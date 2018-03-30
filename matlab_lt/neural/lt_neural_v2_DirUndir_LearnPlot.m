@@ -6,6 +6,10 @@ function lt_neural_v2_DirUndir_LearnPlot(MOTIFSTATS_Compiled, SwitchStruct, Bird
 onlyPlotIfBothPrePostTrials = 0;
 skipifnoDIR = 1; % skips motif
 
+% ---
+xwindplot = [-0.1 0.05];
+
+
 %% === plot all units
 
 lt_neural_DISP_AllPopUnits(SummaryStruct);
@@ -40,6 +44,9 @@ for i=1:numbirds
             
         end
         
+        % ----- first day of expt
+        dayfirst = datestr(floor(SwitchStruct.bird(i).exptnum(ii).switchlist(1).switchdnum), 'ddmmmyyyy');
+        
         for iii=1:numswitches
             
             % ----------------------------------- PLOT?
@@ -49,15 +56,30 @@ for i=1:numbirds
                 end
             end
             
-            
+            neuronsThisExpt = find(strcmp({SummaryStruct.birds(i).neurons.exptID}, exptname));
+
             % ---- for this switch, figure out which neuron has data (at
             % laest one of pre or post
             swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(iii);
             numneurons = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons);
-            motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_regexpr_str;
-            motifpredur = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_predur;
             
-            learningplotted = 0;
+            motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(neuronsThisExpt(1)).motif_regexpr_str;
+            % -- check all neurons make sure motiflist identical
+            for nn=neuronsThisExpt
+                
+                motiflistthis = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif_regexpr_str;
+                disp(length(motiflistthis));
+                assert(all(strcmp(motiflist, motiflistthis)), 'sadfasd');
+            end
+            
+            motifpredur = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_predur;
+            xwindplot_fromzero = motifpredur+xwindplot;
+            
+            %             learningplotted = 0;
+            figureopened =0;
+            batchesplotted = {}; % collects names of batchfiles that have been plotted
+            % i.e. single epoch can have multiple batches)
+            
             for nn=1:numneurons
                 bregionthis = MOTIFSTATS_Compiled.birds(i).SummaryStruct.birds(1).neurons(nn).NOTE_Location;
                 
@@ -80,20 +102,18 @@ for i=1:numbirds
                 end
                 
                 
-                
-                % ----------------------- PLOT EACH NEURON
-                figcount=1;
-                subplotrows=4;
-                subplotcols=8;
-                fignums_alreadyused=[];
-                hfigs=[];
-                hsplots =[];
-                
                 %                 ############################## PLOTS FOR THIS NEURON
                 %                 =============== 1) PLOT LEARNING at target
-                if learningplotted==0
+                currentbatch = SummaryStruct.birds(i).neurons(nn).batchfilename;
+                if ~any(strcmp(batchesplotted, currentbatch))
+                    % then plot for this batch
+                    %
+                    %                 if learningplotted==0
                     lt_figure; hold on;
-                    title([birdname '-' exptname '-sw' num2str(iii) '-n' num2str(nn)]);
+                    title({[birdname '-' exptname '-sw' num2str(iii) '-n' num2str(nn)], ...
+                        [currentbatch]});
+                    
+                    
                     targsyls = swthis.learningContingencies(1:2:end);
                     plotcolors = lt_make_plot_colors(length(targsyls), 0,0);
                     for m=1:length(targsyls)
@@ -102,6 +122,10 @@ for i=1:numbirds
                         indtmp = strcmp(motiflist, tsyl);
                         ffvals = [MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif(indtmp).SegmentsExtract.FF_val];
                         tvals = [MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif(indtmp).SegmentsExtract.song_datenum];
+                        
+                        % -- convert tvals relative to expt onset
+                        %                         tmp = lt_convert_EventTimes_to_RelTimes(dayfirst, tvals);
+                        %                         tvals = tmp.FinalValue;
                         
                         % ---- separate dir and undir
                         isdir = [MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif(indtmp).SegmentsExtract.DirSong]==1;
@@ -121,7 +145,34 @@ for i=1:numbirds
                     line([earliest earliest], ylim, 'LineStyle', '--');
                     line([latest latest], ylim, 'LineStyle', '--');
                     axis tight;
-                    learningplotted = 1;
+                    datetick('x', 'ddmmm-HHMM');
+                    rotateXLabels(gca, 45)
+                    
+                    % --- list neurons that are from this batch
+                    neurtmp = find(strcmp({SummaryStruct.birds(i).neurons.batchfilename}, currentbatch));
+                    lt_plot_annotation(1, ['neur:' num2str(neurtmp)], 'r');
+                    %                     learningplotted = 1;
+                    
+                    %                 end
+                    % === append this batch to list
+                    batchesplotted = [batchesplotted currentbatch];
+                end
+                
+                
+                % ----------------------- PLOT EACH NEURON
+                if figureopened==0
+                    figcount=1;
+                    subplotrows=4;
+                    subplotcols=8;
+                    fignums_alreadyused=[];
+                    hfigs=[];
+                    hsplots =[];
+                    figureopened = 1;
+                else
+                    % -- add one subplot so can see transition to next unit
+                    
+                    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                    
                 end
                 
                 % ======================== 2) FOR EACH MOTIF, PLOT UNDIR
@@ -276,7 +327,7 @@ for i=1:numbirds
                         end
                         
                         shadedErrorBar(x1, y1, y1sem, {'Color', 'k'}, 1);
-                        if ~isempty(y2)
+                        if ~isempty(y2) & length(y2sem)>1
                             shadedErrorBar(x2, y2, y2sem, {'Color', 'b'}, 1);
                         end
                         line([motifpredur motifpredur], ylim, 'Color','r');
@@ -287,6 +338,8 @@ for i=1:numbirds
                 % ---------------
                 if ~isempty(hsplots)
                     linkaxes(hsplots, 'xy');
+                    % --- zoom in on x axis
+                    xlim([xwindplot_fromzero]);
                 end
                 
             end

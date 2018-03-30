@@ -124,7 +124,7 @@ end
 % =============== INLCUDE PREVIOUSLY EXTRACTED STATS (E.G. FF)
 cd(datdir)
 % ------ 1) FF
-if exist('extractFF.mat', 'file')
+if exist('extractFF.mat', 'file');
     FFvals = load('extractFF.mat');
     FFparams = load('extractFF_params');
     

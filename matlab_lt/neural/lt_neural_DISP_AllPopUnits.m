@@ -41,5 +41,6 @@ for i=1:numbirds
 %             lt_plot_text(datenum(Sets_songfiles{ss}{end}, 'yymmdd_HHMMSS'), ...
 %                 Sets_neurons{ss}(end), ['set ' num2str(ss)], 'b')
         end
+        datetick('x', 'ddmmmyyyy-HHMM');
     end
 end

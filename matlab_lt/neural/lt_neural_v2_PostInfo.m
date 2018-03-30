@@ -1,5 +1,9 @@
 function SummaryStruct = lt_neural_v2_PostInfo(SummaryStruct, IgnoreWhetherLearn, ...
     MotifsToCollect)
+%%
+
+wh44hackaddmotifs =0; % set 1 to add syls that are convergent controlled for following syl.
+
 %% lt 1/17/18 - added ability to manually enter which motifs want to extract
 % note: will only use this if bird is entered. if not, then will still do
 % automatic motif extraction
@@ -193,8 +197,16 @@ for j=1:NumBirds
                 
             elseif strcmp(birdname, 'wh44wh39')
                 if strcmp(exptname, 'RALMANlearn1')
-                    MotifsActual = {'nhh', 'dkccb', ...
-                        'dkccb(b)', ...
+                    MotifsActual = {'nhh', 'dkcc', ...
+                        'c(b)', 'cb(b)', ...
+                        '(j)n', '(m)d'};
+                elseif strcmp(exptname, 'RALMANlearn2')
+                    MotifsActual = {'nhh', 'dkcc', ...
+                        'c(b)', ...
+                        '(j)n', '(m)d'};
+                elseif strcmp(exptname, 'RALMANlearn3')
+                    MotifsActual = {'n(h)', 'nh(h)', 'dkcc', ...
+                        'c(b)', 'cb(b)' ...
                         '(j)n', '(m)d'};
                 end
                 
@@ -267,6 +279,12 @@ for j=1:NumBirds
             elseif strcmp(birdname, 'wh44wh39')
                 MotifsActual = {'nhh', 'dkccbb', ...
                     '(j)n', '(m)d'};
+                
+                if wh44hackaddmotifs==1
+                    motifstoadd = {'j(j)j', 'b(j)j', 'h(m)d', 'm(m)d', 'b(n)h', 'j(n)h'};
+                    MotifsActual = [MotifsActual motifstoadd];
+                end
+                    
             else
                 disp('NO MOTIFS INPUTED!!');
                 failures = failures+1;

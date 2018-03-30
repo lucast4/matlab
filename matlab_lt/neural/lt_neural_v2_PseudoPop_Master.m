@@ -1,6 +1,6 @@
 function [FRmatMotifByNeur, AllMotifRegexp, AllNeurLocation] = ...
     lt_neural_v2_PseudoPop_Master(MOTIFSTATS_Compiled, NormToNeurMean, ...
-    premotorWind, plotnans)
+    premotorWind, plotnans, birdnum)
 
 %% ============= PARAMS
 
@@ -12,7 +12,8 @@ function [FRmatMotifByNeur, AllMotifRegexp, AllNeurLocation] = ...
 
 %% =================== EXTRACT DATA
 
-i=1;
+i=birdnum;
+
 numneurons = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons);
 
 motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_regexpr_str;

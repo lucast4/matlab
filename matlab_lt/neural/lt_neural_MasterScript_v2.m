@@ -6,7 +6,7 @@ clear all; close all; fclose all;
 BirdsToKeep = {'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 BrainArea = {};
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
-ExptToKeep = {};
+ExptToKeep = {'RALMANlearn3'};
 RecordingDepth = [];
 LearningOnly = 1;
 BatchesDesired = {};
@@ -115,6 +115,35 @@ end
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 %% &&&&&&&&&&&&&&&&&& DIAGNOSTIC STUFF &&&&&&&&&&&&&&&&
+%% ====== CONFIRM THAT ALL CLUSTERING HAVE "FORCED"
+% i.e. nonclustered spikes have been forced to a spike class (or to noise
+% class)
+
+NotForced = []; % n x [bird neur] 
+numbirds = length(SummaryStruct);
+for i=1:numbirds
+    numneurons = length(SummaryStruct);
+    
+    for ii=1:numneurons
+        
+        cd(SummaryStruct.birds(i).neurons(ii).dirname);
+        tmp = load('times_data.mat');
+        if ~any(tmp.forced==1)
+            % note this down
+            NotForced = [NotForced; [i ii]];
+        end
+        
+    end
+    
+end
+
+if isempty(NotForced)
+    disp('Great - all forced!');
+else
+    disp('Not good - some not forced: ');
+disp(NotForced);
+end
+
 %% ====== check if SU or MU
 
 
@@ -147,7 +176,7 @@ lt_neural_v2_DIAGN_Rawdat(SummaryStruct, displaymode, skipnum)
 %% ============ Check pitch contours
 
 close all;
-useDiffColors = 1; % 1, plots each pc diff color; if 0, shades all gray
+useDiffColors = 0; % 1, plots each pc diff color; if 0, shades all gray
 plotbysyl = 0; % if 1, then each plot one syl. if 0, then go by neuron. [IN PROGRESS]
 dolinkaxes = 0;
 lt_neural_v2_DIAGN_pcontours(SummaryStruct, useDiffColors, plotbysyl, dolinkaxes);
@@ -192,15 +221,15 @@ BirdToPlot = 'wh44wh39';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [8]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+NeurToPlot = [18]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
 % motiflist = {'a(b)', 'jbh(h)g'};
-motiflist = {'(d)k'};
+motiflist = {'(d)kcc', 'dk(c)c', '(n)hh', 'c(b)'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
 % motifpredur = 0.15;
 % motifpostdur = 0.15;
 motifpredur = 0.15;
-motifpostdur = 0.15;
+motifpostdur = 0.05;
 
 plotIndivRaster = 1; % one raster for each neuron/motif
 plotCombRast = 0; % one figure, all rasters
@@ -426,31 +455,55 @@ MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStru
 %% ================ PLOT [CORRELATION WITH FF]
 close all;
 % xcov_dattotake = [-0.01 0.05];
-xcov_dattotake = [-0.08 0.04];
-xcovwindmax = 0.05;
-binsize_spk = 0.005;
+% xcov_dattotake = [-0.08 0.04];
+xcov_dattotake = [-0.04 0.02];
+xcovwindmax = 0.04;
+binsize_spk = 0.01;
 
 MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
     xcov_dattotake, xcovwindmax, binsize_spk);
 
-%% ==== 2) EXTRACT LEARNING SWITCH STRUCT
+ %% ==== 2) EXTRACT LEARNING SWITCH STRUCT
 
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 
 %% ================ PLOT CROSS CORR WRT TO LEARNING
 close all; 
-% BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn1'};
-BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
-SwitchToPlot = [];
+BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn1'};
+% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
+SwitchToPlot = [1];
 BregionWantedList = {{'LMAN', 'RA'}};
 onlyPlotIfBothPrePostTrials = 0;
 lt_neural_POPLEARN_Plot(MOTIFSTATS_pop, SwitchStruct, BirdExptPairsToPlot, ...
     SwitchToPlot, BregionWantedList, onlyPlotIfBothPrePostTrials);
 
 
+%% ================ SUMMARIZE CROSS CORRELATION OVER COURSE OF EXPERIMENT
+% over multiple switches
+close all; 
+exptnum = [];
+birdnum = [];
+BregionWantedList = {{'LMAN', 'RA'}};
+[OUTSTRUCT, birdnum] = lt_neural_POPLEARN_Summary(MOTIFSTATS_pop, SwitchStruct, ...
+    birdnum, exptnum, BregionWantedList);
+
+
+%% ======= PLOT SUMMARY OF XCOV traces
+close all;
+lt_neural_POPLEARN_SummaryPlot1(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
+    birdnum, exptnum)
+
+%% ======= PLOT MEAN XCOV
+close all;
+windowmean = [-0.05 0.02]; % window, in ms, relative to lag = 0;
+lt_neural_POPLEARN_SummaryPlot2(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
+    birdnum, windowmean)
+
+
+
 %% ================ PLOT PAIRED RASTERS WRT TO LEARNING
 BirdExptPairsToPlot = {};
-SwitchToPlot = [];
+SwitchToPlot = [2];
 TypeOfPairToPlot = {'LMAN-RA'}; % e.g. 'LMAN-RA' (in alphabetical order)
 
 numbirds = length(SwitchStruct.bird);
@@ -558,14 +611,373 @@ MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 
 
-%% ==== 3) PLOT
-close all;
-BirdExptPairsToPlot = {};
+%% ==== 3) PLOT (for each switch, plot all neurons and syls)
+% close all;
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
 SwitchToPlot = [4];
 plotIndTrial = 0;
 
 lt_neural_v2_DirUndir_LearnPlot(MOTIFSTATS_Compiled, SwitchStruct, BirdExptPairsToPlot, ...
     SwitchToPlot, plotIndTrial, SummaryStruct);
+
+%% ==== 4) PLOT (for each motif, plot across all switches for a 
+% given experiment
+% close all;
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+% SwitchToPlot = [1];
+plotIndTrial = 0;
+xwindplot = [-0.1 0.05];
+onlyPlotIfBothPrePostTrials = 0;
+
+motiftoplot = {'c(b)'};
+
+numbirds = length(SwitchStruct.bird);
+for i=1:numbirds
+    
+    numexpts = length(SwitchStruct.bird(i).exptnum);
+    birdname = SwitchStruct.bird(i).birdname;
+    
+    for ii=1:numexpts
+        
+        exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+        
+        % ------------------------------- PLOT?
+        if ~isempty(BirdExptPairsToPlot)
+            
+            ind1 = find(strcmp(BirdExptPairsToPlot, birdname));
+            ind2 = find(strcmp(BirdExptPairsToPlot, exptname));
+            
+            if ~any(ind1+1 == ind2)
+                disp(['SKIPPED ' birdname '-' exptname]);
+                continue
+            end
+            
+        end
+        
+        dayfirst = datestr(floor(SwitchStruct.bird(i).exptnum(ii).switchlist(1).switchdnum), 'ddmmmyyyy');
+        numswitches = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
+        neuronsThisExpt = find(strcmp({SummaryStruct.birds(i).neurons.exptID}, exptname));
+        
+        % ======= get list of motifs for this expt
+        % -- first find neurons for this expt
+        motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(neuronsThisExpt(1)).motif_regexpr_str;
+        % -- check all neurons make sure motiflist identical
+        for nn=neuronsThisExpt
+           
+            motiflistthis = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif_regexpr_str;
+            
+            assert(all(strcmp(motiflist, motiflistthis)), 'sadfasd');
+        end
+        
+        % -- make sure they are identical
+%         motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_regexpr_str;
+        motifpredur = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params.motif_predur;
+        xwindplot_fromzero = motifpredur+xwindplot;
+        
+        
+        % ===============================================
+        % -- for each motif plot each neuron for each switch.
+        for mm=1:length(motiflist)
+            if ~any(strcmp(motiflist{mm}, motiftoplot))
+                continue
+            end
+            
+            %% =================== FIRST PLOT LEARNING TRAJECTORY
+            lt_figure; hold on;
+            batchesdone = {};
+            for jj=1:length(neuronsThisExpt)
+                nn = neuronsThisExpt(jj);
+                
+                batchthis = SummaryStruct.birds(i).neurons(nn).batchfilename;
+                if any(strcmp(batchesdone, batchthis))
+                    continue
+                end
+                batchesdone = [batchesdone batchthis];
+%                 bregionthis = MOTIFSTATS_Compiled.birds(i).SummaryStruct.birds(1).neurons(nn).NOTE_Location;
+%                 
+%                 % ===== does this neuron have pre or post data for this
+%                 % switch?
+%                 songtimes = MOTIFSTATS_Compiled.birds(i).SummaryStruct.birds(1).neurons(nn).Filedatenum_unsorted;
+%                 %                 disp(songtimes)
+%                 inds_pre = find(songtimes>swthis.switchdnum_previous & songtimes<swthis.switchdnum);
+%                 inds_post = find(songtimes>swthis.switchdnum & songtimes<swthis.switchdnum_next);
+%                 
+%                 if isempty(inds_pre) & isempty(inds_post)
+%                     continue
+%                 end
+%                 
+%                 if onlyPlotIfBothPrePostTrials ==1
+%                     if isempty(inds_pre) | isempty(inds_post)
+%                         continue
+%                     end
+%                 end
+%                 disp(['analyzing: ' birdname '-' exptname '-sw' num2str(iii) '-neurset' num2str(ss)]);
+%                 
+%                 
+%                 
+                % ======================
+                segextract = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif(mm).SegmentsExtract;
+                
+                if isempty(segextract)
+                    continue
+                end
+                
+                % --- get pre and post inds
+                tvals = [segextract.song_datenum];
+                ffvals = [segextract.FF_val];
+                indsdir = [segextract.DirSong];
+                
+                % ---- UNDIR
+                plot(tvals(indsdir==0), ffvals(indsdir==0), 'ok');
+                
+                % ---- DIR
+                plot(tvals(indsdir==1), ffvals(indsdir==1), 'ob', 'MarkerFaceColor', 'b');
+                
+            end
+            
+                % =========== PUT LINES FOR SWITCHES
+                for iii=1:numswitches
+                    swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(iii);
+                    
+                    line([swthis.switchdnum swthis.switchdnum], ylim);
+%                     earliest = max([swthis.switchdnum_previous, floor(min(tvals))]);
+%                     latest = min([swthis.switchdnum_next, ceil(min(tvals))]);
+%                     
+%                     line([earliest earliest], ylim, 'LineStyle', '--');
+%                     line([latest latest], ylim, 'LineStyle', '--');
+                    tmp = swthis.learningContingencies;
+                    for jjj=1:length(tmp)/2
+                       lt_plot_text(swthis.switchdnum, max(ffvals), [num2str(tmp{2*jjj-1}) ':' num2str(tmp{2*jjj})], 'r'); 
+                       lt_plot_text(swthis.switchdnum, 1.01*max(ffvals), ['sw' num2str(iii)], 'r'); 
+                    end
+                    axis tight;
+                    datetick('x', 'ddmmm-HHMM');
+%                     rotateXLabels(gca, 45)
+                end
+            
+            
+            %% ========= SECOND, plot neural 
+            figcount=1;
+            subplotrows=4;
+            subplotcols=8;
+            fignums_alreadyused=[];
+            hfigs=[];
+            hsplots =[];
+            figureopened = 1;
+            
+            motifstr = motiflist{mm};
+            
+            % =================== GO THRU EACH SWITCH. FOR EACH SWITCH PLOT
+            % ALL THE NEURONS THAT HAVE DATA EITHER IN PRE OR POST PERIOD
+            % FOR THIS SWITCH
+            
+            for iii=1:numswitches
+                swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(iii);
+                
+                titleplotted = 0;
+                for nn = 1:numneurons
+                    bregionthis = MOTIFSTATS_Compiled.birds(i).SummaryStruct.birds(1).neurons(nn).NOTE_Location;
+                    
+                    % ===== does this neuron have pre or post data for this
+                    % switch?
+                    songtimes = MOTIFSTATS_Compiled.birds(i).SummaryStruct.birds(1).neurons(nn).Filedatenum_unsorted;
+                    %                 disp(songtimes)
+                    inds_pre = find(songtimes>swthis.switchdnum_previous & songtimes<swthis.switchdnum);
+                    inds_post = find(songtimes>swthis.switchdnum & songtimes<swthis.switchdnum_next);
+                    
+                    if isempty(inds_pre) & isempty(inds_post)
+                        continue
+                    end
+                    
+                    if onlyPlotIfBothPrePostTrials ==1
+                        if isempty(inds_pre) | isempty(inds_post)
+                            continue
+                        end
+                    end
+                    disp(['analyzing: ' birdname '-' exptname '-sw' num2str(iii) '-neurset' num2str(ss)]);
+                    
+                    
+                    
+                    
+                    % ======================
+                    segextract = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(nn).motif(mm).SegmentsExtract;
+                    
+                    
+                    if isempty(segextract)
+                        continue
+                    end
+                    
+                    % --- get pre and post inds
+                    tvals = [segextract.song_datenum];
+                    
+                    indspre = tvals>swthis.switchdnum_previous ...
+                        & tvals < swthis.switchdnum;
+                    indspost = tvals>swthis.switchdnum ...
+                        & tvals<swthis.switchdnum_next;
+                    
+                    
+                    % ---- get smoothed FR
+                    segextract = lt_neural_SmoothFR(segextract);
+                    
+                    
+                    %% ##################### PLOT PRE
+                    indsEpoch = indspre;
+                    EpochLab = 'PRE';
+                    
+                    if ~any(indsEpoch)
+                        continue
+                    end
+                    % -------------- UNDIR
+                    inds = [segextract.DirSong]==0 & indsEpoch;
+                    plottitle = [motifstr '-UNDIR'];
+                    
+                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                    y = mean(frmat,2);
+                    if plotIndTrial==1
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots hsplot];
+                        title(plottitle);
+                        plot(x, frmat, '-', 'Color', [0.6 0.6 0.6]);
+                        plot(x, y, '-k', 'LineWidth', 3);
+                        line([motifpredur motifpredur], ylim, 'Color','r');
+                    end
+                    
+                    x1 = x;
+                    y1 = y;
+                    y1sem = lt_sem(frmat');
+                    
+                    
+                    % -------------- DIR
+                    inds = [segextract.DirSong]==1 & indsEpoch;
+                    plottitle = [motifstr '-DIR'];
+                    
+                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                    y = mean(frmat,2);
+                    if plotIndTrial==1
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots hsplot];
+                        title(plottitle);
+                        plot(x, frmat, '-', 'Color', [0.6 0.6 0.6]);
+                        plot(x, y, '-k', 'LineWidth', 3);
+                        line([motifpredur motifpredur], ylim, 'Color','r');
+                    end
+                    x2 = x;
+                    y2 = y;
+                    y2sem = lt_sem(frmat');
+                    
+                    
+                    % -------------- COMBINED
+                    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                    hsplots = [hsplots hsplot];
+                    title(motifstr);
+                    xlabel(EpochLab);
+                    
+                      title([motifstr '-neur' num2str(nn) '-' bregionthis]);
+                    if titleplotted==0
+                        ylabel([birdname '-' exptname '-sw' num2str(iii)]);
+                        titleplotted=1;
+                    end
+                    
+                    shadedErrorBar(x1, y1, y1sem, {'Color', 'k'}, 1);
+                    if size(frmat,2)>1
+                        shadedErrorBar(x2, y2, y2sem, {'Color', 'b'}, 1);
+                    end
+                    line([motifpredur motifpredur], ylim, 'Color','r');
+                   
+                  %% PLOT POST (overlay)
+                     indsEpoch = indspost;
+                    EpochLab = 'PRE';
+                    
+                    if ~any(indsEpoch)
+                        continue
+                    end
+                    % -------------- UNDIR
+                    inds = [segextract.DirSong]==0 & indsEpoch;
+                    plottitle = [motifstr '-UNDIR'];
+                    
+                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                    y = mean(frmat,2);
+                    if plotIndTrial==1
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots hsplot];
+                        title(plottitle);
+                        plot(x, frmat, '-', 'Color', [0.6 0.6 0.6]);
+                        plot(x, y, '-k', 'LineWidth', 3);
+                        line([motifpredur motifpredur], ylim, 'Color','r');
+                    end
+                    
+                    x1 = x;
+                    y1 = y;
+                    y1sem = lt_sem(frmat');
+                    
+                    
+                    % -------------- DIR
+                    inds = [segextract.DirSong]==1 & indsEpoch;
+                    plottitle = [motifstr '-DIR'];
+                    
+                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                    y = mean(frmat,2);
+                    if plotIndTrial==1
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots hsplot];
+                        title(plottitle);
+                        plot(x, frmat, '-', 'Color', [0.6 0.6 0.6]);
+                        plot(x, y, '-k', 'LineWidth', 3);
+                        line([motifpredur motifpredur], ylim, 'Color','r');
+                    end
+                    x2 = x;
+                    y2 = y;
+                    y2sem = lt_sem(frmat');
+                    
+                    
+                    % -------------- COMBINED
+%                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+%                     hsplots = [hsplots hsplot];
+%                     title(motifstr);
+%                     xlabel(EpochLab);
+                    
+%                       title([motifstr '-neur' num2str(nn) '-' bregionthis]);
+%                     if titleplotted==0
+%                         ylabel([birdname '-' exptname '-sw' num2str(iii)]);
+%                         titleplotted=1;
+%                     end
+                    
+                    shadedErrorBar(x1, y1, y1sem, {'Color', 'r'}, 1);
+                    if size(frmat,2)>1
+                        shadedErrorBar(x2, y2, y2sem, {'Color', 'm'}, 1);
+                    end
+%                     line([motifpredur motifpredur], ylim, 'Color','r');
+                    
+                end
+                
+                
+            end
+            
+              if ~isempty(hsplots)
+                    linkaxes(hsplots, 'xy');
+                    % --- zoom in on x axis
+                    xlim([xwindplot_fromzero]);
+                end
+
+            
+            
+        end
+    end
+end
+
+
+%% =====  SUMMARY PLOT OF TIMECOURSE (all syllables and units)
+close all;
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+xwindplot = [-0.055 0.035];
+
+lt_neural_v2_DirUndir_LearnSummary1(MOTIFSTATS_Compiled, SwitchStruct, BirdExptPairsToPlot, ...
+    SummaryStruct, xwindplot);
+
 
 %% ###############################################################
 %% ############################################  POPULATION
@@ -595,114 +1007,7 @@ MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
 %% #################################################################
 %% PSEUDO POPULATION
 
-close all; clear MOTIFSTATS_Compiled;
-collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract audio each time (i.e. do and save)
-onlyCollectTargSyl=0;
-LearnKeepOnlyBase = 1;
-saveOn = 1;
-OrganizeByExpt =0;
-collectFF=1;
-
-% --- to make sure extracts motifs
-% MotifsToCollect = {'pu69wh78', {'(j)jjbhhg', '(a)abhhg'}};
-%     Params_regexp.motif_predur = 0.05;
-%     Params_regexp.motif_postdur = 0.05;
-%     Params_regexp.preAndPostDurRelSameTimept = 0;
-%     Params_regexp.RemoveIfTooLongGapDur = 1;
-
-MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
-    collectWNhit, LearnKeepOnlyBase, saveOn, onlyCollectTargSyl, OrganizeByExpt,...
-    collectFF);
-
-
-%% ========== FOR EACH SYLLABLE, GET POPULATION VECTOR (VECTOR OF MEANS)
-NormToNeurMean = 1;
-% premotorWind = [-0.06 -0.02];
-% premotorWind = [-0.03 0.01];
-premotorWind = [-0.03 0.02];
-plotnans = 1;
-
-[FRmatMotifByNeur, AllMotifRegexp, AllNeurLocation] = ...
-    lt_neural_v2_PseudoPop_Master(MOTIFSTATS_Compiled, NormToNeurMean, ...
-    premotorWind, plotnans);
-
-%% ================ SAME-TYPE VS. DIFF SUMMARY
-
-plotOn=1;
-thisloc = 'LMAN';
-distmetric = 'euclidean';
-distmetric = 'correlation';
-
-[dp, FRmatDist] = lt_neural_v2_PseudoPop_SameDiff(FRmatMotifByNeur, AllMotifRegexp, ...
-    AllNeurLocation, thisloc, plotOn, distmetric);
-
-
-
-%% ############################# SYL ENCODING AS FUNCTION OF WINDOW
-if (1)
-    WindList = [-0.1:0.01:0.08; -0.06:0.01:0.12]';
-    DprimeAll = [];
-    thisloc = 'RA';
-    distmetric = 'euclidean';
-    distmetric = 'correlation';
-
-    for j=1:size(WindList,1)
-        windthis = WindList(j,:);
-        
-        % ==================== get pop vector
-        [FRmatMotifByNeur, AllMotifRegexp, AllNeurLocation] = ...
-            lt_neural_v2_PseudoPop_Master(MOTIFSTATS_Compiled, 1, windthis, 0);
-        
-        % ====================== get dprime (diff minus same)
-        plotOn=0;
-        
-        dp = lt_neural_v2_PseudoPop_SameDiff(FRmatMotifByNeur, AllMotifRegexp, ...
-            AllNeurLocation, thisloc, plotOn, distmetric);
-        
-        DprimeAll = [DprimeAll; dp];
-    end
-    
-% ============== PLOT
-lt_figure; hold on;
-title(thisloc);
-xlabel('wind center');
-ylabel('dprime(diff - same');
-
-plot(mean(WindList,2), DprimeAll, '-ok');
-
-end
-%% ================ VARIOUS RAW PLOTS
-
-lt_neural_v2_PseudoPop_PLOT;
-
-
-%% ================ HEIRARCHICAL CLUSTERING
-close all;
-distmetric = 'euclidean';
-distmetric = 'correlation';
-locthis = 'LMAN';
-inds = find(strcmp(AllNeurLocation, locthis));
-
-Z = linkage(FRmatMotifByNeur(:,inds), 'single', distmetric);
-lt_figure; hold on;
-dendrogram(Z, 'Labels', AllMotifRegexp);
-% dendrogram(Z);
-rotateXLabels(gca, 90);
-
-tmp = get(gca,'XTickLabel');
-
-% ---- calcualte cophenetic correlation (i..e how well does clustering
-% represent original distances?)
-
-Y = pdist(FRmatMotifByNeur, distmetric);
-c = cophenet(Z, Y);
-
-
-%% ===== CORRELATION BETWEEN DISTANCE AND GENERALIZATION LEARNING
-% ======================== 1) SAVE DISTANCE MATRIX FOR EACH BIRD
-
-
-% ======================== 2) 
+lt_neural_PseudoPop_Master;
 
 
 %% #############################################################

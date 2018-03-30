@@ -136,8 +136,8 @@ for i=1:NumBirds
                             maxtime = segextract_for_trialdur(1).motifsylOnsets(end)+motifpostdur;
                         end
                         
-                        assert(length(unique(cellfun(@unique, {dattmp1.SegmentsExtract.spk_Clust})))==1, 'other clusts here ...');
-                        assert(length(unique(cellfun(@unique, {dattmp2.SegmentsExtract.spk_Clust})))==1, 'other clusts here ...');
+                        assert(length(unique(cellfun(@unique, {dattmp1.SegmentsExtract(~cellfun(@isempty, {dattmp2.SegmentsExtract.spk_Clust})).spk_Clust})))==1, 'other clusts here ...');
+                        assert(length(unique(cellfun(@unique, {dattmp2.SegmentsExtract(~cellfun(@isempty, {dattmp2.SegmentsExtract.spk_Clust})).spk_Clust})))==1, 'other clusts here ...');
                         
                         % Extract
                         [dattmp1.SegmentsExtract] = lt_neural_QUICK_SpkBinned(dattmp1.SegmentsExtract, maxtime, binsize_spk, 1);

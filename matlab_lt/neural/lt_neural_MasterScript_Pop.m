@@ -4,22 +4,48 @@
 %% go thru all chans/clusts, extract data
 clear all; close all;
 
+% =============== PU69
 % Batchname = 'BatchTest'; % must all have used the same batch
 % ChansToGet = [9 14 17 18 21];
 % ClustToGet = [1 1 1 1 1]; % should be aligned with ChansToGet
 % BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'RA'};
 % dirname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110117_RALMANlearn1/NOTSINGING';
 
-Batchname = 'Batch1219to1304'; % must all have used the same batch
-ChansToGet = [9 14 17 18 21];
-ClustToGet = [1 1 1 1 1]; % should be aligned with ChansToGet
-BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'RA'};
-dirname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110117_RALMANlearn1/NOTSINGING';
+% Batchname = 'Batch1219to1304'; % must all have used the same batch
+% ChansToGet = [9 14 17 21];
+% ClustToGet = [1 1 1 1]; % should be aligned with ChansToGet
+% BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'RA'};
+% dirname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110117_RALMANlearn1/NOTSINGING';
 
 % Batchname = 'Batch1208to2205'; % must all have used the same batch
 % ChansToGet = [17 18 21];
 % ClustToGet = [1 1 1]; % should be aligned with ChansToGet
 % dirname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/103017_RAlearn1/';
+% 
+
+% ================================= WH44
+% ----- pre WN
+% Batchname = 'Batch1146to1158'; % must all have used the same batch
+% ChansToGet = [14 15 17 18 20 20];
+% ClustToGet = [1 1 1 1 1 2]; % should be aligned with ChansToGet
+% BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'RA', 'RA'};
+% dirname = '/bluejay5/lucas/birds/wh44wh39/NEURAL/031418_RALMANlearn2/LIGHTSOFF';
+
+% ----- during WN
+% Batchname = 'Batch1718to1734'; % must all have used the same batch
+% ChansToGet = [14 15 17 20 20 22];
+% ClustToGet = [1 1 1 1 2 1]; % should be aligned with ChansToGet
+% BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'RA', 'RA'};
+% dirname = '/bluejay5/lucas/birds/wh44wh39/NEURAL/031418_RALMANlearn2/LIGHTSOFF';
+
+% --- Sleep
+Batchname = 'Batch0009to0037'; % must all have used the same batch
+ChansToGet = [15 15 17 17 14 18 20 21 22];
+ClustToGet = [1 2 1 2 1 1 1 1 1]; % should be aligned with ChansToGet
+BrainRegion = {'LMAN', 'LMAN', 'RA', 'RA', 'LMAN', 'RA', 'RA', 'RA', 'RA'};
+dirname = '/bluejay5/lucas/birds/wh44wh39/NEURAL/031418_RALMANlearn2/NIGHT';
+
+
 
 % -- defaults
 extractsound = 0;
@@ -71,7 +97,7 @@ NumUnits = length(NeurDat.unit);
 lt_figure; hold on;
 title('all simult. units');
 
-chantoplot = [9]; % empty for all;
+chantoplot = []; % empty for all;
 
 if ~isempty(chantoplot)
 NeurNums = find(ChansToGet==chantoplot);
@@ -100,7 +126,7 @@ lt_neural_PLOT_RawMultChan(NeurDat.dirname, Batchname, ChansToGet);
 
 % ============= 1) CROSS-CORRELATION OF BINNED SPIKES
 binsize = 0.005; % in sec. shift will be identical
-windowmax = 0.5; % in sec, extent of cross-corr (+/- windowmax)
+windowmax = 0.2; % in sec, extent of cross-corr (+/- windowmax)
 
 % ----- 1) bin all spike trains
 fs = NeurDat.metaDat(1).fs;
@@ -119,20 +145,34 @@ end
 % ----- 2) calcualte all cross-corrs
 lt_figure; hold on;
 % [CCall, lags] = xcov(FRmat, ceil(windowmax/binsize), 'coeff');
-[CCall, lags] = xcorr(FRmat, ceil(windowmax/binsize));
+% [CCall, lags] = xcorr(FRmat, ceil(windowmax/binsize));
 
 NeurID1 = [];
 NeurID2 = [];
 CCall = [];
 for i=1:length(NeurDat.unit)
     for ii=i:length(NeurDat.unit)
-   
-%         [cc, lags] = xcov(FRmat(:,i), FRmat(:,ii), ceil(windowmax/binsize), 'coeff');
-        [cc, lags] = xcorr(FRmat(:,i), FRmat(:,ii), ceil(windowmax/binsize));
-
-        CCall = [CCall cc];
-        NeurID1 = [NeurID1 i];
-        NeurID2 = [NeurID2 ii];
+        
+        [cc, lags] = xcov(FRmat(:,i), FRmat(:,ii), ceil(windowmax/binsize), 'coeff');
+        %         [cc, lags] = xcorr(FRmat(:,i), FRmat(:,ii), ceil(windowmax/binsize));
+        
+        % ---- flip CC so that alphabetically earlier brain region is to
+        % left
+        [~, indtmp] = sort({NeurDat.unit(i).BrainRegion, NeurDat.unit(ii).BrainRegion});
+        if indtmp(1)>indtmp(2)
+            % -- then need to flip
+            cc = flipud(cc);
+            CCall = [CCall cc];
+            NeurID1 = [NeurID1 ii];
+            NeurID2 = [NeurID2 i];
+            
+        else
+            CCall = [CCall cc];
+            NeurID1 = [NeurID1 i];
+            NeurID2 = [NeurID2 ii];
+            
+        end
+        
     end
 end
 
@@ -208,7 +248,7 @@ ccall = []; % for plotting mean;
 for indtmp=inds
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     hsplots = [hsplots hsplot];
-    
+  
     % -- plot
     plot(lags.*binsize, CCall(:,indtmp), 'Color', plotcol);
     
@@ -267,7 +307,185 @@ lt_figure; hold on;
 plot(f, S, '-ok');
 % shadedErrorBar(f, S, Serr, {'Color', 'k'},1);
 
+%% ###############################################
+%% ############################################### LFP, SINGING
+%%  extract raw dat for each channel
+% here working thru single song files
+clear all; close all;
+lt_switch_chronux(1);
+sfile = '/bluejay5/lucas/birds/wh44wh39/NEURAL/021518_Rec3/wh44wh39_180215_105438.rhd';
+ChansToPlot = [15 17 18 20 21 22];
+BrainRegions = {'LMAN', 'RA','RA','RA','RA', 'RA'};
 
+% ============ 1) extract dat
+[amplifier_data,board_dig_in_data,frequency_parameters, board_adc_data, ...
+    board_adc_channels, amplifier_channels, board_dig_in_channels, t_amplifier] =...
+    pj_readIntanNoGui(sfile);
+fs = frequency_parameters.amplifier_sample_rate;
+
+% --- for each channel extract raw dat
+DatAll = struct;
+for j = 1:length(ChansToPlot)
+    
+    chan = ChansToPlot(j);
+    
+    DatAll(j).datraw = amplifier_data([amplifier_channels.chip_channel] == chan, :)';
+    DatAll(j).chan_amp = chan;
+    DatAll(j).bregion = BrainRegions{j};
+end
+
+
+%% ====== SPECTROGRAM OF LFP
+% ---- for each region get spectrogram and plot
+% for j=1:length(DatAll)
+   
+    datall = [DatAll.datraw];
+        params = struct;
+        params.Fs = fs;
+        params.fpass = [30 1000];
+        movingwin = [0.1 0.005];
+        
+        
+[S, t, f] = mtspecgramc(datall, movingwin, params);
+        
+% ====================================  plot [spectrograms]
+figcount=1;
+subplotrows=length(DatAll)+1;
+subplotcols=1;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+% --- first plot sound spectrogram
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+lt_plot_spectrogram(board_adc_data, fs, 1, 0);
+
+% --- then plot each neural spectrogram
+for j=1:length(DatAll)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+title(['ch' num2str(DatAll(j).chan_amp) '[' DatAll(j).bregion ']']);
+imagesc(t, f, 10*log10(S(:,:, j)'));
+axis tight;
+ylim([1/(movingwin(1)) params.fpass(2)]);
+end
+linkaxes(hsplots, 'x');
+colormap('jet');
+        
+
+%% ====================================  plot [raw unfiltered dat]
+figcount=1;
+subplotrows=length(DatAll)+1;
+subplotcols=1;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+% --- first plot sound spectrogram
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+lt_plot_spectrogram(board_adc_data, fs, 1, 0);
+
+% --- then plot each neural spectrogram
+for j=1:length(DatAll)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+title(['ch' num2str(DatAll(j).chan_amp) '[' DatAll(j).bregion ']']);
+t = [1:length(DatAll(j).datraw)]./fs;
+dat = DatAll(j).datraw;
+
+% --- filter neural data
+dat = lt_neural_filter(dat, fs, 0, 1, 300);
+plot(t, dat, '-k');
+axis tight;
+end
+linkaxes(hsplots, 'x');
+
+
+%% ============================= COHEROGRAM
+PairToGet = {'LMAN', 'RA'}; 
+        params = struct;
+        params.Fs = fs;
+        params.fpass = [5 1000];
+        params.tapers = [3 5];
+        movingwin = [0.15 0.01];
+
+        DatCoh = struct;
+for i=1:length(DatAll)
+   
+    region1 = DatAll(i).bregion;
+    
+    if ~strcmp(region1, PairToGet{1})
+        continue
+    end
+    
+    % --- go thru all other channels
+    for ii=1:length(DatAll)
+    
+        region2 = DatAll(ii).bregion;
+        
+        if ~strcmp(region2, PairToGet{2})
+            continue
+        end
+        
+        disp([region1 '-' region2]);
+        
+       % ------- get coherence
+       
+       dat1 = DatAll(i).datraw;
+       dat2 = DatAll(ii).datraw;
+       
+       [C,phi,S12,S1,S2,t,f] = cohgramc(dat1, dat2, movingwin, params);
+       
+       DatCoh(i,ii).C = C;
+       DatCoh(i,ii).phi = phi;
+       
+       DatCoh(i,ii).t = t;
+       DatCoh(i,ii).f = f;
+       
+       
+        
+    end
+        
+end
+
+%% ============================ PLOT COHERENCE FOR ALL PAIRS
+figcount=1;
+subplotrows=6;
+subplotcols=1;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+% --- first plot sound spectrogram
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+lt_plot_spectrogram(board_adc_data, fs, 1, 0);
+
+% --- then plot each coherogram
+for j=1:length(DatCoh(:))
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+% title(['ch' num2str(DatAll(j).chan_amp) '[' DatAll(j).bregion ']']);
+dat = DatCoh(j).C;
+t = DatCoh(j).t;
+f = DatCoh(j).f;
+imagesc(t, f, dat');
+axis tight;
+ylim([1/(movingwin(1)) params.fpass(2)]);
+colormap('jet');
+end
+linkaxes(hsplots, 'x');
+
+
+%% ============================= COHERENCE (SPECTRUM) DURING SONG
+% ============== collect part of data that is during song
+
+
+
+
+%%
+lt_switch_chronux(0);
+
+%% ###############################################
 %% ========================================== overnight analysis
 batchf = 'batchtmp';
 chantype = 'ana'; % dig or ana

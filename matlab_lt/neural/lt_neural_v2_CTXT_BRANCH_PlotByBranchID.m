@@ -1,10 +1,11 @@
 function lt_neural_v2_CTXT_BRANCH_PlotByBranchID(ALLBRANCH, BrainRegions, ...
     BirdToPlot, useDprime, ExptToPlot)
 %% lt 11/29/17 - plots, sepaated by unique branch points (i.e. regexpstr)
+wh44tempfix = 1;
 
 %%
 
-datwindow_xcov = [-0.08 0.04]; % data to use, rel onset
+datwindow_xcov = [-0.1 0.05]; % data to use, rel onset
 
 
 %% ======= Filter data (e.g. remove noise, poor labels, etc)
@@ -120,6 +121,25 @@ for i=1:numbirds
                 chan = ALLBRANCH.SummaryStruct.birds(i).neurons(nn).channel;
                 lt_plot_text(xdecode(end), ydecode(j,end), ['ch' num2str(chan)], 'b', 7);
                 
+            end
+            
+            % ===================== TEST WHETHER SIGNIFICANT DECODING
+            % ACCURACY
+            if (0)
+                for tt = 1:length(xdecode)
+                % in each time bin do ttest comparing data to shuffle
+               
+                [h, p] = ttest(ydecode(:,tt), ydecode_neg(:,tt));
+                if p<0.05
+                    plot(xdecode, 1, 'ob');
+                end
+            end
+            else
+            
+            % ---------------------- ttest of entire trajectory vs. neg
+            % control
+            [h, p] = ttest(mean(ydecode,2), mean(ydecode_neg,2));
+            lt_plot_pvalue(p, 'mean decode vs. neg', 1);
             end
             
         end
@@ -520,13 +540,144 @@ if length(BrainRegions)==2
     
     
     
+    %% ============ LIMIT TO BRANCHES THAT ARE NOT DEPENDENT MOTIFS
+    if wh44tempfix==1
+        if (1)
+            birdnumthis = find(strcmp({ALLBRANCH.SummaryStruct.birds.birdname}, 'wh44wh39'));
+            
+            indstoremove = ismember(BranchID, [1 2 3 8]) & ...
+                BirdID == birdnumthis;
+            
+            BirdID(indstoremove) = [];
+            BranchID(indstoremove) = [];
+            LocationAll(indstoremove) = [];
+            YallMat(indstoremove, :) = [];
+            XallMat(indstoremove, :) = [];
+            
+        else
+            % --
+            indstokeep = ismember(BranchID, [4 5 6 7 8]);
+            
+            BirdID = BirdID(indstokeep);
+            BranchID = BranchID(indstokeep);
+            LocationAll = LocationAll(indstokeep);
+            YallMat = YallMat(indstokeep, :);
+            XallMat = XallMat(indstokeep, :);
+        end
+    end
     %% #####################################
     %% ============== CALCULATE PEAKS IN XCORR AND ALSO PLOT
-    windowmax = 0.1; % sec
-    
+    windowmax = 0.075; % sec
+doCConMeans = 0; % then uses mean for brain region and branch
     [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID, BranchID, LocationAll, ...
-        YallMat, XallMat, locationstoplot);
+        YallMat, XallMat, locationstoplot, 0, doCConMeans);
+   
+        
+    %% CALCULATE GRAND MEAN TO GET PEAK TIMING, AND BOOTSTRAP TO GET VARIABILITY
     
+    % -------------- DAT
+    ccmean_dat = mean(CCall);
+    
+    % -------------- SHUFF
+    nshuff = 1000;
+    N = size(CCall,1);
+    ccmean_shuff = [];
+    ccmean_shuff_interp = [];
+    for nn=1:nshuff
+       
+        indtmp = randi(N, 1, N);
+        
+        ccmean_shuff = [ccmean_shuff; mean(CCall(indtmp,:),1)];
+        
+        % ---  smooth
+         ccmean_shuff_interp = [ccmean_shuff_interp; ...
+             smooth(mean(CCall(indtmp,:),1), 9)'];
+ 
+    end
+    
+    
+    % ======================== PLOT (NOT INTERPOLATED)
+    lt_figure; hold on;
+    lt_subplot(2,2,1); hold on;
+    title('dat/shuff, no interp');
+    plot(LagsAll(1,:).*binsize, ccmean_shuff, '-', 'Color', [0.7 0.7 0.7]);
+    plot(LagsAll(1,:).*binsize, ccmean_dat, '-k', 'LineWidth', 3);
+
+     % ---------------------
+     lt_plot_zeroline;
+     lt_plot_zeroline_vert;
+
+     
+     % ============ same, but with interpolation
+    lt_subplot(2,2,2); hold on;
+    title('dat/shuff, with interp');
+    
+   % --- shuff
+%         
+%    ccmean_shuff_interp = interp1(1:length(ccmean_dat), ccmean_shuff', 1:length(ccmean_dat), ...
+%        'spline');
+     plot(LagsAll(1,:).*binsize, ccmean_shuff_interp, '-', 'Color', [0.7 0.7 0.7]);
+  
+   % --- data
+%    xfit = LagsAll(1,:);
+   
+%    xfit = 1:0.25:length(ccmean_dat);
+%    ccmean_dat_interp = interp1(1:length(ccmean_dat), ccmean_dat', xfit);
+   ccmean_dat_interp = smooth(ccmean_dat, 9);
+%    x = 1:length(ccmean_dat);
+%    ccmean_dat_interp = fit(x', ccmean_dat', 'smoothingspline');
+   plot(LagsAll(1,:).*binsize, ccmean_dat_interp, '-k', 'LineWidth', 3);
+   
+     % ---------------------
+     lt_plot_zeroline;
+     lt_plot_zeroline_vert;
+     
+     
+     
+    % ============================ PLOT DISTRIBUTION OF TIMINGS AND PEAKS
+    % ----- DATA
+   [pks, locs] = findpeaks(ccmean_dat_interp, 'SortStr', 'descend');
+   pks_dat = pks(1);
+   locs_dat = locs(1);
+   
+   % ---- SHUFF
+   pks_shuff = [];
+   locs_shuff = [];
+   for j=1:size(ccmean_shuff_interp, 1)
+      
+          [pks, locs] = findpeaks(ccmean_shuff_interp(j, :), 'SortStr', 'descend');
+     
+   pks_shuff = [pks_shuff pks(1)];
+   locs_shuff = [locs_shuff locs(1)];
+   
+   end
+  
+   lt_subplot(2,2,3); hold on;
+   title('loc and size of peaks (dat, shuff)');
+   ylabel(['nshuff=' num2str(nshuff)]);
+   % -- SHUFF
+   plot(LagsAll(1, locs_shuff).*binsize, pks_shuff, 'x', 'Color', [0.7 0.7 0.7]);
+   % --- DAT
+   plot(LagsAll(1,locs_dat).*binsize, pks_dat, 'ok', 'LineWidth', 3);
+   
+   xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
+   lt_plot_zeroline;
+   lt_plot_zeroline_vert;
+   
+   % ========================== CALCULATE MEAN AND STD OF SHUFF
+%    pkmean_shuff = mean(pks_shuff);
+%    pkstd_shuff = std(pks_shuff);
+%    locmean_shuff = mean(locs_shuff);
+%    locstd_shuff = std(locs_shuff);
+%    
+%    lt_subplot(2,2,4); hold on;
+%    xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
+%    lt_plot_zeroline;
+%    lt_plot_zeroline_vert;
+%    
+%    plot(LagsAll(1,locmean_shuff)
+%    
+   
     %% =================== SAVE LOCATION OF PEAK IN GRAND MEAN (PER BIRD)
     
     CCmean_dat = nan(size(CCall,2), numbirds);
@@ -552,9 +703,10 @@ if length(BrainRegions)==2
     end
     
     
+    
     %% ########################### NEGATIVE CONTROL - SHUFFLE LOCATION LABEL
     % ----
-    nshuff = 1000;
+    nshuff = 100;
     TimeOfPeak_Shuff = nan(nshuff, numbirds);
     CCmean_Shuff = nan(size(CCall,2), nshuff, numbirds);
     
@@ -591,7 +743,7 @@ if length(BrainRegions)==2
             suppressplots=0;
         end
         [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID, BranchID, LocationAll_RAND, ...
-            YallMat, XallMat, locationstoplot, suppressplots);
+            YallMat, XallMat, locationstoplot, suppressplots, doCConMeans);
         
         % =========================== CALCUALTE TIME OF PEAK (and collect
         % mean timecourse
@@ -613,42 +765,40 @@ if length(BrainRegions)==2
             
             TimeOfPeak_Shuff(nn, i) = timeofpeak;
         end
-        
-        
     end
    
     %% ====================== COMPARE SHUFFLES TO DATA
-
-
+    
+    
     % =========================1 ) time of peak
     figcount=1;
-subplotrows=2;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-
-for i=1:numbirds
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    subplotrows=2;
+    subplotcols=2;
+    fignums_alreadyused=[];
+    hfigs=[];
+    
+    for i=1:numbirds
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title(['bird ' num2str(i)]);
         
-    xcenters = min(TimeOfPeak_Shuff(:,i)-0.005):0.005:(max(TimeOfPeak_Shuff(:,i))+0.005);
-    lt_plot_histogram(TimeOfPeak_Shuff(:,i), xcenters, 1, 1, '', 1, 'k');
-    line([TimeOfPeak_dat(i) TimeOfPeak_dat(i)], ylim, 'Color', 'r', 'LineWidth', 2);
-    
-    % --- p value
-    p = (sum(abs(TimeOfPeak_Shuff(:,i)) > abs(TimeOfPeak_dat(i))) + 1)./(length(TimeOfPeak_Shuff(:,i)) + 1);
-    lt_plot_pvalue(p, '2-tailed',1);
-    xlim(binsize*[LagsAll(1,1) LagsAll(1,end)]);
+        xcenters = min(TimeOfPeak_Shuff(:,i)-0.005):0.005:(max(TimeOfPeak_Shuff(:,i))+0.005);
+        lt_plot_histogram(TimeOfPeak_Shuff(:,i), xcenters, 1, 1, '', 1, 'k');
+        line([TimeOfPeak_dat(i) TimeOfPeak_dat(i)], ylim, 'Color', 'r', 'LineWidth', 2);
+        
+        % --- p value
+        p = (sum(abs(TimeOfPeak_Shuff(:,i)) > abs(TimeOfPeak_dat(i))) + 1)./(length(TimeOfPeak_Shuff(:,i)) + 1);
+        lt_plot_pvalue(p, '2-tailed',1);
+        xlim(binsize*[LagsAll(1,1) LagsAll(1,end)]);
     end
     
     % ======================= 2) overlay data mean CC on shuffles
     figcount=1;
-subplotrows=2;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
+    subplotrows=2;
+    subplotcols=2;
+    fignums_alreadyused=[];
+    hfigs=[];
     for i=1:numbirds
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title(['bird ' num2str(i)]);
         
         % ---- overlay all shuffle dat
@@ -660,12 +810,12 @@ hfigs=[];
     
     % ======================== 3) overlay mean on shuff mean + sd
     figcount=1;
-subplotrows=2;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
+    subplotrows=2;
+    subplotcols=2;
+    fignums_alreadyused=[];
+    hfigs=[];
     for i=1:numbirds
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title(['bird ' num2str(i)]);
         
         % ---- overlay all shuffle dat
@@ -673,17 +823,59 @@ hfigs=[];
         ccmeanmean = mean(ccmeanall, 2);
         ccmeanstd = std(ccmeanall, 0, 2);
         ccmean95 = prctile(ccmeanall', [2.5 97.5]);
-%         ccmean95 = prctile(ccmeanall', [2.5 97.5]);
-%         ccmean95 =  ccmean95 - repmat(ccmeanmean', 2, 1);
+        %         ccmean95 = prctile(ccmeanall', [2.5 97.5]);
+        %         ccmean95 =  ccmean95 - repmat(ccmeanmean', 2, 1);
         plot(LagsAll(1,:)*binsize, ccmeanmean, '-k', 'LineWidth', 2);
         plot(LagsAll(1,:)*binsize, ccmean95(1,:)', '-k');
         plot(LagsAll(1,:)*binsize, ccmean95(2,:)', '-k');
-%                 
-%         
-%         shadedErrorBar(LagsAll(1,:)*binsize, ccmeanmean, ccmeanstd, {'Color', 'k'}, 1);
+        %
+        %
+        %         shadedErrorBar(LagsAll(1,:)*binsize, ccmeanmean, ccmeanstd, {'Color', 'k'}, 1);
         plot(LagsAll(1,:)*binsize, CCmean_dat(:, i), '-r', 'LineWidth', 3);
         xlim(binsize*[LagsAll(1,1) LagsAll(1,end)]);
     end
+    
+    % ============================ 4) SUM POSITIVE AND NEGATIVE TIME LAGS
+    figcount=1;
+    subplotrows=2;
+    subplotcols=2;
+    fignums_alreadyused=[];
+    hfigs=[];
+    for i=1:numbirds
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title(['bird ' num2str(i)]);
+        
+        % ---- overlay all shuffle dat
+        ccmeanall = CCmean_Shuff(:,:,i);
+        
+        % --- negative sums
+        indtmp = LagsAll(1,:)<0;
+        yneg = mean(ccmeanall(indtmp, :), 1);
+                
+        % --- positive sums
+        indtmp = LagsAll(1,:)>0;
+        ypos = mean(ccmeanall(indtmp, :), 1);
+        
+        % --- take difference
+        y_shuff = ypos - yneg;
+        
+        
+       % === data
+       ypos = mean(CCmean_dat(LagsAll(1,:)>0, i));
+       yneg = mean(CCmean_dat(LagsAll(1,:)<0, i));
+       y_dat = ypos - yneg;
+       
+       % ======= plot
+        lt_plot_histogram(y_shuff);
+       line([y_dat y_dat], ylim);
+       
+        p = (sum(abs(y_shuff) > abs(y_dat)) + 1)./(length(y_shuff) + 1);
+        lt_plot_pvalue(p, '2-tailed',1);
+    end
+
+    
+    
+    
 end
 end
 
@@ -694,9 +886,13 @@ end
 
 
 function [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID, BranchID, LocationAll, ...
-    YallMat, XallMat, locationstoplot, suppressplots)
+    YallMat, XallMat, locationstoplot, suppressplots, doCConMeans)
 if ~exist('suppressplots', 'var')
     suppressplots=0;
+end
+
+if ~exist('doCConMeans', 'var')
+    doCConMeans=0;
 end
 
 %% ############################### CALCULATE CROSS CORRELATIONS
@@ -754,13 +950,13 @@ for i=1:numbirds
         y1 = ymat(loc==loclist(1), :);
         y2 = ymat(loc==loclist(2), :);
         
-        
+        if doCConMeans==0
         for j = 1:size(y1,1)
             
             for jj=1:size(y2,1)
                 
                 [cc, lags] = xcov(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'coeff');
-%                 [cc, lags] = xcorr(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'coeff');
+%                 [cc, lags] = xcorr(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'unbiased');
                 
                 
                 % ------------------------- OUTPUT
@@ -774,7 +970,21 @@ for i=1:numbirds
             end
             
         end
-        
+        else
+            y1 = mean(y1, 1);
+            y2 = mean(y2, 1);
+            
+                [cc, lags] = xcov(y1, y2, ceil(windowmax/binsize), 'coeff');
+%                 [cc, lags] = xcorr(y1, y2, ceil(windowmax/binsize), 'unbiased');
+
+                % ------------------------- OUTPUT
+                CCall = [CCall; cc];
+                LagsAll = [LagsAll; lags];
+                
+                PairedBirdID = [PairedBirdID; i];
+                PairedBranchID = [PairedBranchID; bb];
+                
+        end
     end
 end
 
@@ -819,7 +1029,10 @@ if suppressplots==0
             title(['branch ' num2str(j)]);
             plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
             
+            try
             shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
+            catch err
+            end
             xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
             lt_plot_zeroline_vert
             
@@ -843,9 +1056,41 @@ if suppressplots==0
     
     lt_subplot(2,2,2); hold on;
     title('mean(sem)');
+    if length(lt_sem(CCall))>1
     shadedErrorBar(lags*binsize, mean(CCall, 1), lt_sem(CCall), {'Color', 'k'},1);
     xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
+    end
     
+    % =========== GET MEAN, WEIGHTED BY SAMPEL SIZE
+    if doCConMeans==0
+        
+            % === group: each level is single branch in single bird
+            tmp = num2str([PairedBirdID PairedBranchID]);
+            [GrpInds] = grp2idx(tmp);
+            
+            % --- count sample size for each group
+            tmp = tabulate(GrpInds);
+            weights = 1./tmp(:,2); % -- weighting factors are 1/N
+            
+            % -- normalize weights so that will add to one
+            weights = weights./sum(weights(GrpInds));
+            
+            % -- take dot product of CC with weights
+            weightvec = weights(GrpInds);
+            
+            lt_figure; hold on;
+            if (0)
+                ccmean = CCall'*weightvec;
+                title('weighted mean (1/N)');
+                plot(lags, ccmean);
+            else
+                for j=1:size(CCall,2)
+                    cc =  CCall(:, j)' * weightvec;
+                    cc = sum(CCall(:, j).*weightvec);
+                    plot(j, cc, '-ok');
+                end
+            end
+    end
 end
 
 

@@ -35,6 +35,10 @@ for i=1:numbirds
             if ~strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_Location, 'X')
                 continue
             end
+        elseif LMANorX ==3
+            if ~strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_Location, 'RA')
+                continue
+            end
         end
         
         bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;

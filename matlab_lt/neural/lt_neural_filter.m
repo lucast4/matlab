@@ -1,4 +1,5 @@
-function [datfilt,neuralFiltLow,neuralFiltHi] =lt_neural_filter(dat, frequency_parameters, use_waveclusver)
+function [datfilt,neuralFiltLow,neuralFiltHi] =lt_neural_filter(dat, frequency_parameters, use_waveclusver, ...
+    neuralFiltLow, neuralFiltHi)
 %% lt 8/17/16 - bandpass filters intan neural data.
 
 % dat, vector
@@ -13,9 +14,13 @@ if ~exist('waveclusver', 'var')
     use_waveclusver=1;
 end
 
+if ~exist('neuralFiltLow', 'var')
+    neuralFiltLow = 300;
+end
 
-neuralFiltLow=300;
-neuralFiltHi=3000;
+if ~exist('neuralFiltHi', 'var')
+    neuralFiltHi=3000;
+end
 
 try
     fs=frequency_parameters.amplifier_sample_rate;
@@ -47,8 +52,8 @@ elseif use_waveclusver==1
     x=dat;
     
     if exist('ellip','file')                         %Checks for the signal processing toolbox
-        [b_detect,a_detect] = ellip(4,0.1,40,[neuralFiltLow 3000]*2/fs);
-        [b,a] = ellip(2,0.1,40,[neuralFiltLow 3000]*2/fs);
+        [b_detect,a_detect] = ellip(4,0.1,40,[neuralFiltLow neuralFiltHi]*2/fs);
+        [b,a] = ellip(2,0.1,40,[neuralFiltLow neuralFiltHi]*2/fs);
         %     [z_det,p_det,k_det] = ellip(par.detect_order,0.1,40,[fmin_detect fmax_detect]*2/sr);
         %     [z,p,k] = ellip(par.sort_order,0.1,40,[fmin_sort fmax_sort]*2/sr);
         %

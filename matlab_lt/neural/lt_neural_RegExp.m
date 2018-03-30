@@ -10,7 +10,7 @@ function [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ..
 % MADE default to ignore DIR
 
 if ~exist('extractDirSong', 'var')
-    extractDirSong = [];
+    extractDirSong = 0;
 end
 
 %% lt 1/14/18 - throwing out all spikes with clustnum=0 (is noise) [AUTO]
@@ -869,9 +869,10 @@ end
 
 %% =============== remove directed song if desired
 if extractDirSong==0
+    if ~isempty(SegmentsExtract)
     % -- remove
     SegmentsExtract([SegmentsExtract.DirSong]==1) = [];
-        
+    end
 end
 
 %% ==== DEBUG - CHECK HIT DETECTION

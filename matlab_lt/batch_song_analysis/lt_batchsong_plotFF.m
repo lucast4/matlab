@@ -1,4 +1,5 @@
-function lt_batchsong_plotFF(DATSTRUCT, MotifsToExtract, TrainON, SwitchTimes, subtractMean);
+function lt_batchsong_plotFF(DATSTRUCT, MotifsToExtract, TrainON, SwitchTimes, subtractMean, ...
+    dozscore)
 
 %% LT 11/20/17 - plots
 
@@ -15,6 +16,9 @@ function lt_batchsong_plotFF(DATSTRUCT, MotifsToExtract, TrainON, SwitchTimes, s
 % subtractMean = 0; (baseline mean)
 
 
+if ~exist('dozscore', 'var')
+    dozscore = 0; % if 1, then zscore rel to baseline std.
+end
 
 %%
 
@@ -53,6 +57,11 @@ for i = 1:length(MotifsToExtract);
         baseinds = tvals < TrainON_dnum;
         ffvals = ffvals - mean(ffvals(baseinds));
     end
+    if dozscore ==1
+        basemean = mean(ffvals(baseinds));
+        basestd = std(ffvals(baseinds));
+        ffvals = (ffvals - basemean)./basestd;
+    end        
     
     % -- convert tvals to days from start
     tvals = lt_convert_EventTimes_to_RelTimes(firstday, tvals);
@@ -104,7 +113,12 @@ for i = 1:length(MotifsToExtract);
         baseinds = tvals < TrainON_dnum;
         ffvals = ffvals - mean(ffvals(baseinds));
     end
-    
+    if dozscore ==1
+        % ------- use base mean and std for UNDIR (to maintain ability to
+        % compare)
+        ffvals = (ffvals - basemean)./basestd;
+    end        
+
     % -- convert tvals to days from start
     tvals = lt_convert_EventTimes_to_RelTimes(firstday, tvals);
     tvals = tvals.FinalValue;

@@ -3,14 +3,14 @@
 % &&&&&&&&&&&&& 1) ARBITRARY CONTEXTS
 clear CLASSES
 
-strtype = 'xa'; % a is fixed, x variable, across contexts
+strtype = 'xaa'; % a is fixed, x variable, across contexts
 [CLASSES, prms] = lt_neural_v2_CTXT_Extract(SummaryStruct, strtype);
 
 % &&&&&&&&&&&&& 2) EXTRACT REGEXP STRUCT 
 prms.alignWhichSyl = 2; % which syl (in order) to align to
 prms.alignOnset = 1; % if 1, then onset, if 0, then offset
 prms.motifpredur = 0.15;
-prms.motifpostdur = 0.1;
+prms.motifpostdur = 0.15;
 prms.preAndPostDurRelSameTimept = 1; % 1, then pre and post both aligned at same time. if 0, then post is aligned to motif ofset.
 CLASSES = lt_neural_v2_CTXT_GetBrnchDat(CLASSES, SummaryStruct, prms);
 
@@ -21,8 +21,8 @@ CLASSES = lt_neural_v2_CTXT_GetBrnchPosControl(CLASSES, SummaryStruct, prms, str
 % &&&&&&&&&&&&& 2) PLOT MEAN FR ACROSS CONTEXTS FOR EACH BRANCH 
 close all;
 plotPosControl = 0; % will do if exists.
-LMANorX = 1; % 0 for all; 1 for LMAN; 2 for X
-closeAfterEachBird = 1; % closes figss
+LMANorX = 3; % 0 for all; 1 for LMAN; 2 for X, 3 or RA
+closeAfterEachBird = 0; % closes figss
 lt_neural_v2_CTXT_FRanyclass(CLASSES, SummaryStruct, prms, plotPosControl, ...
     LMANorX, closeAfterEachBird);
 
@@ -101,10 +101,10 @@ ALLBRANCH = lt_neural_v2_CTXT_PlotAll(strtype, plotstat, suffix);
 %% ##################   [NEW VERSION]
 %% ===========================  CLASSIFIER (V2) - picks a branch,
 % does all time points, goes to next branch.
-TimeWindowDur = 0.025;
+TimeWindowDur = 0.040;
 TimeWindowSlide = 0.005;
-FRbinsize = 0.005;
-savenotes = 'wh44wh39RALMAN';
+FRbinsize = 0.008;
+savenotes = 'pu69wh44RALMAN40ms';
 
 prms.ClassSlide.GetNegControl = 1; % 1 = yes. (i.e. shuffle dat-context link).
 prms.ClassSlide.GetPosControl =1;
@@ -114,7 +114,7 @@ plotstat = 'F1';
 
 saveON =1;
 LinTimeWarp = 1;
-regionstowarp = [3];
+regionstowarp = [3 4 5];
 
 ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms, ...
     TimeWindowDur, TimeWindowSlide, FRbinsize, savenotes, CVmethod, plotstat, ...
@@ -145,7 +145,7 @@ close all;
 birdtoplot = 'wh44wh39'; % leave blank to plot all;
 plotspec_num = 0; % how many spectrograms to plot for each class in each branch point? if 0 then none.
 locationtoplot = {'RA'};
-BranchToPlot = {'[a-z](n)'}; % type regexp strings
+BranchToPlot = {'[a-z]mm'}; % type regexp strings
 plotrasters = 0;
 lt_neural_v2_CTXT_BranchEachPlot(ALLBRANCH, birdtoplot, plotspec_num, ...
     locationtoplot, BranchToPlot, plotrasters)

@@ -48,6 +48,11 @@ for i=1:numbirds
             cd(Datstruct.dirname)            
         end
         
+%         disp(pwd);
+%         if strcmp(pwd, '/bluejay5/lucas/birds/wh44wh39/NEURAL/032418_RALMANlearn3/Chan14amp-Batch1033to1427DirUndir')
+%             keyboard
+%         end
+            
         % 3) ===== if Song not removed from MetaDat, then do that.
         if exist('DONE_RemovedSongDatFromMetaDat', 'file') ==2
             % then already removed, DO NOTHING.

@@ -10,7 +10,7 @@ function [CLASSES, prms] = lt_neural_v2_CTXT_Extract(SummaryStruct, strtype)
 % syllable to lock to (i.e. branch point);
 % predur and postdur to get entire motif of interest
 
-minN = 8;
+minN = 7;
 CLASSES = struct;
 
 %%

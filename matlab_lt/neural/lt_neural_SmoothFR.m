@@ -59,20 +59,23 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
     maxInd = floor(commonTrialDur/binsize_spks);
     
     for i=1:NumTrials
-        if isfield(SegmentsExtract, 'spk_Clust')
-            % then is my data -, match to clust
-            if isempty(clustnum)
-                inds = SegmentsExtract(i).spk_Clust>0;
-                assert(length(unique(SegmentsExtract(i).spk_Clust(inds)))==1, 'safd');
-            else
-                inds = SegmentsExtract(i).spk_Clust == clustnum;
-            end
-            spktimes = SegmentsExtract(i).spk_Times(inds);
-        else
-            % is Sober/Mel data
+        if isempty(SegmentsExtract(i).spk_Times)
             spktimes = SegmentsExtract(i).spk_Times;
+        else
+            if isfield(SegmentsExtract, 'spk_Clust')
+                % then is my data -, match to clust
+                if isempty(clustnum)
+                    inds = SegmentsExtract(i).spk_Clust>0;
+                    assert(length(unique(SegmentsExtract(i).spk_Clust(inds)))==1, 'safd');
+                else
+                    inds = SegmentsExtract(i).spk_Clust == clustnum;
+                end
+                spktimes = SegmentsExtract(i).spk_Times(inds);
+            else
+                % is Sober/Mel data
+                spktimes = SegmentsExtract(i).spk_Times;
+            end
         end
-        
         
         if (0)
             disp('NOTE: KDE NOT YET WRITTEN, USING BOXCAR SMOOTHING');
