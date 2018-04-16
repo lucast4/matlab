@@ -8,24 +8,26 @@
 
 
 close all; clear MOTIFSTATS_Compiled;
-collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract audio each time (i.e. do and save)
-onlyCollectTargSyl=0;
-LearnKeepOnlyBase = 1;
-saveOn = 1;
-OrganizeByExpt =0;
-collectFF=1;
-MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
-    collectWNhit, LearnKeepOnlyBase, saveOn, onlyCollectTargSyl, OrganizeByExpt,...
-    collectFF);
+lt_neural_ExtractMotifs_Regular;
 
+
+%% ================ REMOVE DIR SONG 
+
+MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
 
 
 %% ================ extraction continued
 close all;
 MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStruct);
-clear MOTIFSTATS_Compiled;
+% clear MOTIFSTATS_Compiled;
+
+%% ================ 
+birdnum = 2;
+
+lt_neural_POP_PlotRast
 
 
+%% %%%%%%%%%%%%%%% VERSION 1
 %% ================ PLOT [CORRELATION WITH FF]
 close all;
 MOTIFSTATS_pop = lt_neural_POP_FFcorr(MOTIFSTATS_pop, SummaryStruct);
@@ -33,15 +35,40 @@ MOTIFSTATS_pop = lt_neural_POP_FFcorr(MOTIFSTATS_pop, SummaryStruct);
 close all;
 lt_neural_POP_FFcorrPlot
 
-%% ================ 
+%% %%%%%%%%%%%%%%% VERSION 2
+%% ================ PLOT [CORRELATION WITH FF]
+close all;
+xcov_dattotake = [-0.08 0.030];
+xcov_dattotake = [-0.1 0.04];
+% xcovwindmax = 0.04;
+% binsize_spk = 0.005;
+xcovwindmax = 0.05;
+binsize_spk = 0.0025;
+MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
+    xcov_dattotake, xcovwindmax, binsize_spk);
 
-lt_neural_POP_PlotRast
+% 
+% %% =============== PLOT, DISTRIBUTIONS ACROSS ALL MOTIFS/BIRDS
+% numbirds = length(MOTIFSTATS_pop.birds);
+% 
+% for i=1:numbirds
+%  numexptMOTIFSTATS_pop.birds(i)
+% 
+% end
+
+%% =============== SUMMARY PLOT OF ALL CROSS-CORRELATIONS
+OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct);
+
+close all;
+plotRaw =0;
+lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
+    plotRaw);
+
+%% ================= PLOT DISTRIBUTIONS ACROSS ALL BIRDS
 
 
 
-
-
-
+%% #############################################################
 %% #############################################################
 %% ######################## POPULATION - TAKE ENTIRE MOTIF
 
@@ -49,25 +76,33 @@ lt_neural_POP_PlotRast
 lt_neural_v2_ExtractFullMotifs;
 
 
+%% ======================= REMOVE DIR SONG
+
+MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
+
+
 %% ======================== EXTRACT POPULATION
 close all;
 MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStruct);
-clear MOTIFSTATS_Compiled;
+% clear MOTIFSTATS_Compiled;
 
 
 %% ================ PLOT [CORRELATION WITH FF]
 close all;
-xcov_dattotake = [];
-xcovwindmax = 0.2;
-binsize_spk = 0.005;
+xcov_dattotake = [-0.02 0.02];
+xcov_dattotake_anchorpoints = 2; % 
+xcovwindmax = 0.15;
+binsize_spk = 0.0025;
 MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
-    xcov_dattotake, xcovwindmax, binsize_spk);
+    xcov_dattotake, xcovwindmax, binsize_spk, xcov_dattotake_anchorpoints);
 
 
 %% =============== SUMMARY PLOT OF ALL CROSS-CORRELATIONS
 close all;
 OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct);
 
-lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT);
+plotRaw=0;
+lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
+    plotRaw);
 
 

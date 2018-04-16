@@ -3,13 +3,23 @@
 function [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
     regexpr_str, predur, postdur, alignByOnset, WHOLEBOUTS_edgedur, FFparams, ...
     keepRawSongDat, suppressout, collectWNhit, collectWholeBoutPosition, LearnKeepOnlyBase, ...
-    preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, clustnum, extractDirSong)
+    preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, clustnum, extractDirSong, ...
+    keepRawNeuralDat)
+%% lt 4/9/18 - now able to extract raw neural data
+
+% keepRawNeuralDat = 1; % NOTE: will be bandpass filtered in spike range
+
+
 %% lt 2/19/18 - labels rendition as in DIR or UNDIR song
 % does this by looking at suffix in song file name
 
 % MADE default to ignore DIR
 
 if ~exist('extractDirSong', 'var')
+    extractDirSong = 0;
+end
+
+if isempty(extractDirSong)
     extractDirSong = 0;
 end
 
@@ -94,6 +104,10 @@ if isempty(FFparams)
     FFparams.FF_PosRelToken=0; % syl to get FF of, relative to token (i.e. -1 is 1 before token;
     % +1 is 1 after token
     FFparams.FF_sylName=''; % Optional: what syl do you expect this to be? if incompatible will raise error
+end
+
+if ~exist('keepRawNeuralDat', 'var');
+    keepRawNeuralDat = 0;
 end
 
 
@@ -183,12 +197,20 @@ end
 
 TotalDurSec = TotalSamps/fs;
 
+%% get raw neural if desired
+if keepRawNeuralDat==1
+    DatNeural = load('data.mat');
+    assert(length(DatNeural.data) == TotalSamps, 'why num neural samps wrong?');
+%     DatNeural.data = single(DatNeural.data); % doesn't affect precision.
+end
+
+
 %% params for smoothing ampl
 
 if keepSmAmpl==1
-        sm_win = 0.005; % 
-        len = round(fs*sm_win);
-        h_smooth   = ones(1,len)/len;
+    sm_win = 0.005; %
+    len = round(fs*sm_win);
+    h_smooth   = ones(1,len)/len;
 end
 
 
@@ -302,51 +324,51 @@ else
     
     % ------- method 2
     [startinds, tokenExtents, endinds, matchlabs] = lt_neural_QUICK_regexp(AllLabels, regexpr_str);
-
-%     indstmp = regexp(regexpr_str, '[\(\)]'); % find left and right parantheses
-%     
-%     % confirm that there is exactly one token syl.
-%     assert(length(indstmp)==2,'sdafasd');
-%     assert(indstmp(2)-indstmp(1) ==2, 'sdfsdaf');
-%     
-%     % -
-%     tmptmp = [regexpr_str(1:indstmp(1)-1) ...
-%         regexpr_str(indstmp(1)+1) regexpr_str(indstmp(2)+1:end)];
-%     
-%     %     regexpr_str2 = [regexpr_str(1:indstmp(1)-1) '(?=' ...
-%     %         regexpr_str(indstmp(1)+1) regexpr_str(indstmp(2)+1:end) ')']; % for lookahead assertion
-%     
-%     regexpr_str2 = [tmptmp(1) '(?=' tmptmp(2:end) ')']; % for lookahead assertion
-%     
-%     [startinds, ~, ~]=regexp(AllLabels, regexpr_str2, 'start', 'end', ...
-%         'match');
-%     
-%     strlength = length(regexpr_str)-2;
-%     
-%     tokenExtents = startinds + indstmp(1)-1; % i.e. where token was
-%     endinds = startinds + strlength -1;
-%     
-%     % - get match syls
-%     if size(startinds,2)==1
-%         startinds = startinds';
-%     end
-%     
-%     indmat = [];
-%     for j=1:strlength
-%         indmat = [indmat startinds'+j-1];
-%     end
-%     
-%     %     if size(AllLabels,1)==1
-%     %     matchlabs = mat2cell(AllLabels(indmat)', ones(size(indmat,1),1))';
-%     %     else
-%     if size(indmat,2)==1
-%         % then is one col (i.e. only one syl in motif) so need to make sure
-%         % output is col
-%         matchlabs = mat2cell(AllLabels(indmat)', ones(size(indmat,1),1))';
-%     else
-%         matchlabs = mat2cell(AllLabels(indmat), ones(size(indmat,1),1))';
-%     end
-%     
+    
+    %     indstmp = regexp(regexpr_str, '[\(\)]'); % find left and right parantheses
+    %
+    %     % confirm that there is exactly one token syl.
+    %     assert(length(indstmp)==2,'sdafasd');
+    %     assert(indstmp(2)-indstmp(1) ==2, 'sdfsdaf');
+    %
+    %     % -
+    %     tmptmp = [regexpr_str(1:indstmp(1)-1) ...
+    %         regexpr_str(indstmp(1)+1) regexpr_str(indstmp(2)+1:end)];
+    %
+    %     %     regexpr_str2 = [regexpr_str(1:indstmp(1)-1) '(?=' ...
+    %     %         regexpr_str(indstmp(1)+1) regexpr_str(indstmp(2)+1:end) ')']; % for lookahead assertion
+    %
+    %     regexpr_str2 = [tmptmp(1) '(?=' tmptmp(2:end) ')']; % for lookahead assertion
+    %
+    %     [startinds, ~, ~]=regexp(AllLabels, regexpr_str2, 'start', 'end', ...
+    %         'match');
+    %
+    %     strlength = length(regexpr_str)-2;
+    %
+    %     tokenExtents = startinds + indstmp(1)-1; % i.e. where token was
+    %     endinds = startinds + strlength -1;
+    %
+    %     % - get match syls
+    %     if size(startinds,2)==1
+    %         startinds = startinds';
+    %     end
+    %
+    %     indmat = [];
+    %     for j=1:strlength
+    %         indmat = [indmat startinds'+j-1];
+    %     end
+    %
+    %     %     if size(AllLabels,1)==1
+    %     %     matchlabs = mat2cell(AllLabels(indmat)', ones(size(indmat,1),1))';
+    %     %     else
+    %     if size(indmat,2)==1
+    %         % then is one col (i.e. only one syl in motif) so need to make sure
+    %         % output is col
+    %         matchlabs = mat2cell(AllLabels(indmat)', ones(size(indmat,1),1))';
+    %     else
+    %         matchlabs = mat2cell(AllLabels(indmat), ones(size(indmat,1),1))';
+    %     end
+    %
     % ---- compare methods
     if (0)
         if length(startinds) == length(startinds1)
@@ -604,22 +626,22 @@ for i=1:length(tokenExtents)
                 [FF, PC, T]= lt_calc_FF(songseg_forFF, fs, [F_low F_high], [mintime maxtime]);
             end
         end
-    
-    SegmentsExtract(i).FF_val=FF;
-    
+        
+        SegmentsExtract(i).FF_val=FF;
+        
     end
     %% ===================================================
     % FIGURE OUT IF WN HIT ON THIS TRIAL (based on clipping of sound)
     % - collect
     if collectWNhit==1
-
+        
         if (0)
             % -- OLD, used FF posotion to determine where to check for WN
-        FF_PosRelToken=FFparams.FF_PosRelToken;
-        indForFF=tokenExtents(i)+FF_PosRelToken; % can use this to look for WN in flanking syls.
+            FF_PosRelToken=FFparams.FF_PosRelToken;
+            indForFF=tokenExtents(i)+FF_PosRelToken; % can use this to look for WN in flanking syls.
         else
             % -- NEW - look for WN overlayed on token syl.
-        indForFF=tokenExtents(i); % can use this to look for WN in flanking syls.
+            indForFF=tokenExtents(i); % can use this to look for WN in flanking syls.
         end
         prepad_forFF=0.015; postpad_forFF=0.015; % don't change, as this affects temporal window for FF
         
@@ -647,8 +669,8 @@ for i=1:length(tokenExtents)
             % ----
             wasTrialHit=1;
             
-%             WNonset=find(songseg>3.2, 1, 'first'); % timepoint of hit (for entire segment)
-%             WNoffset=find(songseg>3.2, 1, 'last');
+            %             WNonset=find(songseg>3.2, 1, 'first'); % timepoint of hit (for entire segment)
+            %             WNoffset=find(songseg>3.2, 1, 'last');
             
             % --- convert to start of syl (adding motifpredur)
             WNonset=find(songseg_forFF>3.2, 1, 'first'); % timepoint of hit (for entire segment)
@@ -671,18 +693,18 @@ for i=1:length(tokenExtents)
     
     %% get smoothed amplitude
     if keepSmAmpl==1
-
+        
         songseg=SongDat.AllSongs(onsamp:offsamp);
         
         % ------- smooth and rectify...
         % 1) FILTER
         if (1)
-        filter_type='hanningfirff';
-        F_low  = 500;
-        F_high = 8000;
-        songseg_sm=bandpass(double(songseg),fs,F_low,F_high,filter_type);
+            filter_type='hanningfirff';
+            F_low  = 500;
+            F_high = 8000;
+            songseg_sm=bandpass(double(songseg),fs,F_low,F_high,filter_type);
         else
-        songseg_sm = songseg - mean(songseg);
+            songseg_sm = songseg - mean(songseg);
         end
         
         % 2) SQUARE
@@ -692,22 +714,32 @@ for i=1:length(tokenExtents)
         songseg_sm = conv(h_smooth, songseg_sm);
         offsetTMP = round((length(songseg_sm)-length(songseg))/2);
         songseg_sm=songseg_sm(1+offsetTMP:length(songseg)+offsetTMP);
-% 
-%         figure; hold on; plot(songseg_sm,'k')
-    
-% ---- convert to single and downsample
-% songseg_smD = downsample(songseg_sm, fs/1000, round(fs/2000));
-songseg_sm = downsample(songseg_sm, fs/1000);
-t_songseg = 0:0.001:0.001*(length(songseg_sm)-1);
-% figure; hold on; plot(xsm, songseg_smD, 'k');
-% plot(1/fs:1/fs:(1/fs)*length(songseg_sm), songseg_sm, 'r');
-
-SegmentsExtract(i).songseg_sm = single(songseg_sm);
-SegmentsExtract(i).songseg_tOnOff = [t_songseg(1) t_songseg(end)];
-
-
+        %
+        %         figure; hold on; plot(songseg_sm,'k')
+        
+        % ---- convert to single and downsample
+        % songseg_smD = downsample(songseg_sm, fs/1000, round(fs/2000));
+        songseg_sm = downsample(songseg_sm, fs/1000);
+        t_songseg = 0:0.001:0.001*(length(songseg_sm)-1);
+        % figure; hold on; plot(xsm, songseg_smD, 'k');
+        % plot(1/fs:1/fs:(1/fs)*length(songseg_sm), songseg_sm, 'r');
+        
+        SegmentsExtract(i).songseg_sm = single(songseg_sm);
+        SegmentsExtract(i).songseg_tOnOff = [t_songseg(1) t_songseg(end)];
+        
+        
     end
     
+    %% ====================== GET NEURAL DATA
+    if keepRawNeuralDat==1
+      
+        datn = DatNeural.data(onsamp:offsamp);
+        % --- filter
+        datn = lt_neural_filter(double(datn), fs);
+        datn = single(datn);
+        
+        SegmentsExtract(i).neurdatseg_filt = datn;
+    end
     
     
     %% =============== FIGURE OUT POSITION OF MOTIF WITHIN ITS BOUT
@@ -854,24 +886,24 @@ end
 %% ##################### DIR, UNDIR? USE FILENAME SUFFIX
 
 for j=1:length(SegmentsExtract)
-
-   ind =  strfind(SegmentsExtract(j).song_filename, '_DIR_');
-   
-   if isempty(ind)
-       SegmentsExtract(j).DirSong=0;
-   elseif length(ind)==1
-       % -- make sure is at expected location
-       SegmentsExtract(j).DirSong=1;
-   else
-       asdfsdaf;
-   end
+    
+    ind =  strfind(SegmentsExtract(j).song_filename, '_DIR_');
+    
+    if isempty(ind)
+        SegmentsExtract(j).DirSong=0;
+    elseif length(ind)==1
+        % -- make sure is at expected location
+        SegmentsExtract(j).DirSong=1;
+    else
+        asdfsdaf;
+    end
 end
 
 %% =============== remove directed song if desired
 if extractDirSong==0
     if ~isempty(SegmentsExtract)
-    % -- remove
-    SegmentsExtract([SegmentsExtract.DirSong]==1) = [];
+        % -- remove
+        SegmentsExtract([SegmentsExtract.DirSong]==1) = [];
     end
 end
 

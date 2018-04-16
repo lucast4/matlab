@@ -82,7 +82,7 @@ for i=1:numbirds
             numclasses = length(CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum);
             motifs = {};
             Nall = [];
-            
+            IndOrig = [];
             for j=1:numclasses
                 %                 if ~isfield(CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(j).SegmentsExtract, 'FF_val')
                 %                     continue
@@ -97,6 +97,7 @@ for i=1:numbirds
                 
                 motifs = [motifs mtif];
                 Nall = [Nall n];
+                IndOrig = [IndOrig j];
             end
             
             % ------------------ 1b - exit if no data...
@@ -109,7 +110,7 @@ for i=1:numbirds
             [~, indstmp] = sort(Nall, 'descend');
             Nall = Nall(indstmp);
             motifs = motifs(indstmp);
-            
+            IndOrig = IndOrig(indstmp);
             
             % ==================== GET MATCHING SAMPLE THAT IS POSITVE
             % CONTROL ===================================
@@ -123,7 +124,7 @@ for i=1:numbirds
             
             % ------------------------- 1) extract all potential motifs
             [start] = regexp(SongDat.AllLabels, regexpcontrol, 'start');
-            
+%             lt_neural_QUICK_regexp(SongDat.AllLabels, regexpcontrol)
             
             % - get match syls
             strlength = length(strtype);
@@ -146,8 +147,60 @@ for i=1:numbirds
                     n = Nall(j); % need this sample size
                     inds_potential = find(cell2mat(allmotifs_tmp(:,2))>=n); % those with enough sample size
                     assert(~isempty(inds_potential), 'asdfsadf huh?');
-                    indtmp = inds_potential(randi(length(inds_potential), 1)); % pick a random one
                     
+                    
+                    %% old version
+%                          tmp = randi(length(inds_potential), 1); % pick a rendome one
+%                         indtmp = inds_potential(tmp); % pick a random one
+                   
+                    
+                    
+                    %% === new version (to go back to old just comment out this version and uncomment old
+                    tooshort = 1;
+                    while ~isempty(inds_potential) & tooshort==1
+                        tmp = randi(length(inds_potential), 1); % pick a rendome one
+                        indtmp = inds_potential(tmp); % pick a random one
+                        inds_potential(tmp) = []; % remove that one from the pool
+                        
+                     
+                     %% ===== CONFIRM THAT THE SAMPLE SIZE IS LARGE ENOUGH
+                        % USING REGEXP
+                        mclass = allmotifs_tmp{indtmp, 1};
+                        
+                        % ---- put parantheses for token
+                        mclass = [mclass(1:prms.alignWhichSyl-1) '(' ...
+                            mclass(prms.alignWhichSyl) ')' mclass(prms.alignWhichSyl+1:end)];
+                        
+                        % --- extract
+                        if  ~isfield(SummaryStruct.birds(i).neurons(ii), 'isRAsobermel')
+                            learntmp = LearnKeepOnlyBase;
+                        else
+                            learntmp = 0;
+                        end
+                        [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
+                            mclass, prms.motifpredur, prms.motifpostdur, prms.alignOnset, '', FFparams, ...
+                            0, 1, collectWNhit, 0, learntmp, prms.preAndPostDurRelSameTimept);
+                        
+                        % =============== IF not enough trials then try different motif
+                        if length(SegmentsExtract)< n
+                            % -- then try different motif
+                            tooshort = 1;
+                            if isempty(inds_potential)
+                                % then means that ran out of motif
+                                % candidates ...
+                                keyboard
+                            end
+                        else
+                            % -- good!
+                            tooshort = 0;
+                        end
+                    end
+                    % if escape from while loop, then means that got one
+                    % with enough sample size, or no more candidates... if
+                    % no more candidates, then will pare down data to make
+                    % control (later).
+                    
+                    %%
                     MotifsPicked{j} = allmotifs_tmp{indtmp, 1};
                     
                     % -- remove this motif from consideration
@@ -189,12 +242,38 @@ for i=1:numbirds
                     mclass, prms.motifpredur, prms.motifpostdur, prms.alignOnset, '', FFparams, ...
                     0, 1, collectWNhit, 0, learntmp, prms.preAndPostDurRelSameTimept);
                 
+                
+                % ================================= MATCH SAMPLE SIZES
+                % (DATA TO POSITIVE CONTROL)
+                if (0) % OLD VERSION, RUNS INTO ERROR IF POSITIVE CONTROL HAS NOT ENOUGHD ATA
                 % --- confirm that sample sizes match actual data
                 assert(length(SegmentsExtract) >= Nall(j), 'problem - likely becuyase regexp didnt get overlapping, so N is small')
                 
                 % --- downsample to size of actual data(remove random dat)
                 SegmentsExtract(randperm(length(SegmentsExtract), length(SegmentsExtract)-Nall(j))) =[];
-                
+                else % NEW VERSION, DOWNSAMPLES DATA IF POSITIVE CONTROL NOT ENOUGH
+                    % NOTE: this should not happen often. will only happen
+                    % if exhausts pool of positive control motifs (see
+                    % above, in section picking out the motifs). I have not
+                    % tested the part of this code that downsamples data,
+                    % but I am pretty sure shouold work.
+                   % version 2, if not enough positive controls, then will downsample the data to match
+                   if length(SegmentsExtract) > Nall(j)
+                      % -- then downsample pos control
+                      SegmentsExtract(randperm(length(SegmentsExtract), length(SegmentsExtract)-Nall(j))) =[];
+                      
+                   elseif length(SegmentsExtract) < Nall(j)
+                       % -- downsample actual data
+                       indtmp = IndOrig(j);
+                       assert(length(CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(indtmp).SegmentsExtract) ...
+                           == Nall(j), 'mismatch to orignal class num...');
+                       
+                       indstoremove = randperm(Nall(j), Nall(j) - length(SegmentsExtract));
+                       % make sure is not removing too much
+                       assert(length(indstoremove)/Nall(j) < 0.1, 'why removing more than 10% of data ? ...');
+                       CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(indtmp).SegmentsExtract(indstoremove) = [];
+                   end
+                end
                 
                 % ---- GET FR
                 if (0)

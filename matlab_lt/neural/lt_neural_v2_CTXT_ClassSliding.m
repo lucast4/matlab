@@ -2,7 +2,7 @@ function ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms
     TimeWindowDur, TimeWindowSlide, FRbinsize, savenotes, CVmethod, plotstat, ...
     saveON, LinTimeWarp, regionstowarp, ALLBRANCH, tstampsave)
 %% time warp params
-
+% NOTE: the spike times saved for long term are indeed the warped spikes 
 prms.LinTimeWarp = LinTimeWarp;
 prms.regionstowarp = regionstowarp;
 
@@ -130,7 +130,8 @@ for i=1:numbirds
             ConfMatAll = nan(numrows, numrows, size(ListOfTimeWindows,1));
             ConfMatAll_NEG = nan(numrows, numrows, size(ListOfTimeWindows,1));
             ConfMatAll_POS = nan(numrows, numrows, size(ListOfTimeWindows,1));
-            
+            ConfMatAll_NEG_Mult = nan(numrows, numrows, ...
+                prms.ClassSlide.NumNegControls, size(ListOfTimeWindows,1));
             SEGEXTRACT_DAT = CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT;
             
             if LinTimeWarp ==1
@@ -154,7 +155,11 @@ for i=1:numbirds
                     %                     disp(count:(count+originalinds(j)-1));
                     %                     disp('--');
                     SEGEXTRACT_DAT.classnum(j).SegmentsExtract = segextractAll(count:(count+originalinds(j)-1));
+                    CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(j).SegmentsExtract = segextractAll(count:(count+originalinds(j)-1));                    
+                    
                     count = (count+originalinds(j));
+                    
+                    
                 end
             end
             
@@ -177,7 +182,7 @@ for i=1:numbirds
                 
                 
                 
-                %% DATA
+              %% DATA
                 % ############################## CLASSIFY
                 if strcmp(CVmethod, 'LOO')
                     [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
@@ -187,7 +192,7 @@ for i=1:numbirds
                     [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
                         = lt_neural_v2_QUICK_classify(Xall, Y, 'glmnet', ...
                         rebalance, imbalance_thr, beta, CVkfoldnum);
-                                   end
+                end
                 
                 if isempty(ConfMat)
                     % then means failed.. (not full rank?)
@@ -203,29 +208,36 @@ for i=1:numbirds
                 %% NEG CONTROL [just one iteration]
                 if prms.ClassSlide.GetNegControl==1
                     
-                    tmpcount=0;
-                    while tmpcount==0
-                        % --- shuffle Y
-                        indtmp = randperm(size(Y,1));
-                        Yperm = Y(indtmp);
-                        
-                        % --- classify
-                        if strcmp(CVmethod, 'LOO')
-                            [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
-                                = lt_neural_v2_QUICK_classifyBACKUP(Xall, Yperm, 'glmnet', ...
-                                rebalance, imbalance_thr, beta);
-                        elseif strcmp(CVmethod, 'Kfold')
-                            [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
-                                = lt_neural_v2_QUICK_classify(Xall, Yperm, 'glmnet', ...
-                                rebalance, imbalance_thr, beta, CVkfoldnum);
+                    for k=1:prms.ClassSlide.NumNegControls
+                        tmpcount=0;
+                        while tmpcount==0
+                            % --- shuffle Y
+                            indtmp = randperm(size(Y,1));
+                            Yperm = Y(indtmp);
+                            
+                            % --- classify
+                            if strcmp(CVmethod, 'LOO')
+                                [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
+                                    = lt_neural_v2_QUICK_classifyBACKUP(Xall, Yperm, 'glmnet', ...
+                                    rebalance, imbalance_thr, beta);
+                            elseif strcmp(CVmethod, 'Kfold')
+                                [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
+                                    = lt_neural_v2_QUICK_classify(Xall, Yperm, 'glmnet', ...
+                                    rebalance, imbalance_thr, beta, CVkfoldnum);
+                            end
+                            
+                            if ~isempty(ConfMat)
+                                tmpcount=1;
+                            end
                         end
-                        
-                        if ~isempty(ConfMat)
-                            tmpcount=1;
+                        % --- save first output as original code
+                        if k==1
+                            ConfMatAll_NEG(:,:, j) = ConfMat;
                         end
+                        % -- save rest
+                        ConfMatAll_NEG_Mult(:,:, k, j) = ConfMat;
                     end
                     
-                    ConfMatAll_NEG(:,:, j) = ConfMat;
                 end
                 
                 
@@ -245,6 +257,7 @@ for i=1:numbirds
             % ======================================= SAVE OUTPUT
             ALLBRANCH.alignpos(1).bird(i).branch(iii).neuron(ii).ConfMatAll = ConfMatAll;
             ALLBRANCH.alignpos(1).bird(i).branch(iii).neuron(ii).ConfMatAll_NEG = ConfMatAll_NEG;
+            ALLBRANCH.alignpos(1).bird(i).branch(iii).neuron(ii).ConfMatAll_NEG_Mult = ConfMatAll_NEG_Mult;
             
             
             

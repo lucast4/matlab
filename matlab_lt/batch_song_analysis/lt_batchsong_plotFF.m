@@ -39,7 +39,7 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-for i = 1:length(MotifsToExtract);
+for i = 1:length(MotifsToExtract)
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     hsplots = [hsplots hsplot];
     title(MotifsToExtract{i});
@@ -53,13 +53,13 @@ for i = 1:length(MotifsToExtract);
     tvals = [DATSTRUCT.motif(i).rendnum(inds).datenum_song_SecRes];
     
     % ------- subtract baseline FF
-    if subtractMean==1
         baseinds = tvals < TrainON_dnum;
-        ffvals = ffvals - mean(ffvals(baseinds));
+    if subtractMean==1
+        ffvals = ffvals - nanmean(ffvals(baseinds));
     end
     if dozscore ==1
-        basemean = mean(ffvals(baseinds));
-        basestd = std(ffvals(baseinds));
+        basemean = nanmean(ffvals(baseinds));
+        basestd = nanstd(ffvals(baseinds));
         ffvals = (ffvals - basemean)./basestd;
     end        
     

@@ -147,14 +147,16 @@ for ii=1:numexpts
                     % ======================================== PRE
                     indsthis = preInds;
                     CCallthis = [];
-                    for j=1:length(ccRealAll)
-                        
-                        % -- for each pair of neurons
-                        ccraw = mean(ccRealAll{j}(indsthis,:), 1);
-                        ccshift = mean(ccShiftAll{j}(indsthis,:), 1);
-                        ccfinal = ccraw - ccshift;
-                        
-                        CCallthis = [CCallthis; ccfinal];
+                    if any(indsthis)
+                        for j=1:length(ccRealAll)
+                            
+                            % -- for each pair of neurons
+                            ccraw = mean(ccRealAll{j}(indsthis,:), 1);
+                            ccshift = mean(ccShiftAll{j}(indsthis,:), 1);
+                            ccfinal = ccraw - ccshift;
+                            
+                            CCallthis = [CCallthis; ccfinal];
+                        end
                     end
                     
                     OUTSTRUCT.bird(i).expt(ii).swnum(iii).PRE.motif(m).neurset(ss).CCallpairs = CCallthis';
@@ -163,6 +165,7 @@ for ii=1:numexpts
                     % ======================================== POST
                     indsthis = postInds;
                     CCallthis = [];
+                    if any(indsthis)
                     for j=1:length(ccRealAll)
                         
                         % -- for each pair of neurons
@@ -172,9 +175,11 @@ for ii=1:numexpts
                         
                         CCallthis = [CCallthis; ccfinal];
                     end
+                    end
                     
                     OUTSTRUCT.bird(i).expt(ii).swnum(iii).POST.motif(m).neurset(ss).CCallpairs = CCallthis';
                     OUTSTRUCT.bird(i).expt(ii).swnum(iii).POST.motif(m).neurset(ss).xlags_sec = xlags_sec';
+
                 end
             end
         end

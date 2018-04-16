@@ -19,6 +19,9 @@ end
 %%
 % regionstowarp = [3 4]; % [1 2 3 ..], which regions to warp in where index refers to, in order, first syl, first gap, 
 % second syl second gap , etc.
+% doesn't matter where the paranthese are
+% e.g. a(b)cd, region 1 is still "a"
+
 
 %%
 % segextract = CLASSES.birds(1).neurons(1).branchnum(1).SEGEXTRACT.classnum(1).SegmentsExtract;

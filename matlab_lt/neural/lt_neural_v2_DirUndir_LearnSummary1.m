@@ -1,6 +1,10 @@
 function lt_neural_v2_DirUndir_LearnSummary1(MOTIFSTATS_Compiled, SwitchStruct, BirdExptPairsToPlot, ...
-    SummaryStruct, xwindplot)
+    SummaryStruct, xwindplot, matchDirUndirTrials, usemedian)
 Nmin = 3; % min num dir songs, really only applies for DIR. checks on a case by case (neuron x motif) basis.
+plotstat = 'corr';
+% plotstat = 'prctdiff';
+
+minutesflank = 20; % minutes flanking directed songs to limit UNDIR songs to.
 
 %% 3/21/18 - lt, summarize effect of DIR during learning expts
 
@@ -111,81 +115,136 @@ for i=1:numbirds
                     %% ##################### COLLECT PRE
                     indsEpoch = indspre;
                     
-                    if ~any(indsEpoch)
-                        continue
-                    end
-                    
-                    % =========================== UNDIR
-                    inds = [segextract.DirSong]==0 & indsEpoch;
-                    %                     plottitle = [motifstr '-UNDIR'];
-                    
-                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
-                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
-                    y = mean(frmat,2);
-                    % --- shorten to common duration
-                    y = y(xinds);
-                    x = x(xinds);
-                    
-                    % ---- put into output
-                    DatCell{mm, 1, 1, iii} = [DatCell{mm, 1, 1, iii}; y'];
-                    DatCell_xtimes{mm, 1, 1, iii} = x;
-                    DatCell_neuronID{mm, 1, 1, iii} = [DatCell_neuronID{mm, 1, 1, iii}; nn];
-                    
-                    % ============================== DIR
-                    inds = [segextract.DirSong]==1 & indsEpoch;
-                    ndirsongs = length(unique({segextract([segextract.DirSong]==1).song_filename}));
-                    
-                    if ndirsongs>=Nmin & any(inds)
+                    if any(indsEpoch)
+                        
+                        % =========================== UNDIR
+                        inds = [segextract.DirSong]==0 & indsEpoch;
+                        %                     plottitle = [motifstr '-UNDIR'];
+                        
                         frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+
+                        
+                                                % ===================== IF DESIRED, LIMIT TO TRIAL
+                        % RANGE THAT OVERLAPS WITH DIR
+                        if matchDirUndirTrials ==1
+                            % --- get times for DIR
+                            indsdir = [segextract.DirSong]==1 & indsEpoch;
+                            % -- if no dir songs, then take all inds
+                            if any(indsdir)
+                               tdir = [segextract(indsdir).song_datenum];
+                               
+                               tmin = min(tdir) - minutesflank/(24*60);
+                               tmax = max(tdir) + minutesflank/(24*60);
+                               
+                               inds = [segextract.DirSong]==0 & indsEpoch & ...
+                                   [segextract.song_datenum]>tmin & ...
+                                   [segextract.song_datenum]<tmax;
+                            end
+                        end
+
+                        
                         x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                        if usemedian==1
+                        y = median(frmat,2);    
+                        else
                         y = mean(frmat,2);
+                        end
                         % --- shorten to common duration
                         y = y(xinds);
                         x = x(xinds);
                         
                         % ---- put into output
-                        DatCell{mm, 1, 2, iii} = [DatCell{mm, 1, 2, iii}; y'];
-                        DatCell_xtimes{mm, 1, 2, iii} = x;
-                        DatCell_neuronID{mm, 1, 2, iii} = [DatCell_neuronID{mm, 1, 2, iii}; nn];
+                        DatCell{mm, 1, 1, iii} = [DatCell{mm, 1, 1, iii}; y'];
+                        DatCell_xtimes{mm, 1, 1, iii} = x;
+                        DatCell_neuronID{mm, 1, 1, iii} = [DatCell_neuronID{mm, 1, 1, iii}; nn];
+                        
+                        
+                        
+                        % ============================== DIR
+                        inds = [segextract.DirSong]==1 & indsEpoch;
+                        ndirsongs = length(unique({segextract([segextract.DirSong]==1).song_filename}));
+                        
+                        if ndirsongs>=Nmin & any(inds)
+                            frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                            x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                        if usemedian==1
+                        y = median(frmat,2);    
+                        else
+                        y = mean(frmat,2);
+                        end
+                            % --- shorten to common duration
+                            y = y(xinds);
+                            x = x(xinds);
+                            
+                            % ---- put into output
+                            DatCell{mm, 1, 2, iii} = [DatCell{mm, 1, 2, iii}; y'];
+                            DatCell_xtimes{mm, 1, 2, iii} = x;
+                            DatCell_neuronID{mm, 1, 2, iii} = [DatCell_neuronID{mm, 1, 2, iii}; nn];
+                        end
                     end
                     
-                    %% PLOT POST (overlay)
+                    %% COLLECT POST
                     indsEpoch = indspost;
                     
-                    if ~any(indsEpoch)
-                        continue
-                    end
-                    % ========================== UNDIR
-                    inds = [segextract.DirSong]==0 & indsEpoch;
-                    
-                    frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
-                    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
-                    y = mean(frmat,2);
-                    % --- shorten to common duration
-                    y = y(xinds);
-                    x = x(xinds);
-                    
-                    % ---- put into output
-                    DatCell{mm, 2, 1, iii} = [ DatCell{mm, 2, 1, iii} ; y'];
-                    DatCell_xtimes{mm, 2,1, iii} = x;
-                    DatCell_neuronID{mm, 2, 1, iii} = [DatCell_neuronID{mm, 2, 1, iii}; nn];
-                    
-                    % ========================== DIR
-                    inds = [segextract.DirSong]==1 & indsEpoch;
-                    ndirsongs = length(unique({segextract([segextract.DirSong]==1).song_filename}));
-                    
-                    if ndirsongs>=Nmin & any(inds)
+                    if any(indsEpoch)
+                        % ========================== UNDIR
+                        inds = [segextract.DirSong]==0 & indsEpoch;
+                        
+                        % ===================== IF DESIRED, LIMIT TO TRIAL
+                        % RANGE THAT OVERLAPS WITH DIR
+                        if matchDirUndirTrials ==1
+                            % --- get times for DIR
+                            indsdir = [segextract.DirSong]==1 & indsEpoch;
+                            % -- if no dir songs, then take all inds
+                            if any(indsdir)
+                               tdir = [segextract(indsdir).song_datenum];
+                               
+                               tmin = min(tdir) - minutesflank/(24*60);
+                               tmax = max(tdir) + minutesflank/(24*60);
+                               
+                               inds = [segextract.DirSong]==0 & indsEpoch & ...
+                                   [segextract.song_datenum]>tmin & ...
+                                   [segextract.song_datenum]<tmax;
+                            end
+                        end
+                        
                         frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
                         x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                        if usemedian==1
+                        y = median(frmat,2);    
+                        else
                         y = mean(frmat,2);
+                        end
                         % --- shorten to common duration
                         y = y(xinds);
                         x = x(xinds);
                         
                         % ---- put into output
-                        DatCell{mm, 2, 2, iii} = [DatCell{mm, 2, 2, iii}; y'];
-                        DatCell_xtimes{mm, 2,2, iii} = x;
-                        DatCell_neuronID{mm, 2, 2, iii} = [DatCell_neuronID{mm, 2, 2, iii}; nn];
+                        DatCell{mm, 2, 1, iii} = [ DatCell{mm, 2, 1, iii} ; y'];
+                        DatCell_xtimes{mm, 2,1, iii} = x;
+                        DatCell_neuronID{mm, 2, 1, iii} = [DatCell_neuronID{mm, 2, 1, iii}; nn];
+                        
+                        % ========================== DIR
+                        inds = [segextract.DirSong]==1 & indsEpoch;
+                        ndirsongs = length(unique({segextract([segextract.DirSong]==1).song_filename}));
+                        
+                        if ndirsongs>=Nmin & any(inds)
+                            frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
+                            x = segextract(1).FRsmooth_xbin_CommonTrialDur;
+                        if usemedian==1
+                        y = median(frmat,2);    
+                        else
+                        y = mean(frmat,2);
+                        end
+                            % --- shorten to common duration
+                            y = y(xinds);
+                            x = x(xinds);
+                            
+                            % ---- put into output
+                            DatCell{mm, 2, 2, iii} = [DatCell{mm, 2, 2, iii}; y'];
+                            DatCell_xtimes{mm, 2,2, iii} = x;
+                            DatCell_neuronID{mm, 2, 2, iii} = [DatCell_neuronID{mm, 2, 2, iii}; nn];
+                        end
                     end
                     
                     % ============== COLLECT XTIMES
@@ -206,15 +265,17 @@ end
 %% ======= plot
 numbirds = length(DATSTRUCT.bird);
 
-% plotstat = 'corr';
-plotstat = 'prctdiff';
-
 for i=1:numbirds
     birdname = SwitchStruct.bird(i).birdname;
     
     numexpts = length(DATSTRUCT.bird(i).expt);
     for ii=1:numexpts
         exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+        
+        if isempty(DATSTRUCT.bird(i).expt(ii).DatCell)
+            % then did not collect because did not ask to
+            continue
+        end
         
         % ============= get motiflist
         motiflist = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(neuronsThisExpt(1)).motif_regexpr_str;
@@ -295,6 +356,8 @@ for i=1:numbirds
                 DiffPrctCell{mm, preind} = mean(tmp,2);
             end
             
+            
+            
             % ######################## POST
             preind = 2;
             dat = squeeze(DatCell(:, preind, :, ss));
@@ -338,6 +401,9 @@ for i=1:numbirds
                 DiffPrctCell{mm, preind} = mean(tmp,2);
             end
             
+            
+            %             keyboard
+            
             % ################################## PLOT FOR THIS SWITCH
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             hsplots = [hsplots hsplot];
@@ -356,36 +422,46 @@ for i=1:numbirds
                 % --------------- pre
                 y1 = Stattoplot{mm, 1};
                 breglist = BrainLocationCell{mm, 1};
-                if ~isempty(y1)
-                    % -- LMAN
-                    indtmp = strcmp(breglist, 'LMAN');
+                % -- LMAN
+                indtmp = strcmp(breglist, 'LMAN');
+                if any(indtmp)
                     plot(mm-0.2, y1(indtmp), 'og');
-                    % -- RA
-                    indtmp = strcmp(breglist, 'RA');
-                    plot(mm-0.2, y1(indtmp), 'or')
-                    % -- mean
+                end
+                % -- RA
+                indtmp = strcmp(breglist, 'RA');
+                if any(indtmp)
+                    plot(mm-0.2, y1(indtmp), 'or');
+                end
+                % -- mean
+                if ~isempty(y1)
                     lt_plot(mm-0.1, mean(y1), {'Errors', lt_sem(y1), 'Color', 'k'});
                 end
                 
                 % --------------- post
                 y2 = Stattoplot{mm, 2};
                 breglist = BrainLocationCell{mm, 2};
+                % -- LMAN
+                indtmp = strcmp(breglist, 'LMAN');
+                if any(indtmp)
+                    plot(mm+0.2, y2(indtmp), 'og');
+                end
+                % -- RA
+                indtmp = strcmp(breglist, 'RA');
+                if any(indtmp)
+                    plot(mm+0.2, y2(indtmp), 'or');
+                end
+                % -- mean
                 if ~isempty(y2)
-                    % -- LMAN
-                    indtmp = strcmp(breglist, 'LMAN');
-                    plot(mm+0.2, y1(indtmp), 'og');
-                    % -- RA
-                    indtmp = strcmp(breglist, 'RA');
-                    plot(mm+0.2, y1(indtmp), 'or')
-                    % -- mean
                     lt_plot(mm+0.3, mean(y2), {'Errors', lt_sem(y2), 'Color', 'k'});
                 end
                 
                 % ------------- line connecting
-                if ~isempty(y1) & ~isempty(y2)
-                    plot([mm-0.2 mm+0.2], [y1'; y2], '-');
+                try
+                    if ~isempty(y1) & ~isempty(y2)
+                        plot([mm-0.2 mm+0.2], [y1'; y2], '-');
+                    end
+                catch err
                 end
-                
             end
             
             % ====================== PLOT LINE THRU ALL MOTIFS
@@ -409,6 +485,7 @@ for i=1:numbirds
             
             % ----------------------
             lt_plot_zeroline;
+            set(gca, 'XTick', 1:length(motiflist));
             set(gca, 'XTickLabel', motiflist);
             
             if (0)

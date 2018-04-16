@@ -4,7 +4,7 @@ function lt_subtitle(string)
 % [~, h]=subtitle(string);
 % set(h,'FontSize',16,'FontWeight','bold')
 
-h=mtit(string);
+h=mtit(gcf, string);
 
 pos=get(h.th, 'position');
 set(h.th,'FontSize',16,'FontWeight','bold','position',[pos(1) pos(2)+0.03 pos(3)])

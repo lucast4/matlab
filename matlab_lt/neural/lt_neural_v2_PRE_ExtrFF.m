@@ -81,13 +81,13 @@ FFparamsAll.bird(6).FFparams.cell_of_FFtimebins_DurLearn=FFparamsAll.bird(6).FFp
 FFparamsAll.bird(7).birdname = 'wh44wh39';
 FFparamsAll.bird(7).FFparams.cell_of_freqwinds={'n', [1500 2700], 'h', [2800 4500], ...
     'd', [1200 2350], 'k', [1430 2600], 'c', [1800 3100], 'b', [2700 4100]};
-FFparamsAll.bird(7).FFparams.cell_of_FFtimebins={'n', [0.044 0.054], 'h', [0.043 0.057], ...
+FFparamsAll.bird(7).FFparams.cell_of_FFtimebins={'n', [0.044 0.054], 'h', [0.042 0.051], ...
     'd', [0.056 0.061], 'k', [0.04 0.050], 'c', [0.045 0.067], 'b', [0.033 0.043]};
 FFparamsAll.bird(7).FFparams.cell_of_FFtimebins_DurLearn=FFparamsAll.bird(7).FFparams.cell_of_FFtimebins;
 
 
 overWrite = 0; % note, will overwrite rgardless if detects chagnes (NOTE: always overwrites if detects changes)
-plotSpec =1; % to plot raw spec overlayed with PC and windows.
+plotSpec =0; % to plot raw spec overlayed with PC and windows.
 plotOnSong = 1; % will only start plotting spec once hit this song num.
 plotSyl = ''; % to focus on just one syl. NOT DONE YET
 equalizeParams = 1; % if 1, then makes sure t and f windows match. if 0 then only makes sure labels match.

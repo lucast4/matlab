@@ -17,6 +17,7 @@ function [fignums_alreadyused, hfigs, count, hsplot]=lt_plot_MultSubplotsFigs(Su
 % subplotcols=3;
 % fignums_alreadyused=[];
 % hfigs=[];
+% hsplots = [];
 
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 

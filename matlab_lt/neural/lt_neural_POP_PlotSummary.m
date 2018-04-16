@@ -11,6 +11,8 @@ OUTSTRUCT.Pairs.birdID = [];
 OUTSTRUCT.Pairs.exptID= [];
 OUTSTRUCT.Pairs.motifnum= [];
 OUTSTRUCT.Pairs.setnum= [];
+OUTSTRUCT.Pairs.motifregexp = {};
+OUTSTRUCT.Pairs.FF_cv = [];
 
 OUTSTRUCT.Pairs.neurIDfake = [];
 OUTSTRUCT.Pairs.neurIDreal = [];
@@ -29,7 +31,11 @@ for i=1:NumBirds
     
     numexpts = length(MOTIFSTATS_pop.birds(i).exptnum);
 %     params = MOTIFSTATS_pop.birds(i).params;
-    
+            
+% ======= confirm that motiflist is identical across exeriments
+        
+MotifListAll = {};        
+
     for ii=1:numexpts
         
         numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum);
@@ -41,6 +47,7 @@ for i=1:NumBirds
             %             DAT = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii);
             nneur = length(neurons_thisset);
             
+            MotifListAll = [MotifListAll; {MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif.regexpstr}];
             % =========== WHAT BRAIN REGIONS ARE THESE?
 %             BrainregionsList = {SummaryStruct.birds(i).neurons(neurons_thisset).NOTE_Location};
             
@@ -69,15 +76,29 @@ for i=1:NumBirds
                 %                 subplotcols=3;
                 %                 fignums_alreadyused=[];
                 %                 hfigs=[];
-                                
+                           
+                if ~isfield(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm), 'XCov_neurpair')
+                    continue
+                end
+                if isempty(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).XCov_neurpair)
+                    continue
+                end
                 %% 1) EXTRACT CROSSCOVAR FOR ALL PAIRS
                 for nn=1:nneur
                     for nnn=nn+1:nneur
+                        
                         
                         DAT = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).XCov_neurpair(nn, nnn);
                         
                         if isempty(DAT.bregtmp)
                             continue
+                        end
+                        
+                        ff = [MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).SegExtr_neurfakeID(1).SegmentsExtract.FF_val];
+                        if isempty(ff)
+                            ffcv = nan;
+                        else
+                        ffcv = std(ff)./mean(ff);
                         end
                         
                         % --- brain regions
@@ -105,8 +126,10 @@ for i=1:NumBirds
                         OUTSTRUCT.Pairs.birdID = [OUTSTRUCT.Pairs.birdID; i];
                         OUTSTRUCT.Pairs.exptID= [OUTSTRUCT.Pairs.exptID; ii];
                         OUTSTRUCT.Pairs.motifnum= [OUTSTRUCT.Pairs.motifnum; mm];
+                        OUTSTRUCT.Pairs.motifregexp = [OUTSTRUCT.Pairs.motifregexp; motifstr];
                         OUTSTRUCT.Pairs.setnum= [OUTSTRUCT.Pairs.setnum; iii];
                         OUTSTRUCT.Pairs.xlags = [OUTSTRUCT.Pairs.xlags; x];
+                        OUTSTRUCT.Pairs.FF_cv = [OUTSTRUCT.Pairs.FF_cv; ffcv];
                         
                         % ======= flip data to put brain regions in alpha order
                         [~, ind] = sort(bregtmp);
@@ -147,4 +170,9 @@ for i=1:NumBirds
             end
         end
     end
+    
+    assert(length(unique(MotifListAll)) == size(MotifListAll,2), 'diff neurons/expts have diff motifs? why?');
 end
+
+lt_figure; hold on;
+lt_plot_text(0,0.5, 'all motifnums for a given bird correspond to identical actual motif', 'b');

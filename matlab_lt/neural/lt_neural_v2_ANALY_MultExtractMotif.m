@@ -8,6 +8,16 @@ function MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct
 % organize by expt)
 
 
+%% NOTE: on using Params_regexp
+% if use, then must specify all params. leave empty to use default
+% e.g.
+%     Params_regexp.motif_predur = [];
+%     Params_regexp.motif_postdur = [];
+%     Params_regexp.preAndPostDurRelSameTimept = [];
+%     Params_regexp.RemoveIfTooLongGapDur = [];
+%     Params_regexp.extractDirSong = [];
+% 
+
 
 %% 1/17/18 - added ability to manually enter motifs you'd liek to collect
 % ALSO ADDED ENTRY FOR REGEXP PARAMS (if no exist then uses defaults)

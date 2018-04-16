@@ -1,6 +1,8 @@
 function lt_neural_v2_DIAGN_Rawdat(SummaryStruct, displaymode, skipnum)
 %% lt 9/24/17 - for checking clustering. overlays spks with raw filtered dat.
 
+
+
 % displaymode
 %     order; % from song 1 to end
 %     rand; % random, without replacement
@@ -24,7 +26,7 @@ exptname = SummaryStruct.birds(i).neurons(ii).exptID;
 load('times_data.mat'); % clusterclass
 load('MetaDat.mat'); % metaDat
 
-    cd ..
+cd ..
 %% === list of songs, in order
 songlist = 1:length(metaDat);
 if strcmp(displaymode, 'rand')
@@ -115,8 +117,8 @@ for songnum = songlist
     lt_subplot(6,1,6); hold on;
     
     xx = [metaDat.song_datenum];
-        xx = lt_convert_EventTimes_to_RelTimes(datestr(floor(xx), 'ddmmmyyyy'), xx);
-        xx = xx.FinalValue;
+    xx = lt_convert_EventTimes_to_RelTimes(datestr(floor(xx), 'ddmmmyyyy'), xx);
+    xx = xx.FinalValue;
     
     plot(xx, 1, 'ok');
     lt_plot(xx(songnum), 1, {'Color','r'});
@@ -126,7 +128,7 @@ for songnum = songlist
     axis tight
     ylim([0.5 1.5]);
     
-        
+    
     
     
     

@@ -14,9 +14,17 @@ if isempty(Params_regexp)
     Params_regexp.motif_postdur = [];
     Params_regexp.preAndPostDurRelSameTimept = [];
     Params_regexp.RemoveIfTooLongGapDur = [];
+    Params_regexp.extractDirSong = [];
 end
 
 %% PARAMS
+
+if ~isempty(Params_regexp.extractDirSong)
+     extractDirSong = Params_regexp.extractDirSong;
+else
+     extractDirSong = 1;
+end
+
 
 if ~isempty(Params_regexp.motif_predur)
      motif_predur = Params_regexp.motif_predur;
@@ -207,7 +215,7 @@ for i=1:NumNeurons
                 [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
                     regexpr_str, motif_predur, motif_postdur, alignByOnset, WHOLEBOUTS_edgedur, FFparams, ...
                     0, 1, collectWNhit, 1, LearnKeepOnlyBase, preAndPostDurRelSameTimept, ...
-                    RemoveIfTooLongGapDur, clustnum);
+                    RemoveIfTooLongGapDur, clustnum, extractDirSong);
             else
                 SegmentsExtract=struct;
                 Params=struct;
@@ -216,7 +224,7 @@ for i=1:NumNeurons
             [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
                 regexpr_str, motif_predur, motif_postdur, alignByOnset, WHOLEBOUTS_edgedur, FFparams, ...
                 0, 1, collectWNhit, 1, LearnKeepOnlyBase, preAndPostDurRelSameTimept, ...
-                RemoveIfTooLongGapDur, clustnum);
+                RemoveIfTooLongGapDur, clustnum, extractDirSong);
             
         end
         

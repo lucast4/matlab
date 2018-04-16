@@ -1,12 +1,17 @@
+function lt_neural_POP_PlotRast(MOTIFSTATS_pop, SummaryStruct)
 
-plotCols = lt_make_plot_colors(3, 0, 0);
-plotColsRegions = {'LMAN', 'RA', 'X'};
+%% plots rasters for pair of neuron
 
-bb =1;
+bb =2;
 ee =2;
 ss = 2;
 mm = 1;
 
+%%
+plotCols = lt_make_plot_colors(3, 0, 0);
+plotColsRegions = {'LMAN', 'RA', 'X'};
+
+%%
 % ========= fopr this set
 nthis = MOTIFSTATS_pop.birds(bb).exptnum(ee).Sets_neurons{ss};
 locthis = {SummaryStruct.birds(bb).neurons(nthis).NOTE_Location};

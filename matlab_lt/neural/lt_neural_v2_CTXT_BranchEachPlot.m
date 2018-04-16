@@ -262,7 +262,7 @@ for i=1:numalignpos
                 % ############### fig 2 - classifier and dprime
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 hsplots = [hsplots hsplot];
-                title([birdname '-' sylregexp{1} '-n' num2str(nn)]);
+                title([birdname '-' sylregexp{1} '-n' num2str(nn) ',' location]);
                 ylabel('classperformance (thick), dprime (thin)');
                 
                 % ============ 3) dprime

@@ -84,7 +84,7 @@ if plotScatterForEachBin==1
     AlignnumAllall = [];
     YsemAllall = {};
     
-    for i=1:length(BRANCHES);
+    for i=1:length(BRANCHES)
         
         numalign = length(BRANCHES(i).DATSTRUCT.numalign);
         
@@ -105,7 +105,8 @@ if plotScatterForEachBin==1
             SlopesCIAll = [];
             PostMinusPreAll =[];
             PostMinusPreSEMAll = [];
-            for bb = BinMidList;
+            
+            for bb = BinMidList
                 
                 binEdges = [bb-0.02 bb bb+0.02];
                 

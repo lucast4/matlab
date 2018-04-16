@@ -24,7 +24,7 @@ end
 
 %% ====== plot single file dat [align neural and song]
 % close all;
-filename='pu69wh78_171113_165728.rhd';
+filename='pu69wh78_DIR_171118_165959.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
@@ -33,7 +33,7 @@ ChansToPlot.AmpChans_zero=[9 11 12 14 1 18];
 ChansToPlot.AmpChans_zero=[9 14 17 18 21];
 ChansToPlot.AmpChans_zero=[9 14 21];
 ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
-ChansToPlot.AmpChans_zero=18;
+ChansToPlot.AmpChans_zero=[9 14 21];
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
@@ -103,14 +103,14 @@ lt_neural_commonNoise(batchf, ChansToUse, plotOn, save_raw_dat, ...
 
 %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 %% ==================================================== PREPROCESSING
-clear all; close all;
+clear all; close all; fclose all;
 % channel_board = [8 11 14 18 20]; % wh6
 % channel_board = [9 11 12 14 15 18]; % bu77
 % channel_board = [14];
 channel_board = [9 14 17 18 21];
 channel_board = 0:31;
-channel_board = [15];
-batchf = 'Batch1126to1800';
+channel_board = [21];
+batchf = 'Batch1651to1803DirUndir';
 
 %% ==== exploratory - concat all audio and neural and plot for each neural channel
 close all;
@@ -156,7 +156,7 @@ if (0)
         Raster.ThrXNoise=3; % threshold for units, used for all channels, uses absolute data for peak detection
         Raster.PosOrNeg=-1; % -1 or +1, for crossings.
         
-        numsubplots = 5;
+        numsubplots = 2;
         
         lt_neural_alignRawDat(filename, ChansToPlot, neuralFiltLow, PlotWhat, Rect_sm, Raster, numsubplots)
         
@@ -190,7 +190,7 @@ lt_neural_AutoMakeNotmat(batchf);
 % -- makes multiple plots if too much dat.
 close all;
 PlotSecondChan = 1;
-SecondChan = 20;
+SecondChan = 14;
 plotcols={'m', 'r','c', 'b', 'g'};
 
 % want to plot 2nd channel to compare noise?

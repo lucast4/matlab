@@ -1,24 +1,9 @@
 close all; clear MOTIFSTATS_Compiled;
-collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract audio each time (i.e. do and save)
-onlyCollectTargSyl=0;
-LearnKeepOnlyBase = 1;
-saveOn = 1;
-OrganizeByExpt =0;
-collectFF=1;
-
-% --- to make sure extracts motifs
-% MotifsToCollect = {'pu69wh78', {'(j)jjbhhg', '(a)abhhg'}};
-%     Params_regexp.motif_predur = 0.05;
-%     Params_regexp.motif_postsdur = 0.05;
-%     Params_regexp.preAndPostDurRelSameTimept = 0;
-%     Params_regexp.RemoveIfTooLongGapDur = 1;
-
-MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
-    collectWNhit, LearnKeepOnlyBase, saveOn, onlyCollectTargSyl, OrganizeByExpt,...
-    collectFF);
-
+lt_neural_ExtractMotifs_Regular;
 
 %% ========== FOR EACH SYLLABLE, GET POPULATION VECTOR (VECTOR OF MEANS)
+close all
+
 NormToNeurMean = 1;
 % premotorWind = [-0.06 -0.02];
 % premotorWind = [-0.03 0.01];
@@ -102,8 +87,8 @@ Y = pdist(FRmatMotifByNeur, distmetric);
 c = cophenet(Z, Y);
 
 %% =============== PICK ONE SYL, PLOT ITS DISTANCE TO EVERY OTHER SYL
-seedmotif = 'n(h)h';
-locthis = 'LMAN';
+seedmotif = 'aa(b)hh';
+locthis = 'RA';
 distmetric = 'correlation';
 
 indneur = strcmp(AllNeurLocation, locthis);

@@ -9,7 +9,7 @@ strtype = 'xaa'; % a is fixed, x variable, across contexts
 % &&&&&&&&&&&&& 2) EXTRACT REGEXP STRUCT 
 prms.alignWhichSyl = 2; % which syl (in order) to align to
 prms.alignOnset = 1; % if 1, then onset, if 0, then offset
-prms.motifpredur = 0.15;
+prms.motifpredur = 0.2;
 prms.motifpostdur = 0.15;
 prms.preAndPostDurRelSameTimept = 1; % 1, then pre and post both aligned at same time. if 0, then post is aligned to motif ofset.
 CLASSES = lt_neural_v2_CTXT_GetBrnchDat(CLASSES, SummaryStruct, prms);
@@ -107,6 +107,7 @@ FRbinsize = 0.008;
 savenotes = 'pu69wh44RALMAN40ms';
 
 prms.ClassSlide.GetNegControl = 1; % 1 = yes. (i.e. shuffle dat-context link).
+prms.ClassSlide.NumNegControls = 25;
 prms.ClassSlide.GetPosControl =1;
 
 CVmethod = 'Kfold';
@@ -114,7 +115,7 @@ plotstat = 'F1';
 
 saveON =1;
 LinTimeWarp = 1;
-regionstowarp = [3 4 5];
+regionstowarp = [1 2 3];
 
 ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms, ...
     TimeWindowDur, TimeWindowSlide, FRbinsize, savenotes, CVmethod, plotstat, ...
@@ -130,6 +131,9 @@ lt_neural_v2_CTXT_Debug;
 
 
 
+%% ========================= convert decode to z-score
+ALLBRANCH = lt_neural_v2_CTXT_GetZDecode(ALLBRANCH);
+
 
 %% ############################# PLOTTING ALLBRANCh [SINGLE ANALYSIS]
 % ======= EXTRACT GAP/SYL DURS
@@ -143,9 +147,9 @@ ALLBRANCH = lt_neural_v2_CTXT_BranchRemvOlap(ALLBRANCH);
 % ==== 2)  PLOT EACH BRANCH/BIRD/NEURON
 close all;
 birdtoplot = 'wh44wh39'; % leave blank to plot all;
-plotspec_num = 0; % how many spectrograms to plot for each class in each branch point? if 0 then none.
-locationtoplot = {'RA'};
-BranchToPlot = {'[a-z]mm'}; % type regexp strings
+plotspec_num =0; % how many spectrograms to plot for each class in each branch point? if 0 then none.
+locationtoplot = {'LMAN','RA'};
+BranchToPlot = {'[a-z]md'}; % type regexp strings
 plotrasters = 0;
 lt_neural_v2_CTXT_BranchEachPlot(ALLBRANCH, birdtoplot, plotspec_num, ...
     locationtoplot, BranchToPlot, plotrasters)
@@ -182,8 +186,16 @@ BrainRegions = {'LMAN', 'RA'};
 BirdToPlot = {};
 ExptToPlot = {};
 useDprime=0;
+% analyfname = 'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms';
+analyfname = ''; % only required if want to incorporate premotor decode 
+% data as well - e.g. to only compare neurons that have good decoding
+% to begin with. 
+sortbypremotorpval = 0; % requires analyfname to not be empty. if 1 then
+% only analyzes neruon/branch pairs that have significant premotor decode.
+
+% NOTE: if not empty, then will automatically reload ALLBRANCH ...
 lt_neural_v2_CTXT_BRANCH_PlotByBranchID(ALLBRANCH, BrainRegions, ...
-    BirdToPlot, useDprime, ExptToPlot)
+    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval)
 
 
 % ###################### PLOT EXAMPLES FOR EACH BIRD/BRANCH POINT
@@ -209,12 +221,13 @@ lt_neural_v2_CTXT_BranchCompareTwo(branchfname1, branchfname2);
 %% #################### [PREMOTOR WINDOW, DECODING] 
 % ============= 1) IN PREMOTOR WINDOW, COMPARE DECODING VS. SHUFFLED.
 close all;
-analyfname = 'xaaa_Algn2Ons1_19Dec2017_1219_XLMAN25msLTW';
-Niter = 1000;
-TimeWindows = [-0.035 -0.035]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
+analyfname = 'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms';
+Niter = 500;
+TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 % TimeWindows = [0 0 ]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 % TimeWindows = [-0.035 -0.035]; % LMAN
 % TimeWindows = [-0.02 -0.02]; % RA
+TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 lt_neural_v2_CTXT_BRANCH_DatVsShuff(analyfname, Niter, TimeWindows);
 
 % ------- to plot results from above (can do multiple)
@@ -223,11 +236,11 @@ close all;
 %     'xaa_Algn2Ons1_30Nov2017_1911_XLMAN25msLTW', ...
 %     };
 allanalyfnames = {...
-    'xaaa_Algn3Ons1_15Dec2017_0110_XLMAN25msLTW'};
-allanalyfnames = {...
-    'xaaa_Algn2Ons1_19Dec2017_1219_XLMAN25msLTW', ...
-    'xaaa_Algn3Ons1_15Dec2017_0110_XLMAN25msLTW', ...
-    'xaaa_Algn4Ons1_15Dec2017_1100_XLMAN25msLTW'};
+    'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms'};
+% allanalyfnames = {...
+%     'xaaa_Algn2Ons1_19Dec2017_1219_XLMAN25msLTW', ...
+%     'xaaa_Algn3Ons1_15Dec2017_0110_XLMAN25msLTW', ...
+%     'xaaa_Algn4Ons1_15Dec2017_1100_XLMAN25msLTW'};
 DecodeStruct = lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames);
 
 

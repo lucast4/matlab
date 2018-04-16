@@ -3,23 +3,7 @@
 % PLOT ALL MOTIFS - separating into DIR and UNDIR
 % ORGANIZE MOTIFS BY SYLLABLE TYPE
 close all; clear MOTIFSTATS_Compiled;
-collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract audio each time (i.e. do and save)
-onlyCollectTargSyl=0;
-LearnKeepOnlyBase = 1;
-saveOn = 0;
-OrganizeByExpt =0;
-collectFF=0;
-
-% --- to make sure extracts motifs
-% MotifsToCollect = {'pu69wh78', {'(j)jjbhhg', '(a)abhhg'}};
-%     Params_regexp.motif_predur = 0.05;
-%     Params_regexp.motif_postdur = 0.05;
-%     Params_regexp.preAndPostDurRelSameTimept = 0;
-%     Params_regexp.RemoveIfTooLongGapDur = 1;
-
-MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
-    collectWNhit, LearnKeepOnlyBase, saveOn, onlyCollectTargSyl, OrganizeByExpt,...
-    collectFF);
+lt_neural_ExtractMotifs_Regular;
 
 
 %% ====== PLOT ALL MOTIFS, OVERLAYING DIR AND UNDIR

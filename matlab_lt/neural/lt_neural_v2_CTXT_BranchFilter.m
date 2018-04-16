@@ -16,6 +16,8 @@ function ALLBRANCH = lt_neural_v2_CTXT_BranchFilter(ALLBRANCH, Params)
 % Params.durThreshOmega.gappost= [];
 % Params.GapDurPreMax = 0.5; % then will throw out if median pregap dur (for any
 %     % class within branch) is longer than this (sec)
+% Params.GapDurPostMax = 0.5; % then will throw out if all branches have
+% median longer (diff from gap pre, which uses if any)
 % Params.RemoveHandCoded =0 ; % see below
 % Params.expttokeep = {'RAlearn1'};
 
@@ -38,6 +40,11 @@ if ~isfield(Params, 'expttokeep')
     Params.expttokeep = {}; % then assumes get all expts
 end
 
+if isfield(Params, 'GapDurPostMax')
+    GapDurPostMax = Params.GapDurPostMax;
+else
+    GapDurPostMax = [];
+end
 %%
 
 apos = 1; % assumes only one analysis done
@@ -53,6 +60,10 @@ HandCoded(2).branches = {'[a-z]ca'};
 
 HandCoded(3).birdname = 'W32Pi51';
 HandCoded(3).branches = {'[a-z]dd'};
+
+HandCoded(3).birdname = 'wh44wh39';
+HandCoded(3).branches = {'bj[a-z]', 'cb[a-z]', 'nh[a-z]'}; % {bad labels, seq change because WN, seq change bc WN};
+
 
 
 %% extract duration (gap, syl) anovas
@@ -172,6 +183,22 @@ for ii=1:numbirds
                 continue
 
             end
+            end
+            
+            % #################################### post gap too long
+            if ~isempty(GapDurPostMax)
+             
+            functmp = @(x)median(x);
+            postgapdurs_med = cellfun(functmp, {datneur.SylGapDurs.classnum.Dur_gappost});
+            if all(postgapdurs_med > GapDurPostMax)
+
+                % ------------- remove neuron
+                Neuronstoremove = [Neuronstoremove nn];
+                disp(['[POST GAP TOO LONG] removed neur ' num2str(nn)]);
+                continue
+            end
+               
+                
             end
             
             % ####################################### HAND CODED, REMOVE
