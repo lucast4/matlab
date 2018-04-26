@@ -17,7 +17,7 @@ MOTIFSTATS.params.TargSyls = TargSyls;
 close all;
 % motifs for this bird
 % learning expt id
-plottype = 'bysyl'; %
+plottype = 'byneuron'; %
 % 'byneuron' - each neuron one fig will all motifs [DEFAULT]
 % 'dotprod' - for each bin of trials get dot prod from IN PROGRESS
 % 'bysyl' - each plot one syl, all neurons.
@@ -46,7 +46,7 @@ collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract au
     Params_regexp.motif_postdur = [];
     Params_regexp.preAndPostDurRelSameTimept = 1;
     Params_regexp.RemoveIfTooLongGapDur = [];
-
+Params_regexp.extractDirSong = [];
 MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
     collectWNhit, 0, 1, 0, 1, 1, [], Params_regexp);
 
@@ -120,7 +120,7 @@ end
 %% ================================== PLOT LEARNING (ALL SYLS)
 % close all
 MeanSubtract =1; % subtract baseline mean?
-BirdsToPlot = {'pu69wh78'};
+BirdsToPlot = {'wh44wh39'};
 lt_neural_v2_ANALY_LearnAllSylPlot(MOTIFSTATS_Compiled, ...
     MeanSubtract, BirdsToPlot);
 
@@ -251,8 +251,8 @@ lt_neural_v2_ANALY_Swtch_Tcourse(MOTIFSTATS_Compiled, SwitchStruct, ...
 % ========================= TIMECOURSES, BINNING BY TIME, showing smoothed
 % FR and rasters
 close all;
-birdname_get = 'br92br54'; % keep empty if want all.
-exptname_get = 'LMANlearn5';
+birdname_get = 'wh44wh39'; % keep empty if want all.
+exptname_get = 'RALMANlearn4';
 switchnum_get = [1];
 plotneurzscore=0;
 FFzscore =1;

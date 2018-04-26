@@ -58,12 +58,6 @@ if ~exist('ChannelsDesired', 'var')
     ChannelsDesired = [];
 end
 
-%% ======= first, extract sam/mel
-if any(strcmp(BrainArea, 'RA'))
-    SummaryStruct_SamMel = lt_neural_RASamMel_SummaryStruct;
-end
-
-% === then extract mine, below
 
 
 %% =====
@@ -87,6 +81,9 @@ for i=1:numbirds
     neuroncounter = 1;
     
     for ii=1:numneurons
+        
+        % ======== note that is not Sam/mel data
+%         SummaryStruct.birds(i).neurons(ii).isRAsobermel = 0; 
         
         if ~isempty(BrainArea)
             if ~any(strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_Location, BrainArea))
@@ -146,23 +143,23 @@ for i=1:numbirds
             
         else
             % ==== is this learning expt/
-                exptname = SummaryStruct.birds(i).neurons(ii).exptID;
-                [islearning, LearnSummary, switchtime] = lt_neural_v2_QUICK_islearning(birdname, exptname, 1);
-                    
-%                 if max(SummaryStruct.birds(i).neurons(ii).Filedatenum_unsorted) < switchtime
-%                     % then latest song is before onset of WN
-%                     
-%                 end
-                
-%                 birdindtmp = strcmp({LearnStruct.bird.birdname}, birdname);
-%                 if any(strcmp([LearnStruct.bird(birdindtmp).info(1,:)], exptname))
-%                     % then is learning
-%                     islearning =1;
-%                 else
-%                     islearning = 0;
-%                 end
-
-SummaryStruct.birds(i).neurons(ii).INFO_islearning = islearning;
+            exptname = SummaryStruct.birds(i).neurons(ii).exptID;
+            [islearning, LearnSummary, switchtime] = lt_neural_v2_QUICK_islearning(birdname, exptname, 1);
+            
+            %                 if max(SummaryStruct.birds(i).neurons(ii).Filedatenum_unsorted) < switchtime
+            %                     % then latest song is before onset of WN
+            %
+            %                 end
+            
+            %                 birdindtmp = strcmp({LearnStruct.bird.birdname}, birdname);
+            %                 if any(strcmp([LearnStruct.bird(birdindtmp).info(1,:)], exptname))
+            %                     % then is learning
+            %                     islearning =1;
+            %                 else
+            %                     islearning = 0;
+            %                 end
+            
+            SummaryStruct.birds(i).neurons(ii).INFO_islearning = islearning;
             
             if LearningOnly==1
                 % then only keeps if learniong
@@ -241,7 +238,7 @@ if isfield(SummaryStruct_filtered, 'birds');
     
     %% ==== confirm all metadat have permanent datenum. if not, extract
     if extractpreDatenums==1;
-    lt_neural_v2_PRE_datenums(SummaryStruct);
+        lt_neural_v2_PRE_datenums(SummaryStruct);
     end
 end
 
@@ -260,22 +257,22 @@ SummaryStruct_filtered.loadparams.extractiontime = tstamp;
 
 
 %% ========== if RA, then append sam/mel
-if any(strcmp(BrainArea, 'RA'))
-    
+% ======= first, extract sam/mel
+if any(strcmp(BrainArea, 'RAmel'))
+    SummaryStruct_SamMel = lt_neural_RASamMel_SummaryStruct;
     
     % ==== append
     birdcount = length(SummaryStruct_filtered.birds)+1;
     for i=1:length(SummaryStruct_SamMel.birds)
         
-        if ~any(strcmp(SummaryStruct_SamMel.birds(i).birdname, BirdsToKeep))
-            disp(['skipped ' SummaryStruct_SamMel.birds(i).birdname]);
-            continue
-        end
+        %         if ~any(strcmp(SummaryStruct_SamMel.birds(i).birdname, BirdsToKeep))
+        %             disp(['skipped ' SummaryStruct_SamMel.birds(i).birdname]);
+        %             continue
+        %         end
         
         SummaryStruct_filtered.birds(birdcount) = SummaryStruct_SamMel.birds(i);
         birdcount= birdcount+1;
     end
-    
 end
 
 %% ========== find simulataneous neurons

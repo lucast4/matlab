@@ -62,7 +62,7 @@ HandCoded(3).birdname = 'W32Pi51';
 HandCoded(3).branches = {'[a-z]dd'};
 
 HandCoded(3).birdname = 'wh44wh39';
-HandCoded(3).branches = {'bj[a-z]', 'cb[a-z]', 'nh[a-z]'}; % {bad labels, seq change because WN, seq change bc WN};
+HandCoded(3).branches = {'[a-z]bj', '[a-z]jn', '[a-z]bn', '[a-z]hm', 'bj[a-z]', 'cb[a-z]', 'nh[a-z]'}; % {bad labels, seq change because WN, seq change bc WN};
 
 
 

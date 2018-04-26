@@ -89,8 +89,13 @@ for i=1:length(BirdList)
         SummaryStructOut.birds(i).neurons(neuroncount).isRAsobermel = 1;
         SummaryStructOut.birds(i).neurons(neuroncount).whosbird = whosbird;
         SummaryStructOut.birds(i).neurons(neuroncount).exptID = '';
+        SummaryStructOut.birds(i).neurons(neuroncount).clustnum = [];
+        SummaryStructOut.birds(i).neurons(neuroncount).NOTE_Location = 'RA';
+        
     end
-    
+%          SummaryStructOut.birds(i).whosbird = whosbird;
+%          SummaryStructOut.birds(i).isRAsobermel = 1;
+   
 end
 
 % %% =============

@@ -46,7 +46,7 @@ end
 if ~exist('RemoveIfTooLongGapDur', 'var')
     RemoveIfTooLongGapDur=0;
 end
-maxgapdur = 1; % sec
+maxgapdur = 0.5; % sec
 
 %% note on FF stuff
 % WNhit collection is only performed if FF collection is performed - can
@@ -885,6 +885,7 @@ end
 
 %% ##################### DIR, UNDIR? USE FILENAME SUFFIX
 
+if isfield(SegmentsExtract, 'song_filename')
 for j=1:length(SegmentsExtract)
     
     ind =  strfind(SegmentsExtract(j).song_filename, '_DIR_');
@@ -896,6 +897,11 @@ for j=1:length(SegmentsExtract)
         SegmentsExtract(j).DirSong=1;
     else
         asdfsdaf;
+    end
+end
+else
+    for j=1:length(SegmentsExtract)
+    SegmentsExtract(j).DirSong = 0;
     end
 end
 

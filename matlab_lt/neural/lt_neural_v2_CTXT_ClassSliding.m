@@ -1,6 +1,14 @@
 function ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms, ...
     TimeWindowDur, TimeWindowSlide, FRbinsize, savenotes, CVmethod, plotstat, ...
-    saveON, LinTimeWarp, regionstowarp, ALLBRANCH, tstampsave)
+    saveON, LinTimeWarp, regionstowarp, ALLBRANCH, tstampsave, dotransform)
+%% square root transform?
+% dotransform =1; %
+% note: have looked and seems like this is appropriate. 1) varaince is
+% proportional to mean before transform, so shoudl stabilize that somewhat.
+% 2) the noise (at each time bin) is generally skewed to the right, this
+% seems to make that more normal.
+
+
 %% time warp params
 % NOTE: the spike times saved for long term are indeed the warped spikes 
 prms.LinTimeWarp = LinTimeWarp;
@@ -178,7 +186,8 @@ for i=1:numbirds
                 end
                 
                 
-                [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum);
+                [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, ...
+                    clustnum, dotransform);
                 
                 
                 
@@ -273,7 +282,8 @@ for i=1:numbirds
                 else
                     clustnum = SummaryStruct.birds(i).neurons(ii).clustnum;
                 end
-                [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum);
+                [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum, ...
+                    dotransform);
                 
                 
                 
@@ -556,7 +566,8 @@ end
 
 end
 
-function [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum)
+function [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, ...
+    clustnum, dotransform)
 
 frtimewindow = prms.classtmp.frtimewindow; % on and off, relative to syl onset
 frbinsize = prms.ClassSlide.frbinsize;
@@ -612,6 +623,12 @@ for j=1:numclasses
     % time)
     TrimDown = 1;
     [X, xtimes] = lt_neural_v2_QUICK_binFR(X, xtimes, frbinsize, TrimDown);
+    
+    
+    % ==================== do square root transform?
+    if dotransform==1
+        X = sqrt(X);
+    end
     
     
     % ======================== COLLECT ACROSS ALL CLASSES

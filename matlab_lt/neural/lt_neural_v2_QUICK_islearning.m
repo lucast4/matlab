@@ -1,5 +1,8 @@
 function [islearning, LearnSummary, switchtime] = lt_neural_v2_QUICK_islearning(birdname, exptname, extractlearninfo)
+%% updated (lt) 4/23, so that have to have at least 1day of no WN 
+% to be considered a WN off epoch...
 
+%%
 % extractlearninfo =1, then gets summary fo learning for this expt. if 0, then just tells you if islearning.
 % [note: this only runs if actually is laernig]
 
@@ -14,19 +17,19 @@ LearnStruct = lt_neural_v2_LoadLearnMetadat;
 % is this learning expt?
 birdindtmp = strcmp({LearnStruct.bird.birdname}, birdname);
 if ~any(birdindtmp)
-   islearning = [];
-   LearnSummary = [];
-   switchtime = [];
+    islearning = [];
+    LearnSummary = [];
+    switchtime = [];
     return
     
 end
-    
+
 islearning = any(strcmp([LearnStruct.bird(birdindtmp).info(1,:)], exptname));
 
 % --- optional: output info about this learn expt
 if extractlearninfo==1
-        LearnSummary = struct;
-        
+    LearnSummary = struct;
+    
     if islearning==1
         
         exptinds = strcmp([LearnStruct.bird(birdindtmp).info(1,:)], exptname);
@@ -66,8 +69,8 @@ end
 
 %% ===== output time of WN onset (earliest time across all targs)
 if extractlearninfo==1
-switchtime = [];
-if islearning==1
+    switchtime = [];
+    if islearning==1
         numtargs = length(LearnSummary.targnum);
         for jj=1:numtargs
             
@@ -77,7 +80,20 @@ if islearning==1
                 % ,,, throw out all data
                 indtmp = [];
             else
+                
+                % -- find the latest switch such that 1) the preceding
+                % epoch has WN off and 2) there is at least a day of WN
+                % being off.
+                indtmp = strcmp({LearnSummary.targnum(jj).switches.statuspre}, 'Of') ... % switches with pre being off
+                    & diff([0 LearnSummary.targnum(jj).switches.datenum])>1;  % switches preceded by >1 day of stability
+                indtmp = max(find(indtmp)); % the latest switch (to take most data);
+                
+                % old version, runs into issue if e.g. on--> off--> on
+                % during experiment, then will keep data for that off, even
+                % if it is e.g. only an hour long...
+                if (0)
                 indtmp = find(strcmp({LearnSummary.targnum(jj).switches.statuspre}, 'Of'), 1, 'last');
+                end
             end
             
             if isempty(indtmp)
@@ -91,6 +107,6 @@ if islearning==1
             % time when WN began
             switchtime = min([switchtime swtimethis]); % get earliest time across all targets
         end
-else
-end
+    else
+    end
 end

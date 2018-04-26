@@ -133,6 +133,10 @@ for i=1:numbirds
                             continue
                         end
                         
+                        if ~isfield(DAT.motif(m), 'XCov_neurpair')
+                            continue
+                        end
+                        
                         if isempty(DAT.motif(m).XCov_neurpair)
                             continue
                         end

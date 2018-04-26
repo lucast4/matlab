@@ -62,6 +62,9 @@ for i = 1:numbirds
                 decodeneg_mean(t) = mean_neg;
                 decodeneg_std(t) = std_neg;
                 
+                if abs(decode_z(t))>10000
+                    keyboard
+                end
                 
                 % ======= compare actual decode to decode neg
                 if (0)

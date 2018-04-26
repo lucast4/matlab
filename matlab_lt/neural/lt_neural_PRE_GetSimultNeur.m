@@ -10,6 +10,12 @@ for i=1:numbirds
     ListOfExpt = unique({SummaryStruct.birds(i).neurons.exptID});
     
     exptcounter = 1;
+    
+    % ======= skip if this is sam/mel RA data
+    if isfield(SummaryStruct.birds(i).neurons(1), 'isRAsobermel')
+       continue
+    end
+    
     for exptthis = ListOfExpt
         
         % ==== which neurons are in this expt?

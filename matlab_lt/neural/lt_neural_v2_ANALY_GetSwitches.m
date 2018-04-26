@@ -184,10 +184,12 @@ for i=1:NumBirds
                         count = count+1; % sanity check,
                     end
                 end
+                if count>0
                 assert(count ==1, 'should be exactly one for this target')
                 assert(~isempty(preCont) & ~isempty(postCont), 'why???');
                 
                 SwtchConts = [SwtchConts targsyl [preCont postCont]];
+                end
             end
             
             % =========== output
@@ -241,6 +243,9 @@ for i=1:NumBirds
                 tsyl = targsyls{j};
                 
                 indtmp = find(strcmp([SwitchStruct.bird(i).exptnum(ii).switchlist(iii).learningContingencies], tsyl));
+                if isempty(indtmp)
+                    continue
+                end
                 assert(length(indtmp) ==1, 'asdfsdf');
                 
                 

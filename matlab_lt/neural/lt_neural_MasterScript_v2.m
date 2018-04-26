@@ -3,8 +3,8 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'pu69wh78', 'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {};
+BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BrainArea = {'RA', 'LMAN', 'RAmel'}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
 RecordingDepth = [];
@@ -345,6 +345,13 @@ lt_neural_v2_ANALY_BoutPositionJC(SummaryStruct,PlotRaw);
 
 
 
+%% &&&&&&&&&&&&&&&&&&&&&& NGRAMS &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+% like "CONTEXT" but takes all ngrams for a neuron to get distrubitions for
+% each neruon
+
+lt_neural_NGRAMS_MasterScript;
+
+
 
 %% &&&&&&&&&&&&&&&&&&&&&& CONTEXT &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
@@ -519,7 +526,7 @@ xcov_dattotake = [-0.01 0.05];
 xcov_dattotake = [-0.08 0.04];
 xcov_dattotake = [-0.075 0.025];
 xcovwindmax = 0.04;
-binsize_spk = 0.005;
+binsize_spk = 0.0025;
 
 MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
     xcov_dattotake, xcovwindmax, binsize_spk);
@@ -530,7 +537,7 @@ SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 
 %% ================ PLOT CROSS CORR WRT TO LEARNING
 close all; 
-BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn4'};
 % BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
 SwitchToPlot = [2];
 BregionWantedList = {{'LMAN', 'RA'}};

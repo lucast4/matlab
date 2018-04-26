@@ -115,11 +115,13 @@ plotstat = 'F1';
 
 saveON =1;
 LinTimeWarp = 1;
-regionstowarp = [1 2 3];
+regionstowarp = [3 4 5];
 
+% --- square root transform?
+dotransform = 1;
 ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms, ...
     TimeWindowDur, TimeWindowSlide, FRbinsize, savenotes, CVmethod, plotstat, ...
-    saveON, LinTimeWarp, regionstowarp);
+    saveON, LinTimeWarp, regionstowarp, '', '', dotransform);
 
 % NOTE: TO CONTINUE WHERE LEFT OFF BEFORE, RUN ABOVE FUNCTION WITH MODIFIED
 % VARIABLES (SEE THIS SCRIPT FOR EXAMPLE)
@@ -134,6 +136,23 @@ lt_neural_v2_CTXT_Debug;
 %% ========================= convert decode to z-score
 ALLBRANCH = lt_neural_v2_CTXT_GetZDecode(ALLBRANCH);
 
+%% ======================== [DIAGN] plots all raw
+close all; 
+BirdToPlot = {};
+ExptToPlot = {};
+BrainRegions = {'LMAN', 'RA'};
+plot_negshuff_z = 0; % requires shuffled negative control. plots z-score of dat rel to shuff
+% otherwise plots negative shuffle control.
+
+lt_neural_v2_CTXT_PlotAllRaw(ALLBRANCH, BirdToPlot, ExptToPlot, BrainRegions, ...
+    plot_negshuff_z);
+
+
+%% ================= how much does mean FR correlate with decode?
+% ===== does this change with using z-score?
+
+lt_neural_v2_CTXT_ZDecodePlots(ALLBRANCH);
+
 
 %% ############################# PLOTTING ALLBRANCh [SINGLE ANALYSIS]
 % ======= EXTRACT GAP/SYL DURS
@@ -143,13 +162,16 @@ ALLBRANCH = lt_neural_v2_CTXT_BranchGaps(ALLBRANCH);
 % ==== 1)  REMOVE ANY REDUNDANT NEURONS FROM ALLBRANCH
 ALLBRANCH = lt_neural_v2_CTXT_BranchRemvOlap(ALLBRANCH);
 
+% ======= EQUALIZE DURATIONS FR at all classes have same duration (rounding
+% errors...)
+ALLBRANCH = lt_neural_v2_CTXT_BRANCH_EqFRdur(ALLBRANCH);
 
 % ==== 2)  PLOT EACH BRANCH/BIRD/NEURON
 close all;
-birdtoplot = 'wh44wh39'; % leave blank to plot all;
+birdtoplot = 'pu69wh78'; % leave blank to plot all;
 plotspec_num =0; % how many spectrograms to plot for each class in each branch point? if 0 then none.
 locationtoplot = {'LMAN','RA'};
-BranchToPlot = {'[a-z]md'}; % type regexp strings
+BranchToPlot = {'[a-z]jj'}; % type regexp strings
 plotrasters = 0;
 lt_neural_v2_CTXT_BranchEachPlot(ALLBRANCH, birdtoplot, plotspec_num, ...
     locationtoplot, BranchToPlot, plotrasters)
@@ -160,7 +182,7 @@ close all;
 dattoplot = 'classperform';
 % dattoplot = 'frmean';
 % dattoplot = 'dprime';
-LMANorX = 2; % 0, both; 1, LMAN; 2, X, 3(RA)
+LMANorX = 3; % 0, both; 1, LMAN; 2, X, 3(RA)
 birdstoexclude = {};
 % birdstoexclude = {'bk7', 'bu77wh13', 'or74bk35', 'wh6pk36', 'br92br54'};
 
@@ -192,13 +214,46 @@ analyfname = ''; % only required if want to incorporate premotor decode
 % to begin with. 
 sortbypremotorpval = 0; % requires analyfname to not be empty. if 1 then
 % only analyzes neruon/branch pairs that have significant premotor decode.
+plotAllZscoreFR = 0; % overlay all z-score FR
 
 % NOTE: if not empty, then will automatically reload ALLBRANCH ...
 lt_neural_v2_CTXT_BRANCH_PlotByBranchID(ALLBRANCH, BrainRegions, ...
-    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval)
+    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval, ...
+    plotAllZscoreFR)
 
 
 % ###################### PLOT EXAMPLES FOR EACH BIRD/BRANCH POINT
+
+
+%% ####################### TIME BIN BY TIME BIN (COMPARE DAT, NEG AND POS)
+close all;
+% BrainRegions = {'LMAN', 'X', 'RA'};
+BrainRegions = {'LMAN', 'RA'};
+% BrainRegions = {'LMAN','X'};
+BirdToPlot = {};
+ExptToPlot = {};
+useDprime=0;
+% analyfname = 'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms';
+analyfname = ''; % only required if want to incorporate premotor decode 
+% data as well - e.g. to only compare neurons that have good decoding
+% to begin with. 
+sortbypremotorpval = 0; % requires analyfname to not be empty. if 1 then
+% only analyzes neruon/branch pairs that have significant premotor decode.
+plotAllZscoreFR = 0; % overlay all z-score FR
+
+% --- 
+averageWithinNeuron=1; % if 1, then each neuron takes average over all branches.
+minbranches = 1; % need at least this many branches to use.
+
+% ---
+useCorrMetric=0; % then uses 1 minus corr of premotor FR
+
+% NOTE: if not empty, then will automatically reload ALLBRANCH ...
+lt_neural_v2_CTXT_BRANCH_PosNegCompare(ALLBRANCH, BrainRegions, ...
+    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval, ...
+    plotAllZscoreFR, averageWithinNeuron, minbranches, useCorrMetric)
+
+
 
 
 
@@ -221,7 +276,7 @@ lt_neural_v2_CTXT_BranchCompareTwo(branchfname1, branchfname2);
 %% #################### [PREMOTOR WINDOW, DECODING] 
 % ============= 1) IN PREMOTOR WINDOW, COMPARE DECODING VS. SHUFFLED.
 close all;
-analyfname = 'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms';
+analyfname = 'xaa_Algn2Ons1_24Apr2018_1834_pu69wh44RALMAN40ms';
 Niter = 500;
 TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 % TimeWindows = [0 0 ]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)

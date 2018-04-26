@@ -1,11 +1,12 @@
 function lt_neural_v2_CTXT_BRANCH_PlotByBranchID(ALLBRANCH, BrainRegions, ...
-    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval)
+    BirdToPlot, useDprime, ExptToPlot, analyfname, sortbypremotorpval, ...
+    plotAllZscoreFR)
 apos =1;
 
 %% lt 11/29/17 - plots, sepaated by unique branch points (i.e. regexpstr)
 
 if strcmp(ALLBRANCH.alignpos(apos).ParamsFirstIter.Extract.strtype, 'xaa')
-wh44tempfix = 1;
+    wh44tempfix = 1;
 else
     wh44tempfix = 0;
 end
@@ -14,7 +15,7 @@ end
 %%
 
 if sortbypremotorpval==1
-   assert(~isempty(analyfname), 'need analyfname to extract premotor decode pvalue'); 
+    assert(~isempty(analyfname), 'need analyfname to extract premotor decode pvalue');
 end
 
 
@@ -26,14 +27,14 @@ if ~isempty(analyfname)
     disp('CLEARING ALLBRANCH AND REOPENING (using analyfname)');
     clear ALLBRANCH
     savedir = '/bluejay5/lucas/analyses/neural/CTXT_ClassGeneral_M';
-
-load([savedir '/ALLBRANCHv2_' analyfname '.mat']);
-load([savedir '/SUMMARYv2_' analyfname '.mat']);
-try
-    load([savedir '/PARAMSv2_' analyfname '.mat']);
-catch err
-end
-
+    
+    load([savedir '/ALLBRANCHv2_' analyfname '.mat']);
+    load([savedir '/SUMMARYv2_' analyfname '.mat']);
+    try
+        load([savedir '/PARAMSv2_' analyfname '.mat']);
+    catch err
+    end
+    
 end
 
 
@@ -41,10 +42,10 @@ end
 strtype = ALLBRANCH.alignpos(apos).ParamsFirstIter.Extract.strtype;
 
 if strcmp(ALLBRANCH.alignpos(apos).ParamsFirstIter.Extract.strtype, 'xaa')
-% datwindow_xcov = [-0.1 0.05]; % data to use, rel onset
-datwindow_xcov = [-0.12 0.07]; % data to use, rel onset
+    % datwindow_xcov = [-0.1 0.05]; % data to use, rel onset
+    datwindow_xcov = [-0.12 0.07]; % data to use, rel onset
 elseif strcmp(ALLBRANCH.alignpos(apos).ParamsFirstIter.Extract.strtype, 'aax') % then is divergent
-datwindow_xcov = [-0.05 0.14]; % data to use, rel onset  
+    datwindow_xcov = [-0.05 0.14]; % data to use, rel onset
 end
 
 
@@ -64,9 +65,9 @@ Params.RemoveHandCoded =1 ; % see below
 Params.expttokeep = ExptToPlot;
 
 if strcmp(ALLBRANCH.alignpos(apos).ParamsFirstIter.Extract.strtype, 'aax') % then is divergent
-        Params.GapDurPostMax = 0.1; %
+    Params.GapDurPostMax = 0.1; %
 end
-    ALLBRANCH = lt_neural_v2_CTXT_BranchFilter(ALLBRANCH, Params);
+ALLBRANCH = lt_neural_v2_CTXT_BranchFilter(ALLBRANCH, Params);
 
 %%
 if useDprime==1
@@ -84,12 +85,12 @@ end
 
 %% ===== organize data by unique branches
 if ~isempty(analyfname)
-DATSTRUCT_BYBRANCH = lt_neural_v2_CTXT_BRANCH_OrgByBranchID(ALLBRANCH, analyfname, 1, ...
-    useDprime);
+    DATSTRUCT_BYBRANCH = lt_neural_v2_CTXT_BRANCH_OrgByBranchID(ALLBRANCH, analyfname, 1, ...
+        useDprime);
     
 else
-DATSTRUCT_BYBRANCH = lt_neural_v2_CTXT_BRANCH_OrgByBranchID(ALLBRANCH, '', '', ...
-    useDprime);
+    DATSTRUCT_BYBRANCH = lt_neural_v2_CTXT_BRANCH_OrgByBranchID(ALLBRANCH, '', '', ...
+        useDprime);
 end
 %% ===== FOR EACH BIRD PLOT EACH BRANCH, SEPARATING BY BRAIN REGION
 numbirds = length(DATSTRUCT_BYBRANCH.bird);
@@ -137,7 +138,478 @@ for i=1:numbirds
             % ----- get premotor decode if exists
             predecode_p = [];
             if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
-            predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
+                predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
+            end
+            
+            if ~isempty(ydecode)
+                %                 % -- plot mean
+                %                 if size(ydecode,1)>1
+                %                     ymean = mean(ydecode,1);
+                %                     ysem = lt_sem(ydecode);
+                %                     shadedErrorBar(xdecode, ymean, ysem, {'Color', 'r'}, 1);
+                %                 end
+                
+                % -- lines
+                line([0 0], ylim);
+                
+                % --- plot mean + SD of neg control
+                %                 ymean_neg = mean(ydecode_neg, 1);
+                %                 ystd_neg = std(ydecode_neg, 0,1);
+                %                 shadedErrorBar(xdecode, ymean_neg, ystd_neg, {'Color', 'k'}, 1);
+                
+                
+                plot(xdecode, ydecode_neg, '-', 'Color', [0.6 0.6 0.6]);
+                plot(xdecode, mean(ydecode_neg, 1), '-k', 'LineWidth', 2);
+                
+                plot(xdecode, ydecode_pos, '-b');
+                plot(xdecode, mean(ydecode_pos,1), '-b', 'LineWidth',2);
+                
+                if sortbypremotorpval ==1
+                    % then color differently based on whether premotor
+                    % decode was significant
+                    
+                    % -- significant
+                    if any(predecode_p<0.05)
+                        plot(xdecode, ydecode(predecode_p<0.05, :), '-', 'Color', 'r');
+                        plot(xdecode, mean(ydecode(predecode_p<0.05, :),1), '-r', 'LineWidth', 2)
+                    end
+                    % -- not significant
+                    if any(predecode_p>=0.05)
+                        plot(xdecode, ydecode(predecode_p>=0.05, :), '-', 'Color', 'm');
+                    end
+                    % mean of all
+                    
+                else
+                    plot(xdecode, ydecode, '-', 'Color', 'r');
+                    plot(xdecode, mean(ydecode,1), '-r', 'LineWidth', 2)
+                end
+                
+                
+                ymax = max(ydecode(:));
+                plot(sylcontours_x, 0.25*sylcontours_mean+1, '-m');
+            end
+            
+            % ---- note down neuron/channel number
+            neuronOrig = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron(inds);
+            for j=1:length(neuronOrig)
+                
+                nn = neuronOrig(j);
+                
+                chan = ALLBRANCH.SummaryStruct.birds(i).neurons(nn).channel;
+                lt_plot_text(xdecode(end), ydecode(j,end), ['ch' num2str(chan)], 'b', 7);
+                
+            end
+            
+            % ===================== TEST WHETHER SIGNIFICANT DECODING
+            % ACCURACY
+            if (0)
+                for tt = 1:length(xdecode)
+                    % in each time bin do ttest comparing data to shuffle
+                    
+                    [h, p] = ttest(ydecode(:,tt), ydecode_neg(:,tt));
+                    if p<0.05
+                        plot(xdecode, 1, 'ob');
+                    end
+                end
+            else
+                
+                % ---------------------- ttest of entire trajectory vs. neg
+                % control
+                [h, p] = ttest(mean(ydecode,2), mean(ydecode_neg,2));
+                lt_plot_pvalue(p, 'mean decode vs. neg', 1);
+            end
+            
+        end
+        
+    end
+    axis tight
+    if ~isempty(hsplots)
+        linkaxes(hsplots, 'xy');
+    end
+end
+
+%% ===== FOR EACH BIRD PLOT EACH BRANCH, SEPARATING BY BRAIN REGION
+% ======== ALL SUBTRACTING NEGATIVE CONTROL
+
+numbirds = length(DATSTRUCT_BYBRANCH.bird);
+locationstoplot = BrainRegions;
+apos = 1;
+
+for i=1:numbirds
+    birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
+    figcount=1;
+    subplotrows=4;
+    subplotcols=max([2 length(locationstoplot)]);
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots =[];
+    
+    numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
+    
+    for bb=1:numbranches
+        
+        thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
+        
+        % ========= plot for this branch
+        for loc = locationstoplot
+            
+            inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
+            if ~any(inds)
+                continue
+            end
+            
+            % -------------- PLOT
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            hsplots = [hsplots hsplot];
+            title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
+            ylabel('minus neg control');
+            
+            xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
+            ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
+            ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
+            ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
+            
+            sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
+            sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
+            sylcontours_mean = mean(sylcontours_mean,1);
+            sylcontours_x = mean(sylcontours_x,1);
+            
+            % =============== subtract negative control
+            ydecode = ydecode - ydecode_neg;
+            ydecode_pos = ydecode_pos - ydecode_neg;
+            
+            % ----- get premotor decode if exists
+            predecode_p = [];
+            if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
+                predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
+            end
+            
+            if ~isempty(ydecode)
+                %                 % -- plot mean
+                %                 if size(ydecode,1)>1
+                %                     ymean = mean(ydecode,1);
+                %                     ysem = lt_sem(ydecode);
+                %                     shadedErrorBar(xdecode, ymean, ysem, {'Color', 'r'}, 1);
+                %                 end
+                
+                % -- lines
+                line([0 0], ylim);
+                
+                % --- plot mean + SD of neg control
+                %                 ymean_neg = mean(ydecode_neg, 1);
+                %                 ystd_neg = std(ydecode_neg, 0,1);
+                %                 shadedErrorBar(xdecode, ymean_neg, ystd_neg, {'Color', 'k'}, 1);
+                
+                
+%                 plot(xdecode, ydecode_neg, '-', 'Color', [0.6 0.6 0.6]);
+%                 plot(xdecode, mean(ydecode_neg, 1), '-k', 'LineWidth', 2);
+                
+                plot(xdecode, ydecode_pos, '-b');
+                plot(xdecode, mean(ydecode_pos,1), '-b', 'LineWidth',2);
+                
+                if sortbypremotorpval ==1
+                    % then color differently based on whether premotor
+                    % decode was significant
+                    
+                    % -- significant
+                    if any(predecode_p<0.05)
+                        plot(xdecode, ydecode(predecode_p<0.05, :), '-', 'Color', 'r');
+                        plot(xdecode, mean(ydecode(predecode_p<0.05, :),1), '-r', 'LineWidth', 2)
+                    end
+                    % -- not significant
+                    if any(predecode_p>=0.05)
+                        plot(xdecode, ydecode(predecode_p>=0.05, :), '-', 'Color', 'm');
+                    end
+                    % mean of all
+                    
+                else
+                    plot(xdecode, ydecode, '-', 'Color', 'r');
+                    plot(xdecode, mean(ydecode,1), '-r', 'LineWidth', 2)
+                end
+                
+                
+                ymax = max(ydecode(:));
+                plot(sylcontours_x, 0.25*sylcontours_mean+1, '-m');
+            end
+        end
+        
+    end
+    axis tight
+    if ~isempty(hsplots)
+        linkaxes(hsplots, 'xy');
+    end
+end
+
+
+%% ============ FOR EACH NEURON, COLLECT ACROSS ALL BRANCHES
+
+
+for i=1:numbirds
+    birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
+    
+    figcount=1;
+    subplotrows=4;
+    subplotcols=3;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots =[];
+    
+    numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
+    
+    AllXdecode = [];
+    AllYdecode = [];
+    AllYdecode_neg = [];
+    AllYdecode_pos = [];
+    AllNeurInds = [];
+    AllBregions = {};
+    
+    for bb=1:numbranches
+        
+        thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
+        
+        
+        
+        % ========== COLLECT
+        xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
+        ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode;
+        ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg;
+        ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos;
+        neurInds = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron;
+        bregions = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion;
+        
+        sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean;
+        sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x;
+        sylcontours_mean = mean(sylcontours_mean,1);
+        sylcontours_x = mean(sylcontours_x,1);
+        
+        % ===========
+        AllXdecode = [AllXdecode; xdecode];
+        AllYdecode = [AllYdecode; ydecode];
+        AllYdecode_neg = [AllYdecode_neg; ydecode_neg];
+        AllYdecode_pos = [AllYdecode_pos; ydecode_pos];
+        AllNeurInds = [AllNeurInds; neurInds];
+        AllBregions = [AllBregions; bregions];
+    end
+    
+    Xdecode = AllXdecode(1,:);
+    
+    % ================= GO THRU EACH NEURON AND PLOT
+    for loc = locationstoplot
+        
+        neuronstoplot = AllNeurInds(strcmp(AllBregions, loc));
+        neuronstoplot = unique(neuronstoplot); % list of neurons that have data for this bregion
+        
+        % ===========
+        for n=1:length(neuronstoplot)
+            nn = neuronstoplot(n);
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            hsplots = [hsplots hsplot];
+            title([birdname '-n' num2str(nn) ' [' loc{1} ']']);
+            
+            
+            indstmp = AllNeurInds == nn;
+            
+            x = Xdecode;
+            ymat = AllYdecode(indstmp, :);
+            yneg = AllYdecode_neg(indstmp, :);
+            ypos = AllYdecode_pos(indstmp, :);
+           
+            plot(x, ymat, '-k');
+            plot(x, mean(ymat,1), '-k', 'LineWidth', 2);
+            
+            plot(x, yneg, '-r');
+            plot(x, mean(yneg,1), '-r', 'LineWidth', 2);
+            
+            plot(x, ypos, '-b');
+            plot(x, mean(ypos,1), '-b', 'LineWidth', 2);
+            
+            line([0 0], ylim, 'LineStyle', '--', 'Color', 'y');
+        end
+    end
+end
+
+
+%% ===== FOR EACH BIRD AND BRANCH, OVERLAY REPRESENTATION OF ALL FR
+if plotAllZscoreFR ==1
+    numbirds = length(DATSTRUCT_BYBRANCH.bird);
+    locationstoplot = BrainRegions;
+    motifpredur = ALLBRANCH.alignpos(apos).ParamsFirstIter.motifpredur;
+    for i=1:numbirds
+        birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
+        figcount=1;
+        subplotrows=2;
+        subplotcols=2;
+        fignums_alreadyused=[];
+        hfigs=[];
+        hsplots =[];
+        
+        numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
+        
+        for bb=1:numbranches
+            
+            thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
+            
+            % ========= plot for this branch
+            hsplots = [];
+            for loc = locationstoplot
+                
+                inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
+                if ~any(inds)
+                    continue
+                end
+                
+                % -------------- PLOT
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                hsplots = [hsplots hsplot];
+                title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
+                
+                
+                xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
+                ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
+                %             ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
+                %             ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
+                
+                %             sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
+                %             sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
+                %             sylcontours_mean = mean(sylcontours_mean,1);
+                %             sylcontours_x = mean(sylcontours_x,1);
+                
+                % ----- get premotor decode if exists
+                predecode_p = [];
+                if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
+                    predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
+                end
+                
+                
+                % ============== FOR EACH NEURON, PLOT FR
+                branchall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_branch(inds);
+                neuronall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron(inds);
+                sylcontall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
+                sylcontx = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(1,:);
+                sylcontx = sylcontx+motifpredur;
+                
+                if (1)
+                    if sortbypremotorpval==1
+                        branchall = branchall(predecode_p<0.05);
+                        neuronall = neuronall(predecode_p<0.05);
+                        sylcontall = sylcontall(predecode_p<0.05,:);
+                        ydecode = ydecode(predecode_p<0.05, :);
+                    end
+                end
+                
+                % =========== for each neuron, collect FR across classes
+                BranchNamesTmp = {};% -- collect branch names
+                for n = 1:length(neuronall)
+                    nn = neuronall(n);
+                    branchthis = branchall(n);
+                    
+                    dattmp = ALLBRANCH.alignpos(apos).bird(i).branch(branchthis).neuron(nn);
+                    BranchNamesTmp = [BranchNamesTmp dattmp.prms_regexpstr];
+                    
+                    % ==== collect original FR
+                    numclasses = length(dattmp.FR.classnum);
+                    FRmean_all = [];
+                    for cc = 1:numclasses
+                        
+                        frmat = dattmp.FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
+                        frx = dattmp.FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
+                        
+                        frmean = mean(frmat,2);
+                        
+                        if ~isempty(FRmean_all)
+                            if size(FRmean_all,2) ~= length(frmean)
+                                veclength = min([size(FRmean_all,2), length(frmean)]);
+                                FRmean_all = FRmean_all(:,1:veclength);
+                                frmean = frmean(1:veclength);
+                            end
+                        end
+                        
+                        FRmean_all = [FRmean_all; frmean'];
+                    end
+                    
+                    % ==== plot for this neuron
+                    % -- first take global zscore
+                    frmean = mean(FRmean_all(:));
+                    frstd = std(FRmean_all(:));
+                    Y = (FRmean_all - frmean)./frstd;
+                    plot(frx, Y+3*(n-1), '-', 'Color', 0.2+0.6*[rand rand rand], 'LineWidth', 2);
+                    
+                end
+                assert(length(unique(BranchNamesTmp))<2, 'diff branches ...');
+                % === overlay syl contour
+                plot(sylcontx, mean(sylcontall,1)+3*(length(neuronall)-1)+6, '--k')
+                line([motifpredur motifpredur], ylim);
+                
+                % === overlay all decode traces
+                if (0)
+                    % - first take mean then take z
+                    ydecode = mean(ydecode,1);
+                    tmpmean = mean(ydecode(:));
+                    tmpstd = std(ydecode(:), 0,1);
+                    ydecode_z = (ydecode - tmpmean)./tmpstd;
+                    
+                    plot(xdecode+motifpredur, ydecode_z'+3*(length(neuronall)-1)+3, ':r', 'LineWidth', 1.5);
+                    %             line(xlim, [3*(length(neuronall)-1)+3.5 3*(length(neuronall)-1)+3.5], 'LineStyle', ':');
+                    %             line(xlim, [3*(length(neuronall)-1)+2.5 3*(length(neuronall)-1)+2.5], 'LineStyle', ':');
+                end
+                
+            end
+            linkaxes(hsplots, 'xy');
+            if strcmp(strtype, 'xaa')
+                xlim([0.03 0.22]);
+            else
+            end
+        end
+    end
+    
+end
+%% ===== FOR EACH BIRD PLOT EACH BRANCH, SEPARATING BY BRAIN REGION
+numbirds = length(DATSTRUCT_BYBRANCH.bird);
+locationstoplot = BrainRegions;
+apos = 1;
+
+for i=1:numbirds
+    birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
+    figcount=1;
+    subplotrows=4;
+    subplotcols=max([2 length(locationstoplot)]);
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots =[];
+    
+    numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
+    
+    for bb=1:numbranches
+        
+        thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
+        
+        % ========= plot for this branch
+        for loc = locationstoplot
+            
+            inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
+            if ~any(inds)
+                continue
+            end
+            
+            % -------------- PLOT
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            hsplots = [hsplots hsplot];
+            title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
+            
+            xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
+            ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
+            ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
+            ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
+            
+            sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
+            sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
+            sylcontours_mean = mean(sylcontours_mean,1);
+            sylcontours_x = mean(sylcontours_x,1);
+            
+            % ----- get premotor decode if exists
+            predecode_p = [];
+            if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
+                predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
             end
             
             if ~isempty(ydecode)
@@ -165,12 +637,12 @@ for i=1:numbirds
                     
                     % -- significant
                     if any(predecode_p<0.05)
-                    plot(xdecode, ydecode(predecode_p<0.05, :), '-', 'Color', 'r');
-                    plot(xdecode, mean(ydecode(predecode_p<0.05, :),1), '-r', 'LineWidth', 2)
+                        plot(xdecode, ydecode(predecode_p<0.05, :), '-', 'Color', 'r');
+                        plot(xdecode, mean(ydecode(predecode_p<0.05, :),1), '-r', 'LineWidth', 2)
                     end
                     % -- not significant
                     if any(predecode_p>=0.05)
-                    plot(xdecode, ydecode(predecode_p>=0.05, :), '-', 'Color', 'm');
+                        plot(xdecode, ydecode(predecode_p>=0.05, :), '-', 'Color', 'm');
                     end
                     % mean of all
                     
@@ -189,7 +661,7 @@ for i=1:numbirds
             for j=1:length(neuronOrig)
                 
                 nn = neuronOrig(j);
-            
+                
                 chan = ALLBRANCH.SummaryStruct.birds(i).neurons(nn).channel;
                 lt_plot_text(xdecode(end), ydecode(j,end), ['ch' num2str(chan)], 'b', 7);
                 
@@ -199,19 +671,19 @@ for i=1:numbirds
             % ACCURACY
             if (0)
                 for tt = 1:length(xdecode)
-                % in each time bin do ttest comparing data to shuffle
-               
-                [h, p] = ttest(ydecode(:,tt), ydecode_neg(:,tt));
-                if p<0.05
-                    plot(xdecode, 1, 'ob');
+                    % in each time bin do ttest comparing data to shuffle
+                    
+                    [h, p] = ttest(ydecode(:,tt), ydecode_neg(:,tt));
+                    if p<0.05
+                        plot(xdecode, 1, 'ob');
+                    end
                 end
-            end
             else
-            
-            % ---------------------- ttest of entire trajectory vs. neg
-            % control
-            [h, p] = ttest(mean(ydecode,2), mean(ydecode_neg,2));
-            lt_plot_pvalue(p, 'mean decode vs. neg', 1);
+                
+                % ---------------------- ttest of entire trajectory vs. neg
+                % control
+                [h, p] = ttest(mean(ydecode,2), mean(ydecode_neg,2));
+                lt_plot_pvalue(p, 'mean decode vs. neg', 1);
             end
             
         end
@@ -225,233 +697,112 @@ end
 
 
 
-%% ===== FOR EACH BIRD AND BRANCH, OVERLAY REPRESENTATION OF ALL FR
 
-numbirds = length(DATSTRUCT_BYBRANCH.bird);
-locationstoplot = BrainRegions;
-motifpredur = ALLBRANCH.alignpos(apos).ParamsFirstIter.motifpredur;
-for i=1:numbirds
-    birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
-    figcount=1;
-    subplotrows=2;
-    subplotcols=2;
-    fignums_alreadyused=[];
-    hfigs=[];
-    hsplots =[];
-    
-    numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
-    
-    for bb=1:numbranches
-        
-        thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
-        
-        % ========= plot for this branch
-        hsplots = [];
-        for loc = locationstoplot
-            
-            inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
-            if ~any(inds)
-                continue
-            end
-            
-            % -------------- PLOT
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
-            
-            
-            xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
-            ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
-            %             ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
-            %             ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
-            
-            %             sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
-            %             sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
-            %             sylcontours_mean = mean(sylcontours_mean,1);
-            %             sylcontours_x = mean(sylcontours_x,1);
-            
-            % ----- get premotor decode if exists
-            predecode_p = [];
-            if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
-                predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
-            end
-            
-            
-            % ============== FOR EACH NEURON, PLOT FR
-            branchall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_branch(inds);
-            neuronall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron(inds);
-            sylcontall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
-            sylcontx = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(1,:);
-            sylcontx = sylcontx+motifpredur;
-            
-            if (1)
-            if sortbypremotorpval==1
-                branchall = branchall(predecode_p<0.05);
-                neuronall = neuronall(predecode_p<0.05);
-                sylcontall = sylcontall(predecode_p<0.05,:);
-                ydecode = ydecode(predecode_p<0.05, :);
-            end
-            end
-            
-            % =========== for each neuron, collect FR across classes
-            BranchNamesTmp = {};% -- collect branch names
-            for n = 1:length(neuronall)
-                nn = neuronall(n);
-                branchthis = branchall(n);
-                
-                dattmp = ALLBRANCH.alignpos(apos).bird(i).branch(branchthis).neuron(nn);
-                BranchNamesTmp = [BranchNamesTmp dattmp.prms_regexpstr];
-                
-                % ==== collect original FR
-                numclasses = length(dattmp.FR.classnum);
-                FRmean_all = [];
-                for cc = 1:numclasses
-                    
-                    frmat = dattmp.FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
-                    frx = dattmp.FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
-                    
-                    frmean = mean(frmat,2);
-                    
-                    FRmean_all = [FRmean_all; frmean'];
-                end
-                
-                % ==== plot for this neuron
-                % -- first take global zscore
-                frmean = mean(FRmean_all(:));
-                frstd = std(FRmean_all(:));
-                Y = (FRmean_all - frmean)./frstd;
-                plot(frx, Y+3*(n-1), '-', 'Color', 0.2+0.6*[rand rand rand], 'LineWidth', 2);
-                
-            end
-            assert(length(unique(BranchNamesTmp))<2, 'diff branches ...');
-            % === overlay syl contour
-            plot(sylcontx, mean(sylcontall,1)+3*(length(neuronall)-1)+6, '--k')
-            line([motifpredur motifpredur], ylim);
-            
-            % === overlay all decode traces
-            if (0)
-            % - first take mean then take z
-            ydecode = mean(ydecode,1);
-            tmpmean = mean(ydecode(:));
-            tmpstd = std(ydecode(:), 0,1);
-            ydecode_z = (ydecode - tmpmean)./tmpstd;
-            
-            plot(xdecode+motifpredur, ydecode_z'+3*(length(neuronall)-1)+3, ':r', 'LineWidth', 1.5);
-%             line(xlim, [3*(length(neuronall)-1)+3.5 3*(length(neuronall)-1)+3.5], 'LineStyle', ':');
-%             line(xlim, [3*(length(neuronall)-1)+2.5 3*(length(neuronall)-1)+2.5], 'LineStyle', ':');
-            end
-            
-        end
-        linkaxes(hsplots, 'xy');
-        if strcmp(strtype, 'xaa')
-        xlim([0.03 0.22]);
-        else
-        end
-    end
-end
+
+
 
 %% ===== FOR EACH BIRD AND BRANCH, OVERLAY REPRESENTATION OF ALL FR
 
 if (0)
     % this plots STD of FR, but really noisy ...
-
-numbirds = length(DATSTRUCT_BYBRANCH.bird);
-locationstoplot = BrainRegions;
-
-for i=1:numbirds
-    birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
-    figcount=1;
-    subplotrows=4;
-    subplotcols=2;
-    fignums_alreadyused=[];
-    hfigs=[];
-    hsplots =[];
     
-    numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
+    numbirds = length(DATSTRUCT_BYBRANCH.bird);
+    locationstoplot = BrainRegions;
     
-    for bb=1:numbranches
+    for i=1:numbirds
+        birdname = ALLBRANCH.SummaryStruct.birds(i).birdname;
+        figcount=1;
+        subplotrows=4;
+        subplotcols=2;
+        fignums_alreadyused=[];
+        hfigs=[];
+        hsplots =[];
         
-        thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
+        numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
         
-        % ========= plot for this branch
-        for loc = locationstoplot
+        for bb=1:numbranches
             
-            inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
-            if ~any(inds)
-                continue
-            end
+            thisbranch = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).regexpstr;
             
-            % -------------- PLOT
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
-            
-            
-%             xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
-%             ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
-%             ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
-%             ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
-%             
-%             sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
-%             sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
-%             sylcontours_mean = mean(sylcontours_mean,1);
-%             sylcontours_x = mean(sylcontours_x,1);
-            
-            % ----- get premotor decode if exists
-            predecode_p = [];
-            if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
-            predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
-            end
-            
-            
-            % ============== FOR EACH NEURON, PLOT FR
-            branchall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_branch(inds);
-            neuronall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron(inds);
-            
-            if sortbypremotorpval==1
-               branchall = branchall(predecode_p<0.05);
-               neuronall = neuronall(predecode_p<0.05);
-            end
-            
-            % =========== for each neuron, collect FR across classes
-            for n = 1:length(neuronall)
-                nn = neuronall(n);
-                branchthis = branchall(n);
+            % ========= plot for this branch
+            for loc = locationstoplot
                 
-                dattmp = ALLBRANCH.alignpos(apos).bird(i).branch(branchthis).neuron(nn);
-                
-                % ==== collect original FR
-                numclasses = length(dattmp.FR.classnum);
-                FRmean_all = [];
-                for cc = 1:numclasses
-                
-                frmat = dattmp.FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
-                frx = dattmp.FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
-                
-                frmean = mean(frmat,2);
-                
-                FRmean_all = [FRmean_all; frmean'];
+                inds = strcmp(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.brainregion, loc);
+                if ~any(inds)
+                    continue
                 end
                 
-                % ================= PLOT FR
-                % --- z-transform (relative to global mean and sd)
-                frmean = mean(FRmean_all(:));
-                frstd = std(FRmean_all(:));
-                Y = (FRmean_all - frmean)./frstd;
-                if (0)
-                plot(frx, Y, '-', 'Color', 0.2+0.6*[rand rand rand])
+                % -------------- PLOT
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                hsplots = [hsplots hsplot];
+                title([birdname '-' thisbranch{1} ' [' loc{1} ']']);
                 
-                else
-                % --- running std
-                Ystd = std(Y,0,1);
-                plot(frx, Ystd, '-', 'Color', 0.2+0.6*[rand rand rand])
+                
+                %             xdecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.xdecode(1,:);
+                %             ydecode = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode(inds,:);
+                %             ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
+                %             ydecode_pos = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_pos(inds,:);
+                %
+                %             sylcontours_mean = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_mean(inds,:);
+                %             sylcontours_x = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.sylcontour_x(inds,:);
+                %             sylcontours_mean = mean(sylcontours_mean,1);
+                %             sylcontours_x = mean(sylcontours_x,1);
+                
+                % ----- get premotor decode if exists
+                predecode_p = [];
+                if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
+                    predecode_p = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.PREMOTORDECODE_pval(inds);
                 end
+                
+                
+                % ============== FOR EACH NEURON, PLOT FR
+                branchall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_branch(inds);
+                neuronall = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.IndsOriginal_neuron(inds);
+                
+                if sortbypremotorpval==1
+                    branchall = branchall(predecode_p<0.05);
+                    neuronall = neuronall(predecode_p<0.05);
+                end
+                
+                % =========== for each neuron, collect FR across classes
+                for n = 1:length(neuronall)
+                    nn = neuronall(n);
+                    branchthis = branchall(n);
+                    
+                    dattmp = ALLBRANCH.alignpos(apos).bird(i).branch(branchthis).neuron(nn);
+                    
+                    % ==== collect original FR
+                    numclasses = length(dattmp.FR.classnum);
+                    FRmean_all = [];
+                    for cc = 1:numclasses
+                        
+                        frmat = dattmp.FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
+                        frx = dattmp.FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
+                        
+                        frmean = mean(frmat,2);
+                        
+                        FRmean_all = [FRmean_all; frmean'];
+                    end
+                    
+                    % ================= PLOT FR
+                    % --- z-transform (relative to global mean and sd)
+                    frmean = mean(FRmean_all(:));
+                    frstd = std(FRmean_all(:));
+                    Y = (FRmean_all - frmean)./frstd;
+                    if (0)
+                        plot(frx, Y, '-', 'Color', 0.2+0.6*[rand rand rand])
+                        
+                    else
+                        % --- running std
+                        Ystd = std(Y,0,1);
+                        plot(frx, Ystd, '-', 'Color', 0.2+0.6*[rand rand rand])
+                    end
+                end
+                
+                
             end
-            
-             
         end
     end
-end
 end
 
 %% ===== FOR EACH BIRD AND BRANCH, OVERLAY MEAN OF DIFF BRAIN REGIONS
@@ -513,7 +864,7 @@ for i=1:numbirds
                 % -- plot negative control
                 if sortbypremotorpval ==1
                     if any(predecode_p<0.05)
-                    plot(xdecode, mean(ydecode_neg(predecode_p<0.05,:), 1), '--', 'LineWidth', 1, 'Color', plotcols{ll});
+                        plot(xdecode, mean(ydecode_neg(predecode_p<0.05,:), 1), '--', 'LineWidth', 1, 'Color', plotcols{ll});
                     end
                 else
                     plot(xdecode, mean(ydecode_neg, 1), '--', 'LineWidth', 1, 'Color', plotcols{ll});
@@ -534,19 +885,19 @@ for i=1:numbirds
                         end
                         plot(xdecode, ymean, '-', 'LineWidth', 2, ...
                             'Color', plotcols{ll});
-                        end
+                    end
                     
                 else
-                        ymean = mean(ydecode,1);
-                        ysem = lt_sem(ydecode);
-                        
-                        if length(ysem)>1
-                            shadedErrorBar(xdecode, ymean, ysem, {'Color', plotcols{ll}}, 1);
-                        end
-                        plot(xdecode, ymean, '-', 'LineWidth', 2, ...
-                            'Color', plotcols{ll});
-                        
-               end
+                    ymean = mean(ydecode,1);
+                    ysem = lt_sem(ydecode);
+                    
+                    if length(ysem)>1
+                        shadedErrorBar(xdecode, ymean, ysem, {'Color', plotcols{ll}}, 1);
+                    end
+                    plot(xdecode, ymean, '-', 'LineWidth', 2, ...
+                        'Color', plotcols{ll});
+                    
+                end
                 
                 ymax = max(ydecode(:));
                 plot(sylcontours_x, 0.25*sylcontours_mean+0.8, '-m');
@@ -635,7 +986,7 @@ for i=1:numbirds
             xdecode = xdecode(indtmp);
             ydecode = ydecode(:, indtmp);
             
-
+            
             % ----- get premotor decode if exists
             predecode_p = [];
             if isfield(DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT, 'PREMOTORDECODE_pval')
@@ -930,8 +1281,8 @@ linkaxes(hsplots, 'xy');
 if length(BrainRegions)==2
     %% ==== cross correlation between each pair of brain regions
     if (0) % OLD VERSION !!!!!!!!!!!!!!!!!
-%         datwindow = [-0.1 0.05]; % data to use, rel onset
-%         windowmax = 0.05; % in sec
+        %         datwindow = [-0.1 0.05]; % data to use, rel onset
+        %         windowmax = 0.05; % in sec
         datwindow = []; % data to use, rel onset
         windowmax = 0.1; % in sec
         
@@ -962,10 +1313,10 @@ if length(BrainRegions)==2
                     ydecode_neg = DATSTRUCT_BYBRANCH.bird(i).branchID(bb).DAT.ydecode_neg(inds,:);
                     
                     if ~isempty(datwindow)
-                       indstmp = xdecode>=datwindow(1) & xdecode<=datwindow(2);
-                       
-                       ydecode = ydecode(:,indstmp);
-                       ydecode_neg = ydecode_neg(:, indstmp);
+                        indstmp = xdecode>=datwindow(1) & xdecode<=datwindow(2);
+                        
+                        ydecode = ydecode(:,indstmp);
+                        ydecode_neg = ydecode_neg(:, indstmp);
                         
                     end
                     % ==================== COLLECT
@@ -984,7 +1335,7 @@ if length(BrainRegions)==2
                         dat2 = Yall{2}(kk,:);
                         
                         [cc, lags] = xcov(dat1, dat2, ceil(windowmax/binsize), 'coeff');
-%                         [cc, lags] = xcorr(dat1, dat2, ceil(windowmax/binsize));
+                        %                         [cc, lags] = xcorr(dat1, dat2, ceil(windowmax/binsize));
                         plot(lags*binsize, cc);
                         YallMat = [YallMat; cc];
                     end
@@ -1047,11 +1398,11 @@ if length(BrainRegions)==2
                 
                 % --------- withold to premotor window here
                 if ~isempty(datwindow_xcov)
-                        indstmp = xdecode(1,:)>=datwindow_xcov(1) & ...
-                            xdecode(1,:)<=datwindow_xcov(2);
-                        xdecode = xdecode(:,indstmp);
-                        ydecode = ydecode(:,indstmp);
-                        ydecode_neg = ydecode_neg(:, indstmp);
+                    indstmp = xdecode(1,:)>=datwindow_xcov(1) & ...
+                        xdecode(1,:)<=datwindow_xcov(2);
+                    xdecode = xdecode(:,indstmp);
+                    ydecode = ydecode(:,indstmp);
+                    ydecode_neg = ydecode_neg(:, indstmp);
                 end
                 
                 % ---- collect all binsizes - will make sure all are equal
@@ -1122,9 +1473,9 @@ if length(BrainRegions)==2
     windowmax = 0.075; % sec
     doCConMeans = 0; % then uses mean for brain region and branch
     for j=1:max(BirdID)
-    [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID(BirdID==j), ...
-        BranchID(BirdID==j), LocationAll(BirdID==j), YallMat(BirdID==j, :), ...
-        XallMat(BirdID==j, :), locationstoplot, 0, doCConMeans);        
+        [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID(BirdID==j), ...
+            BranchID(BirdID==j), LocationAll(BirdID==j), YallMat(BirdID==j, :), ...
+            XallMat(BirdID==j, :), locationstoplot, 0, doCConMeans);
     end
     
     %% ============== COMBINE ACROSS BIRDS
@@ -1132,10 +1483,10 @@ if length(BrainRegions)==2
     doCConMeans = 0; % then uses mean for brain region and branch
     [CCall, LagsAll, PairedBirdID, PairedBranchID, binsize] = fn_calcxcov(windowmax, BirdID, BranchID, LocationAll, ...
         YallMat, XallMat, locationstoplot, 0, doCConMeans);
-   
     
-    %% 
-        
+    
+    %%
+    
     %% CALCULATE GRAND MEAN TO GET PEAK TIMING, AND BOOTSTRAP TO GET VARIABILITY
     
     % -------------- DAT
@@ -1147,15 +1498,15 @@ if length(BrainRegions)==2
     ccmean_shuff = [];
     ccmean_shuff_interp = [];
     for nn=1:nshuff
-       
+        
         indtmp = randi(N, 1, N);
         
         ccmean_shuff = [ccmean_shuff; mean(CCall(indtmp,:),1)];
         
         % ---  smooth
-         ccmean_shuff_interp = [ccmean_shuff_interp; ...
-             smooth(mean(CCall(indtmp,:),1), 9)'];
- 
+        ccmean_shuff_interp = [ccmean_shuff_interp; ...
+            smooth(mean(CCall(indtmp,:),1), 9)'];
+        
     end
     
     
@@ -1165,82 +1516,82 @@ if length(BrainRegions)==2
     title('dat/shuff, no interp');
     plot(LagsAll(1,:).*binsize, ccmean_shuff, '-', 'Color', [0.7 0.7 0.7]);
     plot(LagsAll(1,:).*binsize, ccmean_dat, '-k', 'LineWidth', 3);
-
-     % ---------------------
-     lt_plot_zeroline;
-     lt_plot_zeroline_vert;
-
-     
-     % ============ same, but with interpolation
+    
+    % ---------------------
+    lt_plot_zeroline;
+    lt_plot_zeroline_vert;
+    
+    
+    % ============ same, but with interpolation
     lt_subplot(2,2,2); hold on;
     title('dat/shuff, with interp');
     
-   % --- shuff
-%         
-%    ccmean_shuff_interp = interp1(1:length(ccmean_dat), ccmean_shuff', 1:length(ccmean_dat), ...
-%        'spline');
-     plot(LagsAll(1,:).*binsize, ccmean_shuff_interp, '-', 'Color', [0.7 0.7 0.7]);
-  
-   % --- data
-%    xfit = LagsAll(1,:);
-   
-%    xfit = 1:0.25:length(ccmean_dat);
-%    ccmean_dat_interp = interp1(1:length(ccmean_dat), ccmean_dat', xfit);
-   ccmean_dat_interp = smooth(ccmean_dat, 9);
-%    x = 1:length(ccmean_dat);
-%    ccmean_dat_interp = fit(x', ccmean_dat', 'smoothingspline');
-   plot(LagsAll(1,:).*binsize, ccmean_dat_interp, '-k', 'LineWidth', 3);
-   
-     % ---------------------
-     lt_plot_zeroline;
-     lt_plot_zeroline_vert;
-     
-     
-     
+    % --- shuff
+    %
+    %    ccmean_shuff_interp = interp1(1:length(ccmean_dat), ccmean_shuff', 1:length(ccmean_dat), ...
+    %        'spline');
+    plot(LagsAll(1,:).*binsize, ccmean_shuff_interp, '-', 'Color', [0.7 0.7 0.7]);
+    
+    % --- data
+    %    xfit = LagsAll(1,:);
+    
+    %    xfit = 1:0.25:length(ccmean_dat);
+    %    ccmean_dat_interp = interp1(1:length(ccmean_dat), ccmean_dat', xfit);
+    ccmean_dat_interp = smooth(ccmean_dat, 9);
+    %    x = 1:length(ccmean_dat);
+    %    ccmean_dat_interp = fit(x', ccmean_dat', 'smoothingspline');
+    plot(LagsAll(1,:).*binsize, ccmean_dat_interp, '-k', 'LineWidth', 3);
+    
+    % ---------------------
+    lt_plot_zeroline;
+    lt_plot_zeroline_vert;
+    
+    
+    
     % ============================ PLOT DISTRIBUTION OF TIMINGS AND PEAKS
     % ----- DATA
-   [pks, locs] = findpeaks(ccmean_dat_interp, 'SortStr', 'descend');
-   pks_dat = pks(1);
-   locs_dat = locs(1);
-   
-   % ---- SHUFF
-   pks_shuff = [];
-   locs_shuff = [];
-   for j=1:size(ccmean_shuff_interp, 1)
-      
-          [pks, locs] = findpeaks(ccmean_shuff_interp(j, :), 'SortStr', 'descend');
-     
-   pks_shuff = [pks_shuff pks(1)];
-   locs_shuff = [locs_shuff locs(1)];
-   
-   end
-  
-   lt_subplot(2,2,3); hold on;
-   title('loc and size of peaks (dat, shuff)');
-   ylabel(['nshuff=' num2str(nshuff)]);
-   % -- SHUFF
-   plot(LagsAll(1, locs_shuff).*binsize, pks_shuff, 'x', 'Color', [0.7 0.7 0.7]);
-   % --- DAT
-   plot(LagsAll(1,locs_dat).*binsize, pks_dat, 'ok', 'LineWidth', 3);
-   
-   xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
-   lt_plot_zeroline;
-   lt_plot_zeroline_vert;
-   
-   % ========================== CALCULATE MEAN AND STD OF SHUFF
-%    pkmean_shuff = mean(pks_shuff);
-%    pkstd_shuff = std(pks_shuff);
-%    locmean_shuff = mean(locs_shuff);
-%    locstd_shuff = std(locs_shuff);
-%    
-%    lt_subplot(2,2,4); hold on;
-%    xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
-%    lt_plot_zeroline;
-%    lt_plot_zeroline_vert;
-%    
-%    plot(LagsAll(1,locmean_shuff)
-%    
-   
+    [pks, locs] = findpeaks(ccmean_dat_interp, 'SortStr', 'descend');
+    pks_dat = pks(1);
+    locs_dat = locs(1);
+    
+    % ---- SHUFF
+    pks_shuff = [];
+    locs_shuff = [];
+    for j=1:size(ccmean_shuff_interp, 1)
+        
+        [pks, locs] = findpeaks(ccmean_shuff_interp(j, :), 'SortStr', 'descend');
+        
+        pks_shuff = [pks_shuff pks(1)];
+        locs_shuff = [locs_shuff locs(1)];
+        
+    end
+    
+    lt_subplot(2,2,3); hold on;
+    title('loc and size of peaks (dat, shuff)');
+    ylabel(['nshuff=' num2str(nshuff)]);
+    % -- SHUFF
+    plot(LagsAll(1, locs_shuff).*binsize, pks_shuff, 'x', 'Color', [0.7 0.7 0.7]);
+    % --- DAT
+    plot(LagsAll(1,locs_dat).*binsize, pks_dat, 'ok', 'LineWidth', 3);
+    
+    xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
+    lt_plot_zeroline;
+    lt_plot_zeroline_vert;
+    
+    % ========================== CALCULATE MEAN AND STD OF SHUFF
+    %    pkmean_shuff = mean(pks_shuff);
+    %    pkstd_shuff = std(pks_shuff);
+    %    locmean_shuff = mean(locs_shuff);
+    %    locstd_shuff = std(locs_shuff);
+    %
+    %    lt_subplot(2,2,4); hold on;
+    %    xlim([LagsAll(1,1).*binsize LagsAll(1,end).*binsize]);
+    %    lt_plot_zeroline;
+    %    lt_plot_zeroline_vert;
+    %
+    %    plot(LagsAll(1,locmean_shuff)
+    %
+    
     %% =================== SAVE LOCATION OF PEAK IN GRAND MEAN (PER BIRD)
     
     CCmean_dat = nan(size(CCall,2), numbirds);
@@ -1249,7 +1600,7 @@ if length(BrainRegions)==2
     for i=1:numbirds
         
         inds = PairedBirdID==i;
-    
+        
         if ~any(inds)
             continue
         end
@@ -1257,7 +1608,7 @@ if length(BrainRegions)==2
         % ------ collect mean CC
         ccmean = mean(CCall(inds,:),1);
         CCmean_dat(:, i) = ccmean;
-                
+        
         
         % ----------- find main peak of mean xcov
         [~, loctmp] = findpeaks(mean(CCall(inds,:), 1), 'NPEAKS', 1, 'SORTSTR', 'descend');
@@ -1281,17 +1632,17 @@ if length(BrainRegions)==2
         for i=1:numbirds
             numbranches = length(DATSTRUCT_BYBRANCH.bird(i).branchID);
             for bb = 1:numbranches
-%                 disp([num2str(i) '-' num2str(bb)]);
+                %                 disp([num2str(i) '-' num2str(bb)]);
                 inds = find(BirdID==i & BranchID==bb);
                 
-%                 if isempty(inds)
-% %                     LocationAll_RAND(inds) = 97; % put some crazy number. don't want to be nan, but don't want it to affect actual data
-%                     continue
-%                 end
+                %                 if isempty(inds)
+                % %                     LocationAll_RAND(inds) = 97; % put some crazy number. don't want to be nan, but don't want it to affect actual data
+                %                     continue
+                %                 end
                 
                 indsperm = inds(randperm(length(inds)));
                 
-%                 assert(all(isnan(LocationAll_RAND(inds))), 'asdf');
+                %                 assert(all(isnan(LocationAll_RAND(inds))), 'asdf');
                 LocationAll_RAND(inds) = LocationAll(indsperm);
             end
         end
@@ -1301,7 +1652,7 @@ if length(BrainRegions)==2
         
         % =========================== CALC COV
         if nn>0
-        suppressplots = 1;
+            suppressplots = 1;
         else
             suppressplots=0;
         end
@@ -1318,10 +1669,10 @@ if length(BrainRegions)==2
                 continue
             end
             
-                % ------ collect mean CC
+            % ------ collect mean CC
             ccmean = mean(CCall(inds,:),1);
             CCmean_Shuff(:, nn, i) = ccmean;
-
+            
             % ----------- find main peak of mean xcov
             [~, loctmp] = findpeaks(mean(CCall(inds,:), 1), 'NPEAKS', 1, 'SORTSTR', 'descend');
             timeofpeak = LagsAll(1,loctmp)*binsize;
@@ -1329,7 +1680,7 @@ if length(BrainRegions)==2
             TimeOfPeak_Shuff(nn, i) = timeofpeak;
         end
     end
-   
+    
     %% ====================== COMPARE SHUFFLES TO DATA
     
     
@@ -1414,7 +1765,7 @@ if length(BrainRegions)==2
         % --- negative sums
         indtmp = LagsAll(1,:)<0;
         yneg = mean(ccmeanall(indtmp, :), 1);
-                
+        
         % --- positive sums
         indtmp = LagsAll(1,:)>0;
         ypos = mean(ccmeanall(indtmp, :), 1);
@@ -1423,19 +1774,19 @@ if length(BrainRegions)==2
         y_shuff = ypos - yneg;
         
         
-       % === data
-       ypos = mean(CCmean_dat(LagsAll(1,:)>0, i));
-       yneg = mean(CCmean_dat(LagsAll(1,:)<0, i));
-       y_dat = ypos - yneg;
-       
-       % ======= plot
+        % === data
+        ypos = mean(CCmean_dat(LagsAll(1,:)>0, i));
+        yneg = mean(CCmean_dat(LagsAll(1,:)<0, i));
+        y_dat = ypos - yneg;
+        
+        % ======= plot
         lt_plot_histogram(y_shuff);
-       line([y_dat y_dat], ylim);
-       
+        line([y_dat y_dat], ylim);
+        
         p = (sum(abs(y_shuff) > abs(y_dat)) + 1)./(length(y_shuff) + 1);
         lt_plot_pvalue(p, '2-tailed',1);
     end
-
+    
     
     
     
@@ -1514,39 +1865,39 @@ for i=1:numbirds
         y2 = ymat(loc==loclist(2), :);
         
         if doCConMeans==0
-        for j = 1:size(y1,1)
-            
-            for jj=1:size(y2,1)
+            for j = 1:size(y1,1)
                 
-                [cc, lags] = xcov(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'coeff');
-%                 [cc, lags] = xcorr(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'unbiased');
-                
-                
-                % ------------------------- OUTPUT
-                CCall = [CCall; cc];
-                LagsAll = [LagsAll; lags];
-                
-                PairedBirdID = [PairedBirdID; i];
-                PairedBranchID = [PairedBranchID; bb];
-                
+                for jj=1:size(y2,1)
+                    
+                    [cc, lags] = xcov(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'coeff');
+                    %                 [cc, lags] = xcorr(y1(j,:), y2(jj,:), ceil(windowmax/binsize), 'unbiased');
+                    
+                    
+                    % ------------------------- OUTPUT
+                    CCall = [CCall; cc];
+                    LagsAll = [LagsAll; lags];
+                    
+                    PairedBirdID = [PairedBirdID; i];
+                    PairedBranchID = [PairedBranchID; bb];
+                    
+                    
+                end
                 
             end
-            
-        end
         else
             y1 = mean(y1, 1);
             y2 = mean(y2, 1);
             
-                [cc, lags] = xcov(y1, y2, ceil(windowmax/binsize), 'coeff');
-%                 [cc, lags] = xcorr(y1, y2, ceil(windowmax/binsize), 'unbiased');
-
-                % ------------------------- OUTPUT
-                CCall = [CCall; cc];
-                LagsAll = [LagsAll; lags];
-                
-                PairedBirdID = [PairedBirdID; i];
-                PairedBranchID = [PairedBranchID; bb];
-                
+            [cc, lags] = xcov(y1, y2, ceil(windowmax/binsize), 'coeff');
+            %                 [cc, lags] = xcorr(y1, y2, ceil(windowmax/binsize), 'unbiased');
+            
+            % ------------------------- OUTPUT
+            CCall = [CCall; cc];
+            LagsAll = [LagsAll; lags];
+            
+            PairedBirdID = [PairedBirdID; i];
+            PairedBranchID = [PairedBranchID; bb];
+            
         end
     end
 end
@@ -1595,7 +1946,7 @@ if suppressplots==0
             plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
             
             try
-            shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
+                shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
             catch err
             end
             xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
@@ -1604,26 +1955,26 @@ if suppressplots==0
             % ----------- find and plot peaks
             [~, loctmp] = findpeaks(mean(CCall(inds,:), 1), 'NPEAKS', 1, 'SORTSTR', 'descend');
             if ~isempty(loctmp)
-            line([lags(loctmp)*binsize lags(loctmp)*binsize], ylim, 'Color', 'b');
+                line([lags(loctmp)*binsize lags(loctmp)*binsize], ylim, 'Color', 'b');
             end
             
         end
         
         
         % ================== SAME, BUT JUST PLOT THE MEAN
-                figcount=1;
+        figcount=1;
         subplotrows=3;
         subplotcols=2;
         fignums_alreadyused=[];
         hfigs=[];
-
+        
         inds = PairedBirdID==i;
         if ~any(inds)
             continue
         end
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title('all neuron pairs');
-%         plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
+        %         plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
         
         shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
         xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
@@ -1634,7 +1985,7 @@ if suppressplots==0
         % ----------- find and plot peaks
         [~, loctmp] = findpeaks(mean(CCall(inds,:), 1), 'NPEAKS', 1, 'SORTSTR', 'descend');
         line([lags(loctmp)*binsize lags(loctmp)*binsize], ylim, 'Color', 'b');
-
+        
         
         for j=1:numbranches
             
@@ -1645,10 +1996,10 @@ if suppressplots==0
             end
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title(['branch ' num2str(j)]);
-%             plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
+            %             plot(lags*binsize, CCall(inds,:)', 'Color', [0.7 0.7 0.7]);
             
             try
-            shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
+                shadedErrorBar(lags*binsize, mean(CCall(inds,:), 1), lt_sem(CCall(inds,:)), {'Color', 'r'},1);
             catch err
             end
             xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
@@ -1657,7 +2008,7 @@ if suppressplots==0
             % ----------- find and plot peaks
             [~, loctmp] = findpeaks(mean(CCall(inds,:), 1), 'NPEAKS', 1, 'SORTSTR', 'descend');
             if ~isempty(loctmp)
-            line([lags(loctmp)*binsize lags(loctmp)*binsize], ylim, 'Color', 'b');
+                line([lags(loctmp)*binsize lags(loctmp)*binsize], ylim, 'Color', 'b');
             end
             
         end
@@ -1677,41 +2028,41 @@ if suppressplots==0
     lt_subplot(2,2,2); hold on;
     title('mean(sem)');
     if length(lt_sem(CCall))>1
-    shadedErrorBar(lags*binsize, mean(CCall, 1), lt_sem(CCall), {'Color', 'k'},1);
-    xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
+        shadedErrorBar(lags*binsize, mean(CCall, 1), lt_sem(CCall), {'Color', 'k'},1);
+        xlabel([locationstoplot{1} ' leads <---> ' locationstoplot{2} ' leads']);
     end
     
     % =========== GET MEAN, WEIGHTED BY SAMPEL SIZE
     if doCConMeans==0
         
-            % === group: each level is single branch in single bird
-            tmp = num2str([PairedBirdID PairedBranchID]);
-            [GrpInds] = grp2idx(tmp);
-            
-            % --- count sample size for each group
-            tmp = tabulate(GrpInds);
-            weights = 1./tmp(:,2); % -- weighting factors are 1/N
-            
-            % -- normalize weights so that will add to one
-            weights = weights./sum(weights(GrpInds));
-            
-            % -- take dot product of CC with weights
-            weightvec = weights(GrpInds);
-            
-            lt_subplot(2,2,3); hold on;
-            title('all branches equal weight');
-            if (1)
-                ccmean = CCall'*weightvec;
-%                 title('weighted mean (1/N)');
-                plot(lags*binsize, ccmean);
-                lt_plot_zeroline_vert;
-            else
-                for j=1:size(CCall,2)
-                    cc =  CCall(:, j)' * weightvec;
-                    cc = sum(CCall(:, j).*weightvec);
-                    plot(j, cc, '-ok');
-                end
+        % === group: each level is single branch in single bird
+        tmp = num2str([PairedBirdID PairedBranchID]);
+        [GrpInds] = grp2idx(tmp);
+        
+        % --- count sample size for each group
+        tmp = tabulate(GrpInds);
+        weights = 1./tmp(:,2); % -- weighting factors are 1/N
+        
+        % -- normalize weights so that will add to one
+        weights = weights./sum(weights(GrpInds));
+        
+        % -- take dot product of CC with weights
+        weightvec = weights(GrpInds);
+        
+        lt_subplot(2,2,3); hold on;
+        title('all branches equal weight');
+        if (1)
+            ccmean = CCall'*weightvec;
+            %                 title('weighted mean (1/N)');
+            plot(lags*binsize, ccmean);
+            lt_plot_zeroline_vert;
+        else
+            for j=1:size(CCall,2)
+                cc =  CCall(:, j)' * weightvec;
+                cc = sum(CCall(:, j).*weightvec);
+                plot(j, cc, '-ok');
             end
+        end
     end
 end
 

@@ -1,6 +1,6 @@
 %% LT 10/8/15 - each point is paired vectors (X, Y). will plot in square and plot 45 degress line
-function lt_plot_makesquare_plot45line(haxes, color)
-
+function lt_plot_makesquare_plot45line(haxes, color, lowerlimHand)
+% lowerlimtozero=1; 
 %% defualts
 
 
@@ -8,6 +8,9 @@ if ~exist('color','var');
     color='k';
 end
 
+if ~exist('lowerlimHand','var');
+    lowerlimHand=[];
+end
 
 %% run
 
@@ -22,7 +25,10 @@ amount_to_add=(upperlim-lowerlim)/10;
 lowerlim=lowerlim+amount_to_add;
 upperlim=upperlim+amount_to_add;
 
-
+if ~isempty(lowerlimHand)
+    lowerlim = lowerlimHand;
+end
+    
 xlim([lowerlim upperlim]);
 ylim([lowerlim upperlim]);
 

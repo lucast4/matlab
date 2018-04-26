@@ -11,11 +11,11 @@ function [Ybinned, Xcenters, hbar]=lt_plot_histogram(Y, Xcenters, plotON, pdfON,
 % hbar = handle of barplot
 
 
+    Nbins=ceil((numel(Y)^0.9)/5);
 if ~exist('Xcenters', 'var');
      minbin=min(Y)-std(Y)/3;
     maxbin=max(Y)+std(Y)/3;
     
-    Nbins=ceil(numel(Y)/5);
     if Nbins<8;
         Nbins=8;
     end
@@ -25,7 +25,6 @@ elseif isempty(Xcenters);
     minbin=min(Y)-std(Y)/3;
     maxbin=max(Y)+std(Y)/3;
     
-    Nbins=ceil(numel(Y)/5);
     if Nbins<8;
         Nbins=8;
     end
