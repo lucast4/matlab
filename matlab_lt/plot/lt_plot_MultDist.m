@@ -1,5 +1,6 @@
 %% lt 7/3/17 - given cell array plots each distribution + does anova and/or pairwise comparisons
-function lt_plot_MultDist(Yall, xvals, plotanova, plotcol, plotspreadonly, plotanovaonly)
+function lt_plot_MultDist(Yall, xvals, plotanova, plotcol, plotspreadonly, plotanovaonly, ...
+    dontplotspread)
 
 
 %%
@@ -22,7 +23,13 @@ end
 if ~exist('plotanovaonly', 'var')
     plotanovaonly=0;
 end
+if isempty(plotanovaonly)
+    plotanovaonly = 0;
+end
 
+if ~exist('dontplotspread', 'var')
+    dontplotspread = 0;
+end
 %%
 % --- if any gaps, remove
 indstmp = ~cellfun('isempty', Yall);
@@ -37,29 +44,33 @@ xvals = xvals(indstmp);
 % cell inds
 
 if plotanovaonly==0
-if plotspreadonly ==1
-%                 sh = plotSpread(ah,data,'xValues',opt.xValues,'xyOri',opt.xyOri);
-                sh = plotSpread(Yall, 'xValues', xvals, 'distributionColors', plotcol);
-%             set(sh{1},'color',[0,128,255]/255);
-
-else
-distributionPlot(Yall, 'xValues', xvals, 'showMM', 4, 'addSpread', 1, 'color', plotcol);
-end
+    if plotspreadonly ==1
+        %                 sh = plotSpread(ah,data,'xValues',opt.xValues,'xyOri',opt.xyOri);
+        sh = plotSpread(Yall, 'xValues', xvals, 'distributionColors', plotcol);
+        %             set(sh{1},'color',[0,128,255]/255);
+        
+    else
+        if dontplotspread==0
+            distributionPlot(Yall, 'xValues', xvals, 'showMM', 4, 'addSpread', 1, 'color', plotcol);
+        else
+            distributionPlot(Yall, 'xValues', xvals, 'showMM', 4, 'addSpread', 0, 'color', plotcol);
+        end
+    end
 end
 
 if plotanova==1
-% --- anova *(one way)
-Yvec = [];
-Group = [];
-for i=1:length(Yall)
-    if size(Yall{i},1) == 1;
-        Yvec = [Yvec; Yall{i}'];
-    else
-        Yvec = [Yvec; Yall{i}];
+    % --- anova *(one way)
+    Yvec = [];
+    Group = [];
+    for i=1:length(Yall)
+        if size(Yall{i},1) == 1;
+            Yvec = [Yvec; Yall{i}'];
+        else
+            Yvec = [Yvec; Yall{i}];
+        end
+        Group = [Group; i*ones(length(Yall{i}),1)];
     end
-    Group = [Group; i*ones(length(Yall{i}),1)];
-end
-
-[p] = anovan(Yvec, Group, 'display', 'off');
-lt_plot_pvalue(p, 'anova', 2);
+    
+    [p] = anovan(Yvec, Group, 'display', 'off');
+    lt_plot_pvalue(p, 'anova', 2);
 end

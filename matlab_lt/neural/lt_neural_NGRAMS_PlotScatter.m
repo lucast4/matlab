@@ -1,11 +1,23 @@
 function lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
-    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg)
+    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian)
+%%
+assert(sum([plotRawGood plotON])<2, 'cannot do both types of raw plots ...');
+
+%% for globalz
+useGlobalNeg = 0; % if 0, then just neg for the desired pairs. default: 1
+
 %% LT 4/24/18 - plots scatter (i.e. mean for pairtype 2 vs. 1)
 
 
 %% INPUTS
 
-% plottype = 'absfrdiff'; % oneminusrho or absfrdiff
+% plottype = 'absfrdiff';
+% oneminusrho - 1 minus correlation coefficient of smoothed FR
+% absfrdiff - diff in FR, each pair/unit normalized (z) versus its own
+% shuffle control
+% absfrdiff_globZ - mean abs diff in FR, normalized versus global
+% distribtuion of neg control shuffles
+
 % plotON=0; % only works for absfrdiff
 % PairtypesToplot = {...
 %     '1  1  1', ... % xaxis
@@ -111,14 +123,16 @@ for i=1:maxbirds
                 lt_plot_histogram(AllRhoNeg, xcenters, 1, 1, '', 1, [0.7 0.7 0.7]);
             end
             
-        elseif strcmp(plottype, 'absfrdiff')
             
+        else
+            %%
             if plotON==1
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 title([birdname '-n' num2str(ii) '[' bregion ']']);
             end
             
-            
+            YplotAll = cell(1,3); % dat1, dat2, neg control
+            MotifPairString = cell(1,3);
             for k =1:numpairtypes
                 
                 pairtypethis = PairtypesToplot{k};
@@ -126,15 +140,63 @@ for i=1:maxbirds
                 
                 inds = All_birdnum==i & All_neurnum==ii & All_diffsyl_PairType==pairtypethis;
                 
-                % ========= collect data
-                y = All_AbsFRdiff_Zrelshuff(inds);
                 
+                % ########################################## COLLECT DATA
+                y = [];
+                if strcmp(plottype, 'absfrdiff')
+                    % then mean abs diff in FR, normalized within each
+                    % pairtype
+                    y = All_AbsFRdiff_Zrelshuff(inds);
+                    
+                elseif strcmp(plottype, 'absfrdiff_globZ')
+                    % =========== version with both dat and pos compared to
+                    % distribution of negative controls
+                    
+                    % ----- V1 - NEG = combined from the pairs being analyzed
+                    if useGlobalNeg==0 % old version, limited to just the desired pairs. but I think
+                        % is better to use all pairs ...
+                        [~, pairtypes_neg] = intersect(PairTypesInOrder, PairtypesToplot);
+                        indsneg = All_birdnum==i & All_neurnum==ii & ...
+                            ismember(All_diffsyl_PairType, pairtypes_neg);
+                    elseif useGlobalNeg==1
+                        indsneg = All_birdnum==i & All_neurnum==ii;
+                    end
+                    
+                    
+                    negmean = mean(All_AbsFRdiff_NEG(indsneg));
+                    negstd = std(All_AbsFRdiff_NEG(indsneg));
+                    
+                    y = (All_AbsFRdiff(inds) - negmean)./negstd;
+                    
+                    % ================= OUTPUT FOR PLOTTING
+                    YplotAll{k} = All_AbsFRdiff(inds);
+                    YplotAll{3} = [YplotAll{3} All_AbsFRdiff_NEG(inds)]; % collect negative controls
+                elseif strcmp(plottype, 'absfrdiff_typediff')
+                    
+                    % ----- V2 - each type compaired to mean of its own neg
+                    % (not zscored)
+                    y = All_AbsFRdiff(inds) - mean(All_AbsFRdiff_NEG(inds));
+                    
+                end
+                
+                % ==================== COLLECT MOTIF NAMES
+                motifpairlist = OUTSTRUCT.All_ngramstring_inorder(inds,:);
+                MotifPairString{k} = motifpairlist;
+                MotifPairString{3} = [MotifPairString{3}; motifpairlist];
+                
+                % ###################################### PLOT HISTOGRAMS?
                 if plotON==1
                     % =============== plot histograms
                     lt_plot_histogram(y, '', 1, 1, '', 1, pcolors{k});
                 end
-                % ================ collect mean to then do scatterplot
-                ymean = mean(y);
+                
+                
+                % #################### collect mean to then do scatterplot
+                if usemedian==1
+                    ymean = median(y);
+                else
+                    ymean = mean(y);
+                end
                 allmeans(k) = ymean;
             end
             
@@ -143,13 +205,40 @@ for i=1:maxbirds
             AllPairs_Bregions = [AllPairs_Bregions; bregion];
             AllPairs_Birdnum = [AllPairs_Birdnum; i];
             
+        end
+        
+        % =============================== PLOT,
+        if plotRawGood==1 & strcmp(plottype, 'absfrdiff_globZ')
             
-        else
-            dasfasdfsdf;
+            % rthen can plot!!
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title([birdname '-n' num2str(ii) '[' bregion ']']);
+            
+            lt_plot_MultDist(YplotAll, [1 2 3], 0, 'k', 0)
+            lt_plot_zeroline;
+            
+            if (0) % old version, plotting histograms , but is too crowded...
+                
+                xcenters = min(cell2mat(YplotAll)):0.1:max(cell2mat(YplotAll));
+                
+                % ----- NEG
+                indtmp = 3;
+                pcol = [0.7 0.6 0.7];
+                lt_plot_histogram(YplotAll{indtmp}, xcenters, 1, 1, '', 1, pcol);
+                % ----- POS
+                indtmp = 1;
+                pcol = [0.3 0.3 0.9];
+                lt_plot_histogram(YplotAll{indtmp}, xcenters, 1, 1, '', 1, pcol);
+                % ----- DAT
+                indtmp = 2;
+                pcol = 'k';
+                lt_plot_histogram(YplotAll{indtmp}, xcenters, 1, 1, 0.2, 0, pcol);
+            end
         end
         
     end
 end
+
 
 %% =========== PLOT SCATTER COMPARING TWO CLASSES ACROSS ALL NEURONS
 if strcmp(plottype, 'oneminusrho')
@@ -189,7 +278,7 @@ if strcmp(plottype, 'oneminusrho')
     % LMAN
     indstmp = strcmp(AllPairs_Bregions, 'LMAN');
     y = AllPairs_Means(indstmp, :);
-    plot(y(:,1), y(:,2), 'og');
+    plot(y(:,1), y(:,2), 'ob');
     
     % RA
     indstmp = strcmp(AllPairs_Bregions, 'RA');
@@ -215,7 +304,7 @@ if strcmp(plottype, 'oneminusrho')
         % LMAN
         indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
         y = AllPairs_Means(indstmp, :);
-        plot(y(:,1), y(:,2), 'og');
+        plot(y(:,1), y(:,2), 'ob');
         
         % RA
         indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
@@ -236,15 +325,23 @@ if strcmp(plottype, 'oneminusrho')
         
     end
 else
+    figcount=1;
+    subplotrows=6;
+    subplotcols=3;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+    
     
     maxbirds = max(AllPairs_Birdnum);
     for j=1:maxbirds
-        lt_figure; hold on;
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title([SummaryStruct.birds(j).birdname]);
+        hsplots = [hsplots hsplot];
         % LMAN
         indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
         y = AllPairs_Means(indstmp, :);
-        plot(y(:,1), y(:,2), 'og');
+        plot(y(:,1), y(:,2), 'ob');
         
         % RA
         indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
@@ -260,22 +357,19 @@ else
         
         lt_plot_makesquare_plot45line(gca, 'k', -2);
     end
-end
-
-
-% =================== COMBINE ALL DATAPOINTS
-lt_figure; hold on;
-title('all datapoints');
-maxbirds = max(AllPairs_Birdnum);
-for j=1:maxbirds
     
+    
+    % ============ ONE PLOT ALL BIRDS
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title(['ALL BIRDS']);
+    hsplots = [hsplots hsplot];
     % LMAN
-    indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
+    indstmp = strcmp(AllPairs_Bregions, 'LMAN');
     y = AllPairs_Means(indstmp, :);
-    plot(y(:,1), y(:,2), 'og');
+    plot(y(:,1), y(:,2), 'ob');
     
     % RA
-    indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
+    indstmp = strcmp(AllPairs_Bregions, 'RA');
     y = AllPairs_Means(indstmp, :);
     plot(y(:,1), y(:,2), 'or');
     
@@ -287,17 +381,24 @@ for j=1:maxbirds
     %         ylim([-1 1]);
     
     lt_plot_makesquare_plot45line(gca, 'k', -2);
+    linkaxes(hsplots, 'xy');
+    
+    
+    % #################3 SAME JUST MY BIRDS
+    
+    
 end
 
 
-%% ========== ancova, 
-
-indstmp = AllPairs_Birdnum==6;
-y1 = AllPairs_Means(indstmp, 1);
-y2 = AllPairs_Means(indstmp, 2);
-group = AllPairs_Bregions(indstmp);
-
-aoctool(y1, y2, group)
+%% ========== ancova,
+if (0)
+    indstmp = AllPairs_Birdnum==6;
+    y1 = AllPairs_Means(indstmp, 1);
+    y2 = AllPairs_Means(indstmp, 2);
+    group = AllPairs_Bregions(indstmp);
+    
+    aoctool(y1, y2, group)
+end
 
 %% ====== OVERLAY DISTRIBUTIONS FOR ALL BIRDS
 lt_figure; hold on;
@@ -347,10 +448,19 @@ end
 AllPairs_Ratios = AllPairs_Means(:,2)./AllPairs_Means(:,1);
 
 % ====================== PLOT, each bird compare LMAN and RA
+figcount=1;
+subplotrows=5;
+subplotcols=3;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
 maxbirds = max(AllPairs_Birdnum);
 for j=1:maxbirds
-    lt_figure; hold on;
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title([SummaryStruct.birds(j).birdname]);
+    hsplots = [hsplots hsplot];
     
     Y = {};
     % LMAN
@@ -371,7 +481,60 @@ for j=1:maxbirds
     
 end
 
+% ============ grand mean
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('ALL BIRDS');
+hsplots = [hsplots hsplot];
 
+Y = {};
+% LMAN
+indstmp = strcmp(AllPairs_Bregions, 'LMAN');
+Y{1} = AllPairs_Ratios(indstmp, :);
+
+% LMAN
+indstmp = strcmp(AllPairs_Bregions, 'RA');
+Y{2} = AllPairs_Ratios(indstmp, :);
+
+% === plot
+lt_plot_MultDist(Y, [1 2], 1);
+
+% FORMATING
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}])
+xlabel('LMAN -- RA');
+xlim([0 3]);
+
+
+linkaxes(hsplots, 'y');
+
+
+% ###########################33 COMBINE ALL IN ONE PLOT
+lt_figure; hold on;
+title('[dat - neg]/[pos - neg]');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}])
+xlabel('Birds (LMAN -- RA)');
+
+maxbirds = max(AllPairs_Birdnum);
+for j=1:maxbirds
+    
+    % LMAN
+    pcol = 'b';
+    x = j*3-2;
+    indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
+    if any(indstmp)
+        lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
+    end
+    
+    % RA
+    pcol = 'r';
+    x = j*3-1;
+    indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
+    if any(indstmp)
+        lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
+    end
+    
+    line(3*[j j], ylim, 'Color', 'k' ,'LineStyle', '--');
+end
+lt_plot_zeroline;
 
 
 %% ====== LINEAR MODEL TESTING WHETHER SLOPE DEPENDS ON BREGION
@@ -425,7 +588,7 @@ mdl = 'y2 ~ y1 + bregion:y1 + (-1 + y1|birdnum) + (-1+bregion:y1|birdnum)';  % f
 lme = fitlme(tbl, mdl)
 
 %% =============== SAME, BUT DO MODEL FOR SINGLE BIRD
-birdtodo = 'pu69wh78';
+birdtodo = 'wh44wh39';
 goodbirds = [];
 for j=1:length(SummaryStruct.birds)
     if ~strcmp(SummaryStruct.birds(j).birdname, birdtodo)

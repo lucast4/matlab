@@ -104,10 +104,10 @@ ALLBRANCH = lt_neural_v2_CTXT_PlotAll(strtype, plotstat, suffix);
 TimeWindowDur = 0.040;
 TimeWindowSlide = 0.005;
 FRbinsize = 0.008;
-savenotes = 'pu69wh44RALMAN40ms';
+savenotes = 'AllBirdsRALMANX40ms';
 
 prms.ClassSlide.GetNegControl = 1; % 1 = yes. (i.e. shuffle dat-context link).
-prms.ClassSlide.NumNegControls = 25;
+prms.ClassSlide.NumNegControls = 1;
 prms.ClassSlide.GetPosControl =1;
 
 CVmethod = 'Kfold';

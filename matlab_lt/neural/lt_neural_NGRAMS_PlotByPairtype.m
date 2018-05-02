@@ -188,7 +188,7 @@ elseif strcmp(plottype, 'absfrdiff')
     plot(1:size(Yall,2), y, '-k');
     ymean = nanmean(y,1);
     ysem = lt_sem(y);
-    lt_plot(x+0.1, ymean, {'Errors', ysem})
+    lt_plot(x+0.1, ymean, {'Errors', ysem, 'Color', 'r'})
     
     % -- ra
     lt_subplot(2,2,2); hold on;
@@ -199,7 +199,7 @@ elseif strcmp(plottype, 'absfrdiff')
     plot(1:size(Yall,2), y, '-k');
     ymean = nanmean(y,1);
     ysem = lt_sem(y);
-    lt_plot(x+0.1, ymean, {'Errors', ysem})
+    lt_plot(x+0.1, ymean, {'Errors', ysem, 'Color', 'r'})
     
     
 else

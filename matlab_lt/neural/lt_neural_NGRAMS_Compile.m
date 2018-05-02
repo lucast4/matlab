@@ -5,7 +5,7 @@ function [OUTSTRUCT, SummaryStruct, Params] = lt_neural_NGRAMS_Compile(dirname, 
 %% ===========
 savedir = '/bluejay5/lucas/analyses/neural/NGRAMS';
 savedir = [savedir '/' dirname];
-
+Params.dirname = dirname;
 
 %% =========== load metadat
 load([savedir '/SummaryStruct.mat']);
@@ -20,7 +20,7 @@ load([savedir '/Params.mat']);
 motifpredur = Params.regexpr.motifpredur;
 windowx = motifpredur+window_prem;
 strtype = Params.strtype;
-assert(strcmp(strtype, 'xaa')==1, 'have not coded for other string tyupes yet ...');
+% assert(strcmp(strtype, 'xaa')==1, 'have not coded for other string tyupes yet ...');
 
 %% ========== go thru all birds and extract
 All_birdnum =[];
@@ -31,6 +31,9 @@ All_OneMinusRho_NEG = [];
 OUTSTRUCT.All_AbsFRdiff_Zrelshuff = [];
 OUTSTRUCT.All_AbsFRdiff = [];
 OUTSTRUCT.All_AbsFRdiff_NEG = [];
+OUTSTRUCT.All_ngrampair_inorder = [];
+OUTSTRUCT.All_ngramstring_inorder = {};
+
 
 numbirds = length(SummaryStruct.birds);
 for i=1:numbirds
@@ -288,6 +291,12 @@ for i=1:numbirds
                 All_diffsyl_logical = [All_diffsyl_logical; diffsyl_logical];
                 All_OneMinusRho = [All_OneMinusRho; 1-rhoDAT];
                 All_OneMinusRho_NEG = [All_OneMinusRho_NEG; 1-rhoNEG];
+                OUTSTRUCT.All_ngrampair_inorder = [OUTSTRUCT.All_ngrampair_inorder; ...
+                    j jj];
+                OUTSTRUCT.All_ngramstring_inorder = [OUTSTRUCT.All_ngramstring_inorder; ...
+                    {motif1 motif2}];
+
+                
             end
         end
     end

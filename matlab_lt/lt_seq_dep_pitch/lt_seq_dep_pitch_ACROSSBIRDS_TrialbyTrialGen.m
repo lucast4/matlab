@@ -1,10 +1,10 @@
 function lt_seq_dep_pitch_ACROSSBIRDS_TrialbyTrialGen(TrialStruct, ParamsTrial, ...
     SeqDepPitch_AcrossBirds, plotSongBySong, plotRaw)
 %% to do (11/28/17 )
-1) compare raw FF to cross cov functions for each experiment
-2) only look at experiments with strong learning
-3) only look at early learning + last baseline day (combine into one vector
-allows 
+% 1) compare raw FF to cross cov functions for each experiment
+% 2) only look at experiments with strong learning
+% 3) only look at early learning + last baseline day (combine into one vector
+% allows
 
 
 %%
@@ -27,11 +27,11 @@ for i=1:NumBirds
     
     for ii=1:numexpts
         
-if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
+        if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
             disp('SKIP - no songs');
             continue
         end
-                numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
         
         % ---- get time of all unique songs for this experiment
         %         tvalsAll = [];
@@ -73,95 +73,95 @@ end
 
 %% ========= 1) EACH SONG AS ONE DATAPOINT - SONG BY SONG GENERALIZATION
 if plotRaw==1
-for i=1:NumBirds
-    
-    numexpts = length(TrialStruct.birds(i).exptnum);
-    
-    for ii=1:numexpts
+    for i=1:NumBirds
         
+        numexpts = length(TrialStruct.birds(i).exptnum);
         
-if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
-            disp('SKIP - no songs');
-            continue
-end
-
-figcount=1;
-        subplotrows=5;
-        subplotcols=2;
-        fignums_alreadyused=[];
-        hfigs=[];
-        hsplots = [];
-        
-        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-        
-        % ------- day parameters
-        baseDays = TrialStruct.birds(i).exptnum(ii).BaseDays;
-        
-        
-        
-        % ================ first plot targ
-        targind = [TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget];
-        targind = logical(targind);
-        if plotSongBySong==1
-            tvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_Tvals;
-            ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_FFvals;
-        else
-            tvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).Tvals;
-            ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).FFvals;
-        end
-        syl = TrialStruct.birds(i).exptnum(ii).sylnum(targind).syl;
-        
-        % --- subtract baseline
-        ffvals = ffvals - mean(ffvals(tvals<max(baseDays)+1));
-        
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        hsplots =[hsplots hsplot];
-        title(syl);
-        plot(tvals, ffvals, 'ok');
-        
-        % --- lines
-        line([baseDays(end)+1 baseDays(end)+1], ylim);
-        lt_plot_zeroline;
-        
-        % ==================== plot other syls
-        for j=1:numsyls
+        for ii=1:numexpts
             
-            % --- skip if is targ
-            if TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_istarget==1
+            
+            if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
+                disp('SKIP - no songs');
                 continue
             end
-            syl = TrialStruct.birds(i).exptnum(ii).sylnum(j).syl;
             
+            figcount=1;
+            subplotrows=5;
+            subplotcols=2;
+            fignums_alreadyused=[];
+            hfigs=[];
+            hsplots = [];
+            
+            numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+            
+            % ------- day parameters
+            baseDays = TrialStruct.birds(i).exptnum(ii).BaseDays;
+            
+            
+            
+            % ================ first plot targ
+            targind = [TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget];
+            targind = logical(targind);
             if plotSongBySong==1
-                tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).songbysong_Tvals;
-                ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).songbysong_FFvals;
+                tvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_Tvals;
+                ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_FFvals;
             else
-                tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals;
-                ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).FFvals;
+                tvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).Tvals;
+                ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(targind).FFvals;
             end
-            
-            issimilar = TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_similar;
-            if issimilar==1
-                plotcol = 'b';
-            else
-                plotcol = 'r';
-            end
+            syl = TrialStruct.birds(i).exptnum(ii).sylnum(targind).syl;
             
             % --- subtract baseline
             ffvals = ffvals - mean(ffvals(tvals<max(baseDays)+1));
             
-            
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            title(syl);
             hsplots =[hsplots hsplot];
-            plot(tvals, ffvals, 'o', 'Color', plotcol);
+            title(syl);
+            plot(tvals, ffvals, 'ok');
+            
+            % --- lines
             line([baseDays(end)+1 baseDays(end)+1], ylim);
             lt_plot_zeroline;
             
+            % ==================== plot other syls
+            for j=1:numsyls
+                
+                % --- skip if is targ
+                if TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_istarget==1
+                    continue
+                end
+                syl = TrialStruct.birds(i).exptnum(ii).sylnum(j).syl;
+                
+                if plotSongBySong==1
+                    tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).songbysong_Tvals;
+                    ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).songbysong_FFvals;
+                else
+                    tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals;
+                    ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).FFvals;
+                end
+                
+                issimilar = TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_similar;
+                if issimilar==1
+                    plotcol = 'b';
+                else
+                    plotcol = 'r';
+                end
+                
+                % --- subtract baseline
+                ffvals = ffvals - mean(ffvals(tvals<max(baseDays)+1));
+                
+                
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                title(syl);
+                hsplots =[hsplots hsplot];
+                plot(tvals, ffvals, 'o', 'Color', plotcol);
+                line([baseDays(end)+1 baseDays(end)+1], ylim);
+                lt_plot_zeroline;
+                
+            end
+            linkaxes(hsplots, 'xy');
         end
-        linkaxes(hsplots, 'xy');
     end
-end
 end
 
 %% =================== correlation of between syls, using song by song dat
@@ -172,8 +172,8 @@ AllXcov.diff.base = [];
 AllXcov.diff.WNon = [];
 
 plotOn = 0;
-            windxcov = 10;
-            binxcov = 1;
+windxcov = 10;
+binxcov = 1;
 subtractrunningmean = 1;
 
 for i=1:NumBirds
@@ -189,12 +189,12 @@ for i=1:NumBirds
         end
         
         if plotOn==1
-                figcount=1;
-                subplotrows=5;
-                subplotcols=2;
-                fignums_alreadyused=[];
-                hfigs=[];
-                hsplots = [];
+            figcount=1;
+            subplotrows=5;
+            subplotcols=2;
+            fignums_alreadyused=[];
+            hfigs=[];
+            hsplots = [];
         end
         
         numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
@@ -206,8 +206,8 @@ for i=1:NumBirds
         % ================ first get targ
         targind = [TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget];
         targind = logical(targind);
-%         syl = TrialStruct.birds(i).exptnum(ii).sylnum(targind).syl;
-                
+        %         syl = TrialStruct.birds(i).exptnum(ii).sylnum(targind).syl;
+        
         tvalsTarg = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_Tvals;
         ffvalsTarg = TrialStruct.birds(i).exptnum(ii).sylnum(targind).songbysong_FFvals;
         
@@ -231,14 +231,14 @@ for i=1:NumBirds
             syl = TrialStruct.birds(i).exptnum(ii).sylnum(j).syl;
             issimilar = TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_similar;
             
-    % ----
+            % ----
             if subtractrunningmean==1
-            binsize = 15; % must be odd
-            tmp = lt_running_stats(ffvals, binsize);
-            ffmean = [ones(1,(binsize-1)/2)*tmp.Mean(1) tmp.Mean ones(1,(binsize-1)/2)*tmp.Mean(end)];
-            ffvals = ffvals - ffmean';
-        end
-
+                binsize = 15; % must be odd
+                tmp = lt_running_stats(ffvals, binsize);
+                ffmean = [ones(1,(binsize-1)/2)*tmp.Mean(1) tmp.Mean ones(1,(binsize-1)/2)*tmp.Mean(end)];
+                ffvals = ffvals - ffmean';
+            end
+            
             
             % ------------------------- pull out songs for which they both
             % have data
@@ -254,15 +254,15 @@ for i=1:NumBirds
             
             % ========================= correlate with target
             if plotOn==1
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            if issimilar==1
-                title([syl], 'Color', 'b');
-                typefname = 'sametype';
-            else
-                title([syl], 'Color', 'k');
-                typefname = 'diff';
-            end
-            xlabel(['targ <--> ' syl]);
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                if issimilar==1
+                    title([syl], 'Color', 'b');
+                    typefname = 'sametype';
+                else
+                    title([syl], 'Color', 'k');
+                    typefname = 'diff';
+                end
+                xlabel(['targ <--> ' syl]);
             end
             
             % ----- for output
@@ -273,14 +273,14 @@ for i=1:NumBirds
             end
             
             % ############ BASELINE
-            f1 = Ftarg(Ttarg<baseDays(end)+1); 
+            f1 = Ftarg(Ttarg<baseDays(end)+1);
             f2 = Fsyl(Tsyl<baseDays(end)+1);
             
             [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'coeff');
-
+            
             if plotOn==1
-            plot(lag*binxcov, cc, '-ok');
-            lt_plot_zeroline;
+                plot(lag*binxcov, cc, '-ok');
+                lt_plot_zeroline;
             end
             
             % --- colect
@@ -288,20 +288,20 @@ for i=1:NumBirds
             
             
             % ############ TRAINING
-            f1 = Ftarg(Ttarg>baseDays(end)+1); 
+            f1 = Ftarg(Ttarg>baseDays(end)+1);
             f2 = Fsyl(Tsyl>baseDays(end)+1);
             
             [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'coeff');
-
+            
             if plotOn==1
-            plot(lag*binxcov, cc, '-or');
-            lt_plot_zeroline;
+                plot(lag*binxcov, cc, '-or');
+                lt_plot_zeroline;
             end
             
             % --- colect
             AllXcov.(typefname).WNon = [AllXcov.(typefname).WNon; cc'];
             
-           
+            
         end
     end
 end

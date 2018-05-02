@@ -4,7 +4,7 @@
 %% EXTRACT
 clear all; close all; fclose all;
 BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {'RA', 'LMAN', 'RAmel'}; % if want Sam/Mel data, must include "RAmel"
+BrainArea = {'RA', 'LMAN', 'X'}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
 RecordingDepth = [];
@@ -12,13 +12,6 @@ LearningOnly = 0;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
-% BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-% BrainArea = {'X'};
-% ExptToKeep = {};
-% RecordingDepth = [];
-% LearningOnly = 1;
-% BatchesDesired = {};
-% ChannelsDesired = [];
 [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database(BirdsToKeep, ...
     BrainArea, ExptToKeep, RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
     extractpreDatenums);
@@ -30,6 +23,17 @@ end
 
 %% ############################################### DISP (stuff)
 %% ############################################################
+%% get bird and neuron number for desired neruon
+
+dirname = '/bluejay5/lucas/birds/wh44wh39/NEURAL/031418_RALMANlearn2/Chan14amp-Batch1058to1106';
+birdname = 'wh44wh39';
+
+% =========== RUN
+birdnum = find(strcmp({SummaryStruct.birds.birdname}, 'wh44wh39'))
+neurid = find(strcmp({SummaryStruct.birds(birdnum).neurons.dirname}, dirname))
+
+
+
 
 %% ========== plot all units info
 
@@ -178,10 +182,10 @@ BirdToPlot = 'wh44wh39';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [36]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+NeurToPlot = [76]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
 % motiflist = {'a(b)', 'jbh(h)g'};
 % motiflist = {'(d)kcc', 'dk(c)c', '(n)hh', 'c(b)'};
-motiflist = {'(n)hh'};
+motiflist = {'dk(c)cbb'};
 
 % motifpredur = 0.15;
 % motifpostdur = 0.15;
@@ -276,20 +280,20 @@ BirdToPlot = 'wh44wh39';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [6]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+NeurToPlot = [76]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
 % motiflist = {'a(b)', 'jbh(h)g'};
-motiflist = {'(n)hh'};
+motiflist = {'n(h)h'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
-motifpredur = 0.15;
-motifpostdur = 0.05;
+motifpredur = 0.1;
+motifpostdur = 0.5;
 
 plotIndivRaster = 1; % one raster for each neuron/motif
 plotCombRast = 0; % one figure, all rasters
 plotSmFR = 0; % all smoothed FR.
 
 % --- 1) directed song
-PlotDirSong = 1; % 0 is only UNDIR, 1 is only DIR; 2 is both
+PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
 
 lt_neural_v2_DIAGN_PlotRasterMotif(SummaryStruct, BirdToPlot, NeurToPlot, ...
     motiflist, plotbytime, motifpredur, motifpostdur, plotIndivRaster, ...

@@ -122,7 +122,7 @@ elseif strcmp(Params.strtype, 'xaaa')
     '1  0  0  0'}; % yaxis
 end   
 Nmin = 2; % number of pairs in class. [DOESNT WORK YET]
-plotRawGood = 0; % histogram for pos, negative, dat (only works for plottype = absfrdiff_globZ);
+plotRawGood = 1; % histogram for pos, negative, dat (only works for plottype = absfrdiff_globZ);
 
 % ----------- params for one minus rho, specifically
 dosubtractcontrol = 1; % then subtracts negative control before plotting [if 0, then overlays neg]
@@ -147,8 +147,8 @@ elseif strcmp(Params.strtype, 'xaaa')
 end   
 
 % -------------- WHICH TO PLOT?
-birdtoplot = 'Pu55Pu22';
-neurtoplot = 15;
+birdtoplot = 'or74wh33';
+neurtoplot = 4;
 
 lt_neural_NGRAMS_PlotMotStr(OUTSTRUCT, SummaryStruct, plottype, ...
     PairtypesToplot, birdtoplot, neurtoplot);

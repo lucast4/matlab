@@ -145,11 +145,14 @@ for i=1:numbirds
                 Params.regexpr.preAndPostDurRelSameTimept, ...
                 Params.regexpr.RemoveIfTooLongGapDur, clustnum, extractDirSong);
             
-            if isempty(SegmentsExtract)
-                % then no data ... skip
+
+            % =================== throw out this motif if there is not
+            % enough trials. % usually mismatch from regexp above occurs
+            % becuase of the added restriction of gap durations in
+            % lt_neural_RegExp [or throw out if empty]
+            if length(SegmentsExtract) < Params.Nmin
                 continue
             end
-            
             
             % ============================ EXTRACT THINGS
             % ++++++++++++++++++++++++++++++ ENTIRE SEGETRACT
@@ -164,7 +167,7 @@ for i=1:numbirds
             % make duration consistent
             if Params.regexpr.preAndPostDurRelSameTimept==1
                 % then expect all syls to have aligned data timebase
-                maxsamps = 1000*(Params.regexpr.motifpredur + Params.regexpr.motifpostdur)-1;
+                maxsamps = round(1000*(Params.regexpr.motifpredur + Params.regexpr.motifpostdur)-1);
                 frmat = frmat(1:maxsamps,:);
             end
             NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).DAT.frmat = frmat;

@@ -155,9 +155,10 @@ for i=1:length(ListOfDirs)
             if plotEachSyl==1
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 title([syl ', pos:' num2str(j)]);
+                if length(syldat)/fs>0.0512
                 lt_plot_spectrogram(syldat, fs, 0, 0, [], [], 0);
                 plot(T, PC, 'w', 'LineWidth', 2);
-                
+                end
                 % --- overlay FF and time windows
                 line([mintime mintime], ylim, 'Color', 'k');
                 line([maxtime maxtime], ylim, 'Color', 'k');

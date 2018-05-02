@@ -51,6 +51,8 @@ F_high = 8000;
 %% run
 
 % ==== filter song
+bandpass(songdat,fs,F_low,F_high,filter_type);
+
 songdat=bandpass(songdat,fs,F_low,F_high,filter_type);
 
 % === colect spectrogram
