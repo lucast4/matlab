@@ -1,4 +1,16 @@
-function lt_neural_v2_CTXT_BRANCH_DatVsShuff(analyfname, Niter, TimeWindows)
+function lt_neural_v2_CTXT_BRANCH_DatVsShuff(analyfname, Niter, TimeWindows, ...
+    dotransform)
+%% 5/11/18 - modified to allow for both alignment by onset and offset, detects automatically from params
+
+% if align by onset: then will take from sylonset+TimeWindows(1) to
+% syloffset (i.e. 25th percentile of syl dur) + TimeWindows(2)
+
+% if align by offset: then will take from syloffset - syldur(25th
+% percentile) + TimeWindows(1) to offset + TimeWindows(2)
+% so if TimeWindows = [-0.01 -0.01] then will get from 10ms before syl
+% onset (infered as syl offset minus 25th percentile of syl dur) to 10ms
+% before syl offets.
+
 %% lt 11/28/17 - output saved in a directory (as individual .mat files)
 % PREVIOUSLY saved as a field in the CLASSES structure, but it is too
 % large, so do this instead.
@@ -42,7 +54,7 @@ beta = 0.9;
 decodestat = 'F1';
 
 
-%% 
+%%
 
 currdir = pwd;
 try
@@ -71,7 +83,7 @@ for i=1:numbirds
             
             
             % ======= to get offset of window, take deviation
-            % from 5th percentile (short side) offset of all contexts in this branch
+            % from 25th percentile (short side) offset of all contexts in this branch
             numclasses = length(datstruct.SEGEXTRACT.classnum);
             alldurs = [];
             for cc = 1:numclasses
@@ -81,10 +93,19 @@ for i=1:numbirds
                 tmp = [datstruct.SEGEXTRACT.classnum(cc).SegmentsExtract.Dur_syl];
                 alldurs = [alldurs tmp];
             end
-            syldur = prctile(alldurs, 5);
+            
+            % ============= what to use as syl dur depends on whether
+            % aligning to onset or offest
+            syldur = prctile(alldurs, 25);
             
             TimeWindows_relonset = TimeWindows;
+            if prms.alignOnset==1
+                % then straightforward - get time relative to onset
             TimeWindows_relonset(:,2) = TimeWindows_relonset(:,2)+syldur; % converted... can easily modify this iof wanted
+            elseif prms.alignOnset==0
+                % get times relative to syllable offset ---
+                TimeWindows_relonset(1) = TimeWindows_relonset(1) - syldur;
+            end
             
             
             % ################ go thru all time bins
@@ -94,8 +115,8 @@ for i=1:numbirds
                 savefname = [savedir '/' analyfname '/SHUFFDECODE/bird' num2str(i) '_neur' num2str(ii) ...
                     '_branch' num2str(iii) '_tbin' num2str(tt) '.mat'];
                 if exist(savefname, 'file')
-                   disp(['SKIP - already exist: ' savefname]);
-                   continue
+                    disp(['SKIP - already exist: ' savefname]);
+                    continue
                 end
                 
                 % ------ SOME PARAMS
@@ -109,7 +130,8 @@ for i=1:numbirds
                     clustnum = SummaryStruct.birds(i).neurons(ii).clustnum;
                 end
                 
-                [Xall, ~, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum);
+                [Xall, ~, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum, ...
+                    dotransform);
                 
                 if length(CtxtClasses)<2
                     continue
@@ -149,12 +171,12 @@ for i=1:numbirds
                 
                 % ================= OUTPUT
                 if (0)
-                    % old version 
-                CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).window_relonset = prms.classtmp.frtimewindow;
-                CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).ConfMatAll_DAT = ConfMatAll;
-                CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).ConfMatAll_NEG = ConfMatAll_NEG;
-                
-                
+                    % old version
+                    CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).window_relonset = prms.classtmp.frtimewindow;
+                    CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).ConfMatAll_DAT = ConfMatAll;
+                    CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).ConfMatAll_NEG = ConfMatAll_NEG;
+                    
+                    
                 end
                 
                 %% =================== compare data to distribution
@@ -188,7 +210,7 @@ for i=1:numbirds
                 
                 % ==================== OUTPUT
                 if (0)
-                % -- old version
+                    % -- old version
                     CLASSES.birds(i).neurons(ii).branchnum(iii).SHUFFDECODE.timebin(tt).Pdat = Pdat;
                 end
                 
@@ -214,8 +236,8 @@ save(savename_par, 'TimeWindows');
 
 %% ======= save classes (overwrite old struct)
 if (0)
-CLASSES.SHUFFDECODEpar.TimeWindows_relOnsetOffset =TimeWindows;
-save([savedir '/CLASSESv2_' analyfname '.mat'], 'CLASSES');
+    CLASSES.SHUFFDECODEpar.TimeWindows_relOnsetOffset =TimeWindows;
+    save([savedir '/CLASSESv2_' analyfname '.mat'], 'CLASSES');
 end
 
 %% ================== debug, to convert from older bersion (saving in struct) to new version (saving .mat)
@@ -225,7 +247,8 @@ end
 end
 
 
-function [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum)
+function [Xall, xtimesall, Y, CtxtClasses] = fn_extractClassDat(SEGEXTRACT, prms, clustnum, ...
+    dotransform)
 
 frtimewindow = prms.classtmp.frtimewindow; % on and off, relative to syl onset
 frbinsize = prms.ClassSlide.frbinsize;
@@ -266,8 +289,11 @@ for j=1:numclasses
     
     % ---- EXTRAC FR VECTOR (within desired time window)
     xbin = segextract(1).FRsmooth_xbin_CommonTrialDur;
-    indsFR = xbin>(prms.motifpredur+frtimewindow(1)+0.0001) ...
-        & xbin<=(prms.motifpredur+frtimewindow(2)+0.0001); % add/minus at ends because somtimes
+    
+    % --------- min val depends on whether aligned to onset or offset
+    xminval = prms.motifpredur+frtimewindow(1)+0.0001;
+    xmaxval = prms.motifpredur+frtimewindow(2)+0.0001;
+    indsFR = xbin>(xminval) & xbin<=(xmaxval); % add/minus at ends because somtimes
     
     X = [segextract.FRsmooth_rate_CommonTrialDur];
     X = X(indsFR, :);
@@ -281,6 +307,11 @@ for j=1:numclasses
     % time)
     TrimDown = 1;
     [X, xtimes] = lt_neural_v2_QUICK_binFR(X, xtimes, frbinsize, TrimDown);
+    
+    % ==================== do square root transform?
+    if dotransform==1
+        X = sqrt(X);
+    end
     
     
     % ======================== COLLECT ACROSS ALL CLASSES

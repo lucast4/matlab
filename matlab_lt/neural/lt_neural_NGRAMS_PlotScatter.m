@@ -1,5 +1,7 @@
-function lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
-    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian)
+function [AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
+    lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
+    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
+    removeBadSyls)
 %%
 assert(sum([plotRawGood plotON])<2, 'cannot do both types of raw plots ...');
 
@@ -138,8 +140,13 @@ for i=1:maxbirds
                 pairtypethis = PairtypesToplot{k};
                 pairtypethis = find(strcmp(PairTypesInOrder, pairtypethis));
                 
-                inds = All_birdnum==i & All_neurnum==ii & All_diffsyl_PairType==pairtypethis;
                 
+                if removeBadSyls==1
+                    inds = All_birdnum==i & All_neurnum==ii & All_diffsyl_PairType==pairtypethis & ...
+                        OUTSTRUCT.All_BadSyls == 0;
+                else
+                    inds = All_birdnum==i & All_neurnum==ii & All_diffsyl_PairType==pairtypethis;
+                end
                 
                 % ########################################## COLLECT DATA
                 y = [];
@@ -170,7 +177,7 @@ for i=1:maxbirds
                     
                     % ================= OUTPUT FOR PLOTTING
                     YplotAll{k} = All_AbsFRdiff(inds);
-                    YplotAll{3} = [YplotAll{3} All_AbsFRdiff_NEG(inds)]; % collect negative controls
+                    YplotAll{3} = [YplotAll{3}; All_AbsFRdiff_NEG(inds)]; % collect negative controls
                 elseif strcmp(plottype, 'absfrdiff_typediff')
                     
                     % ----- V2 - each type compaired to mean of its own neg
@@ -325,6 +332,8 @@ if strcmp(plottype, 'oneminusrho')
         
     end
 else
+    
+    % ================== ONE, EQUAL AXES
     figcount=1;
     subplotrows=6;
     subplotcols=3;
@@ -384,8 +393,61 @@ else
     linkaxes(hsplots, 'xy');
     
     
-    % #################3 SAME JUST MY BIRDS
+    % ############################## TWO, SEPARATE AXES
+    figcount=1;
+    subplotrows=6;
+    subplotcols=3;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
     
+    
+    maxbirds = max(AllPairs_Birdnum);
+    for j=1:maxbirds
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title([SummaryStruct.birds(j).birdname]);
+        % LMAN
+        indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
+        y = AllPairs_Means(indstmp, :);
+        plot(y(:,1), y(:,2), 'ob');
+        
+        % RA
+        indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
+        y = AllPairs_Means(indstmp, :);
+        plot(y(:,1), y(:,2), 'or');
+        
+        % FORMATING
+        xlabel(PairtypesToplot{1});
+        ylabel(PairtypesToplot{2});
+        
+        %         xlim([-1 1]);
+        %         ylim([-1 1]);
+        
+        lt_plot_makesquare_plot45line(gca, 'k', -2);
+    end
+    
+    
+    % ============ ONE PLOT ALL BIRDS
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title(['ALL BIRDS']);
+    % LMAN
+    indstmp = strcmp(AllPairs_Bregions, 'LMAN');
+    y = AllPairs_Means(indstmp, :);
+    plot(y(:,1), y(:,2), 'ob');
+    
+    % RA
+    indstmp = strcmp(AllPairs_Bregions, 'RA');
+    y = AllPairs_Means(indstmp, :);
+    plot(y(:,1), y(:,2), 'or');
+    
+    % FORMATING
+    xlabel(PairtypesToplot{1});
+    ylabel(PairtypesToplot{2});
+    
+    %         xlim([-1 1]);
+    %         ylim([-1 1]);
+    
+    lt_plot_makesquare_plot45line(gca, 'k', -2);
     
 end
 
@@ -441,6 +503,52 @@ for j=1:maxbirds
     
     lt_plot_makesquare_plot45line(gca, 'k', -2);
 end
+
+%% ================= GET RATIO OF MEANS FOR EACH BIRD, 
+maxbirds = max(AllPairs_Birdnum);
+
+Y = nan(maxbirds,2);
+
+for i=1:maxbirds
+    
+    % ========= LMAN
+    x = 1;
+    inds = AllPairs_Birdnum==i & strcmp(AllPairs_Bregions, 'LMAN');
+    
+    % ---- get ratio of means
+    y = mean(AllPairs_Means(inds,:), 1);
+    Y(i, x) = y(2)/y(1);
+  
+   
+    % ========= RA
+    x = 2;
+    inds = AllPairs_Birdnum==i & strcmp(AllPairs_Bregions, 'RA');
+    
+    % ---- get ratio of means
+    y = mean(AllPairs_Means(inds,:), 1);
+    Y(i, x) = y(2)/y(1);
+
+end
+
+lt_figure; hold on;
+title('ratio of means, by bird');
+xlabel('LMAN -- RA');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}]);
+
+lt_plot([1 2], Y);
+
+% ---- plot means
+
+
+% --- plot with lines
+plot([1 2], Y(all(~isnan(Y),2),:)', '-k');
+
+xlim([0 3]);
+
+p = ranksum(Y(:,1), Y(:,2));
+lt_plot_pvalue(p, 'ranksum', 1);
+lt_plot_zeroline;
+
 
 
 %% ================= FOR EACH NEURON, DIVIDE DATA INTO POS CONTROL
@@ -514,6 +622,7 @@ ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}])
 xlabel('Birds (LMAN -- RA)');
 
 maxbirds = max(AllPairs_Birdnum);
+Yall = cell(maxbirds, 2);
 for j=1:maxbirds
     
     % LMAN
@@ -523,6 +632,7 @@ for j=1:maxbirds
     if any(indstmp)
         lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
     end
+    Yall{j, 1} = AllPairs_Ratios(indstmp, :);
     
     % RA
     pcol = 'r';
@@ -531,83 +641,132 @@ for j=1:maxbirds
     if any(indstmp)
         lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
     end
+    Yall{j, 2} = AllPairs_Ratios(indstmp, :);
     
     line(3*[j j], ylim, 'Color', 'k' ,'LineStyle', '--');
 end
 lt_plot_zeroline;
+set(gca, 'XTick', 1:3:3*maxbirds, 'XTickLabel', {SummaryStruct.birds.birdname});
+% xticks(1:3:3*maxbirds);
+% xticklabels({SummaryStruct.birds.birdname});
+rotateXLabels(gca, 90);
 
 
-%% ====== LINEAR MODEL TESTING WHETHER SLOPE DEPENDS ON BREGION
-
-y1 = AllPairs_Means(:,1);
-y2 = AllPairs_Means(:,2);
-tbl = table(y1, y2, AllPairs_Birdnum, AllPairs_Bregions, 'VariableNames', ...
-    {'y1', 'y2', 'birdnum', 'bregion'});
-
-mdl = 'y2 ~ y1 + bregion:y1 + (-1 + y1|birdnum) + (-1+bregion:y1|birdnum)';  % full model
-% mdl = 'y1 ~ y2 + bregion:y2 + (-1 + y2|birdnum) + (-1+bregion:y2|birdnum)';  % full model
-lme = fitlme(tbl, mdl)
-
-
-%% =========== SAME, BUT RESTRICTED TO BIRDS WITH BOTH DATA
-goodbirds = intersect(AllPairs_Birdnum(strcmp(AllPairs_Bregions, 'LMAN')) ,...
-    AllPairs_Birdnum(strcmp(AllPairs_Bregions, 'RA')));
-indsgood = ismember(AllPairs_Birdnum, goodbirds');
-
-y1 = AllPairs_Means(:,1);
-y2 = AllPairs_Means(:,2);
-tbl = table(y1(indsgood), y2(indsgood), AllPairs_Birdnum(indsgood), AllPairs_Bregions(indsgood), 'VariableNames', ...
-    {'y1', 'y2', 'birdnum', 'bregion'});
-
-mdl = 'y2 ~ y1 + bregion:y1 + (-1 + y1|birdnum) + (-1+bregion:y1|birdnum)';  % full model
-lme = fitlme(tbl, mdl)
-
-
-%% =========== SAME, BUT RESTRICTED TO BIRDS THAT I RECORDED
-% -------- FIND THE GOOD BIRDS
-goodbirds = [];
-for j=1:length(SummaryStruct.birds)
-    if isfield(SummaryStruct.birds(j).neurons(1), 'isRAsobermel')
-        continue
-    else
-        % -- then is my bird
-        goodbirds = [goodbirds j];
+% ########################### PLOT ALL ON ONE PLOT
+lt_figure; hold on;
+% === bird by bird
+lt_subplot(2,2,1); hold on;
+title('by bird (mean, std)');
+xlabel('LMAN -- RA');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}]);
+for j=1:size(Yall,1)
+    
+    xplot = [1 3] + 0.8*rand-0.4;
+    
+    % --lman
+    x = 1;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    % -- ra
+    x = 2;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    if all(~cellfun(@isempty, Yall(j,:)))
+        
+        % -- plot line between
+        ymeans = cellfun(@mean, Yall(j,:));
+        plot(xplot, ymeans, '-or');
     end
 end
-disp({SummaryStruct.birds(goodbirds).birdname});
+xlim([0 4]);
+lt_plot_zeroline;
+y1 = cellfun(@mean, Yall(:,1));
+y2 = cellfun(@mean, Yall(:,2));
 
-% ------- INDS FOR THESE BIRDS
-indsgood = ismember(AllPairs_Birdnum, goodbirds);
+y1 = y1(~isnan(y1));
+y2 = y2(~isnan(y2));
 
-y1 = AllPairs_Means(:,1);
-y2 = AllPairs_Means(:,2);
-tbl = table(y1(indsgood), y2(indsgood), AllPairs_Birdnum(indsgood), AllPairs_Bregions(indsgood), 'VariableNames', ...
-    {'y1', 'y2', 'birdnum', 'bregion'});
+p = ranksum(y1, y2);
+lt_plot_pvalue(p, 'rank sum', 1);
 
-mdl = 'y2 ~ y1 + bregion:y1 + (-1 + y1|birdnum) + (-1+bregion:y1|birdnum)';  % full model
-lme = fitlme(tbl, mdl)
 
-%% =============== SAME, BUT DO MODEL FOR SINGLE BIRD
-birdtodo = 'wh44wh39';
-goodbirds = [];
-for j=1:length(SummaryStruct.birds)
-    if ~strcmp(SummaryStruct.birds(j).birdname, birdtodo)
-        continue
-    else
-        % -- then is my bird
-        goodbirds = [goodbirds j];
-    end
+
+% === all datapoints
+lt_subplot(2,2,2); hold on;
+title('by neuron');
+xlabel('LMAN -- RA');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}]);
+
+Ypoints  = {};
+Ypoints{1} = cell2mat(Yall(:,1));
+Ypoints{2} = cell2mat(Yall(:,2));
+
+lt_plot_MultDist(Ypoints, [1 2], 0, 'k');
+lt_plot_zeroline;
+
+% --- pvalue
+p = ranksum(Ypoints{1}, Ypoints{2});
+lt_plot_pvalue(p, 'rank sum', 1);
+
+
+%% ======================== PLOT EACH CLASS SEPARATELY ACROSS BIRDS
+
+Ymeans = nan(maxbirds,4); % bird x [4 classes below]
+Ystd = nan(maxbirds, 4);
+
+for i=1:maxbirds
+% ------ LMAN, TYPE 1
+inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
+indtype = 1;
+% get
+Ymeans(i, 1) = mean(AllPairs_Means(inds, indtype));
+Ystd(i, 1) = std(AllPairs_Means(inds, indtype));
+
+% ------ LMAN TYPE 2
+inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
+indtype = 2;
+% get
+Ymeans(i, 2) =mean(AllPairs_Means(inds, indtype));
+Ystd(i, 2) = std(AllPairs_Means(inds, indtype));
+
+% ----- RA, TYPE 1
+inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
+indtype = 1;
+% get
+Ymeans(i, 3) = mean(AllPairs_Means(inds, indtype));
+Ystd(i, 3) = std(AllPairs_Means(inds, indtype));
+
+% ----- RA, TYPE 2
+inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
+indtype = 2;
+% get
+Ymeans(i, 4) = mean(AllPairs_Means(inds, indtype));
+Ystd(i, 4) = std(AllPairs_Means(inds, indtype));
 end
-goodbirds = find(strcmp({SummaryStruct.birds.birdname}, birdtodo));
 
-% ------- INDS FOR THESE BIRDS
-indsgood = ismember(AllPairs_Birdnum, goodbirds);
+% ======== plot
+lt_figure; hold on;
+title('each bird mean,std');
+for i = 1:maxbirds
+   
+     x = [1:2:7] + 0.8*rand-0.4;
+     y = Ymeans(i,:);
+     ystd = Ystd(i,:);
+     
+     lt_plot(x, y, {'Errors', ystd});    
+     if all(~isnan(Ymeans(i,:)))
+     plot(x,y, '-', 'Color', [0.2 0.2 0.8]);    
+     else
+     plot(x,y, '-', 'Color', [0.7 0.7 0.7]);
+     end
+end
+lt_plot([1:2:7]+0.5, nanmean(Ymeans,1), {'Errors', lt_sem(Ymeans), 'Color', 'r'});
 
-% -----
-y1 = AllPairs_Means(:,1);
-y2 = AllPairs_Means(:,2);
-tbl = table(y1(indsgood), y2(indsgood), AllPairs_Birdnum(indsgood), AllPairs_Bregions(indsgood), 'VariableNames', ...
-    {'y1', 'y2', 'birdnum', 'bregion'});
 
-mdl = 'y2 ~ y1 + bregion:y1';  % full model
-lme = fitlme(tbl, mdl)
+lt_plot_zeroline;
+xlabel(['LMAN(' PairtypesToplot{1} ') LMAN(' PairtypesToplot{2} ') RA(type1) RA(type2)']);
+ylabel('frdiff, z rel shuffle');

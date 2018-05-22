@@ -1,15 +1,20 @@
-function [OUTSTRUCT, SummaryStruct, Params] = lt_neural_NGRAMS_Compile(dirname, window_prem, Nshuffs)
+function [OUTSTRUCT, SummaryStruct, Params] = lt_neural_NGRAMS_Compile(dirname, window_prem, ...
+    Nshuffs, doSqrtTransform, use_dPrime, nshufftmp, dodecode)
+DoDecode = dodecode;
 
 %% lt 4/24/18 - gets all saved data and extract stats from them and puts into struct
 
 %% ===========
 savedir = '/bluejay5/lucas/analyses/neural/NGRAMS';
 savedir = [savedir '/' dirname];
-Params.dirname = dirname;
 
 %% =========== load metadat
 load([savedir '/SummaryStruct.mat']);
 load([savedir '/Params.mat']);
+Params.dirname = dirname;
+Params.doSqrtTransform = doSqrtTransform;
+Params.use_dPrime = use_dPrime;
+Params.nshufftmp = nshufftmp; % 50-100 is optimal, see DIAG below.
 
 %% =========== determine premotor window
 
@@ -33,6 +38,7 @@ OUTSTRUCT.All_AbsFRdiff = [];
 OUTSTRUCT.All_AbsFRdiff_NEG = [];
 OUTSTRUCT.All_ngrampair_inorder = [];
 OUTSTRUCT.All_ngramstring_inorder = {};
+OUTSTRUCT.All_DecodeConfMat = {};
 
 
 numbirds = length(SummaryStruct.birds);
@@ -92,151 +98,166 @@ for i=1:numbirds
                     
                     TrialInds = {1:n1, n1+1:n1+n2};
                 end
-                % --- pare down to just premotor windwo
-                FRmat = FRmat(x>=windowx(1) & x<=windowx(2),:);
                 
                 
-                % ############################ TAKE SQUARE ROOT TRANSFORM
-                FRmat = sqrt(FRmat);
-                
-                if (0)
-                    % ========== DIAGNOSITCS (HISTOGRAMS)
-                    figure; hold on;
-                    lt_subplot(2,2,1); hold on;
-                    xlabel('noise (spk), mean subtracted at each timebin');
-                    tmp = FRmat(:, TrialInds{1}) - mean(FRmat(:, TrialInds{1}),2);
-                    lt_plot_histogram(tmp(:));
-                    
-                    % ---- apply square root transform
-                    lt_subplot(2,2,3); hold on;
-                    title('sqroot transform each trial');
-                    FRmatSq = sqrt(FRmat);
-                    tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
-                    lt_plot_histogram(tmp(:));
-                    
-                    % ---- apply log transform
-                    lt_subplot(2,2,4); hold on;
-                    title('log transofrm each trial');
-                    FRmatSq = log10(FRmat+0.1*min(FRmat(FRmat(:)>0)));
-                    tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
-                    lt_plot_histogram(tmp(:));
-                    
-                    % --- variance as function of mean (across time bins)
-                    lt_subplot(2,2,2); hold on;
-                    xlabel('mean');
-                    ylabel('var');
-                    mean1 =  mean(FRmat(:, TrialInds{1}),2);
-                    var1 = var(FRmat(:, TrialInds{1}),0,2);
-                    plot(mean1, var1, 'ok')
-                    
-                elseif (0)
-                    % =============== DIAGNOSTICS (RESIDUAL PLOTS)
-                    figure; hold on;
-                    lt_subplot(2,2,1); hold on;
-                    xlabel('noise (spk), mean subtracted at each timebin');
-                    tmp = FRmat(:, TrialInds{1}) - mean(FRmat(:, TrialInds{1}),2);
-                    plot(1:size(tmp,1), tmp, '.k')
-                    
-                    % ---- apply square root transform
-                    lt_subplot(2,2,3); hold on;
-                    title('sqroot transform each trial');
-                    FRmatSq = sqrt(FRmat);
-                    tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
-                    plot(1:size(tmp,1), tmp, '.k')
-                    
-                    % ---- apply log transform
-                    lt_subplot(2,2,4); hold on;
-                    title('log transofrm each trial');
-                    FRmatSq = log10(FRmat+0.1*min(FRmat(FRmat(:)>0)));
-                    tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
-                    plot(1:size(tmp,1), tmp, '.k')
-                    
-                    % --- variance as function of mean (across time bins)
-                    lt_subplot(2,2,2); hold on;
-                    xlabel('mean');
-                    ylabel('var');
-                    mean1 =  mean(FRmat(:, TrialInds{1}),2);
-                    var1 = var(FRmat(:, TrialInds{1}),0,2);
-                    plot(mean1, var1, 'ok')
-                end
-                
-                %% ############### RUNNING FR DIFF (relative to shuffles)
-                % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DAT
-                % NOTE: have confirmed that distribituions of null data are
-                % mostly normal looking. this is becuase of sqrt transfomr
-                fr1 = mean(FRmat(:, TrialInds{1}),2);
-                fr2 = mean(FRmat(:, TrialInds{2}),2);
-                frdiffDAT = mean(abs(fr1-fr2));
+                %% ==== new version for fr diff
+                [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds, ...
+                    DecodeDAT, DecodeShuff] = lt_neural_NGRAMS_QUICK_FRdiff(...
+                    frmat1, frmat2, 1, windowx, Params.Nmin, nshufftmp, ...
+                    Params, DoDecode);
                 
                 OUTSTRUCT.All_AbsFRdiff = ...
-                    [OUTSTRUCT.All_AbsFRdiff frdiffDAT];
-                %% ########### COMPARE FR DIFF TO SHUFFLE DISTRIBUTION
-                FRdiffShuff = [];
-                nshufftmp = 100; % 50-100 is optimal, see DIAG below.
-                
-                nsamps = size(FRmat,2);
-                for ss = 1:nshufftmp
-                    
-                    indshuff = randperm(nsamps);
-                    FRmatSHUFF = FRmat(:,indshuff);
-                    
-                    % ================= calculate correlation
-                    fr1 = mean(FRmatSHUFF(:, TrialInds{1}),2);
-                    fr2 = mean(FRmatSHUFF(:, TrialInds{2}),2);
-                    frdiff = mean(abs(fr1-fr2));
-                    
-                    FRdiffShuff = [FRdiffShuff frdiff];
-                end
-                
-                % ########################### SAVE THE FIRST SHUFF
+                    [OUTSTRUCT.All_AbsFRdiff FRdiffDAT];
                 OUTSTRUCT.All_AbsFRdiff_NEG = ...
                     [OUTSTRUCT.All_AbsFRdiff_NEG FRdiffShuff(1)];
-
-                
-                
-                % ########################## zscore data relative to shuff
-                frdiff_Z = (frdiffDAT - mean(FRdiffShuff))./std(FRdiffShuff);
-                
                 OUTSTRUCT.All_AbsFRdiff_Zrelshuff = ...
-                    [OUTSTRUCT.All_AbsFRdiff_Zrelshuff frdiff_Z];
+                    [OUTSTRUCT.All_AbsFRdiff_Zrelshuff FRdiff_Z];
                 
-                % ======================= DIAG - run this to determine
-                % number of shuffles before z-score converges. I think is
-                % about 50-100, even for cases of small sample size
-                % (n=10-20)
+                % OLD VERSION, NOW IS INCORPORATED INTO FRDIFF FUNCTION
+                % ABOVE
+%                %% DECCODE -
+%                 if dodecode==1
+%                 % ----- 1) BIN FR MATRIX
+%                 [Xall, xtimesall, Y] = ...
+%                     lt_neural_NGRAMS_DecodePrep(frmat1, frmat2, windowx, ...
+%                     Params);
+%                 
+%                 % ------ 2) DECODER
+%                 rebalance =1;
+%                 imbalance_thr = 0.7;
+%                 beta = 0.9;
+%                 CVkfoldnum = 4;
+%                 [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...
+%                         = lt_neural_v2_QUICK_classify(Xall, Y, 'glmnet', ...
+%                         rebalance, imbalance_thr, beta, CVkfoldnum);
+%                     
+%                     sts = lt_neural_ConfMatStats(ConfMat);
+%                    
+%                     OUTSTRUCT.All_DecodeConfMat = [OUTSTRUCT.All_DecodeConfMat; ...
+%                         ConfMat];
+%                     
+%                     % =============
+%                     disp('-----');
+%                     disp(sts.F1)
+%                     disp(DecodeDAT)
+%                 end
+%                 
+                %% DIAGNOSTICS
                 if (0)
-                    Ytmp = [];
-                    for nshufftmp = [5 10 15 20 50 75 100 200 500 1000]
-                        % ================== COMPARE TO SHUFFLE DISTRIBUTION
-                        FRdiffShuff = [];
-                        %                 nshufftmp = 200;
-                        nsamps = size(FRmat,2);
-                        for ss = 1:nshufftmp
-                            
-                            indshuff = randperm(nsamps);
-                            FRmatSHUFF = FRmat(:,indshuff);
-                            
-                            % ================= calculate correlation
-                            fr1 = mean(FRmatSHUFF(:, TrialInds{1}),2);
-                            fr2 = mean(FRmatSHUFF(:, TrialInds{2}),2);
-                            frdiff = mean(abs(fr1-fr2));
-                            
-                            FRdiffShuff = [FRdiffShuff frdiff];
-                        end
-                        
-                        % ======================= zscore data relative to shuff
-                        y = (frdiffDAT - mean(FRdiffShuff))./std(FRdiffShuff);
-                        Ytmp = [Ytmp y];
+                    % --- pare down to just premotor windwo
+                    FRmat = FRmat(x>=windowx(1) & x<=windowx(2),:);
+                    
+                    
+                    % ############################ TAKE SQUARE ROOT TRANSFORM
+                    if Params.doSqrtTransform==1
+                        FRmat = sqrt(FRmat);
                     end
-                    figure; hold on;
-                    subplot(2,2,1); hold on;
-                    plot([5 10 15 20 50 75 100 200 500 1000], Ytmp, '-ok');
-                    lt_plot_text(100, 1, ['N = ' num2str(n1) ',' num2str(n2)], 'r');
-                    subplot(2,2,2); hold on;
-                    plot(log10([5 10 15 20 50 75 100 200 500 1000]), Ytmp, '-ok');
+                    
+                    if (0)
+                        % ========== DIAGNOSITCS (HISTOGRAMS)
+                        figure; hold on;
+                        lt_subplot(2,2,1); hold on;
+                        xlabel('noise (spk), mean subtracted at each timebin');
+                        tmp = FRmat(:, TrialInds{1}) - mean(FRmat(:, TrialInds{1}),2);
+                        lt_plot_histogram(tmp(:));
+                        
+                        % ---- apply square root transform
+                        lt_subplot(2,2,3); hold on;
+                        title('sqroot transform each trial');
+                        FRmatSq = sqrt(FRmat);
+                        tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
+                        lt_plot_histogram(tmp(:));
+                        
+                        % ---- apply log transform
+                        lt_subplot(2,2,4); hold on;
+                        title('log transofrm each trial');
+                        FRmatSq = log10(FRmat+0.1*min(FRmat(FRmat(:)>0)));
+                        tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
+                        lt_plot_histogram(tmp(:));
+                        
+                        % --- variance as function of mean (across time bins)
+                        lt_subplot(2,2,2); hold on;
+                        xlabel('mean');
+                        ylabel('var');
+                        mean1 =  mean(FRmat(:, TrialInds{1}),2);
+                        var1 = var(FRmat(:, TrialInds{1}),0,2);
+                        plot(mean1, var1, 'ok')
+                        
+                    elseif (0)
+                        % =============== DIAGNOSTICS (RESIDUAL PLOTS)
+                        figure; hold on;
+                        lt_subplot(2,2,1); hold on;
+                        xlabel('noise (spk), mean subtracted at each timebin');
+                        tmp = FRmat(:, TrialInds{1}) - mean(FRmat(:, TrialInds{1}),2);
+                        plot(1:size(tmp,1), tmp, '.k')
+                        
+                        % ---- apply square root transform
+                        lt_subplot(2,2,3); hold on;
+                        title('sqroot transform each trial');
+                        FRmatSq = sqrt(FRmat);
+                        tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
+                        plot(1:size(tmp,1), tmp, '.k')
+                        
+                        % ---- apply log transform
+                        lt_subplot(2,2,4); hold on;
+                        title('log transofrm each trial');
+                        FRmatSq = log10(FRmat+0.1*min(FRmat(FRmat(:)>0)));
+                        tmp = FRmatSq(:, TrialInds{1}) - mean(FRmatSq(:, TrialInds{1}),2);
+                        plot(1:size(tmp,1), tmp, '.k')
+                        
+                        % --- variance as function of mean (across time bins)
+                        lt_subplot(2,2,2); hold on;
+                        xlabel('mean');
+                        ylabel('var');
+                        mean1 =  mean(FRmat(:, TrialInds{1}),2);
+                        var1 = var(FRmat(:, TrialInds{1}),0,2);
+                        plot(mean1, var1, 'ok')
+                    end
+                    
+                    
+                    
+                    
+                    
+                    % ======================= DIAG - run this to determine
+                    % number of shuffles before z-score converges. I think is
+                    % about 50-100, even for cases of small sample size
+                    % (n=10-20)
+                    if (0)
+                        Ytmp = [];
+                        for nshufftmp = [5 10 15 20 50 75 100 200 500 1000]
+                            % ================== COMPARE TO SHUFFLE DISTRIBUTION
+                            FRdiffShuff = [];
+                            %                 nshufftmp = 200;
+                            nsamps = size(FRmat,2);
+                            for ss = 1:nshufftmp
+                                
+                                indshuff = randperm(nsamps);
+                                FRmatSHUFF = FRmat(:,indshuff);
+                                
+                                % ================= calculate correlation
+                                fr1 = mean(FRmatSHUFF(:, TrialInds{1}),2);
+                                fr2 = mean(FRmatSHUFF(:, TrialInds{2}),2);
+                                frdiff = mean(abs(fr1-fr2));
+                                
+                                FRdiffShuff = [FRdiffShuff frdiff];
+                            end
+                            
+                            % ======================= zscore data relative to shuff
+                            y = (frdiffDAT - mean(FRdiffShuff))./std(FRdiffShuff);
+                            Ytmp = [Ytmp y];
+                        end
+                        figure; hold on;
+                        subplot(2,2,1); hold on;
+                        plot([5 10 15 20 50 75 100 200 500 1000], Ytmp, '-ok');
+                        lt_plot_text(100, 1, ['N = ' num2str(n1) ',' num2str(n2)], 'r');
+                        subplot(2,2,2); hold on;
+                        plot(log10([5 10 15 20 50 75 100 200 500 1000]), Ytmp, '-ok');
+                    end
+                    
+                    % ============== display
+                    
+                    
                 end
-                
-                
                 %% ############################################ RHO
                 
                 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DATA
@@ -295,7 +316,7 @@ for i=1:numbirds
                     j jj];
                 OUTSTRUCT.All_ngramstring_inorder = [OUTSTRUCT.All_ngramstring_inorder; ...
                     {motif1 motif2}];
-
+                
                 
             end
         end

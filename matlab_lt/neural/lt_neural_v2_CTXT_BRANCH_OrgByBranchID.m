@@ -1,5 +1,5 @@
 function DatStructByBranch = lt_neural_v2_CTXT_BRANCH_OrgByBranchID(ALLBRANCH, ...
-    analyfname, tbin, useDprime, timewindow)
+    analyfname, tbin, useDprime, timewindow, prms)
 % timewindow = [-0.03 0.03]; % relative to syllable onset (for getting
 % other metric of fr difference, one scalar for premotor window)
 
@@ -75,6 +75,8 @@ for i=1:numbirds
         DatStructByBranch.bird(i).branchID(kk).DAT.FRcorr_neg = [];
         DatStructByBranch.bird(i).branchID(kk).DAT.FRcorr_pos = [];
         
+        DatStructByBranch.bird(i).branchID(kk).DAT.FFstruct = [];
+        DatStructByBranch.bird(i).branchID(kk).DAT.frdat = [];
     end
     
     
@@ -146,48 +148,48 @@ for i=1:numbirds
             
             %% ################################# OTHER DISTANCE METRICS
             if ~isempty(timewindow)
-            % ========= 1) CORR OF SMOOTHED FR
-            
-            % ===================================== data
-            % ----------- 1) CONCATENATE ALL TRIALS (FR)
-            numclasses = length(ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum);
-            FRmatall = [];
-            Xall = [];
-            IndList = cell(1,numclasses);
-            count = 1;
-            for cc = 1:numclasses
-                frmat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
-                x = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
-                if isempty(frmat)
-                    continue
+                % ========= 1) CORR OF SMOOTHED FR
+                
+                % ===================================== data
+                % ----------- 1) CONCATENATE ALL TRIALS (FR)
+                numclasses = length(ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum);
+                FRmatall = [];
+                Xall = [];
+                IndList = cell(1,numclasses);
+                count = 1;
+                for cc = 1:numclasses
+                    frmat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(cc).FRsmooth_rate_CommonTrialDur;
+                    x = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(cc).FRsmooth_xbin_CommonTrialDur;
+                    if isempty(frmat)
+                        continue
+                    end
+                    
+                    if ~isempty(FRmatall) & (size(FRmatall,1) ~= size(frmat,1))
+                        maxind = min([size(FRmatall,1) size(frmat,1)]);
+                        FRmatall = FRmatall(1:maxind,:);
+                        frmat = frmat(1:maxind,:);
+                        x = x(1:maxind);
+                        Xall = Xall(1:maxind,:);
+                    end
+                    
+                    FRmatall = [FRmatall frmat];
+                    Xall = [Xall x];
+                    IndList{cc} = [count:count+size(frmat,2)-1];
+                    count = count+size(frmat,2);
+                end
+                x = median(Xall,2);
+                % -------------- 2) get mean fr from concatenated frmat
+                FRallclass = [];
+                for cc = 1:numclasses
+                    frmat = FRmatall(:,IndList{cc});
+                    fr = mean(frmat,2);
+                    FRallclass = [FRallclass; fr'];
                 end
                 
-                if ~isempty(FRmatall) & (size(FRmatall,1) ~= size(frmat,1))
-                    maxind = min([size(FRmatall,1) size(frmat,1)]);
-                    FRmatall = FRmatall(1:maxind,:);
-                    frmat = frmat(1:maxind,:);
-                    x = x(1:maxind);
-                    Xall = Xall(1:maxind,:);
-                end
                 
-                FRmatall = [FRmatall frmat];
-                Xall = [Xall x];
-                IndList{cc} = [count:count+size(frmat,2)-1];
-                count = count+size(frmat,2);
-            end
-            x = median(Xall,2);
-            % -------------- 2) get mean fr from concatenated frmat
-            FRallclass = [];
-            for cc = 1:numclasses
-                frmat = FRmatall(:,IndList{cc});
-                fr = mean(frmat,2);
-                FRallclass = [FRallclass; fr'];
-            end
-            
-            
-            % -------------- 3) compute all pairwise correlations in premotor window
-%                 x = [ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum.FRsmooth_xbin_CommonTrialDur];
-%                 x = x(:,1);
+                % -------------- 3) compute all pairwise correlations in premotor window
+                %                 x = [ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum.FRsmooth_xbin_CommonTrialDur];
+                %                 x = x(:,1);
                 motifpredur = ALLBRANCH.alignpos(apos).ParamsFirstIter.motifpredur;
                 indwind = x>=(motifpredur+timewindow(1)) & x<=(motifpredur+timewindow(2));
                 RhoAll = [];
@@ -304,6 +306,40 @@ for i=1:numbirds
                 y_rho_POS = nan;
             end
             
+            %% get fr mat
+          frinds = find(~cellfun('isempty', ...
+              {ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum.FRsmooth_rate_CommonTrialDur})); % which ones are not empty
+            
+          frdat = struct;
+          count = 1;
+          for indthis = frinds
+              dat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(indthis).FRsmooth_rate_CommonTrialDur; % extract those not empty
+              frdat.classnum(count).frmat = dat;
+              count = count+1;
+          end
+%           frdat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(frinds); % extract those not empty
+            
+            
+            
+            %% get ff by trial
+                ffstruct = lt_neural_v2_CTXT_BRANCH_GetFF(analyfname, i, ...
+                    nn, bb, prms);
+                
+                % =========== sanity check
+                % make sure num contexts match
+                n1 = length(ffstruct.classnum);
+                n2 = length(frdat.classnum);
+                %                 n2 = size(ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).ConfMatAll,1);
+                %                 n2 = length(ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum);
+                assert(n1 ==n2, 'diff num classes ?');
+                % make sure samle sizes match
+
+                for ctocheck = 1:length(ffstruct.classnum)
+                    %                     n1= size(ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(ctocheck).FRsmooth_rate_CommonTrialDur, 2);
+                    n1=  size(frdat.classnum(ctocheck).frmat,2);
+                    n2 = size(ffstruct.classnum(ctocheck).t_ff,1);
+                    assert(n1 ==n2, 'diff sample size ...');
+                end
             
             %% ============== save
             ind = strcmp(ListOfBranches, thisbranch);
@@ -340,7 +376,7 @@ for i=1:numbirds
             
             % ----------------- correlation in premotor window (decode
             % metric)
-            DatStructByBranch.bird(i).branchID(ind).DAT.FRcorr_dat = ...
+            DatStructByBranch.bird(i).branchID(ind).DAT.FdRcorr_dat = ...
                 [DatStructByBranch.bird(i).branchID(ind).DAT.FRcorr_dat; ...
                 y_rho_DAT];
             
@@ -385,6 +421,17 @@ for i=1:numbirds
                 [DatStructByBranch.bird(i).branchID(ind).DAT.PREMOTORDECODE_struct; ...
                 decodestruct];
             
+            
+            % ---------- ff structu
+            DatStructByBranch.bird(i).branchID(ind).DAT.FFstruct= ...
+                [DatStructByBranch.bird(i).branchID(ind).DAT.FFstruct; ...
+                ffstruct];
+
+            DatStructByBranch.bird(i).branchID(ind).DAT.frdat= ...
+                [DatStructByBranch.bird(i).branchID(ind).DAT.frdat; ...
+                frdat];
+
+            
             % ----------- inds to refer back to ALLBRANCH, SUMMARYstruct,
             % ...
             DatStructByBranch.bird(i).branchID(ind).DAT.IndsOriginal_apos = ...
@@ -402,6 +449,8 @@ for i=1:numbirds
             DatStructByBranch.bird(i).branchID(ind).DAT.IndsOriginal_neuron = ...
                 [DatStructByBranch.bird(i).branchID(ind).DAT.IndsOriginal_neuron; ...
                 nn];
+            
+            
             
         end
     end

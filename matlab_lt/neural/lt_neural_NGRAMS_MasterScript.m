@@ -16,17 +16,23 @@ saveON =1;
 
 NGRAMSTRUCT = lt_neural_NGRAMS_Extract(SummaryStruct, Params, saveON);
 
-
+%% #################################### EXTRACTION/PREPROCESSING
 %% ================= EXTRACT NGRAMSTRUCT FROM SAVED DATA 
 close all;
-dirname = 'xaaa_01May2018_1016';
+dirname = 'xaa_30Apr2018_2342';
 window_prem = [-0.025 0.025]; % relative to syl onset
 Nshuffs = 1; % for negative control (corr analysis)
+doSqrtTransform = 1;
+use_dPrime = 0; % if 1, then gets mean dPrime instead of mean abs FR diff
+nshufftmp = 2; % for zscoring fr diff.
+DoDecode = 1; % to get decoder performances; IMPORTNAT: IF 1, then overwrites 
+% FRdiff values.
 
 [OUTSTRUCT, SummaryStruct, Params] = lt_neural_NGRAMS_Compile(dirname, ...
-    window_prem, Nshuffs);
-Params.dirname = dirname;
+    window_prem, Nshuffs, doSqrtTransform, use_dPrime, nshufftmp, DoDecode);
 Params.window_prem = window_prem;
+Params.doSqrtTransform = doSqrtTransform;
+Params.use_dPrime = use_dPrime;
 
 % ========================== FOR COMPATIBILITY WITH OLD CODE, EXTRACT ALL
 % FIELDS
@@ -34,6 +40,16 @@ fnamesthis = fieldnames(OUTSTRUCT);
 for j=1:length(fnamesthis)
    eval([fnamesthis{j} ' = OUTSTRUCT.' fnamesthis{j} ';']); 
 end
+
+%% ================= get bregion for each datapt
+All_Bregion = cell(length(OUTSTRUCT.All_birdnum),1);
+for i=1:length(OUTSTRUCT.All_birdnum)
+   bnum = OUTSTRUCT.All_birdnum(i);
+   neur = OUTSTRUCT.All_neurnum(i);
+   disp(num2str(i));
+   All_Bregion{i} = SummaryStruct.birds(bnum).neurons(neur).NOTE_Location;
+end
+OUTSTRUCT.All_Bregion = All_Bregion;
 
 %% ================= get all pairwise distances during premotor window
 if (0) % OLD VERSION --- this works with NGRAMSTRUCT. new version does not since 
@@ -84,11 +100,319 @@ assert(all(strcmp(All_diffsyl_string, PairTypesInOrder(All_diffsyl_PairType)')),
 OUTSTRUCT.PairTypesInOrder = PairTypesInOrder;
 OUTSTRUCT.All_diffsyl_PairType = All_diffsyl_PairType;
 
+
+%% ============ [FIGURE OUT MISLABELED SYLLABLES]
+
+ncases = length(OUTSTRUCT.All_birdnum);
+OUTSTRUCT.All_BadSyls = nan(ncases,1);
+for i=1:ncases
+    disp(num2str(i));
+    % -- birdname
+    birdname = SummaryStruct.birds(OUTSTRUCT.All_birdnum(i)).birdname;    
+    badstrings = lt_neural_NGRAMS_BadSyls(birdname, Params);
+    
+    % -- if either of then grams contains any of the bad strings, then
+    % mark as bad
+    ngramstrings = OUTSTRUCT.All_ngramstring_inorder(i,:);
+    
+%     if strcmp(birdname, 'pu26y2')
+%         keyboard
+%     end
+    anybad = [];
+    for j=1:2
+        tmp = regexp(ngramstrings{j}, badstrings);
+        anybad = any([anybad ~cellfun(@isempty, tmp)]);
+    end
+    
+    OUTSTRUCT.All_BadSyls(i) = anybad;
+end
+
+
+% =========== for each bird, list all motif pairs that are bad
+if (0)
+    numbirds = max(OUTSTRUCT.All_birdnum);
+for j=1:numbirds
+   inds = OUTSTRUCT.All_birdnum==j & OUTSTRUCT.All_BadSyls==1;
+   motifpairs = OUTSTRUCT.All_ngramstring_inorder(inds,:);
+  birdname = SummaryStruct.birds(j).birdname;
+  
+   disp([' ==================== ' birdname]);
+   
+   motifpairstrings = cell(size(motifpairs,1), 1);
+   for jj=1:size(motifpairs,1)
+       motifpairstrings{jj} = [motifpairs{jj,1} '-' motifpairs{jj,2}];
+   end
+   disp(unique(motifpairstrings));
+   disp(' ---- ignoring any with "x"');
+   tmp = unique(motifpairstrings);
+   indsnox = cellfun(@isempty, regexp(tmp, 'x'));
+   disp(tmp(indsnox));
+end
+
+end
+
+%% ============ REMOVE BAD LABEL PAIRS FROM DATASET
+
+% ==== save original outsturct
+OUTSTRUCT_orig = OUTSTRUCT;
+
+% ==== save this for later
+PairTypesInOrder = OUTSTRUCT.PairTypesInOrder;
+
+% ==== remove this field, since is smaller vector.
+OUTSTRUCT = rmfield(OUTSTRUCT, 'PairTypesInOrder');
+
+% ==== go thru all fields and only keep the good syls
+indstokeep = ~OUTSTRUCT.All_BadSyls;
+fnames = fieldnames(OUTSTRUCT);
+
+for j=1:length(fnames)
+    
+    ytmp = OUTSTRUCT.(fnames{j});
+    
+    try
+        ytmp = ytmp(indstokeep, :);
+        OUTSTRUCT.(fnames{j}) = ytmp;
+    catch err
+        try ytmp = ytmp(:, indstokeep);
+            OUTSTRUCT.(fnames{j}) = ytmp';
+        catch err
+            disp('why error?');
+        end
+    end
+end
+
+% === put pairtypes back in
+OUTSTRUCT.PairTypesInOrder = PairTypesInOrder;
+
+%% =========== [RE-EXTRACT, EQUALIZING SAMPLE SIZE]
+close all;
+measure_to_recalc = 'absfrdiff';
+if strcmp(Params.strtype, 'xaa')
+PairTypesToCompare = {...
+    '1  1  1', ... % xaxis
+    '1  0  0'}; % yaxis
+elseif strcmp(Params.strtype, 'xaaa')
+ PairTypesToCompare = {...
+    '1  1  1  1', ... % xaxis
+    '1  0  0  0'}; % yaxis
+end   
+nshufftmp = 2;
+DoDecode =1; % IMPORTANT: if this is 1, then uses decode and overwrites FR diff stuff
+OUTSTRUCT = lt_neural_NGRAMS_ReSample(OUTSTRUCT, SummaryStruct, Params, ...
+    measure_to_recalc, PairTypesToCompare, nshufftmp, DoDecode);
+
+%% ============= save outstruct
+savesuffix = 'DecodeWithSqrtTransform';
+
+fname = ['/bluejay5/lucas/analyses/neural/NGRAMS/' Params.dirname '/OUTSTRUCT_' savesuffix '.mat'];
+save(fname, 'OUTSTRUCT');
+
+fname = ['/bluejay5/lucas/analyses/neural/NGRAMS/' Params.dirname '/Params_' savesuffix '.mat'];
+save(fname, 'Params');
+
+%% ============ [DOWNSAMPLING]
+% QUESTION: RA vs. LMAN, what if downsample RA so that equalize positive
+% control values between RA and LMAN?
+
+% === for each neuron, regardless of brain region, get values as function
+% of sample size.
+
+measure_to_recalc = 'absfrdiff';
+downfactorlist = [0.025 0.05 0.1 0.2 0.5 0.75 1]; % fractin of samples between N and Nmin.
+[OUTSTRUCT_subsamp, downfactorlist] = lt_neural_NGRAMS_Downsample(OUTSTRUCT, SummaryStruct, Params, ...
+    measure_to_recalc, downfactorlist);
+Params.downfactorlist = downfactorlist;
+
+%% ============= [DOWNSAMPLE] === plot each neuron, fr diff 
+% as function of downsample.
+
+close all;
+
+PairtypesToplot = {...
+    '1  1  1', ... % xaxis
+    '1  0  0'}; % yaxis
+Indpaircomp = find(ismember(OUTSTRUCT.PairTypesInOrder, PairtypesToplot));
+
+% ============
+maxbirds = max(OUTSTRUCT.All_birdnum);
+maxneur = max(OUTSTRUCT.All_neurnum);
+
+
+for i=1:maxbirds
+    birdname = SummaryStruct.birds(i).birdname;
+    
+    
+    figcount=1;
+    subplotrows=6;
+    subplotcols=3;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+    for ii=1:maxneur
+        
+        inds = OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==ii;
+        if ~any(inds)
+            continue
+        end
+        
+        bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;
+        
+        % =====================
+        PairTypes = OUTSTRUCT.All_diffsyl_PairType(inds);
+        Ydat = OUTSTRUCT_subsamp.FRdiffDAT(inds,:);
+        Yshuff = OUTSTRUCT_subsamp.FRdiffShuff(inds,:);
+        Nmean = OUTSTRUCT_subsamp.Nboth(inds, :, :);
+        Nmean = squeeze(mean(Nmean, 2));
+        
+        % --------------------------- first pairtype (x)
+        indtype = 1;
+        
+        indtmp = PairTypes == Indpaircomp(indtype);
+        ydat = Ydat(indtmp,:);
+        yshuff = Yshuff(indtmp, :);
+%         x = Nmean(indtmp,:); % sample size, mean between 2 motifs
+        x = Params.downfactorlist;
+        
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title([birdname ',' num2str(i) '-n' num2str(ii) '-' bregion]);
+%         xlabel('subsample N (mean 2 motifs)');
+        xlabel('downfactor');
+        ylabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)}]);
+        % -- dat
+        if sum(indtmp)<100
+        plot(x, ydat, '-', 'Color', [0.7 0.7 0.7]);
+        plot(x, yshuff, '-', 'Color', [0.7 0.2 0.2]);
+        end
+        % -- means
+        plot(x, mean(yshuff,1), '-r', 'LineWidth', 2);
+        plot(x, mean(ydat,1), '-k', 'LineWidth', 2);
+        
+        
+        % --------------------------- second pairtype (x)
+        indtype = 2;
+        
+        indtmp = PairTypes == Indpaircomp(indtype);
+        ydat = Ydat(indtmp,:);
+        yshuff = Yshuff(indtmp, :);
+%         x = Nmean(indtmp,:); % sample size, mean between 2 motifs
+        x = Params.downfactorlist;
+        
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title([birdname ',' num2str(i) '-n' num2str(ii)]);
+%         xlabel('subsample N (mean 2 motifs)');
+        xlabel('downfactor');
+        ylabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)}]);
+        
+        % -- dat
+        if sum(indtmp)<100
+        plot(x, ydat, '-', 'Color', [0.7 0.7 0.7]);
+        plot(x, yshuff, '-', 'Color', [0.7 0.2 0.2]);
+        end
+        % -- means
+        plot(x, mean(yshuff,1), '-r', 'LineWidth', 2);
+        plot(x, mean(ydat,1), '-k', 'LineWidth', 2);
+        
+        
+        % ------------------------ COMBINE (EACH TYPE, SUBTRACT GLOBAL NEG)
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title([birdname ',' num2str(i) '-n' num2str(ii)]);
+%         xlabel('subsample N (mean 2 motifs)');
+        xlabel('downfactor');
+        ylabel(['frdiff']);
+        
+        Yall = {}; % dat, dat, shuff
+        
+        % -- type 1 (dat)
+        indtype = 1;
+        indtmp = PairTypes == Indpaircomp(indtype);
+        ydat = mean(Ydat(indtmp,:),1);
+        plot(x, ydat, '--r');
+        lt_plot_text(x(1), ydat(1), OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)});
+                
+        Yall{indtype} = ydat;
+        
+        % -- type 1 (dat)
+        indtype = 2;
+        indtmp = PairTypes == Indpaircomp(indtype);
+        ydat = mean(Ydat(indtmp,:),1);
+        plot(x, ydat, '--b');
+        lt_plot_text(x(1), ydat(1), OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)});
+                
+        Yall{indtype} = ydat;
+        
+        % -- negative
+        indtmp = ismember(PairTypes, Indpaircomp);
+        yshuff = mean(Yshuff(indtmp,:),1);
+        
+        plot(x, yshuff, '--k')
+        
+        % ============= OVERLAY DIFFERENCES
+        plot(x, Yall{1}-yshuff, '-r');
+        plot(x, Yall{2}-yshuff, '-b');
+        lt_plot_zeroline;
+    end
+end
+
+
+%% =========== [DOWNSAMPLE] - replace by certain factor of downsample
+% then redo scatter plot analysis
+dsampvalue_take = 0.05;
+dsampbregion = {'RA'}; % if empty, downsamples none. e.g. {'LMAN', 'RA'};
+
+OUTSTRUCT_tmp = OUTSTRUCT;
+
+dsampind = find(Params.downfactorlist ==  dsampvalue_take);
+assert(length(dsampind)==1, 'this dsamp value doesnt exist...');
+
+% ================= REPLACE DATA WITH DOWNSAMPLED DATA
+indstodo = ismember(OUTSTRUCT_tmp.All_Bregion, dsampbregion);
+
+OUTSTRUCT_tmp.All_AbsFRdiff(indstodo) = ...
+    OUTSTRUCT_subsamp.FRdiffDAT(indstodo, dsampind);
+OUTSTRUCT_tmp.All_AbsFRdiff_NEG(indstodo) = ...
+    OUTSTRUCT_subsamp.FRdiffShuff(indstodo, dsampind);
+OUTSTRUCT_tmp.All_AbsFRdiff_Zrelshuff(indstodo) = ...
+    OUTSTRUCT_subsamp.FRdiff_Z(indstodo, dsampind);
+OUTSTRUCT_tmp.All_N(indstodo, :) = ...
+    OUTSTRUCT_subsamp.Nboth(indstodo, :, dsampind);
+
+% ================= RUN SCATTERPLOT
+close all;
+
+plottype = 'absfrdiff_typediff'; % oneminusrho or absfrdiff or absfrdiff_globZ or absfrdiff_typediff
+usemedian = 0; % only workds for absfrdiff, absfrdiff_globZ or absfrdiff_typediff
+plotON=0; % only works for absfrdiff
+if strcmp(Params.strtype, 'xaa')
+PairtypesToplot = {...
+    '1  1  1', ... % xaxis
+    '1  0  0'}; % yaxis
+elseif strcmp(Params.strtype, 'xaaa')
+ PairtypesToplot = {...
+    '1  1  1  1', ... % xaxis
+    '1  0  0  0'}; % yaxis
+end   
+plotRawGood = 0; % histogram for pos, negative, dat (only works for plottype = absfrdiff_globZ);
+
+% ----------- params for one minus rho, specifically
+dosubtractcontrol = 1; % then subtracts negative control before plotting [if 0, then overlays neg]
+sanitycheckuseneg = 0; % uses negative control data instead of data
+removeBadSyls = 1; % i.e. badly labeled...
+
+[AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
+    lt_neural_NGRAMS_PlotScatter(OUTSTRUCT_tmp, SummaryStruct, plottype, plotON, ...
+    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
+    removeBadSyls);
+
+
+
+
+%% ####################################################
 %% ============ [DIAGNOSTICS]
 close all;
 dispNgramStrings = 0; % then for 10% of neurons will disp.
-plotRawSampSize = 1; % then plots number of trials.
-compareNtoFRdist = 0; % MANY PLOTS - compares samp size to fr dist. neuron by neuron.
+plotRawSampSize = 0; % then plots number of trials.
+compareNtoFRdist = 1; % MANY PLOTS - compares samp size to fr dist. neuron by neuron.
 lt_neural_NGRAMS_DIAGNOSTIC(OUTSTRUCT, SummaryStruct, Params, dispNgramStrings, ...
     plotRawSampSize, compareNtoFRdist);
 
@@ -116,21 +440,43 @@ if strcmp(Params.strtype, 'xaa')
 PairtypesToplot = {...
     '1  1  1', ... % xaxis
     '1  0  0'}; % yaxis
+PairtypesToplot = {...
+    '1  1  1', ... % xaxis
+    '0  1  1'}; % yaxis
 elseif strcmp(Params.strtype, 'xaaa')
  PairtypesToplot = {...
     '1  1  1  1', ... % xaxis
     '1  0  0  0'}; % yaxis
 end   
 Nmin = 2; % number of pairs in class. [DOESNT WORK YET]
-plotRawGood = 0; % histogram for pos, negative, dat (only works for plottype = absfrdiff_globZ);
+plotRawGood = 1; % histogram for pos, negative, dat (only works for plottype = absfrdiff_globZ);
 
 % ----------- params for one minus rho, specifically
 dosubtractcontrol = 1; % then subtracts negative control before plotting [if 0, then overlays neg]
 sanitycheckuseneg = 0; % uses negative control data instead of data
+removeBadSyls = 1; % i.e. badly labeled...
 
-lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
-    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, ...
-    usemedian);
+[AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
+    lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
+    PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
+    removeBadSyls);
+
+
+%%  ######################## REGRESSION MODELING
+
+
+lt_neural_NGRAMS_Regression;
+
+
+%% ########################### PLOT EXAMPLE FR TRACES
+close all;
+birdtoplot = 'pu69wh78';
+neurtoplot = 2;
+ngramstoplot = {}; % leave empty to plot random one
+pairtypetoplot = '1  1  1';
+
+ lt_neural_NGRAMS_PlotEgPair(OUTSTRUCT, SummaryStruct, Params, ...
+    birdtoplot, neurtoplot, ngramstoplot, pairtypetoplot);
 
 %% =========== [DIAGNOSTIC] - plot motif pair strings...
 close all;
@@ -147,8 +493,8 @@ elseif strcmp(Params.strtype, 'xaaa')
 end   
 
 % -------------- WHICH TO PLOT?
-birdtoplot = 'Pu55Pu22';
-neurtoplot = 15;
+birdtoplot = 'pu69wh78';
+neurtoplot = 14;
 
 lt_neural_NGRAMS_PlotMotStr(OUTSTRUCT, SummaryStruct, plottype, ...
     PairtypesToplot, birdtoplot, neurtoplot);
@@ -237,21 +583,6 @@ for i=1:maxbirds
         end
     end
 end
-
-%% =========== [RE-EXTRACT, EQUALIZING SAMPLE SIZE]
-close all;
-measure_to_recalc = 'absfrdiff';
-if strcmp(Params.strtype, 'xaa')
-PairTypesToCompare = {...
-    '1  1  1', ... % xaxis
-    '1  0  0'}; % yaxis
-elseif strcmp(Params.strtype, 'xaaa')
- PairTypesToCompare = {...
-    '1  1  1  1', ... % xaxis
-    '1  0  0  0'}; % yaxis
-end   
-OUTSTRUCT = lt_neural_NGRAMS_ReSample(OUTSTRUCT, SummaryStruct, Params, ...
-    measure_to_recalc, PairTypesToCompare);
 
 
 %% =========== [CHECK] Compare resampled to old data, separated by pairtype
@@ -348,7 +679,7 @@ end
 PairtypesToplot = {...
     '1  1  1', ... % xaxis
     '1  0  0'}; % yaxis
-Indpaircomp = find(ismember(OUTSTRUCT.PairTypesInOrder, PairTypesToCompare));
+Indpaircomp = find(ismember(OUTSTRUCT.PairTypesInOrder, PairtypesToplot));
 
 plottype = 'N_new';
 % ---- options:
@@ -373,7 +704,7 @@ for i=1:maxbirds
     
     % ================== one subplot per bird
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    title(['[' plottype ']' birdname ',' num2str(i) '-' num2str(ii)]);
+    title(['[' plottype ']' birdname ',' num2str(i)]);
     xlabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(1)}]);
     ylabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(2)}]);
     

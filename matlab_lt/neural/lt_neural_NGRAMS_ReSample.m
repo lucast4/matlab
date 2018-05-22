@@ -1,5 +1,10 @@
 function OUTSTRUCT = lt_neural_NGRAMS_ReSample(OUTSTRUCT, SummaryStruct, Params, ...
-    measure_to_recalc, PairTypesToCompare)
+    measure_to_recalc, PairTypesToCompare, nshufftmp, DoDecode)
+% nshufftmp = 10; % 50-100 is optimal, see DIAG below.
+% NOTE: usually 100, but only matters for data in which
+% want to zscore vs. self. for global z this just takes the
+% first shuffle anyways.
+
 % PairTypesToCompare = {'1  0  0', '1  1  1'};
 % measure_to_recalc = 'absfrdiff'; % currently only 'absfrdiff' works
 
@@ -75,6 +80,21 @@ for i=1:numbirds
                     continue
                 end
                 
+                % ================ skip this if have already removed
+                % because is a bad syl
+                % ---- pairtypes
+                indtmp = find(OUTSTRUCT.All_birdnum == i & OUTSTRUCT.All_neurnum==nn & ...
+                    all(OUTSTRUCT.All_ngrampair_inorder == [j jj],2));
+                if isempty(indtmp)
+                    % then this has been removed
+                    continue
+                end
+                
+                assert(length(indtmp)<2, 'OUTSTRUCT and other dat arent matched');
+                pairtype = OUTSTRUCT.All_diffsyl_PairType(indtmp);
+                
+                
+                
                 % =================== 1) FOR EACH PAIR TY
                 % ---- syl 1
                 motif1 = birdstruct.neuron(nn).ngramnum(j).regexprstr;
@@ -83,13 +103,6 @@ for i=1:numbirds
                 % ---- sample size
                 N1 = size(birdstruct.neuron(nn).ngramnum(j).DAT.frmat, 2);
                 N2 = size(birdstruct.neuron(nn).ngramnum(jj).DAT.frmat, 2);
-                
-                % ---- pairtypes
-                indtmp = find(OUTSTRUCT.All_birdnum == i & OUTSTRUCT.All_neurnum==nn & ...
-                    all(OUTSTRUCT.All_ngrampair_inorder == [j jj],2));
-                assert(length(indtmp)==1, 'OUTSTRUCT and other dat arent matched');
-                pairtype = OUTSTRUCT.All_diffsyl_PairType(indtmp);
-                
                 
                 % ==================== OUTPUT
                 % ------- this neuron
@@ -123,8 +136,9 @@ for i=1:numbirds
                         % -------------- pare down to just premotor windwo
                         FRmat = FRmat(x>=windowx(1) & x<=windowx(2),:);
                         % ------------------- TAKE SQUARE ROOT TRANSFORM
-                        FRmat = sqrt(FRmat);
-                        
+                        if Params.doSqrtTransform==1
+                            FRmat = sqrt(FRmat);
+                        end
                         
                         % ############### RUNNING FR DIFF (relative to shuffles)
                         % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DAT
@@ -280,102 +294,146 @@ for i=1:numbirds
                     continue
                 end
                 
+                % ===== skip this if has been thrown out because is b ad
+                % syl
+                % --- 1) is the current pairtype the one that should be
+                % downsampled?
+                indtmp = find(OUTSTRUCT.All_birdnum == i & OUTSTRUCT.All_neurnum==nn & ...
+                    all(OUTSTRUCT.All_ngrampair_inorder == [j jj],2));
+                if isempty(indtmp)
+                    continue
+                end
+                
+                assert(length(indtmp)<2, 'OUTSTRUCT and other dat arent matched');
+                pairtype = OUTSTRUCT.All_diffsyl_PairType(indtmp);
+                pairtype_logical = OUTSTRUCT.All_diffsyl_logical(indtmp, :);
+                
                 
                 % ============ GET FRMAT across 2 motifs
                 frmat1 = birdstruct.neuron(nn).ngramnum(j).DAT.frmat;
                 frmat2 = birdstruct.neuron(nn).ngramnum(jj).DAT.frmat;
-                    N1 = size(frmat1,2);
-                    N2 = size(frmat2, 2);
+                N1 = size(frmat1,2);
+                N2 = size(frmat2, 2);
                 assert(N1>=Params.Nmin, 'asfsd');
                 assert(N2>=Params.Nmin, 'asfsd');
                 
                 
                 % ================== OUTPUT SOME THINGS
                 OUTSTRUCT.All_N_ORIG = [OUTSTRUCT.All_N_ORIG; [N1 N2]];
-
-                % ============ DOWNSAMPLE
-                % --- 1) is the current pairtype the one that should be
-                % downsampled?
-                indtmp = find(OUTSTRUCT.All_birdnum == i & OUTSTRUCT.All_neurnum==nn & ...
-                    all(OUTSTRUCT.All_ngrampair_inorder == [j jj],2));
-                assert(length(indtmp)==1, 'OUTSTRUCT and other dat arent matched');
-                pairtype = OUTSTRUCT.All_diffsyl_PairType(indtmp);
-                pairtype_logical = OUTSTRUCT.All_diffsyl_logical(indtmp, :);
                 
+                
+                
+                %% =========== get fr differences
                 if pairtype == pairtypeToDwnsmp
-                    % then downsample
-                    N1_new = round(downfactor*(N1 - Params.Nmin)) + Params.Nmin; % downfactor*[excess from Nmin] + [Nmin]
-                    N2_new = round(downfactor*(N2 - Params.Nmin)) + Params.Nmin; % downfactor*[excess from Nmin] + [Nmin]
-                    
-                    % ================= replace things
-                    frmat1 = frmat1(:, randperm(N1, N1_new));
-                    frmat2 = frmat2(:, randperm(N2, N2_new));
-                    N1 = N1_new;
-                    N2 = N2_new;
+                    % then do downsample
+                    [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds, ...
+                    DecodeDAT, DecodeShuff] = lt_neural_NGRAMS_QUICK_FRdiff(...
+                        frmat1, frmat2, downfactor, windowx, Params.Nmin, nshufftmp, ...
+                        Params, DoDecode);
+                else
+                    % don't do downsample
+                    [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds, ...
+                    DecodeDAT, DecodeShuff] = lt_neural_NGRAMS_QUICK_FRdiff(...
+                        frmat1, frmat2, 1, windowx, Params.Nmin, nshufftmp, Params, ...
+                        DoDecode);
                 end
                 
-                % =========== OUTPUT STUFF
-                    OUTSTRUCT.All_N = [OUTSTRUCT.All_N; [N1 N2]];
-
-                % =========== Concatenate into FRmat
-                FRmat = [frmat1 frmat2];
-                x = lt_neural_QUICK_XfromFRmat(frmat1);
-                TrialInds = {1:N1, N1+1:N1+N2};
+                OUTSTRUCT.All_N = [OUTSTRUCT.All_N; Nboth'];
                 
-                % -------------- pare down to just premotor windwo
-                FRmat = FRmat(x>=windowx(1) & x<=windowx(2),:);
-                % ------------------- TAKE SQUARE ROOT TRANSFORM
-                FRmat = sqrt(FRmat);
-                
-                
-                %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DAT
-                fr1 = mean(FRmat(:, TrialInds{1}),2);
-                fr2 = mean(FRmat(:, TrialInds{2}),2);
-                frdiffDAT = mean(abs(fr1-fr2));
                 
                 OUTSTRUCT.All_AbsFRdiff = ...
-                    [OUTSTRUCT.All_AbsFRdiff frdiffDAT];
-                
-                %% ############################ CONTROLS
-                FRdiffShuff = [];
-                nshufftmp = 100; % 50-100 is optimal, see DIAG below.
-                
-                nsamps = size(FRmat,2);
-                for ss = 1:nshufftmp
-                    
-                    indshuff = randperm(nsamps);
-                    FRmatSHUFF = FRmat(:,indshuff);
-                    
-                    % ================= calculate correlation
-                    fr1 = mean(FRmatSHUFF(:, TrialInds{1}),2);
-                    fr2 = mean(FRmatSHUFF(:, TrialInds{2}),2);
-                    frdiff = mean(abs(fr1-fr2));
-                    
-                    FRdiffShuff = [FRdiffShuff frdiff];
-                end
-                
-                % ########################### SAVE THE FIRST SHUFF
+                    [OUTSTRUCT.All_AbsFRdiff; FRdiffDAT];
                 OUTSTRUCT.All_AbsFRdiff_NEG = ...
-                    [OUTSTRUCT.All_AbsFRdiff_NEG FRdiffShuff(1)];
-                
-                
-                %% ########################## zscore data relative to shuff
-                frdiff_Z = (frdiffDAT - mean(FRdiffShuff))./std(FRdiffShuff);
-                
+                    [OUTSTRUCT.All_AbsFRdiff_NEG; FRdiffShuff(1)];
                 OUTSTRUCT.All_AbsFRdiff_Zrelshuff = ...
-                    [OUTSTRUCT.All_AbsFRdiff_Zrelshuff frdiff_Z];
+                    [OUTSTRUCT.All_AbsFRdiff_Zrelshuff; FRdiff_Z];
                 
-                %% ======================= SANITY CHECK
-                motif1 = birdstruct.neuron(nn).ngramlist{j};
-                motif2 = birdstruct.neuron(nn).ngramlist{jj};
-                % -- code: 111 means same at all 3 positions. 010 means
-                % diff-same-diff, etc.
-                diffsyl_logical = motif1~=motif2;
-                assert(all(diffsyl_logical == pairtype_logical), 'not matched ...');
                 
+                
+                
+                %%
+                if (0) % OLDER VERSION...
+                    % ============ DOWNSAMPLE
+                    
+                    if pairtype == pairtypeToDwnsmp
+                        % then downsample
+                        N1_new = round(downfactor*(N1 - Params.Nmin)) + Params.Nmin; % downfactor*[excess from Nmin] + [Nmin]
+                        N2_new = round(downfactor*(N2 - Params.Nmin)) + Params.Nmin; % downfactor*[excess from Nmin] + [Nmin]
+                        
+                        % ================= replace things
+                        frmat1 = frmat1(:, randperm(N1, N1_new));
+                        frmat2 = frmat2(:, randperm(N2, N2_new));
+                        N1 = N1_new;
+                        N2 = N2_new;
+                    end
+                    
+                    % =========== OUTPUT STUFF
+                    OUTSTRUCT.All_N = [OUTSTRUCT.All_N; [N1 N2]];
+                    
+                    
+                    % =========== Concatenate into FRmat
+                    FRmat = [frmat1 frmat2];
+                    x = lt_neural_QUICK_XfromFRmat(frmat1);
+                    TrialInds = {1:N1, N1+1:N1+N2};
+                    
+                    % -------------- pare down to just premotor windwo
+                    FRmat = FRmat(x>=windowx(1) & x<=windowx(2),:);
+                    % ------------------- TAKE SQUARE ROOT TRANSFORM
+                    if Params.doSqrtTransform==1
+                        FRmat = sqrt(FRmat);
+                    end
+                    
+                    % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DAT
+                    fr1 = mean(FRmat(:, TrialInds{1}),2);
+                    fr2 = mean(FRmat(:, TrialInds{2}),2);
+                    frdiffDAT = mean(abs(fr1-fr2));
+                    
+                    OUTSTRUCT.All_AbsFRdiff = ...
+                        [OUTSTRUCT.All_AbsFRdiff; frdiffDAT];
+                    
+                    % ############################ CONTROLS
+                    FRdiffShuff = [];
+                    
+                    nsamps = size(FRmat,2);
+                    for ss = 1:nshufftmp
+                        
+                        indshuff = randperm(nsamps);
+                        FRmatSHUFF = FRmat(:,indshuff);
+                        
+                        % ================= calculate correlation
+                        fr1 = mean(FRmatSHUFF(:, TrialInds{1}),2);
+                        fr2 = mean(FRmatSHUFF(:, TrialInds{2}),2);
+                        frdiff = mean(abs(fr1-fr2));
+                        
+                        FRdiffShuff = [FRdiffShuff frdiff];
+                    end
+                    
+                    % ########################### SAVE THE FIRST SHUFF
+                    OUTSTRUCT.All_AbsFRdiff_NEG = ...
+                        [OUTSTRUCT.All_AbsFRdiff_NEG; FRdiffShuff(1)];
+                    
+                    
+                    % ########################## zscore data relative to shuff
+                    frdiff_Z = (frdiffDAT - mean(FRdiffShuff))./std(FRdiffShuff);
+                    
+                    OUTSTRUCT.All_AbsFRdiff_Zrelshuff = ...
+                        [OUTSTRUCT.All_AbsFRdiff_Zrelshuff; frdiff_Z];
+                    
+                end
+            %% ======================= SANITY CHECK
+            motif1 = birdstruct.neuron(nn).ngramlist{j};
+            motif2 = birdstruct.neuron(nn).ngramlist{jj};
+            % -- code: 111 means same at all 3 positions. 010 means
+            % diff-same-diff, etc.
+            diffsyl_logical = motif1~=motif2;
+            assert(all(diffsyl_logical == pairtype_logical), 'not matched ...');
             end
+            
+            
+            
         end
     end
+end
 end
 
 

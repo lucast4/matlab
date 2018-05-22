@@ -1,4 +1,5 @@
-function DATSTRUCT =lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames)
+function [DATSTRUCT] =lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames, ...
+    plotON)
 
 %% lt 10/27/17 - takes multiple analyses and plots
 % INPUT fnames
@@ -11,16 +12,29 @@ function DATSTRUCT =lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames)
 %%
 
 DATSTRUCT = struct;
+savedir = '/bluejay5/lucas/analyses/neural/CTXT_ClassGeneral_M';
 
 for i=1:length(allanalyfnames)
     
     afname = allanalyfnames{i};
-    dstruct = lt_neural_v2_CTXT_BRANCH_DatVsShuffPLOT(afname);
+    
+    % ============== load summarystruct
+    load([savedir '/SUMMARYv2_' afname '.mat']);    
+    DATSTRUCT.analynum(i).SummaryStruct = SummaryStruct;
+    
+    % ====== load params
+    load([savedir '/PARAMSv2_' afname]);    
+    DATSTRUCT.analynum(i).Params = prms;
+        
+    % ============= LOAD DAT
+    [dstruct, dstructbybranch] = lt_neural_v2_CTXT_BRANCH_DatVsShuffPLOT(afname, ...
+        plotON);
     
     % ====== save structs
     DATSTRUCT.analynum(i).dat = dstruct;
+    DATSTRUCT.analynum(i).datbybranch = dstructbybranch;
     DATSTRUCT.analynum(i).fname = afname;
-    
+
 %     if ~exist('DATSTRUCT', 'var')
 %         DATSTRUCT = dstruct;
 %     else
@@ -54,4 +68,4 @@ end
 % lt_plot_zeroline
 % 
 
-%% ============== 
+

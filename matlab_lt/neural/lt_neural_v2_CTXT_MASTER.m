@@ -104,7 +104,7 @@ ALLBRANCH = lt_neural_v2_CTXT_PlotAll(strtype, plotstat, suffix);
 TimeWindowDur = 0.040;
 TimeWindowSlide = 0.005;
 FRbinsize = 0.008;
-savenotes = 'AllBirdsRALMANX40ms';
+savenotes = 'AllBirdsRA40ms';
 
 prms.ClassSlide.GetNegControl = 1; % 1 = yes. (i.e. shuffle dat-context link).
 prms.ClassSlide.NumNegControls = 1;
@@ -168,10 +168,10 @@ ALLBRANCH = lt_neural_v2_CTXT_BRANCH_EqFRdur(ALLBRANCH);
 
 % ==== 2)  PLOT EACH BRANCH/BIRD/NEURON
 close all;
-birdtoplot = 'pu69wh78'; % leave blank to plot all;
+birdtoplot = 'bk7'; % leave blank to plot all;
 plotspec_num =0; % how many spectrograms to plot for each class in each branch point? if 0 then none.
-locationtoplot = {'LMAN','RA'};
-BranchToPlot = {'[a-z]jj'}; % type regexp strings
+locationtoplot = {'LMAN'};
+BranchToPlot = {'[a-z]hh'}; % type regexp strings
 plotrasters = 0;
 lt_neural_v2_CTXT_BranchEachPlot(ALLBRANCH, birdtoplot, plotspec_num, ...
     locationtoplot, BranchToPlot, plotrasters)
@@ -182,7 +182,7 @@ close all;
 dattoplot = 'classperform';
 % dattoplot = 'frmean';
 % dattoplot = 'dprime';
-LMANorX = 3; % 0, both; 1, LMAN; 2, X, 3(RA)
+LMANorX = 1; % 0, both; 1, LMAN; 2, X, 3(RA)
 birdstoexclude = {};
 % birdstoexclude = {'bk7', 'bu77wh13', 'or74bk35', 'wh6pk36', 'br92br54'};
 
@@ -276,14 +276,18 @@ lt_neural_v2_CTXT_BranchCompareTwo(branchfname1, branchfname2);
 %% #################### [PREMOTOR WINDOW, DECODING] 
 % ============= 1) IN PREMOTOR WINDOW, COMPARE DECODING VS. SHUFFLED.
 close all;
-analyfname = 'xaa_Algn2Ons1_24Apr2018_1834_pu69wh44RALMAN40ms';
-Niter = 500;
-TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
+analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+Niter = 1000;
+% TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 % TimeWindows = [0 0 ]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
 % TimeWindows = [-0.035 -0.035]; % LMAN
-% TimeWindows = [-0.02 -0.02]; % RA
-TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
-lt_neural_v2_CTXT_BRANCH_DatVsShuff(analyfname, Niter, TimeWindows);
+% TimeWindows = [-0.025 -0.035]; % RA
+% TimeWindows = [-0.1 -0.01]; % [-0.05 -0.05] means window from 50ms pre onset to 50ms pre offset (each row is separate analysis)
+% ----- GOOD ONES:
+TimeWindows = [-0.025 -0.035]; % xaa
+% TimeWindows = [-0.015 -0.025]; % aax
+dotransform = 1; % sqrt transform
+lt_neural_v2_CTXT_BRANCH_DatVsShuff(analyfname, Niter, TimeWindows, dotransform);
 
 % ------- to plot results from above (can do multiple)
 close all;
@@ -291,13 +295,55 @@ close all;
 %     'xaa_Algn2Ons1_30Nov2017_1911_XLMAN25msLTW', ...
 %     };
 allanalyfnames = {...
-    'xaa_Algn2Ons1_20Mar2018_1857_pu69wh44RALMAN40ms'};
+    'aax_Algn2Ons0_11May2018_1118_AllBirdsLMANX40ms'};
 % allanalyfnames = {...
 %     'xaaa_Algn2Ons1_19Dec2017_1219_XLMAN25msLTW', ...
 %     'xaaa_Algn3Ons1_15Dec2017_0110_XLMAN25msLTW', ...
 %     'xaaa_Algn4Ons1_15Dec2017_1100_XLMAN25msLTW'};
-DecodeStruct = lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames);
+plotON = 0;
+[DecodeStruct] = lt_neural_v2_CTXT_BRANCH_DatVsShuffMULT(allanalyfnames, ...
+    plotON);
 
+
+%% ================== pull out a single bird, neuron, branch
+birdtoget = 'bk7';
+branchtoget = '[a-z]hh';
+neurtoget = 1;
+analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+
+lt_neural_v2_CTXT_BRANCH_PlotOne(analyfname, birdtoget, branchtoget, ...
+    neurtoget);
+
+
+%% ================ [PLOT] DECODE PLOTS
+close all;
+lt_neural_v2_CTXT_BRANCH_DecodePlot(DecodeStruct);
+
+
+%% ########################################################
+%% ################### DECODE EXPLAINED BY FF DIFF?
+% ====================== EXTRACT FF AND SAVE
+close all; 
+analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+skipifdone =1;
+lt_neural_v2_CTXT_Acoustic(analyfname, skipifdone);
+
+
+%% =================== [DECODE, FF DIFF...]
+close all;
+analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+bregiontoplot = 'LMAN';
+
+% =============
+lt_neural_v2_CTXT_Acoustic_Plot(analyfname, bregiontoplot);
+
+%% =================== LOOK AT CODING OF CONTEXT AND FF IN TERMS OF 
+% CORRELATIONS
+close all;
+analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+bregiontoplot = 'LMAN';
+doshuffmany=0; % for analysis of corr vs. shuff
+lt_neural_v2_CTXT_Acoustic_Corr(analyfname, bregiontoplot, doshuffmany);
 
 %% ################ RUNNING HISTOGRAM DISTANCE AS DISTANCE METRIC
 

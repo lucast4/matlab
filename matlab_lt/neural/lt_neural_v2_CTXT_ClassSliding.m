@@ -10,7 +10,7 @@ function ALLBRANCH = lt_neural_v2_CTXT_ClassSliding(CLASSES, SummaryStruct, prms
 
 
 %% time warp params
-% NOTE: the spike times saved for long term are indeed the warped spikes 
+% NOTE: the spike times saved for long term are indeed the warped spikes
 prms.LinTimeWarp = LinTimeWarp;
 prms.regionstowarp = regionstowarp;
 
@@ -163,7 +163,7 @@ for i=1:numbirds
                     %                     disp(count:(count+originalinds(j)-1));
                     %                     disp('--');
                     SEGEXTRACT_DAT.classnum(j).SegmentsExtract = segextractAll(count:(count+originalinds(j)-1));
-                    CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(j).SegmentsExtract = segextractAll(count:(count+originalinds(j)-1));                    
+                    CLASSES.birds(i).neurons(ii).branchnum(iii).SEGEXTRACT.classnum(j).SegmentsExtract = segextractAll(count:(count+originalinds(j)-1));
                     
                     count = (count+originalinds(j));
                     
@@ -191,7 +191,7 @@ for i=1:numbirds
                 
                 
                 
-              %% DATA
+                %% DATA
                 % ############################## CLASSIFY
                 if strcmp(CVmethod, 'LOO')
                     [Ypredicted, ConfMat, accuracy, sensitivity_mean, PiYActual] ...

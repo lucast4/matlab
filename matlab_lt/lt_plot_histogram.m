@@ -11,9 +11,9 @@ function [Ybinned, Xcenters, hbar]=lt_plot_histogram(Y, Xcenters, plotON, pdfON,
 % hbar = handle of barplot
 
 
-    Nbins=ceil((numel(Y)^0.9)/5);
+Nbins=ceil((numel(Y)^0.85)/5);
 if ~exist('Xcenters', 'var');
-     minbin=min(Y)-std(Y)/3;
+    minbin=min(Y)-std(Y)/3;
     maxbin=max(Y)+std(Y)/3;
     
     if Nbins<8;
@@ -58,7 +58,7 @@ end
 % get binned data
 [Ybinned, Xcenters]=hist(Y, Xcenters);
 
-% get pdf 
+% get pdf
 if pdfON==1;
     Ybinned=Ybinned./sum(Ybinned);
     Ybinned./(Xcenters(2)-Xcenters(1));
@@ -68,17 +68,17 @@ end
 % Plot
 if plotON==1;
     if StairsON==0
-    hbar=lt_plot_bar(Xcenters, Ybinned, {'FaceAlpha',FaceAlpha, 'Color',color});
-    
+        hbar=lt_plot_bar(Xcenters, Ybinned, {'FaceAlpha',FaceAlpha, 'Color',color});
+        
     else
-       binwidth=Xcenters(2)-Xcenters(1); % go from center to left edge
-%        inds=find(Ybinned>0);  % remove x with no data, or else will get line at 0
+        binwidth=Xcenters(2)-Xcenters(1); % go from center to left edge
+        %        inds=find(Ybinned>0);  % remove x with no data, or else will get line at 0
         hbar=stairs(Xcenters-binwidth/2, Ybinned);
         set(hbar, 'LineWidth' , 3, 'Color',color)
-%         Ylim=ylim; % move slightly up so line at zero is not visible
-%         ylim([0.01 Ylim(2)])
+        %         Ylim=ylim; % move slightly up so line at zero is not visible
+        %         ylim([0.01 Ylim(2)])
     end
-        
+    
     if pdfON==1;
         ylabel('prob density');
     else
@@ -88,12 +88,12 @@ if plotON==1;
     % plot mean + sem
     Ymean=mean(Y);
     Ysem=lt_sem(Y);
-
+    
     Ylim=ylim;
     Yrange=Ylim(2)-Ylim(1);
     plot(Ymean, Ylim(2)-Yrange/10, 'd', 'MarkerSize',8, 'Color',color, 'MarkerFaceColor',color);
     line([Ymean-Ysem, Ymean+Ysem], [Ylim(2)-Yrange/10 Ylim(2)-Yrange/10], 'Color', color, 'LineWidth',2);
-
+    
     
 else
     hbar=[];

@@ -1,3 +1,6 @@
+%% ========== DATABASE OF BOS EXPERIMENTS
+
+
 %% given batch of BOS, plot responses for all channels
 clear all; close all;
 
@@ -89,7 +92,6 @@ line(xlim, [threshold threshold], 'Color','r');
     
     
     fline = fgetl(fid);
-    
 end
 
 

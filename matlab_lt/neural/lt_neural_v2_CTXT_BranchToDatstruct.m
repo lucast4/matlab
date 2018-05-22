@@ -51,6 +51,9 @@ for i=1:numalign
     NeuronnumAll = [];
     BranchmumAll = [];
     
+                 SylDurMedAll = [];
+                GapPreMedAll = [];
+                
     Datstruct = struct;
     
     for ii=1:numbirds
@@ -142,7 +145,7 @@ for i=1:numalign
                 
                 
                 
-                %% ========================================== DATA
+              %% ========================================== DATA
                 
                 DatN = nan(1,3);
                 if strcmp(dattoplot, 'classperform')
@@ -180,13 +183,24 @@ for i=1:numalign
                 
                 DatN(1) = length(Ycell{end});
                 
+                % ------------------------- MEDIAN DUR OF SYL, GAP(PRE).
+                numclass = length(datneur.SylGapDurs.classnum);
+                syldurall = [];
+                gappredurall = [];
+                for c =1:numclass
+                   syldurall = [syldurall ...
+                       datneur.SylGapDurs.classnum(c).Dur_syl];
+                   gappredurall = [gappredurall, ...
+                       datneur.SylGapDurs.classnum(c).Dur_gappre];
+                end
+                syldur_median = median(syldurall);
+                gappredur_median = median(gappredurall);
                 
-                
-                % =================================== POS CONTROL
+                %% =================================== POS CONTROL
                 if strcmp(dattoplot, 'classperform')
                     Xcell_pos = [Xcell_pos datneur.xtimes];
                     Ycell_pos = [Ycell_pos datneur.yvals_pos];
-                elseif strcmp(dattoplot, 'dprime');
+                elseif strcmp(dattoplot, 'dprime')
                     % take average for each branch
                     if (1)
                         Ycell_pos = [Ycell_pos nanmean(datneur.DprimeAllPairwise_Pos,2)];
@@ -214,11 +228,11 @@ for i=1:numalign
                 DatN(2) = length(Ycell_pos{end});
                 
                 
-                % ========================================= NEG CONTROL
+                %% ========================================= NEG CONTROL
                 if strcmp(dattoplot, 'classperform')
                     Xcell_neg = [Xcell_neg datneur.xtimes];
                     Ycell_neg = [Ycell_neg datneur.yvals_neg];
-                elseif strcmp(dattoplot, 'dprime');
+                elseif strcmp(dattoplot, 'dprime')
                     % take average for each branch
                     if (1)
                         Ycell_neg = [Ycell_neg nanmean(datneur.DprimeAllPairwise_Neg,2)];
@@ -256,6 +270,9 @@ for i=1:numalign
                 NeuronnumAll = [NeuronnumAll nn];
                 BranchmumAll = [BranchmumAll j];
 
+                SylDurMedAll = [SylDurMedAll syldur_median];
+                GapPreMedAll = [GapPreMedAll gappredur_median];
+                
                 % ======= confirm that is paired - i.e. each datapoint has dat and both controls
                 %                 disp(DatN);
                 assert(length(unique(DatN))==1, 'dat and controls have diff lengths ...');
@@ -281,7 +298,9 @@ for i=1:numalign
     Datstruct.Dat.BirdnumAll = BirdnumAll;
     Datstruct.Dat.NeuronnumAll = NeuronnumAll;
     Datstruct.Dat.BranchmumAll = BranchmumAll;
-    
+                  
+    Datstruct.Dat.SylDurMedAll = SylDurMedAll;
+    Datstruct.Dat.GapPreMedAll = GapPreMedAll;
     %% ====================== SUBTRACT CONTROLS
     
     for nn = 1:length(Datstruct.Dat.Ycell);

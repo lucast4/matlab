@@ -89,6 +89,8 @@ for i=1:maxbirds
         bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;
         allmeans = nan(1,numpairtypes);
         
+        disp(SummaryStruct.birds(i).neurons(ii));
+        
         if strcmp(plottype, 'oneminusrho')
             % ========= plot
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -189,7 +191,7 @@ for i=1:maxbirds
                     
                     % ================= OUTPUT FOR PLOTTING
                     YplotAll{k} = All_AbsFRdiff(inds);
-                    YplotAll{3} = [YplotAll{3} All_AbsFRdiff_NEG(inds)]; % collect negative controls
+                    YplotAll{3} = [YplotAll{3}; All_AbsFRdiff_NEG(inds)]; % collect negative controls
                 elseif strcmp(plottype, 'absfrdiff_typediff')
                     
                     % ----- V2 - each type compaired to mean of its own neg
@@ -231,7 +233,7 @@ for i=1:maxbirds
             
             % rthen can plot!!
             lt_figure; hold on;
-            title([birdname '-n' num2str(ii)]);
+            title([birdname '(' num2str(i) ')-n' num2str(ii)]);
             
             lt_plot_MultDist(YplotAll, [1 2 3], 0, 'k', 0, '', 1)
             lt_plot_zeroline;

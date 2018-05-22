@@ -178,20 +178,20 @@ lt_neural_v2_DIAGN_Rawdat(SummaryStruct, displaymode, skipnum)
 %% ====== PLOT RAW NEURAL FOR ANY GIVEN BIRD, EXPT, MOTIF
 
 close all; 
-BirdToPlot = 'wh44wh39';
+BirdToPlot = 'O55Pu53';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [76]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+NeurToPlot = [6]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
 % motiflist = {'a(b)', 'jbh(h)g'};
 % motiflist = {'(d)kcc', 'dk(c)c', '(n)hh', 'c(b)'};
-motiflist = {'dk(c)cbb'};
+motiflist = {'a(a)b', 'i(a)b', 'c(a)b'};
 
 % motifpredur = 0.15;
 % motifpostdur = 0.15;
-motifpredur = 0.05;
-motifpostdur = 0.05;
-preAndPostDurRelSameTimept = 0;
+motifpredur = 0.15;
+motifpostdur = 0.1;
+preAndPostDurRelSameTimept = 1;
 
 % --- 1) directed song
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
@@ -276,21 +276,21 @@ FRmat = FRmat(t1:t2, trials);
 
 %% ================================== PLOT RASTER AND SMOOTHED FR FOR ANY MOTIF
 close all
-BirdToPlot = 'wh44wh39';
+BirdToPlot = 'pu26y2';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [76]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+NeurToPlot = [7]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
 % motiflist = {'a(b)', 'jbh(h)g'};
-motiflist = {'n(h)h'};
+motiflist = {'i(a)c', 'a(a)c', 'e(a)c'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
 motifpredur = 0.1;
-motifpostdur = 0.5;
+motifpostdur = 0.1;
 
-plotIndivRaster = 1; % one raster for each neuron/motif
-plotCombRast = 0; % one figure, all rasters
-plotSmFR = 0; % all smoothed FR.
+plotIndivRaster = 0; % one raster for each neuron/motif
+plotCombRast = 1; % one figure, all rasters
+plotSmFR = 1; % all smoothed FR.
 
 % --- 1) directed song
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both

@@ -715,6 +715,17 @@ else
         shadedErrorBar(X, Ymean, Ysem, {'Color', plotcol}, 1);
     end
     
+    % ==================== OVERLAY MEDIANS FOR SYL DURATIONS
+    syldurmed = median(Datstruct.Dat.SylDurMedAll);
+    gappremed = median(Datstruct.Dat.GapPreMedAll);
+    
+    % --- syl
+    YLIM = ylim;
+    h = patch([0 syldurmed syldurmed 0], [YLIM(1) YLIM(1) YLIM(2) YLIM(2)], ...
+        [0.7 0.7 0.7], 'EdgeColor', 'none');
+    set(h, 'FaceAlpha', 0.1);
+
+    line([-gappremed -gappremed], ylim);
     
 end
 end
