@@ -254,6 +254,12 @@ frtimewindow = prms.classtmp.frtimewindow; % on and off, relative to syl onset
 frbinsize = prms.ClassSlide.frbinsize;
 Nmin = prms.ClassSlide.Nmin;
 
+% --- if frtimewindow is too short, make it at least 2 bins large
+if frtimewindow(2)-frtimewindow(1)<(2*frbinsize)
+    frtimewindow(2) = frtimewindow(1) + (2*frbinsize);
+end
+
+
 numclasses = length(SEGEXTRACT.classnum);
 
 % =================== COLLECT DATA TO CLASSIFY

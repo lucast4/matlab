@@ -9,6 +9,7 @@ function [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds, ...
 
 % e.g. fr mats are
 % frmat1 = birdstruct.neuron(nn).ngramnum(j).DAT.frmat; % timebin x trial
+% [RAW]
 % frmat2 = birdstruct.neuron(nn).ngramnum(jj).DAT.frmat;
 % windowx = motifpredur+Params.window_prem; % i.e all datapoints >=0. windwo to take FR
 % Nmin = Params.Nmin; i.e. downsample will make sure to not go below this.

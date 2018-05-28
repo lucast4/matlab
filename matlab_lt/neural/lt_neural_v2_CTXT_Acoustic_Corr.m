@@ -84,6 +84,12 @@ for i =1:numbirds
             % premotor window)
             premwind = DAT.PREMOTORDECODE_struct(nn).window_relonset;
             xwind = prms.motifpredur + premwind; % window, in sec
+            
+            % ---- if window too short, lengthen to 10ms.
+            if xwind(2)-xwind(1)<0.01
+                xwind(2) = xwind(1)+0.01;
+            end
+            
             xtimes = lt_neural_QUICK_XfromFRmat(frmatall); % time of bins
             
             indsgood = xtimes>=xwind(1) & xtimes<xwind(2);
@@ -242,7 +248,7 @@ if doshuffmany == 1
         AllNeurnum, AllClassnum, AllFRmeans, AllPitch, doshuff, poolOverCtxt);
     
     % ================= COLLECT MULTIPLE SHUFFLES
-    Nshuffs = 5000;
+    Nshuffs = 1000;
     AbsRhoMedian_ShuffMult = nan(Nshuffs, 1);
     RhoMedian_ShuffMult = nan(Nshuffs, 1);
     Nsign_ShuffMult = nan(Nshuffs,1);
@@ -451,7 +457,7 @@ if doshuffmany == 1
         AllNeurnum, AllClassnum, AllFRmeans, AllPitch, doshuff);
     
     % ================= COLLECT MULTIPLE SHUFFLES
-    Nshuffs = 5000;
+    Nshuffs = 1000;
     AbsRhoMedian_ShuffMult = nan(Nshuffs, 1);
     RhoMedian_ShuffMult = nan(Nshuffs, 1);
     Nsign_ShuffMult = nan(Nshuffs,1);
@@ -588,6 +594,8 @@ for i=1:numbirds
     end
 end
 assert(~any(isnan(AllBranch_DecodeP)));
+
+
 
 %% ============ PLOT PROPORTION CASES SIGNIFICANT CLASS/SLOPE DIFF
 lt_figure; hold on;
@@ -734,7 +742,8 @@ for plotfrac = plotfraclist
     end
 end
 
-%% =============== [DAT VS. SHUFFLE];
+%% =============== [DAT VS. SHUFFLE] EXTRACT;
+close all;
 % --------------------- PERFORM AND COLLECT MULTIPLE SHUFFLES
 pitch_as_predictor = 1; % if 1, then pitch on x axis...
 doshuff = 1;
@@ -771,10 +780,66 @@ if exist([savedir '/' analyfname '/Acoustic_Corr'], 'dir') == 0
 end
 save(savefname, 'AllBranch_SHUFFSTRUCT');
 
+% ============== SAVE ACTUAL DAT
+tmpnames = whos('AllBranch*');
+for j=1:length(tmpnames)
+savefname = [savedir '/' analyfname '/Acoustic_Corr/' tmpnames(j).name];
+save(savefname, tmpnames(j).name);
+end
+
+%% ============= [DAT VS> SHUFFLE] SIGNIFICANCE
+% FOR EACH CASE, ask how unlikely its effect size is given its own shuffle
+% distribution
+% ---- which coefficient to care about?
+ydat = AllBranch_SlopeCoeff_MedAbs;
+yshuff = [AllBranch_SHUFFSTRUCT.cycle.SlopeCoeff_MedAbs];
+
+% ===========================================================
+shuffmat = yshuff;
+datmat = repmat(ydat, 1, size(shuffmat,2));
+
+% ------ get vals
+pvalmat = (sum(shuffmat>=datmat, 2))./size(shuffmat,2);
+
+ind_sigcases = pvalmat<0.01;
+disp([num2str(sum(ind_sigcases)) ' sig cases out of ' num2str(length(ind_sigcases))]);
+
+% ------ zscore all data relative to shuffle distribution
+lt_figure; hold on;
+lt_subplot(3,2,1); hold on;
+title('singal case shuff distr (rand choice)');
+casethis = randi(size(yshuff,1),1);
+lt_plot_histogram(yshuff(casethis,:));
+
+lt_subplot(3,2,2); hold on;
+title('all case zscore rel own shuffles');
+y_zscore = (ydat - mean(yshuff,2))./std(yshuff,0,2);
+
+lt_plot_histogram(y_zscore);
+lt_plot_zeroline_vert;
+
+lt_subplot(3,2,3); hold on;
+title('all cases, percentiles rel own shuffle');
+xcenters = 0:0.05:1;
+[Ybinned] = lt_plot_histogram(pvalmat, xcenters);
+
+lt_subplot(3,2,4); hold on;
+title('all cases, percentiles rel own shuffle');
+xlabel('prct');
+ylabel('frac cases equal to or below this percent')
+
+x = xcenters;
+binsize = xcenters(2)-xcenters(1);
+x = x+binsize/2;
+x(end) = 1;
+y = cumsum(Ybinned)./sum(Ybinned);
+plot(x,y, '-k');
+line([0 1], [0 1], 'Color', 'b', 'LineStyle', '--');
+
 %% ============= [DAT VS. SHUFFLE] COMPARE DISTRIBUTIONS
 lt_figure; hold on;
 shuffcycle = 1; % which one ot plot;
-onlysigdecode = 1; % then filters based on decode [0 1 or 2]
+onlysigdecode = 0; % then filters based on decode [0 1 or 2]
 NctxtToPlot = [1:10]; % can't be empty 
 
 if onlysigdecode==1
@@ -854,13 +919,12 @@ lt_plot_pvalue(p, 'srank', 1);
 
 
 
-
 %% ============= [DAT VS. SHUFFLE] PLOT
 %% [PLOT] OVERLAY DATA WITH ONE INSTANCE OF SHUFFLE
 lt_figure; hold on;
 count = 1;
 decodelist = [1 2]; % iterate over diff contingencies on decode performance
-plotfrac = 0;
+plotfrac = 1;
 shuffcycle = 1;
 for useshuff = [0 1]
     for onlydecode = decodelist
@@ -1015,6 +1079,58 @@ for useshuff = [0 1]
         end
     end
 end
+
+%% = PLOT "RASTER" OF ALL CASES, INDICATING MAGNITUDE AND SIGNIFICANCE
+effecttosortby = 2;
+
+plotshuffle = 1; % have to have done shuffle already
+sc = 1; % choose which one.
+
+% ================
+lt_figure; hold on;
+ylabel('case #');
+xlabel('Int*ctxt -- Slope*ctxt -- SlopeOverall');
+
+% --- ciollect data
+if plotshuffle==0
+Y = [AllBranch_IntCoeff_MedAbs AllBranch_SlopeCoeff_MedAbs AllBranch_SlopeOverallCoeff_MedAbs];
+Ysig = [AllBranch_IntDiff AllBranch_SlopeDiff AllBranch_SlopeOverall];
+Ydecode = AllBranch_DecodeP<0.05;
+title('[DAT]median abs(cofficeint)');
+elseif plotshuffle==1
+Y = [AllBranch_SHUFFSTRUCT.cycle(sc).IntCoeff_MedAbs AllBranch_SHUFFSTRUCT.cycle(sc).SlopeCoeff_MedAbs ...
+    AllBranch_SHUFFSTRUCT.cycle(sc).SlopeOverallCoeff_MedAbs];
+Ysig = [AllBranch_SHUFFSTRUCT.cycle(sc).IntDiff AllBranch_SHUFFSTRUCT.cycle(sc).SlopeDiff ...
+    AllBranch_SHUFFSTRUCT.cycle(sc).SlopeOverall];
+Ydecode = AllBranch_DecodeP<0.05;
+title('[SHUFF]median abs(cofficeint)');
+end
+% ---- sort data, increasing effect *(choose effect)
+[~, inds] = sort(Y(:,effecttosortby));
+Y = Y(inds,:);
+Ysig = Ysig(inds, :);
+Ydecode = Ydecode(inds,:);
+
+
+% ---- plot
+x = 1:size(Y,2);
+imagesc(Y, [0 2]);
+colorbar;
+colormap('gray');
+
+% ---- mark those that are significnat
+for j=1:size(Ysig,2)
+   plot(j-0.3, find(Ysig(:,j)), 'or'); 
+end
+    
+% ---- mark those with significnat decode (regression)
+plot(0.3, find(Ydecode), 'ob');    
+
+% lt_figure; hold on;
+% for j=1:size(Y,2)
+%     lt_plot_stem3(j*ones(size(Y,1),1), 1:size(Y,1)', Y(:, j), 'k', 1);
+% end
+
 
 %% ========= [PLOT] plot ff vs. fr (overlay in diff color for all classes)
 % OVERLAY OUTCOME OF CONJUNCTIVE CODING

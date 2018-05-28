@@ -328,11 +328,17 @@ analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
 skipifdone =1;
 lt_neural_v2_CTXT_Acoustic(analyfname, skipifdone);
 
+% ++++++++++++++++++++ NOTE:
+% the inds used in this and in premotor decode (for classes) correspond to
+% classnums in CLASSES, which corresponds to classnums for
+% ALLBRANCH.SylGapDurs and ALLBRANCH.FR.classnum [confirmed]
 
 %% =================== [DECODE, FF DIFF...]
 close all;
-analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
-bregiontoplot = 'LMAN';
+% analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms'; % LMAN/X
+% bregiontoplot = 'LMAN';
+analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms'; % RA
+bregiontoplot = 'RA';
 
 % =============
 lt_neural_v2_CTXT_Acoustic_Plot(analyfname, bregiontoplot);
@@ -340,10 +346,31 @@ lt_neural_v2_CTXT_Acoustic_Plot(analyfname, bregiontoplot);
 %% =================== LOOK AT CODING OF CONTEXT AND FF IN TERMS OF 
 % CORRELATIONS
 close all;
-analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
-bregiontoplot = 'LMAN';
+% analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+% bregiontoplot = 'LMAN';
+analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+bregiontoplot = 'RA';
 doshuffmany=0; % for analysis of corr vs. shuff
 lt_neural_v2_CTXT_Acoustic_Corr(analyfname, bregiontoplot, doshuffmany);
+
+
+%% ================ [COMPARE DATASETS - CONTEXT VS. FF]
+% NOTE: must run lt_neural_v2_CTXT_Acoustic_Corr first and save datasets
+% and shuffles...
+close all;
+
+analyfnames = {};
+bregionstoplot = {};
+analyfnames{1} = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+analyfnames{2} = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+bregionstoplot{1} = 'RA'; % note: this is just for annotating - bregions are already filtered.
+bregionstoplot{2} = 'LMAN';
+
+onlyGoodDecode =0; % only cases where can actually decode context.
+onlyIfTwoCtxts = 1; % withold to cases where only 2 contexts exist
+lt_neural_v2_CTXT_Acoustic_Compare(analyfnames, bregionstoplot, ...
+    onlyGoodDecode, onlyIfTwoCtxts);
+
 
 %% ################ RUNNING HISTOGRAM DISTANCE AS DISTANCE METRIC
 

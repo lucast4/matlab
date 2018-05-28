@@ -1,5 +1,5 @@
 function [TrialStruct, Params] = lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
-    OnlyExptsWithNoStartDelay, DayWindow)
+    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn)
 
 % OnlyExptsWithNoStartDelay= 0 ;
 % TakeIntoAccountStartDelay = 1;
@@ -13,18 +13,27 @@ Params.OnlyExptsWithNoStartDelay= OnlyExptsWithNoStartDelay;
 Params.TakeIntoAccountStartDelay = TakeIntoAccountStartDelay;
 Params.DayWindow = DayWindow; %
 
+
+%% =========== only significnat learning?
+
+filter='learning_metric';
+[SeqDepPitch_AcrossBirds, NumBirds]=lt_seq_dep_pitch_ACROSSBIRDS_ExtractStruct(...
+    SeqDepPitch_AcrossBirds, filter);
+% 40.34hz
+% 0.8z
+
 %% lt 8/18/17 - perform cross correlation analysis, to look at lag of generalization
 
 NumBirds = length(SeqDepPitch_AcrossBirds.birds);
 
-for i=1:NumBirds;
+for i=1:NumBirds
     birdname=SeqDepPitch_AcrossBirds.birds{i}.birdname;
     numexpts=length(SeqDepPitch_AcrossBirds.birds{i}.experiment);
     
     TrialStruct.birds(i).birdname = birdname;
     
     
-    for ii=1:numexpts;
+    for ii=1:numexpts
         exptname=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.ExptID;
         SylsUnique = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique;
         
@@ -43,14 +52,13 @@ for i=1:NumBirds;
         
         % ------ what data to use?
         LMANinactivated = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.LMANinactivated;
-        if LMANinactivated==1;
+        if LMANinactivated==1
             datafield_ff='FFvals_DevFromBase_WithinTimeWindow';
             datafield_tvals='Tvals_WithinTimeWindow';
         else
             datafield_ff='FFvals';
             datafield_tvals='Tvals';
         end
-        
         
         %% ----------------- what were good learning days?
         % ==================== method 1
@@ -76,7 +84,7 @@ for i=1:NumBirds;
         baseEnd=WNday1-1;
         
         % -- WN days
-        if TakeIntoAccountStartDelay==1;
+        if TakeIntoAccountStartDelay==1
             daysDelay=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.NumEmptyDays_StartWN_FromZscoreCode;
             if daysDelay>0
                 disp(['ADDED ' num2str(daysDelay) ' days for: ' birdname '-' exptname]);
@@ -97,9 +105,7 @@ for i=1:NumBirds;
         targsyl = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.targsyl;
         
         % ================ COLLECT SOME GENERAL INFOR FOR THIS EXPT
-        if isempty(BaseDays)
-            keyboard
-        end
+        assert(~isempty(BaseDays),'asdfasd');
            
         TrialStruct.birds(i).exptnum(ii).BaseDays = BaseDays;
         TrialStruct.birds(i).exptnum(ii).WNDays = WNDays;
@@ -113,15 +119,10 @@ for i=1:NumBirds;
         
         %% Collect trial by trail pitch and times for each day and syl
         
-        for j=1:length(SylsUnique);
+        for j=1:length(SylsUnique)
             syl=SylsUnique{j};
             
             istarget=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).is_target;
-            
-            %             if istarget
-            %                 continue;
-            %             end
-            
             similar=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).similar_to_targ;
             
             % --- COLLECT
@@ -166,6 +167,7 @@ for i=1:NumBirds;
             % ==== sanity check, make sure this is same value that
             % extracted learning value
             
+            if DayWindow(1)==-2 & DayWindow(2)==4
             % last 2 days
             ffmeanWN = mean(FFvals(Tvals>=WNDays(end-1)));
             ffmeanBase = mean(FFvals(Tvals< BaseDays(2)+1));
@@ -173,7 +175,7 @@ for i=1:NumBirds;
             learnval = (ffmeanWN - ffmeanBase);
             
             assert(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).LEARNING.learning_metric.mean - learnval < 10, 'assfasd');
-            
+            end
             
         end
     end

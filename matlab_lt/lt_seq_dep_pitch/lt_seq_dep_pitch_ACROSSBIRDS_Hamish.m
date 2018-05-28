@@ -151,7 +151,10 @@ for i=1:NumBirds
             plotRawFF=1; % 1=raw FF, 0= baseline subtracted (MUSC-MUSC)
             OverlayLMANStats=1; % plots mean shift in single target learning window (defined below)
             OverlayMUSC_days=[];
-            lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds, Params, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, plotRawFF, UseSylColors, flipsign, use_std, OverlayLMANStats, OverlayMUSC_days, plotLarge)
+            lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds,...
+                Params, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, ...
+                plotRawFF, UseSylColors, flipsign, use_std, OverlayLMANStats, ...
+                OverlayMUSC_days, plotLarge)
             
             pause;
             close all;
@@ -159,6 +162,7 @@ for i=1:NumBirds
         
     end
 end
+
 
 %% ==== plot
 figcount=1;

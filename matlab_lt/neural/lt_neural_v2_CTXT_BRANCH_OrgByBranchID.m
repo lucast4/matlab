@@ -315,6 +315,7 @@ for i=1:numbirds
           for indthis = frinds
               dat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(indthis).FRsmooth_rate_CommonTrialDur; % extract those not empty
               frdat.classnum(count).frmat = dat;
+              frdat.classnum(count).ind_classorig = indthis;
               count = count+1;
           end
 %           frdat = ALLBRANCH.alignpos(apos).bird(i).branch(bb).neuron(nn).FR.classnum(frinds); % extract those not empty
@@ -322,8 +323,9 @@ for i=1:numbirds
             
             
             %% get ff by trial
+            classindsinorder = [frdat.classnum.ind_classorig];
                 ffstruct = lt_neural_v2_CTXT_BRANCH_GetFF(analyfname, i, ...
-                    nn, bb, prms);
+                    nn, bb, prms, classindsinorder);
                 
                 % =========== sanity check
                 % make sure num contexts match

@@ -2,9 +2,9 @@
 %% SET PARAMS BEFORE RUNNING
 clear all; close all;
 
-baselineLMANanalysis=1; % if 1, then gets all syllables from baseline. if 0, then 
+baselineLMANanalysis=0; % if 1, then gets all syllables from baseline. if 0, then 
 % removes syls that will be avoided for learning analysis (i.e. WN overlap,
-% etc)
+% etc): 
 
 
 %% TO DO:
@@ -726,26 +726,47 @@ lt_seq_dep_pitch_ACROSSBIRDS_MotifInputDays_v2(SeqDepPitch_AcrossBirds, PARAMS, 
 close all;
 
 % ============= 1) extract trial by trial data
-OnlyExptsWithNoStartDelay= 1;
-DayWindow = [-2 4]; % [-2 4] mean 2 base days and 1st 4 learning days
+OnlyExptsWithNoStartDelay= 0;
+DayWindow = [-3 3]; % [-2 4] mean 2 base days and 1st 4 learning days
+onlyIfSignLearn = 1;
 [TrialStruct, ParamsTrial] = ...
     lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
-    OnlyExptsWithNoStartDelay, DayWindow);
+    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn);
+
+% ============== [RAW PLOT] DAY VS. NIGHT LEARNING AND GENERALIZATION
+close all;
+ignoreDiffType=1;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
+    ignoreDiffType);
+%  % TO DO:
+%  1) subtract out baselein slope
+%  2) only plot non-LMAN inactivation expts
+
+% ============ [ANALYSIS PLOT] average 
+close all;
+ignoreLMANexpt=1; % usually 1, since they lack full day label
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
+    ignoreLMANexpt);
+
 
 % ============= 2) CROSS CORRELATION analyses
 close all;
-plotRaw =1; 
+plotRaw =0; 
 plotSongBySong = 1; % for raw dat
+% ignoreLMANexpt = 1;
 lt_seq_dep_pitch_ACROSSBIRDS_TrialbyTrialGen(TrialStruct, ParamsTrial, ...
     SeqDepPitch_AcrossBirds, plotSongBySong, plotRaw);
 
 
 %% ==== TRIAL TO TRIAL LEARNING/ DAY VS. OVERNIGHT?
 % NOTE: FLIP SIGN OF SLOPE TO COMPARE ACROSS EXPERIMENTS
+% NOTE: HAVE BEGUN TO INCORPORATE THESE ANALYSES (mainly 2: within day
+% slopes and o/n change) into the trial by trial above)
+% i.e. this is probably obsolete
 
 close all;
-BirdToPlot='pu37wh20';
-ExptToPlot='SeqDepPitchShift2';
+BirdToPlot='rd12pu6';
+ExptToPlot='SeqDepPitch';
 OnlyWellLearned=1;
 
 lt_seq_dep_pitch_ACROSSBIRDS_TrialByTrial(SeqDepPitch_AcrossBirds, PARAMS, BirdToPlot, ExptToPlot, OnlyWellLearned);
@@ -1178,8 +1199,15 @@ SeqDepPitch_AcrossBirds_LMAN=SeqDepPitch_AcrossBirds;
 %% [HAMISH] ============= BASELINE LMAN BIAS PREDICT LEARNING?
 
 close all;
-plotExptRawDat=0;
+plotExptRawDat=1;
 lt_seq_dep_pitch_ACROSSBIRDS_Hamish(SeqDepPitch_AcrossBirds, PARAMS, plotExptRawDat)
+
+
+% ==================== PLOT SIMPLIFIED - COMPARING DIRECTION OF AFP BIAS -
+% DOES THAT SWITCH DURING THE EXPERIMENT?
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds, PARAMS, plotExptRawDat);
+
 
 %% ==================== BASELINE EFFECT OF INACTIVATION
 % NOTE: this shows that baseline effect of musc is to bring same types

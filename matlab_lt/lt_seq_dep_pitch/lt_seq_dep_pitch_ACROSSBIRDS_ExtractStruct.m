@@ -400,7 +400,9 @@ end
 %% LEARNING METRIC -
 if strcmp(filter, 'learning_metric');
 %     threshold=0.8; % zscore
-    threshold=input('what is zscore threshold for learning? ');
+%     threshold=input('what is zscore threshold for learning? ');
+threshold = 40.34;
+disp(['NOTE: using thresold of 40.34 hz --- can change...']);
     
     % remove experiments - first figure out what inds to remove
     expts_to_remove=[];

@@ -1,7 +1,10 @@
-function lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds, PARAMS, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, plotRawFF, UseSylColors, flipsign, use_std, OverlayLMANStats, OverlayMUSC_days, plotLarge)
+function lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds, ...
+    PARAMS, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, plotRawFF, ...
+    UseSylColors, flipsign, use_std, OverlayLMANStats, OverlayMUSC_days, ...
+    plotLarge, plotRunningCV)
 
 if ~exist('plotLarge','var');
-    plotLarge=0
+    plotLarge=0;
 end
 
 plotLMANalldata=1; % then not just in time window. also plots swiching times.
@@ -65,13 +68,13 @@ for i=1:NumBirds
         fignums_alreadyused=[];
         hfigs=[];
         if plotLarge==1
-        subplotrows=2;
-        subplotcols=1;
+            subplotrows=2;
+            subplotcols=1;
         end
-            
+        
         
         hplots=[];
-        for j=1:length(SylsToPlot);
+        for j=1:length(SylsToPlot)
             syl=SylsToPlot{j};
             
             [fignums_alreadyused, hfigs, count, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, count);
@@ -264,8 +267,9 @@ for i=1:NumBirds
             %                 lt_plot_annotation(1, ['shift (z score) = ' num2str(learningZ, '%3.2g')], PlotCol)
             
             % =====
+            if plotRawFF==0
             line(xlim, [0 0], 'Color', PlotCol);
-            
+            end
         end
         
         
@@ -429,8 +433,9 @@ for i=1:NumBirds
             %                 lt_plot_annotation(1, ['shift (z score) = ' num2str(learningZ, '%3.2g')], PlotCol)
             
             % =====
+            if plotRawFF==0
             line(xlim, [0 0], 'Color', PlotCol);
-            
+            end
             
             % ==== OVERLAY LMAN LAERNING STATS?
             if OverlayLMANStats==1
@@ -493,7 +498,7 @@ end
 
 
 %% =========== RUNNING CV if plotting raw LMAN (all datapoints even outside of time window), then plot running CV
-if plotLMANalldata==1 & ~isempty(BirdToPlot)
+if plotLMANalldata==1 & ~isempty(BirdToPlot) & plotRunningCV==1
     BinSize=15;
     % skip if trying to plot all birds, too many figures
     SylsToPlot_orig=SylsToPlot;
@@ -674,12 +679,11 @@ if plotLMANalldata==1 & ~isempty(BirdToPlot)
                         
                         plot(tvalRun.Mean, ffvalRun.STD./ffvalRun.Mean, 'k.');
                         
-                        
                         % ===== plot lines for MUSC switch + lag
                         lagtime=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.Lag_time;
                         muscSchedule=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.MuscimolSchedule_ByDayInds{day};
                         preSwitch=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.PBS_window(1);
-                                                
+                        
                         muscStart=day+muscSchedule.start/24;
                         muscEnd=day+muscSchedule.end/24;
                         preSwitch=day+(muscSchedule.start/24)+(preSwitch/24);

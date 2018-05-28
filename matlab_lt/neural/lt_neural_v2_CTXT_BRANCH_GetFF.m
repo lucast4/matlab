@@ -1,5 +1,19 @@
 function ffstruct = lt_neural_v2_CTXT_BRANCH_GetFF(analyfname, birdnum, neurnum,...
-    branchnum, prms)
+    branchnum, prms, classindsinorder)
+%% optional
+% classindsinorder = [2 4], then extracts just these classes. if ~exist,
+% then extracts all classes, i.e. those that exist in the saved dir. NOTE:
+% those classnums correspond to the classes in ALLBRANCH.FR, and those in
+% CLASSES.
+
+if ~exist('classindsinorder', 'var')
+    classindsinorder = 1:1000; % basically all potentiall classes.
+end
+
+if isempty(classindsinorder)
+    classindsinorder = 1:1000;
+end
+
 %%
 
 % ============ load FF data
@@ -23,6 +37,17 @@ disp('---------');
 classfnames = dir(fname);
 count = 0;
 for j=1:length(classfnames)
+    
+    % --------------------- make sure is one of desired classes
+    indstr1 = strfind(classfnames(j).name, 'classnum');
+    indstr2 = strfind(classfnames(j).name, '.mat');
+    
+    classthis = str2num(classfnames(j).name(indstr1+8:indstr2-1));
+    if ~ismember(classthis, classindsinorder)
+        continue
+    end        
+    
+    % ---------------------- extract for this class.
     disp(classfnames(j).name);
     tmp = load([savedir '/' analyfname '/FF/' classfnames(j).name]);
     t_ff = tmp.t_ff; % [t, ff]
@@ -35,6 +60,8 @@ for j=1:length(classfnames)
     % ==== output
     count = count+1;
     ffstruct.classnum(count).t_ff = t_ff;
+    ffstruct.classnum(count).name = classfnames(j).name;
+    ffstruct.classnum(count).ind_classorig = classthis;
 end
 
 %% ======== check whether match regexp

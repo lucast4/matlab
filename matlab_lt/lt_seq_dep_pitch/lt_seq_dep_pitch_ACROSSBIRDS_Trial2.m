@@ -865,13 +865,14 @@ minScaleFactor=input('minimum scale factor? ');
 % METHOD 1 - use lowest maximum value (across all experiments). that way
 % ensures gets all experiments, but throws out data after this value
 % ============= WHAT IS MINIMUM(MAXIMUM(X))?
-MinX_positive=min(Xall_targ(:,end));
+if (0)
+    MinX_positive=min(Xall_targ(:,end));
 MinX_negative=max(Xall_targ(:,1));
 Xinterp=ceil(MinX_negative):floor(MinX_positive);
-
+else
 % METHOD 2 - ENTER BY HAND
 Xinterp=-50:100;
-
+end
 %% ================================================= PLOT, SCALED BY SCALE [ALSO GET INTERPOLATED VALUES]
 % FACTOR
 % NOTE: bin 1 = first bin with WN. AFter got this, then scaled.

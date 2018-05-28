@@ -7,6 +7,7 @@ function lt_seq_dep_pitch_ACROSSBIRDS_TrialbyTrialGen(TrialStruct, ParamsTrial, 
 % allows
 
 
+
 %%
 % -- for interpolation
 xbinsize = 1; % in units minutes
@@ -172,7 +173,7 @@ AllXcov.diff.base = [];
 AllXcov.diff.WNon = [];
 
 plotOn = 0;
-windxcov = 10;
+windxcov = 20;
 binxcov = 1;
 subtractrunningmean = 1;
 
@@ -276,7 +277,7 @@ for i=1:NumBirds
             f1 = Ftarg(Ttarg<baseDays(end)+1);
             f2 = Fsyl(Tsyl<baseDays(end)+1);
             
-            [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'coeff');
+            [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'unbiased');
             
             if plotOn==1
                 plot(lag*binxcov, cc, '-ok');
@@ -291,7 +292,7 @@ for i=1:NumBirds
             f1 = Ftarg(Ttarg>baseDays(end)+1);
             f2 = Fsyl(Tsyl>baseDays(end)+1);
             
-            [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'coeff');
+            [cc, lag] = xcov(f1, f2, windxcov/binxcov, 'unbiased');
             
             if plotOn==1
                 plot(lag*binxcov, cc, '-or');
@@ -326,7 +327,7 @@ ccsem = lt_sem(AllXcov.sametype.WNon);
 shadedErrorBar(lag, ccmean, ccsem, {'Color', plotcol}, 1);
 
 lt_plot_zeroline;
-ylim([-0.2 0.8]);
+% ylim([-0.2 0.8]);
 
 % %%%%%%%%%%%%%%%%%%%%%%%%% diff
 lt_subplot(1,2,2); hold on;
@@ -343,7 +344,7 @@ ccmean = mean(AllXcov.diff.WNon,1);
 ccsem = lt_sem(AllXcov.diff.WNon);
 shadedErrorBar(lag, ccmean, ccsem, {'Color', plotcol}, 1);
 lt_plot_zeroline;
-ylim([-0.2 0.8]);
+% ylim([-0.2 0.8]);
 
 %% ================== 1) interpolate to get continuous signal (can't use trials since not fully labeled).
 

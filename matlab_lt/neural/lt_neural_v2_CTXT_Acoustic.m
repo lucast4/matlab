@@ -63,19 +63,19 @@ for i = 1:NumBirds
             sylstr = DAT.regexprstr;
             
             Numclasses = length(DAT.SEGEXTRACT.classnum);
-            disp(['bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb)]);            
+            disp(['bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb)]);
             for cc = 1:Numclasses
                 
                 % ================== if already done, then skip
                 savefname = [savedirfinal '/bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc) '.mat'];
                 if skipifdone==1
-                if exist(savefname, 'file')~=0
-                    % then already exists, skip analysis
-                    disp(['[already done] skipping bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc)]);
-                    continue
+                    if exist(savefname, 'file')~=0
+                        % then already exists, skip analysis
+                        disp(['[already done] skipping bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc)]);
+                        continue
+                    end
                 end
-                end
-                   
+                
                 
                 mclass = DAT.SEGEXTRACT.classnum(cc).regexpstr;
                 
@@ -86,10 +86,6 @@ for i = 1:NumBirds
                     0, 1, collectWNhit, 0, LearnKeepOnlyBase, prms.preAndPostDurRelSameTimept);
                 
                 
-                % --------------- test whether sample size is expected
-                sizematch = length(SegmentsExtract) ==  length(DAT.SEGEXTRACT.classnum(cc).SegmentsExtract);
-                AllSizeMatch = [AllSizeMatch; sizematch];
-                AllBirdNeurBranchClass = [AllBirdNeurBranchClass; [i ii bb cc]];
                 
                 % ######################################## EXTRACT THINGS
                 if isempty(SegmentsExtract)
@@ -98,12 +94,25 @@ for i = 1:NumBirds
                 
                 % ================== FF
                 ff = [SegmentsExtract.FF_val];
-                tvals = [SegmentsExtract.song_datenum];
+                % ------ tvals are only defined for my data. For sam/mel
+                % data I have not been able to link individual spike times
+                % to the song file, which has fname that indicates time.
+                % the info about duration of each song file must be fuond
+                % to do this.
+                if isfield(SegmentsExtract, 'song_datenum')
+                    tvals = [SegmentsExtract.song_datenum];
+                else
+                    tvals = nan(size(ff));
+                end
                 
                 % ######################################## SAVE
-%                 savefname = [savedirfinal '/bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc) '.mat'];
+                % --------------- test whether sample size is expected
+                sizematch = length(SegmentsExtract) ==  length(DAT.SEGEXTRACT.classnum(cc).SegmentsExtract);
+                AllSizeMatch = [AllSizeMatch; sizematch];
+                AllBirdNeurBranchClass = [AllBirdNeurBranchClass; [i ii bb cc]];
                 
                 % ------ save as matric [tvals, ff]; trials x 2
+                %                 savefname = [savedirfinal '/bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc) '.mat'];
                 t_ff = [tvals' ff'];
                 save(savefname, 't_ff');
                 
