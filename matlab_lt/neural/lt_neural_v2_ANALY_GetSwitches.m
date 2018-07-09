@@ -24,8 +24,8 @@ for i=1:NumBirds
     birdind = strcmp({LearnSummary.bird.birdname}, birdname);
     learnmetadat = LearnSummary.bird(birdind);
     
-%     ExptList = unique([learnmetadat.info(1,:)]);
-%     
+    %     ExptList = unique([learnmetadat.info(1,:)]);
+    %
     ExptList = unique({MOTIFSTATS_Compiled.birds(i).exptnum.exptname});
     
     for ii=1:length(ExptList)
@@ -102,9 +102,13 @@ for i=1:NumBirds
                 
                 % -- sanity check, if designated to this swich, then
                 % shoudl ghave file pre and post.
-                if swtime_this == ...
-                        datenum(SummaryStruct.birds(1).neurons(nn).LEARN_WNonDatestr, 'ddmmmyyyy-HHMM');
-                    assert(haspresongs==1 & haspostsongs==1, 'asfasdfasfasfsdaf');
+                if (0) % STopped doing this, since now switch times are determined with
+                    % a metadat file, not with each neuron's hand entered
+                    % params.
+                    if swtime_this == ...
+                            datenum(SummaryStruct.birds(1).neurons(nn).LEARN_WNonDatestr, 'ddmmmyyyy-HHMM')
+                        assert(haspresongs==1 & haspostsongs==1, 'asfasdfasfasfsdaf');
+                    end
                 end
                 
                 if (0)   % SANITY check, plot song tdates for this neuron + this switcht ime's borders
@@ -185,10 +189,10 @@ for i=1:NumBirds
                     end
                 end
                 if count>0
-                assert(count ==1, 'should be exactly one for this target')
-                assert(~isempty(preCont) & ~isempty(postCont), 'why???');
-                
-                SwtchConts = [SwtchConts targsyl [preCont postCont]];
+                    assert(count ==1, 'should be exactly one for this target')
+                    assert(~isempty(preCont) & ~isempty(postCont), 'why???');
+                    
+                    SwtchConts = [SwtchConts targsyl [preCont postCont]];
                 end
             end
             
@@ -230,11 +234,11 @@ for i=1:NumBirds
             swtime_post = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).switchdnum_next;
             swtime_this = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).switchdnum;
             
-%             if i==2 & ii==1 && iii==3
-%                 keyboard
-%             end
+            %             if i==2 & ii==1 && iii==3
+            %                 keyboard
+            %             end
             
-            % ==== FOR EACH TARG SYL FIGURE OUT DIRECTION OF LEARNING 
+            % ==== FOR EACH TARG SYL FIGURE OUT DIRECTION OF LEARNING
             targsyls = motifstats.params.TargSyls;
             learningDirs = {};
             SylLower = {};
@@ -267,11 +271,11 @@ for i=1:NumBirds
             
             assert(length(unique(SylLower))>0, 'sdasfasdfsdfasd');
             if length(unique(SylLower)) ==1
-            SwitchStruct.bird(i).exptnum(ii).switchlist(iii).targsAreSameSyl =1;
-            else 
-            SwitchStruct.bird(i).exptnum(ii).switchlist(iii).targsAreSameSyl =0;
+                SwitchStruct.bird(i).exptnum(ii).switchlist(iii).targsAreSameSyl =1;
+            else
+                SwitchStruct.bird(i).exptnum(ii).switchlist(iii).targsAreSameSyl =0;
             end
-               
+            
             SylLower_targ = SylLower;
             
             %
@@ -344,7 +348,7 @@ for i=1:NumBirds
                     
                     indtmp = strcmp(motifstats.params.motif_regexpr_str, sylthis);
                     if ~isfield(motifstats.neurons(j).motif(indtmp).SegmentsExtract, 'FF_val')
-                    continue
+                        continue
                     end
                     ffvals = [motifstats.neurons(j).motif(indtmp).SegmentsExtract.FF_val];
                     tvals = [motifstats.neurons(j).motif(indtmp).SegmentsExtract.song_datenum];
@@ -384,11 +388,11 @@ for i=1:NumBirds
                 thistargsyl = any(strcmp(SylLower_targ, sylthis_lower));
                 
                 % ============= SAVE
-                 SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Isthistargcontext = thistargcontext;
-                 SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Thislearndir = thislearndir;
-                 SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Isthistargsyl = thistargsyl;
-                 
-               
+                SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Isthistargcontext = thistargcontext;
+                SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Thislearndir = thislearndir;
+                SwitchStruct.bird(i).exptnum(ii).switchlist(iii).STATS_motifsyl(ss).Isthistargsyl = thistargsyl;
+                
+                
                 
             end
             

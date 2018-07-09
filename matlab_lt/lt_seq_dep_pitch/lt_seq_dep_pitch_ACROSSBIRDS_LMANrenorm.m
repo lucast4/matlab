@@ -39,7 +39,7 @@ for i=1:NumBirds;
                 disp(['vals below should be: ' num2str(baseline_musc_minus_pbs)]);
             end
             
-            for day=1:NumDays;
+            for day=1:NumDays
                 
                 if isempty(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix_MUSC.(syl).FFvals_WithinTimeWindow{day});
                     continue

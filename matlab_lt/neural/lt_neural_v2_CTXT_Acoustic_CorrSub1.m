@@ -1,6 +1,8 @@
 function [AllBranch_IntDiff, AllBranch_SlopeDiff, AllBranch_SlopeOverall, ...
     AllBranch_IntCoeff_MedAbs, AllBranch_SlopeCoeff_MedAbs, AllBranch_SlopeOverallCoeff_MedAbs, ...
-    AllBranch_birdnum, AllBranch_branchnum, AllBranch_neurnum] = ...
+    AllBranch_birdnum, AllBranch_branchnum, AllBranch_neurnum, ...
+    AllBranch_AllClassPair_IntEffect, AllBranch_AllClassPair_SlopeEffect, ...
+    AllBranch_AllClassPair_SlopeDiffEffect] = ...
     lt_neural_v2_CTXT_Acoustic_CorrSub1(AllBirdnum, AllBranchnum, ...
     AllNeurnum, AllClassnum, AllFRmeans, AllPitch, pitch_as_predictor, ...
     SummaryStruct, doshuff)
@@ -26,6 +28,11 @@ AllBranch_neurnum = [];
 AllBranch_IntCoeff_MedAbs = [];
 AllBranch_SlopeCoeff_MedAbs = [];
 AllBranch_SlopeOverallCoeff_MedAbs = [];
+
+AllBranch_AllClassPair_IntEffect = {};
+AllBranch_AllClassPair_SlopeEffect = {};
+AllBranch_AllClassPair_SlopeDiffEffect = {};
+
 
 %%
 for i=1:numbirds
@@ -128,7 +135,8 @@ for i=1:numbirds
                         
                     end
                     
-                    %% continue - do regression
+                    
+                  %% continue - do regression
                     % --- make class categorical
                     classtmp = categorical(classtmp);
                     
@@ -183,14 +191,27 @@ for i=1:numbirds
                     % ------------------------ SAVE
                     CoeffAll_Intdiff = [CoeffAll_Intdiff; coeff_intdiff];
                     PvalAll_Intdiff = [PvalAll_Intdiff; pval_intdiff];
+                    
                     CoeffAll_Slopediff = [CoeffAll_Slopediff; coeff_slopediff];
                     PvalAll_Slopediff = [PvalAll_Slopediff; pval_slopediff];
                     
                     CoeffAll_SlopeOverall = [CoeffAll_SlopeOverall; coeff_slopeOverall];
                     PvalAll_SlopeOverall = [PvalAll_SlopeOverall; pval_slopeOverall];
+                    
+                    
                 end
             end
+
+            % ##################### EXTRACT 2 DATASETS
+            % 1) ACTUAL VALUES FOR ALL PAIRS OF CLASSES 
+            AllBranch_AllClassPair_IntEffect = [AllBranch_AllClassPair_IntEffect; CoeffAll_Intdiff];
+            AllBranch_AllClassPair_SlopeEffect = [AllBranch_AllClassPair_SlopeEffect; CoeffAll_SlopeOverall];
+            AllBranch_AllClassPair_SlopeDiffEffect = [AllBranch_AllClassPair_SlopeDiffEffect; CoeffAll_Slopediff];
+
             
+            
+            % 2) FOR EACH BRANCH, ONE VALUE (MEDIANS OF ABS VALUE ACROSS
+            % ALL CLASS PAIRS)
             % ================ ARE ANY SLOPE OR INTERCEPT DIFFERENT BETWEEN
             % ANY PAIR?
             % ----- Do Bonferonni correction on pvals

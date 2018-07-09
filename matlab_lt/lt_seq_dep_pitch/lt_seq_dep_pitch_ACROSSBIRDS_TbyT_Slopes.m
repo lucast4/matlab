@@ -16,6 +16,9 @@ useregression=1; % then gets day on and off by fitting each day separately
 % otherwise get first and last N renditions
 Nrend = 8;
 
+% ======== throw out same-type syls that don't show any learning? 
+threshOnSametype = 1; % threshold is 0 for mean of mrinig and night of last day.
+
 %%
 
 
@@ -42,6 +45,13 @@ for i=1:Numbirds
     Numexpt = length(TrialStruct.birds(i).exptnum);
     
     for ii=1:Numexpt
+        
+        % ---------- SKIP IF NO DATA
+        if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
+                disp(['[no DATA] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
+            continue
+        end
+            
         
         % --------- ignore if lMAN?
         if ignoreLMANexpt==1
@@ -79,6 +89,8 @@ for i=1:Numbirds
             indsbase = t<basedays(end)+1;
             ffmean_base = mean(ff(indsbase));
             ffstd_base = std(ff(indsbase));
+            
+            
             
             
             % ======================== FIT SIMPLE REGRESSION LINES FOR EACH
@@ -166,6 +178,13 @@ for i=1:Numbirds
             %
             
             % ===================== CLEANING UP EXPT
+            
+            % =================== THROW OUT EXPT IF NO LEARNING?
+            if threshOnSametype==1 & istarg==0 & issame==1
+                if mean(FFedges_byday(end-1:end))<0
+                    continue
+                end
+            end
             
             % ================= OUTPUT
             ffedges_allsyls =[ffedges_allsyls; FFedges_byday];
@@ -1429,5 +1448,127 @@ IsDay = [ones(size(Y,1),1); 0*ones(size(Y,1),1)];
 tbl = table(LearnTot, LearnSub, IsDay);
 formula = 'LearnSub ~ LearnTot + LearnTot:IsDay';
 lme = fitlme(tbl, formula)
+
+
+%% =================== NONTARG LEARNING (DAY/NIGHT SEPARATE) VS. TARG LEARNING
+
+% ==== FIGURE OUT INDS FOR DURING WN ONLY
+numbasedays = -ParamsTrial.DayWindow(1);
+ind_wnon = (2*numbasedays)+1; % because each day has 2 values ...
+
+TMPSTRUCT = struct; % to collect target, nontargs
+
+% ######################## TARGET
+fieldthis = 'target';
+inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+
+% ----------- TOTAL LEARNING (first morning to last morning)
+tmp = DATSTRUCT.AllFFedges(inds,ind_wnon:end-1);
+learnTot = tmp(:,end) - tmp(:,1);
+
+% ----------- all differences
+ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
+
+%  DAYTIME
+learnDay = sum(ffdiff(:,1:2:end),2);
+
+%  OVERNIGHT
+learnNight = sum(ffdiff(:,2:2:end),2);
+
+% ---- COLLECT BIRD AND EXPT NUMBERS, TO MATCH TO NONTARG
+bnums = DATSTRUCT.AllBirdnum(inds);
+enums = DATSTRUCT.AllExptnum(inds);
+
+% ============================= OUTPUT
+TMPSTRUCT.(fieldthis).learnTot = learnTot;
+TMPSTRUCT.(fieldthis).learnDay = learnDay;
+TMPSTRUCT.(fieldthis).learnNight = learnNight;
+TMPSTRUCT.(fieldthis).bnums = bnums;
+TMPSTRUCT.(fieldthis).enums = enums;
+
+
+% ######################## SAME
+fieldthis = 'same';
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
+    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+
+% ----------- TOTAL LEARNING (first morning to last morning)
+tmp = DATSTRUCT.AllFFedges(inds,ind_wnon:end-1);
+learnTot = tmp(:,end) - tmp(:,1);
+
+% ----------- all differences
+ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
+
+%  DAYTIME
+learnDay = sum(ffdiff(:,1:2:end),2);
+
+%  OVERNIGHT
+learnNight = sum(ffdiff(:,2:2:end),2);
+
+% ---- COLLECT BIRD AND EXPT NUMBERS, TO MATCH TO NONTARG
+bnums = DATSTRUCT.AllBirdnum(inds);
+enums = DATSTRUCT.AllExptnum(inds);
+
+% ============================= OUTPUT
+TMPSTRUCT.(fieldthis).learnTot = learnTot;
+TMPSTRUCT.(fieldthis).learnDay = learnDay;
+TMPSTRUCT.(fieldthis).learnNight = learnNight;
+TMPSTRUCT.(fieldthis).bnums = bnums;
+TMPSTRUCT.(fieldthis).enums = enums;
+
+
+
+% ######################################################## PLOT
+lt_figure; hold on;
+
+% ========================= SAME
+fieldthis = 'same';
+lt_subplot(2,2,1); hold on;
+
+% ----------
+xlabel('target (total learn');
+ylabel('nontarg (day=r; night = b)');
+title(fieldthis);
+
+nsyls = length(TMPSTRUCT.(fieldthis).learnDay);
+x_targ = [];
+y_day = [];
+y_night = [];
+for j=1:nsyls
+    
+    % ---- skip if not positive learning at nontarg (i.e generalization)
+%     if TMPSTRUCT.(fieldthis).learnTot(j)<=0
+%         disp('/adadasdd')
+%         continue
+%     end
+   
+    % ---------------------- find corresponding target data
+    bnumthis = TMPSTRUCT.(fieldthis).bnums(j);
+    enumthis = TMPSTRUCT.(fieldthis).enums(j);
+    
+    indtarg = TMPSTRUCT.target.bnums==bnumthis & TMPSTRUCT.target.enums == enumthis;
+    assert(sum(indtarg)==1, 'asdfasd');
+    
+    % --- extract total learning for corresponding targ
+    x_targ = [x_targ; TMPSTRUCT.target.learnTot(indtarg)];
+    
+    % --- extract day and night learning for nontarg
+    y_day = [y_day; TMPSTRUCT.(fieldthis).learnDay(j)];
+    y_night = [y_night; TMPSTRUCT.(fieldthis).learnNight(j)];
+end
+
+plot(x_targ, y_day, 'or');
+plot(x_targ, y_night, 'ob');
+
+lt_plot_makesquare_plot45line(gca, 'k')
+
+% -------- REGRESSION - 
+
+
+
+
+
+
+
 
 

@@ -15,7 +15,7 @@ collectFF=1;
 MotifsToCollect = {'pu69wh78', {'(j)bhh', 'j(b)hh', '(a)bhh', 'a(b)hh'}, ...
     'wh44wh39', {'(n)hh', '(d)k', '(c)cbb'}}; % these versions limit the distortion caused
 % by time warping --> I think distortion leads to wide cross correlations.
-Params_regexp.motif_predur = 0.05;
+Params_regexp.motif_predur = 0.1;
 Params_regexp.motif_postdur = 0.15;
 Params_regexp.preAndPostDurRelSameTimept = 0;
 Params_regexp.RemoveIfTooLongGapDur = 1;

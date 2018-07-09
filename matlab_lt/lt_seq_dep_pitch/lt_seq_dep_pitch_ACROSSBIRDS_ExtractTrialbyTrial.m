@@ -1,5 +1,5 @@
 function [TrialStruct, Params] = lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
-    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn)
+    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame)
 
 % OnlyExptsWithNoStartDelay= 0 ;
 % TakeIntoAccountStartDelay = 1;
@@ -15,12 +15,13 @@ Params.DayWindow = DayWindow; %
 
 
 %% =========== only significnat learning?
-
+if onlyIfSignLearn==1
 filter='learning_metric';
 [SeqDepPitch_AcrossBirds, NumBirds]=lt_seq_dep_pitch_ACROSSBIRDS_ExtractStruct(...
     SeqDepPitch_AcrossBirds, filter);
 % 40.34hz
 % 0.8z
+end
 
 %% lt 8/18/17 - perform cross correlation analysis, to look at lag of generalization
 
@@ -123,7 +124,12 @@ for i=1:NumBirds
             syl=SylsUnique{j};
             
             istarget=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).is_target;
-            similar=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).similar_to_targ;
+            if useHandLabSame ==0
+                similar=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).similar_to_targ;
+            elseif useHandLabSame==1
+                similar = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).similar_to_targ_HandLab;
+            end
+            
             
             % --- COLLECT
             FFvals = [];
@@ -154,6 +160,12 @@ for i=1:NumBirds
                 missingsomedat = 1;
             end
             
+            % ------------ SORT BY TVALS
+            [~, inds] = sort(Tvals);
+            Tvals = Tvals(inds);
+            FFvals = FFvals(inds);
+            Tvals_datenum = Tvals_datenum(inds);
+
             % ---- OUT
             TrialStruct.birds(i).exptnum(ii).sylnum(j).syl = syl;
             TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals = Tvals;

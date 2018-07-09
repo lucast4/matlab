@@ -1,12 +1,22 @@
 %% ================ extract ngrams and fr
 close all;
 
+% Params.LearnKeepOnlyBase = 1;
+% Params.strtype = 'xaaa';
+% Params.Nmin = 6; % num trials minimum
+% Params.alignsyl = 3;
+% 
+% Params.regexpr.motifpredur = 0.2;
+% Params.regexpr.motifpostdur = 0.1;
+% Params.regexpr.alignOnset = 1;
+% Params.regexpr.preAndPostDurRelSameTimept=1;
+% Params.regexpr.RemoveIfTooLongGapDur = 1;
 Params.LearnKeepOnlyBase = 1;
-Params.strtype = 'xaaa';
+Params.strtype = 'xaa';
 Params.Nmin = 6; % num trials minimum
-Params.alignsyl = 3;
+Params.alignsyl = 2;
 
-Params.regexpr.motifpredur = 0.2;
+Params.regexpr.motifpredur = 0.15;
 Params.regexpr.motifpostdur = 0.1;
 Params.regexpr.alignOnset = 1;
 Params.regexpr.preAndPostDurRelSameTimept=1;
@@ -75,6 +85,12 @@ fname = ['/bluejay5/lucas/analyses/neural/NGRAMS/' Params.dirname '/Params_' sav
 save(fname, 'Params');
 
 
+%% ============= LOAD SAVED STRUCT HERE
+
+load('OUTSTRUCT.mat');
+load('Params.mat');
+load('SummaryStruct.mat');
+
 %% %%%%%%%%%%%%%%%%%%%%%%%% OPTIONAL - DOWNSAMPLING ONE TYPE SO EFFECT SIZE MATCHES OTHER.
 % === this script contains ...
 
@@ -133,10 +149,13 @@ dosubtractcontrol = 0; % then subtracts negative control before plotting
 lt_neural_NGRAMS_PlotByPairtype(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
     dosubtractcontrol)
 
+
 %%  ######################## REGRESSION MODELING
 
 
 lt_neural_NGRAMS_Regression;
+
+
 
 
 %% ########################### PLOT EXAMPLES
@@ -170,6 +189,7 @@ neurtoplot = 14;
 
 lt_neural_NGRAMS_PlotMotStr(OUTSTRUCT, SummaryStruct, plottype, ...
     PairtypesToplot, birdtoplot, neurtoplot);
+
 
 
 %% ##################################### [OLDER PLOTS]
@@ -354,6 +374,7 @@ lt_plot_MultDist(Y, [1 2], 1);
 
 
 
+
 %% ################################ TIMECOURSE ANALYSIS
 %% EXTRACT/COMPUTE TIMECOURSES FROM SAVED RAW DAT
 
@@ -422,7 +443,8 @@ lt_neural_NGRAMS_Timecourse_Calc(OUTSTRUCT, SummaryStruct, Params, ...
 
 
 
-
+%% #############################################################
+%% ########################### FF AND PITCH CORRELATIONS ANALYSES
 
 
 

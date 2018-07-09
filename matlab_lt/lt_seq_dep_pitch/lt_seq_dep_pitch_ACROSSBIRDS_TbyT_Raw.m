@@ -1,5 +1,5 @@
 function lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
-    ignoreDiffType)
+    ignoreDiffType, birdtoplot, expttoplot)
 %% plots all experiments, raw FF
 
 %%
@@ -8,27 +8,46 @@ Numbirds = length(TrialStruct.birds);
 
 %%
 for i=1:Numbirds
-   Numexpt = length(TrialStruct.birds(i).exptnum);
-   
-   for ii=1:Numexpt
-      
-       % ========================figure
-       if ignoreDiffType==1
-        subplotrows=4;
-        subplotcols=1;
-       else
-       subplotrows=5;
-        subplotcols=2;
-       end
-              figcount=1;
+    Numexpt = length(TrialStruct.birds(i).exptnum);
+    birdname = TrialStruct.birds(i).birdname;
+    
+    for ii=1:Numexpt
+        exptname = TrialStruct.birds(i).exptnum(ii).exptname;
+        % ========================figure
+        if ignoreDiffType==1
+            subplotrows=4;
+            subplotcols=1;
+        else
+            subplotrows=5;
+            subplotcols=2;
+        end
+        
+        % =================== skip?
+        if ~isempty(birdtoplot)
+            if ~strcmp(birdname, birdtoplot)
+                continue
+            end
+        end
+        
+        if ~isempty(expttoplot)
+            if ~strcmp(exptname, expttoplot)
+                continue
+            end
+        end
+        
+       
+        
+        figcount=1;
         fignums_alreadyused=[];
         hfigs=[];
         hsplots = [];
-
+        
         Numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
         
+        
+        
         for ss =1:Numsyls
-           
+            
             % ============== subplot for this syl
             t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
             ff = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals;
@@ -43,10 +62,10 @@ for i=1:Numbirds
                 if issame==0
                     continue
                 end
-            end                    
-                
+            end
             
-            if istarg==1 
+            
+            if istarg==1
                 pcol ='k';
             elseif istarg==0 & issame==1
                 pcol = 'b';
@@ -57,9 +76,9 @@ for i=1:Numbirds
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             hsplots = [hsplots hsplot];
             if istarg==1
-            title([sylname ',' birdname '-' exptname]);    
+                title([sylname ',' birdname '-' exptname]);
             else
-            title([sylname]);
+                title([sylname]);
             end
             ylabel('ff');
             
@@ -85,21 +104,21 @@ for i=1:Numbirds
                 ffthis = ff(indthis);
                 % -- sort
                 [~, indtmp] = sort(tthis);
-               tthis = tthis(indtmp);
-               ffthis = ffthis(indtmp);
+                tthis = tthis(indtmp);
+                ffthis = ffthis(indtmp);
                 % -- fit regression
-            [b] =lt_regress(ffthis, tthis, 0);
-            ff_fit = b(1) + b(2)*(tthis);
-            line([tthis(1) tthis(end)], [ff_fit(1) ff_fit(end)], 'Color', pcol, ...
-                'LineWidth', 2);
+                [b] =lt_regress(ffthis, tthis, 0);
+                ff_fit = b(1) + b(2)*(tthis);
+                line([tthis(1) tthis(end)], [ff_fit(1) ff_fit(end)], 'Color', pcol, ...
+                    'LineWidth', 2);
             end
             
             % ------------------- put lines for expt onset
             baseend = TrialStruct.birds(i).exptnum(ii).BaseDays(end);
-            line([baseend+1 baseend+1], ylim, 'Color', 'k','LineStyle', '--');            
-                
+            line([baseend+1 baseend+1], ylim, 'Color', 'k','LineStyle', '--');
+            
             
         end
         linkaxes(hsplots, 'x');
-   end
+    end
 end

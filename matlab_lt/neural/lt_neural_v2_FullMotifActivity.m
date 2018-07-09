@@ -19,7 +19,7 @@ MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
 close all;
 % birdtoplot = 'wh44wh39';
 birdtoplot = 'wh44wh39';
-motiftoplot = '(d)kccbb';
+motiftoplot = '(n)hh';
 % motiftoplot = '(j)jjbhhg';
 plotcv = 0; % if 1, then plots running cv. if 0 then plots fr and running mean.
 bregionsToPlot = {'RA', 'LMAN'};
@@ -27,6 +27,7 @@ bregionsToPlot = {'RA', 'LMAN'};
 plotRaw=0;
 lt_neural_FullMotif_SmFR(MOTIFSTATS_Compiled, birdtoplot, ...
     motiftoplot, plotcv, bregionsToPlot, plotRaw);
+
 
 %% === FOR A GIVEN NEURON, PLOT RASTERS
 close all;
@@ -73,3 +74,9 @@ for j=1:length(onsets)
     line([offsets(j) offsets(j)], ylim, 'Color', 'm');
 end
 
+
+%% #################################################
+%% ############################### AUTOCORRELATIONS
+
+close all;
+lt_neural_AutoCorr_Calc(MOTIFSTATS_Compiled);

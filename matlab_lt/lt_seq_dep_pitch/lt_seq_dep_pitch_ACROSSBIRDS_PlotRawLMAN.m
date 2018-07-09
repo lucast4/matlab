@@ -427,7 +427,11 @@ for i=1:NumBirds
             line([WNonInd WNonInd], ylim, 'Color','k', 'LineWidth',2)
             line([WNoffInd WNoffInd], ylim, 'Color','k', 'LineWidth',2)
             
+            % ============== END OF SINGLE DIR LEARNING
+            lastdaysingle = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.DATES.SingleDirLastDay;
+            line([lastdaysingle+1 lastdaysingle+1], ylim, 'Color', 'b', 'LineStyle', '--');
             
+                        
             %                 % ==== plot learning value
             %                 learningZ=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).LEARNING.learning_metric.mean;
             %                 lt_plot_annotation(1, ['shift (z score) = ' num2str(learningZ, '%3.2g')], PlotCol)

@@ -58,7 +58,6 @@ for i = 1:NumBirds
             
             % ====================== GO THRU ALL NEURONS
             
-            %         DAT = ALLBRANCH.alignpos(apos).bird(i).branch(ii).neuron(nn);
             DAT = CLASSES.birds(i).neurons(ii).branchnum(bb);
             sylstr = DAT.regexprstr;
             
@@ -113,7 +112,7 @@ for i = 1:NumBirds
                 
                 % ------ save as matric [tvals, ff]; trials x 2
                 %                 savefname = [savedirfinal '/bird' num2str(i) '_neur' num2str(ii) '_branch' num2str(bb) '_classnum' num2str(cc) '.mat'];
-                t_ff = [tvals' ff'];
+                t_ff = [tvals' double(ff')];
                 save(savefname, 't_ff');
                 
                 

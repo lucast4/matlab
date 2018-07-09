@@ -276,7 +276,7 @@ for i=1:NumBirds;
         
         % ========== COLLECT AND PLOT ONE BY ONE EACH EPOCH (E.G. CONSOLID START...)
         EpochNameList={'days_consolid_early', 'days_consolid_late', 'days_bidir_early', 'days_bidir_late'};
-        for k=1:length(EpochNameList);
+        for k=1:length(EpochNameList)
             epochfield=EpochNameList{k};
             if isfield(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData.PBS_and_MUSC, epochfield);
                 

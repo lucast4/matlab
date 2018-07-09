@@ -135,7 +135,7 @@ for i=1:numbirds
             NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).regexprstr = regexprstr;
             
             % ---------- 2) EXtRACT DAT
-            FFparams.collectFF=0;
+            FFparams.collectFF=1;
             extractDirSong=0;
             %             keepRawNeuralDat=0;
             [SegmentsExtract, Prmstmp]=lt_neural_RegExp(SongDat, NeurDat, ...
@@ -180,6 +180,17 @@ for i=1:numbirds
             NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).DAT.motifsylOn = motifsylOn;
             NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).DAT.motifsylOff = motifsylOff;
            
+            
+            % ++++++++++++++++++++++++++++++ FF
+            ffvals = [SegmentsExtract.FF_val];
+            if isfield(SegmentsExtract, 'song_datenum')
+                tvals = [SegmentsExtract.song_datenum];
+            else
+                tvals = nan(size(ffvals));
+            end
+            
+            NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).DAT.ffvals = ffvals';
+            NGRAMSTRUCT.bird(i).neuron(ii).ngramnum(m).DAT.tvals = tvals';
             
             % ++++++++++++++++++++++++++++++ 1) Smoothed FR
             if (0) % don't do this, since now I am extracting frmat, so can get smoothed fr easiyl

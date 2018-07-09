@@ -168,11 +168,11 @@ for i=1:NumBirds
                         [dattmp2.SegmentsExtract] = lt_neural_QUICK_SpkBinned(dattmp2.SegmentsExtract, maxtime, binsize_spk, 1);
                         
                         if (0)
-                        lt_figure; hold on;
-                        plot(dattmp1.SegmentsExtract(1).spk_Times, 1, 'ok');
-                        plot(dattmp1.SegmentsExtract(1).spk_Binned_x, dattmp1.SegmentsExtract(1).spk_Binned, '-r');
-                        plot(dattmp1.SegmentsExtract(1).FRsmooth_xbin_CommonTrialDur, ...
-                            dattmp1.SegmentsExtract(1).FRsmooth_rate_CommonTrialDur, '-b');
+                            lt_figure; hold on;
+                            plot(dattmp1.SegmentsExtract(1).spk_Times, 1, 'ok');
+                            plot(dattmp1.SegmentsExtract(1).spk_Binned_x, dattmp1.SegmentsExtract(1).spk_Binned, '-r');
+                            plot(dattmp1.SegmentsExtract(1).FRsmooth_xbin_CommonTrialDur, ...
+                                dattmp1.SegmentsExtract(1).FRsmooth_rate_CommonTrialDur, '-b');
                         end
                         
                         % ========= FIGURE OUT WHERE TO ANCHOR DATA TO.

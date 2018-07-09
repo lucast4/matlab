@@ -55,6 +55,7 @@ AllNeurSimChange = [];
 AllNeurSimBase = [];
 AllNeurSimTrain = [];
 AllFFneurCorr = [];
+AllFratechange = [];
 
 AllTargLearnDir = [];
 AllNumtargs = [];
@@ -476,6 +477,15 @@ for i=1:Numbirds
                     % -- ff
                     ffchange = mean(ffvals(trainEndInds)) - mean(ffvals(baseEndInds));
                     
+                    % -- FRATE CHANGE
+                    frateall = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(nn).DATA.motif(j).NEUR_meanFR;
+                    assert(length(segextract) == length(frateall));
+                    
+                    % - take zscore                    
+                    frateall = (frateall - mean(frateall(baseInds)))./std(frateall(baseInds));
+                    frate_change = mean(frateall(trainEndInds)) - mean(frateall(baseEndInds));
+                    
+                    
                     
                     % -- neur sim
                     neursimbase = mean(neuralsim(baseEndInds));
@@ -677,6 +687,7 @@ for i=1:Numbirds
                     
                     % ========================== OUTPUTS
                     AllFFchange = [AllFFchange ffchange];
+                    AllFratechange = [AllFratechange frate_change];
                     AllNeurSimChange = [AllNeurSimChange neursimchange];
                     AllNeurSimBase = [AllNeurSimBase neursimbase];
                     AllNeurSimTrain = [AllNeurSimTrain neursimtrain];
@@ -722,6 +733,7 @@ end
 
 % ============= OUTPUT STRUCT
 DATSTRUCT.AllFFchange = AllFFchange;
+DATSTRUCT.AllFratechange = AllFratechange;
 
 DATSTRUCT.AllNeurSimChange = AllNeurSimChange;
 DATSTRUCT.AllNeurSimBase = [AllNeurSimBase ];
@@ -872,13 +884,37 @@ plot(DATSTRUCT.AllNeurSimChange, [DATSTRUCT.AllNeurSplitCorrTrain...
     - DATSTRUCT.AllNeurSplitCorrBase] , 'xr');
 
 
-%% ========= PLOT (ONE LINE FOR EACH EXPT) - NEURAL SIMILAIRTY CHANGES
-
+%% ############ BASELINE PITCH VS. FRATE CORR PREDICT DIRECTION OF CHANGE?
 % - for each neuron, go thru all motifs and compile
 numbirds = max(unique([DATSTRUCT.AllBirdnum]));
 numexpts = max(unique([DATSTRUCT.AllExptnum]));
 numswitches = max(unique([DATSTRUCT.AllSwitchnum]));
 numneurons = max(unique([DATSTRUCT.AllNeuronnum]));
+
+
+for i=1:numbirds
+    for ii=1:numexpts
+        for iii=1:numswitches
+            
+            if ~any([DATSTRUCT.AllBirdnum]==i & [DATSTRUCT.AllExptnum]==ii ...
+                    & [DATSTRUCT.AllSwitchnum]==iii)
+                continue
+            end
+            
+            numuniqueneurons = length(unique(DATSTRUCT.AllNeuronnum([DATSTRUCT.AllBirdnum]==i & [DATSTRUCT.AllExptnum]==ii ...
+                & [DATSTRUCT.AllSwitchnum]==iii)));
+            
+            birdname = SwitchStruct.bird(i).birdname;
+            exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+
+            
+        end
+    end
+end
+
+
+
+%% ========= PLOT (ONE LINE FOR EACH EXPT) - NEURAL SIMILAIRTY CHANGES
 
 figcount=1;
 subplotrows=4;
@@ -891,6 +927,8 @@ ByNeuron_NeuralsimPre = {}; % neuron x {[targ], [same], [diff]}
 ByNeuron_NeuralsimPost = {};
 ByNeuron_NeuralsimChange = {};
 ByNeuron_FFchange = {};
+ByNeuron_Fratechange = {};
+ByNeuron_BaseFratePitchCorr = {};
 
 ByNeuron_TargSameSylSameDir = []; % neuron x 1
 ByNeuron_TargLearnDir = [];
@@ -928,6 +966,7 @@ for i=1:numbirds
                 inds = find([DATSTRUCT.AllBirdnum]==i & [DATSTRUCT.AllExptnum]==ii ...
                     & [DATSTRUCT.AllSwitchnum]==iii & [DATSTRUCT.AllNeuronnum]==nn);
                 
+                
                 if ~any(inds)
                     continue
                 end
@@ -945,7 +984,8 @@ for i=1:numbirds
                 YminusXall = cell(1,3);
                 
                 FFchangeAll = cell(1,3);
-                
+                FratechangeAll = cell(1,3);
+                BasePitchFrateCorrAll = cell(1,3);
                 
                 for j=1:length(inds)
                     indtmp = inds(j);
@@ -962,6 +1002,8 @@ for i=1:numbirds
                     assert((istarg + issame + isdiff) ==1, 'asdasdasdf');
                     
                     ffchange = DATSTRUCT.AllFFchange(indtmp);
+                    fratechange = DATSTRUCT.AllFratechange(indtmp);
+                    fratevspitch_basecorr = DATSTRUCT.AllBaseFFvsNeurFRCorr(indtmp);
                     
                     % --- OUTPUT
                     Xall{logical([istarg issame isdiff])} = [Xall{logical([istarg issame isdiff])} ...
@@ -974,6 +1016,14 @@ for i=1:numbirds
                     
                     FFchangeAll{logical([istarg issame isdiff])} = ...
                         [FFchangeAll{logical([istarg issame isdiff])} ffchange];
+                    
+                    FratechangeAll{logical([istarg issame isdiff])} = ...
+                        [FratechangeAll{logical([istarg issame isdiff])} fratechange];
+                    
+                    BasePitchFrateCorrAll{logical([istarg issame isdiff])} = ...
+                        [BasePitchFrateCorrAll{logical([istarg issame isdiff])} fratevspitch_basecorr];
+                    
+                    
                     %                 if istarg==1
                     %                     Xtarg = [Xtarg x];
                     %                     Ytarg = [];
@@ -989,12 +1039,16 @@ for i=1:numbirds
                 lt_plot_MultDist(YminusXall, xvals, 0, plotcolors{counter}, 1);
                 counter = counter+1;
                 
+                
                 % ====== SAVE FOR THIS NEURON
                 ByNeuron_NeuralsimPre = [ByNeuron_NeuralsimPre; Xall]; % neuron x {[targ], [same], [diff]}
                 ByNeuron_NeuralsimPost = [ByNeuron_NeuralsimPost; Yall];
                 ByNeuron_NeuralsimChange = [ByNeuron_NeuralsimChange; YminusXall];
                 
                 ByNeuron_FFchange = [ByNeuron_FFchange; FFchangeAll];
+                ByNeuron_Fratechange = [ByNeuron_Fratechange; FratechangeAll];
+                ByNeuron_BaseFratePitchCorr = [ByNeuron_BaseFratePitchCorr; BasePitchFrateCorrAll];
+                
                 
                 % ----------------- TARGET STATS
                 if SwitchStruct.bird(i).exptnum(ii).switchlist(iii).targsAreSameSyl ==1 ...
@@ -1038,6 +1092,8 @@ BYNEURONDAT.ByNeuron_NeuralsimPre = ByNeuron_NeuralsimPre;
 BYNEURONDAT.ByNeuron_NeuralsimPost = ByNeuron_NeuralsimPost;
 BYNEURONDAT.ByNeuron_NeuralsimChange = ByNeuron_NeuralsimChange;
 BYNEURONDAT.ByNeuron_FFchange = ByNeuron_FFchange;
+BYNEURONDAT.ByNeuron_Fratechange = ByNeuron_Fratechange;
+BYNEURONDAT.ByNeuron_BaseFratePitchCorr = ByNeuron_BaseFratePitchCorr;
 
 BYNEURONDAT.ByNeuron_TargSameSylSameDir = ByNeuron_TargSameSylSameDir'; % neuron x 1
 BYNEURONDAT.ByNeuron_TargLearnDir = ByNeuron_TargLearnDir';
@@ -1048,8 +1104,258 @@ BYNEURONDAT.ByNeuron_Exptname = ByNeuron_Exptname';
 BYNEURONDAT.ByNeuron_SWnum_real = ByNeuron_SWnum_real';
 
 
+%% ############# BASELINE FRATE VS. PITCH CORR PREDICT FRATE CHANGE?
+nneurtmp = length(BYNEURONDAT.ByNeuron_Birdname);
 
-%% ==========[ NEURON AS DATAPOINT]
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% version 1, 3d scatter.
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+for i=1:nneurtmp
+    
+    birdname = BYNEURONDAT.ByNeuron_Birdname{i};
+    exptname = BYNEURONDAT.ByNeuron_Exptname{i};
+    swnum = BYNEURONDAT.ByNeuron_SWnum_real(i);
+
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    xlabel('base frate-pitch corr');
+    ylabel('pitch change');
+    zlabel('frate change');
+    title([birdname '-' exptname(end-5:end) '-' num2str(swnum)]);
+    
+    % ======================== targ
+    indcol = 1;
+    pcol = 'k';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+
+    lt_plot_stem3(base_pitchfratecorr, pitchchange, fratechange, pcol, 0);
+    
+    
+    % =========================== same
+    indcol = 2;
+    pcol = 'b';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+
+    lt_plot_stem3(base_pitchfratecorr, pitchchange, fratechange, pcol, 0);
+    
+    
+    % =========================== same
+    indcol = 3;
+    pcol = 'r';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+
+    lt_plot_stem3(base_pitchfratecorr, pitchchange, fratechange, pcol, 1);
+
+    % ------
+    xlim([-1 1]);
+    
+end
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%% version 2, 2d scatter
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+for i=1:nneurtmp
+
+    birdname = BYNEURONDAT.ByNeuron_Birdname{i};
+    exptname = BYNEURONDAT.ByNeuron_Exptname{i};
+    swnum = BYNEURONDAT.ByNeuron_SWnum_real(i);
+
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    xlabel('base frate-pitch corr x pitch change');
+    ylabel('frate change');
+    title([birdname '-' exptname(end-5:end) '-' num2str(swnum)]);
+
+    % ======================== targ
+    indcol = 1;
+    pcol = 'k';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr.*pitchchange;
+    y = fratechange;
+    plot(x, y, 'o', 'Color', pcol);
+    
+    
+    % =========================== same
+    indcol = 2;
+    pcol = 'b';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr .* pitchchange;
+    y = fratechange;
+    plot(x, y, 'o', 'Color', pcol);
+    
+    
+    % =========================== same
+    indcol = 3;
+    pcol = 'r';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr .* pitchchange;
+    y = fratechange;
+    plot(x, y, 'o', 'Color', pcol);
+
+    
+    % ------
+    
+end
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%% version 2, 2d scatter
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+for i=1:nneurtmp
+
+    birdname = BYNEURONDAT.ByNeuron_Birdname{i};
+    exptname = BYNEURONDAT.ByNeuron_Exptname{i};
+    swnum = BYNEURONDAT.ByNeuron_SWnum_real(i);
+
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    xlabel('base frate-pitch corr x frate change');
+    ylabel('pitch change');
+    title([birdname '-' exptname(end-5:end) '-' num2str(swnum)]);
+
+    % ======================== targ
+    indcol = 1;
+    pcol = 'k';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr.*fratechange;
+    y = pitchchange;
+    plot(x, y, 'o', 'Color', pcol);
+    
+    
+    % =========================== same
+    indcol = 2;
+    pcol = 'b';
+    
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr.*fratechange;
+    y = pitchchange;
+    plot(x, y, 'o', 'Color', pcol);
+    
+    % =========================== same
+    indcol = 3;
+    pcol = 'r';
+
+    pitchchange = [BYNEURONDAT.ByNeuron_FFchange{i,indcol}];
+    fratechange = [BYNEURONDAT.ByNeuron_Fratechange{i,indcol}];
+    base_pitchfratecorr = [BYNEURONDAT.ByNeuron_BaseFratePitchCorr{i,indcol}];
+    
+    x = base_pitchfratecorr.*fratechange;
+    y = pitchchange;
+    plot(x, y, 'o', 'Color', pcol);
+    % ------
+    
+end
+
+
+% ================================ ONLY TARGETS
+% direction/magnitude of neural change predicted by linear combination of
+% learning and baseline corr?
+onlyFirstSwitch = 0;
+normFrateToAllSyls = 0;
+keepmotifsseparate = 0; % if 1, then each motif is one datapoint, if 0 then for each neuron takes average over all motifs
+
+lt_figure;
+% ==================== 1) 3d scatter
+lt_subplot(3,2,1); hold on
+xlabel('base pitch-frate corr (POS = LearnDIR)');
+ylabel('frate change');
+zlabel('pitch change (POS = learndir)');
+
+% --- frate,pitch corr
+x = cellfun(@nanmean, BYNEURONDAT.ByNeuron_BaseFratePitchCorr(:,1));
+x = x.*BYNEURONDAT.ByNeuron_TargLearnDir;
+
+% --- frate change
+y = cellfun(@nanmean, BYNEURONDAT.ByNeuron_Fratechange(:,1));
+if normFrateToAllSyls==1
+    y = y - cellfun(@mean, BYNEURONDAT.ByNeuron_Fratechange(:,3));
+end
+
+% --- pitch change
+z = cellfun(@nanmean, BYNEURONDAT.ByNeuron_FFchange(:,1));
+z = z.*BYNEURONDAT.ByNeuron_TargLearnDir;
+
+lt_plot_stem3(x, y, z, 'k', 1)
+
+
+% ==================== 1) 3d scatter
+lt_subplot(3,2,2); hold on
+xlabel('pitch change (POS = learndir)');
+ylabel('frate change');
+zlabel('base pitch-frate corr (POS = LearnDIR)');
+
+lt_plot_stem3(z, y, x, 'k', 1)
+
+
+% =================== 2) 2d scatter 
+lt_subplot(3,2,3); hold on;
+xlabel('[Base P-F corr (POS=learn)] * [pitch change (post=learn)]');
+ylabel('frate change');
+
+X = x.*z;
+Y = y;
+
+lt_regress(Y, X, 1);
+
+% ================= PREDICT FR CHANGE BY BASE PITCH CORR?
+lt_subplot(3,2,4); hold on;
+xlabel('base pitch-frate corr (POS = LearnDIR)');
+ylabel('frate change');
+
+lt_regress(y, x, 1);
+
+
+% ================ 
+
+
+
+%% ========== [NEURON AS DATAPOINT]
 
 % ===== ALL DAT
 lt_neural_v2_ANALY_Swtch_Summary_c(BYNEURONDAT);

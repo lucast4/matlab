@@ -120,6 +120,7 @@ for i =1:numbirds
     end
 end
 
+
 %%
 maxbranch = max(AllBranchnum);
 maxneur = max(AllNeurnum);
@@ -549,10 +550,13 @@ pitch_as_predictor = 1; % if 1, then pitch on x axis...
 doshuff = 0;
 [AllBranch_IntDiff, AllBranch_SlopeDiff, AllBranch_SlopeOverall, ...
     AllBranch_IntCoeff_MedAbs, AllBranch_SlopeCoeff_MedAbs, AllBranch_SlopeOverallCoeff_MedAbs, ...
-    AllBranch_birdnum, AllBranch_branchnum, AllBranch_neurnum] = ...
+    AllBranch_birdnum, AllBranch_branchnum, AllBranch_neurnum, ...
+    AllBranch_AllClassPair_IntEffect, AllBranch_AllClassPair_SlopeEffect, ...
+    AllBranch_AllClassPair_SlopeDiffEffect] = ...
     lt_neural_v2_CTXT_Acoustic_CorrSub1(AllBirdnum, AllBranchnum, ...
     AllNeurnum, AllClassnum, AllFRmeans, AllPitch, pitch_as_predictor, ...
     SummaryStruct, doshuff);
+
 
 %% 
 % AllBranch_IntDiff = AllBranch_IntDiff_DAT;
@@ -597,6 +601,54 @@ assert(~any(isnan(AllBranch_DecodeP)));
 
 
 
+%% #################################### PLOT ALL PAIRS OF CLASSES
+
+if (0)
+% ----------- ONLY CASES WITH SIGNIFICANT SLOPE OR SLOPE INTERACTION
+indstokeep = AllBranch_SlopeOverall==1 | AllBranch_SlopeDiff==1;
+
+else
+% ----------- ONLY CASES WITH SIGNIFICANT DECODE
+indstokeep = AllBranch_DecodeP<0.05;
+end
+
+% =========== 1) for all pairs of classes, across all branches get slopes
+% for both classes
+
+
+slopeall = cell2mat(AllBranch_AllClassPair_SlopeEffect(indstokeep));
+slopediffall = cell2mat(AllBranch_AllClassPair_SlopeDiffEffect(indstokeep));
+
+slope_class1 = slopeall;
+slope_class2 = slopeall + slopediffall;
+
+
+lt_figure; hold on;
+
+% --------- 1) class vs. class
+lt_subplot(2,2,1); hold on;
+title('all pairs (some branch mult pairs)');
+xlabel('slope, class1');
+ylabel('slope, class2');
+
+% plot(slope_class1, slope_class2, 'ok');
+lt_regress(slope_class2, slope_class1, 1);
+lt_plot_makesquare_plot45line(gca, 'k');
+
+% ---------- 2) slope vs. interaction
+lt_subplot(2,2,2); hold on;
+title('all pairs (some branch mult pairs)');
+xlabel('slope, class1');
+ylabel('slope interaction');
+
+% plot(slope_class1, slope_class2, 'ok');
+lt_regress(slopediffall, slope_class1, 1);
+lt_plot_makesquare_plot45line(gca, 'k');
+
+
+
+
+%% ################################################################
 %% ============ PLOT PROPORTION CASES SIGNIFICANT CLASS/SLOPE DIFF
 lt_figure; hold on;
 count = 1;

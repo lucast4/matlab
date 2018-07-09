@@ -726,18 +726,30 @@ lt_seq_dep_pitch_ACROSSBIRDS_MotifInputDays_v2(SeqDepPitch_AcrossBirds, PARAMS, 
 close all;
 
 % ============= 1) extract trial by trial data
+% params (day/night analysis)
 OnlyExptsWithNoStartDelay= 0;
-DayWindow = [-3 3]; % [-2 4] mean 2 base days and 1st 4 learning days
+DayWindow = [-3 4]; % [-2 4] mean 2 base days and 1st 4 learning days
 onlyIfSignLearn = 1;
+useHandLabSame= 1;
+% DayWindow = [-3 3]; % [-2 4] mean 2 base days and 1st 4 learning days
+% onlyIfSignLearn = 1;
+% useHandLabSame= 0;
 [TrialStruct, ParamsTrial] = ...
     lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
-    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn);
+    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame);
+
+% ============== PLOT RANGE OF TIMEPOINTS WITH SINGING DATA
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial);
+
 
 % ============== [RAW PLOT] DAY VS. NIGHT LEARNING AND GENERALIZATION
 close all;
-ignoreDiffType=1;
+ignoreDiffType=0;
+birdtoplot = 'pu64bk13';
+expttoplot = ''; % blank if don't care
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
-    ignoreDiffType);
+    ignoreDiffType, birdtoplot, expttoplot);
 %  % TO DO:
 %  1) subtract out baselein slope
 %  2) only plot non-LMAN inactivation expts
@@ -748,6 +760,37 @@ ignoreLMANexpt=1; % usually 1, since they lack full day label
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt);
 
+% #################################### COMBINE WITH GENERALIZATION STRUCT
+% ================ [OPTIONAL] CONVERT BASELINE INDICATOR TO ACCOMOATE
+% WITHIN DAY
+TrialStructORIG = TrialStruct;
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Base(TrialStruct);
+
+% =============== CONVERT GENSTRUCT TO TRIALSTRUCT
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Conv(TrialStruct, ...
+    ParamsTrial, GenStruct);
+
+
+% =============== [OPTIONAL - REMOVE OUTLIER TRIALS, FF]
+close all;
+plotRawFF = 0; % if 1, then plots raw FF showing wghich are outliers.
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Outli(TrialStruct, plotRawFF);
+
+
+% ============= [ANALYSIS PLOT] Relating timecourse of AFP and MP changes
+close all;
+ignoreLMANexpt=1; % usually 1, since they lack full day label
+plotraw = 0;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse(TrialStruct, ParamsTrial, ...
+    ignoreLMANexpt, plotraw);
+
+if (0) % BACKUP
+close all;
+ignoreLMANexpt=1; % usually 1, since they lack full day label
+plotraw = 0;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse(TrialStruct, ParamsTrial, ...
+    ignoreLMANexpt, plotraw);
+end
 
 % ============= 2) CROSS CORRELATION analyses
 close all;
@@ -1206,9 +1249,19 @@ lt_seq_dep_pitch_ACROSSBIRDS_Hamish(SeqDepPitch_AcrossBirds, PARAMS, plotExptRaw
 % ==================== PLOT SIMPLIFIED - COMPARING DIRECTION OF AFP BIAS -
 % DOES THAT SWITCH DURING THE EXPERIMENT?
 close all;
-lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds, PARAMS, plotExptRawDat);
+plotsametype = 0; % default: 0 (just targ)
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds, PARAMS, ...
+        plotsametype);
 
 
+if (0)
+    % ===== LMAN EXPERIMENTS ONLY
+    close all;
+    plotsametype = 0; % default: 0 (just targ)
+    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds_LMAN, PARAMS, ...
+        plotsametype);
+end
+    
 %% ==================== BASELINE EFFECT OF INACTIVATION
 % NOTE: this shows that baseline effect of musc is to bring same types
 % closer together, with no effect on diff-types. don't see effect if do

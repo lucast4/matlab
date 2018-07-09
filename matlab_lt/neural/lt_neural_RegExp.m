@@ -803,6 +803,7 @@ for i=1:length(tokenExtents)
         SegmentsExtract(i).song_filename=songfname;
         %     SegmentsExtract(i).song_datenum=lt_neural_fn2datenum(songfname);
         SegmentsExtract(i).song_datenum=NeurDat.metaDat(songind).song_datenum;
+        
         SegmentsExtract(i).song_ind_in_batch=songind;
     else
         % then is Sam/Mel data. Keep information about song filename, but

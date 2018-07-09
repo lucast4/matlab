@@ -160,7 +160,7 @@ for j=1:NumBirds
                         's(y)', 'h(y)'}; % NEW, looks good.
                 end
                 
-            elseif strcmp(birdname, 'or74bk35');
+            elseif strcmp(birdname, 'or74bk35')
                 if strcmp(exptname, 'LMANneural2')
                     MotifsActual = {...
                         'ja(b)', 'ba(b)', 'an(b)', 'h(b)', ...

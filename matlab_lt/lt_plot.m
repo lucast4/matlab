@@ -20,17 +20,17 @@ if nargin==2;
         Y=X;
     else
         % then have X, Y, but no modifier
-%            Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerSize',6};
-                      Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerFaceColor','k','MarkerSize',5};
-
+        %            Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerSize',6};
+        Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerFaceColor','k','MarkerSize',5};
+        
     end
 elseif nargin==1;
     % then we just have a Y
     Y=X;
-    X=1:length(Y);   
-    Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerFaceColor','k','MarkerSize',5};   
-%     Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerSize',6};   
-
+    X=1:length(Y);
+    Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerFaceColor','k','MarkerSize',5};
+    %     Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerSize',6};
+    
 end
 
 
@@ -44,7 +44,7 @@ end
 if ~any(strcmp(Modifiers,'Marker'));
     Modifiers=[Modifiers, 'Marker','o'];
 end
-    
+
 if ~any(strcmp(Modifiers,'Color'));
     Modifiers=[Modifiers, 'Color','k'];
 end
@@ -69,16 +69,16 @@ end
 
 % then plot
 if plot_errors==0;
-hfig=plot(X,Y);
-
+    hfig=plot(X,Y);
+    
 else
     if length(X)==1;
         X=ones(length(Y), 1)*X;
     end
-       
+    
     hfig=errorbar(X, Y, Yerr);
     if ~strcmp(version('-release'), '2017a')
-    errorbar_tick(hfig, 10000000)
+        errorbar_tick(hfig, 10000000)
     end
 end
 

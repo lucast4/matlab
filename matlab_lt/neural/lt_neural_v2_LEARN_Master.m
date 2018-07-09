@@ -42,12 +42,12 @@ lt_neural_v2_LEARNING_MetaSummary
 collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract audio each time (i.e. do and save)
 % MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
 %     collectWNhit);
-    Params_regexp.motif_predur = [];
-    Params_regexp.motif_postdur = [];
+    Params_regexp.motif_predur = 0.15;
+    Params_regexp.motif_postdur = 0.1;
     Params_regexp.preAndPostDurRelSameTimept = 1;
     Params_regexp.RemoveIfTooLongGapDur = [];
-Params_regexp.extractDirSong = [];
-MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
+    Params_regexp.extractDirSong = 0;
+    MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
     collectWNhit, 0, 1, 0, 1, 1, [], Params_regexp);
 
 
@@ -182,7 +182,7 @@ end
 
 % === PULL OUT RAW FR FOR ALL NEURONS/TRIALS
 RemoveTrialsZeroFR = 1;
-premotorWind = [-0.06 0.02]; % [-a b] means "a" sec before onset and "b" sec after offset
+premotorWind = [-0.05 0]; % [-a b] means "a" sec before onset and "b" sec after offset
 % premotorWind = [-0.03 0.025]; % [-a b] means "a" sec before onset and "b" sec after offset
 % premotorWind = [-0.05 0]; % [-a b] means "a" sec before onset and "b" sec after offset
 [MOTIFSTATS_Compiled] = lt_neural_v2_ANALY_GetAllFR(MOTIFSTATS_Compiled, ...
@@ -248,6 +248,7 @@ lt_neural_v2_ANALY_Swtch_Tcourse(MOTIFSTATS_Compiled, SwitchStruct, ...
     birdname_get, exptname_get, switchnum_get, plotneurzscore, ...
     onlyPlotTargNontarg)
 
+
 % ========================= TIMECOURSES, BINNING BY TIME, showing smoothed
 % FR and rasters
 close all;
@@ -300,31 +301,31 @@ lt_neural_v2_ANALY_Swtch_Binned2(MOTIFSTATS_Compiled, SwitchStruct, ...
 
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
-   birdname = SwitchStruct.bird(i).birdname;
+    birdname = SwitchStruct.bird(i).birdname;
     numexpts = length(SwitchStruct.bird(i).exptnum);
     
     for ii=1:numexpts
-       numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
-       exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
-       
-       for iii=1:numswitch
-          
-           close all;
-        birdname_get = birdname; % keep empty if want all.
-        exptname_get = exptname;
-        switchnum_get = [iii];
-        plotneurzscore=0;
-        FFzscore =1;
-        onlyPlotTargNontarg=1;
-        saveFigs =1;
-        lt_neural_v2_ANALY_Swtch_Tcourse2(MOTIFSTATS_Compiled, SwitchStruct, ...
-            birdname_get, exptname_get, switchnum_get, plotneurzscore, FFzscore, ...
-            onlyPlotTargNontarg, saveFigs)
-
-           
-       end
-       
-       
+        numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
+        exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+        
+        for iii=1:numswitch
+            
+            close all;
+            birdname_get = birdname; % keep empty if want all.
+            exptname_get = exptname;
+            switchnum_get = [iii];
+            plotneurzscore=0;
+            FFzscore =1;
+            onlyPlotTargNontarg=1;
+            saveFigs =1;
+            lt_neural_v2_ANALY_Swtch_Tcourse2(MOTIFSTATS_Compiled, SwitchStruct, ...
+                birdname_get, exptname_get, switchnum_get, plotneurzscore, FFzscore, ...
+                onlyPlotTargNontarg, saveFigs)
+            
+            
+        end
+        
+        
     end
 end
 
@@ -370,7 +371,7 @@ neuralmetricname = 'NEURvsbase_FRcorr';
 % note: if multiple targets then will filter on just first target...
 plotLearnStatsOn = 0; %
 OnlyKeepSigLearn = 1; % either regression or end training has be significant.
-learnsigalpha = 0.01; % for deciding that an experiment showed "no learning"
+learnsigalpha = 0.05; % for deciding that an experiment showed "no learning"
 
 % ---- ONLY KEEP SWITCHES STARTING FROM WN OFF
 OnlyKeepWNonset =0; % if 1, then yes, if 2, then only keeps those with WN transition (not onset); if 0, then takes all
@@ -389,12 +390,21 @@ OnlyUseDatOnSwitchDay=1; % NOTE: if use with "UsePeakLearn" then will constrain 
 
 
 % ============================================ PAIRWISE CORRELATIONS DUR
-% LEARNING
+% LEARNING 
+% [IN PROGRESS!!! - USE DIFFERENT CODE, POPULATION STRUCTURE]
 lt_neural_v2_LEARNING_NeurPairCorr(MOTIFSTATS_Compiled, SwitchStruct);
-
 
 
 
 % ================ IN LINEAR MODEL IS THERE EFFECT OF SYLLABLE TYPE AFTER
 % CONTROLLING FOR VARIOUS THINGS?
 lt_neural_v2_ANALY_Swtch_LME(DATSylMot)
+
+
+
+
+%% ============= LEARNING CHANGE, SEPARATE BY BASELINE FR-PITCH CORRELATION
+
+
+
+

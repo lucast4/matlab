@@ -324,8 +324,9 @@ lt_neural_v2_CTXT_BRANCH_DecodePlot(DecodeStruct);
 %% ################### DECODE EXPLAINED BY FF DIFF?
 % ====================== EXTRACT FF AND SAVE
 close all; 
-analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
-skipifdone =1;
+% analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+skipifdone =0;
 lt_neural_v2_CTXT_Acoustic(analyfname, skipifdone);
 
 % ++++++++++++++++++++ NOTE:
@@ -350,7 +351,7 @@ close all;
 % bregiontoplot = 'LMAN';
 analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
 bregiontoplot = 'RA';
-doshuffmany=0; % for analysis of corr vs. shuff
+doshuffmany=1; % for analysis of corr vs. shuff
 lt_neural_v2_CTXT_Acoustic_Corr(analyfname, bregiontoplot, doshuffmany);
 
 
@@ -366,10 +367,89 @@ analyfnames{2} = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
 bregionstoplot{1} = 'RA'; % note: this is just for annotating - bregions are already filtered.
 bregionstoplot{2} = 'LMAN';
 
-onlyGoodDecode =0; % only cases where can actually decode context.
-onlyIfTwoCtxts = 1; % withold to cases where only 2 contexts exist
+onlyGoodDecode =1; % only cases where can actually decode context.
+% 0 = dont care; 1 = yes; 2 = can't decode
+onlyIfTwoCtxts = 0; % withold to cases where only 2 contexts exist
 lt_neural_v2_CTXT_Acoustic_Compare(analyfnames, bregionstoplot, ...
     onlyGoodDecode, onlyIfTwoCtxts);
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SONG BOUT BY SONG BOUT CORRELATIONS
+% e.g. does neural activity covary>?
+
+close all;
+
+% -------- GENERAL PARAMS
+motifcorr_dirty =0; % keep at 0
+ignoreMelBirds = 1; % since I do not know song times for those birds
+
+% ================ RA
+analyfname = 'xaa_Algn2Ons1_21May2018_1725_AllBirdsRA40ms';
+bregiontoplot = 'RA';
+OUTSTRUCT_RA = lt_neural_v2_CTXT_SongBySong(analyfname, bregiontoplot, ...
+    motifcorr_dirty, ignoreMelBirds);
+
+% =============== LMAN
+analyfname = 'xaa_Algn2Ons1_02May2018_0136_AllBirdsLMANX40ms';
+bregiontoplot = 'LMAN';
+OUTSTRUCT_LMAN = lt_neural_v2_CTXT_SongBySong(analyfname, bregiontoplot, ...
+    motifcorr_dirty, ignoreMelBirds);
+
+
+% ########################################
+lt_figure; hold on;
+
+% ========= LMAN
+lt_subplot(3,2,1); hold on;
+title('LMAN');
+
+lt_plot_histogram(OUTSTRUCT_LMAN.AllPair_fraterho);
+
+% ========= RA
+lt_subplot(3,2,2); hold on;
+title('RA');
+
+lt_plot_histogram(OUTSTRUCT_RA.AllPair_fraterho);
+
+
+% =========== COMPARE DISTRIBUTIONS
+lt_subplot(3,2,3); hold on;
+xlabel('LMAN -- RA');
+ylabel('frate corr (song by song)');
+Y = {};
+Y{1} = OUTSTRUCT_LMAN.AllPair_fraterho;
+Y{2} = OUTSTRUCT_RA.AllPair_fraterho;
+lt_plot_MultDist(Y, [1 2], 1);
+lt_plot_zeroline;
+
+% ========== 
+lt_subplot(3,2,4); hold on;
+xlabel('LMAN -- RA');
+ylabel('FF corr (song by song)');
+Y = {};
+Y{1} = OUTSTRUCT_LMAN.AllPair_pitchrho;
+Y{2} = OUTSTRUCT_RA.AllPair_pitchrho;
+lt_plot_MultDist(Y, [1 2], 1);
+lt_plot_zeroline;
+
+
+% ========================== FRATE CORRELATION RELATED TO PITCH CORR?
+lt_subplot(3,2,5); hold on;
+title('LMAN');
+ylabel('pitch corr');
+xlabel('frate corr');
+
+lt_regress(OUTSTRUCT_LMAN.AllPair_pitchrho, OUTSTRUCT_LMAN.AllPair_fraterho, 1, 0);
+lt_plot_makesquare_plot45line(gca, 'k');
+
+% ========================== FRATE CORRELATION RELATED TO PITCH CORR?
+lt_subplot(3,2,6); hold on;
+title('RA');
+ylabel('pitch corr');
+xlabel('frate corr');
+
+lt_regress(OUTSTRUCT_RA.AllPair_pitchrho, OUTSTRUCT_RA.AllPair_fraterho, 1, 0);
+lt_plot_makesquare_plot45line(gca, 'k');
 
 
 %% ################ RUNNING HISTOGRAM DISTANCE AS DISTANCE METRIC

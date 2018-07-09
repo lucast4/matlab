@@ -7,7 +7,7 @@ if ~exist('binsize', 'var')
 end
 
 if ~exist('maxdur', 'var')
-    maxdur = []; % in sec, max dur to get bins
+    maxdur = []; % in sec, max dur to get bins (i.e. for xbins)
 end
 
 %% NOTE if TIME WARPED:
@@ -17,10 +17,10 @@ end
 %% -- run
 
 if isempty(maxdur)
-% --- what is maximum common trial dur?
-stimes = {segextract.spk_Times};
-maxtime = cellfun(@max, stimes);
-maxtime = max(maxtime);
+    % --- what is maximum common trial dur?
+    stimes = {segextract.spk_Times};
+    maxtime = cellfun(@max, stimes);
+    maxtime = max(maxtime);
 else
     maxtime = maxdur;
 end
@@ -41,7 +41,7 @@ for t =1:ntrials
     if convertosingle==1
         y = single(y);
     else
-    y = int8(y);
+        y = int8(y);
     end
     
     SpkCounts(t,:) = y;

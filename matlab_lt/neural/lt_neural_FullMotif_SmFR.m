@@ -1,6 +1,10 @@
 function lt_neural_FullMotif_SmFR(MOTIFSTATS_Compiled, birdtoplot, ...
     motiftoplot, plotcv, bregionsToPlot, plotRaw)
 
+
+lt_figure; hold on;
+lt_plot_text(0,1, 'NOTE: make sure edges do not influence xcov...');
+lt_plot_text(0,1, 'NOTE: currently using entire time window');
 %% lt - plots smoothed fr for a given motif, across all channels (diff brain regions)
 
 % === NOTE: will assert that has been timewarped (all neurons simultaneously) ...
