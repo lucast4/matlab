@@ -6,10 +6,10 @@ function [SeqDepPitch_AcrossBirds, PARAMS] = lt_seq_dep_pitch_ACROSSBIRDS_PREPRO
 NumExpt=length(ExperimentList);
 SeqDepPitch_AcrossBirds=struct('birds',[]); % holding structure
 
-for i=1:length(ExperimentList);
+for i=1:length(ExperimentList)
     
     % skip if is empty
-    if isempty(ExperimentList{i});
+    if isempty(ExperimentList{i})
         continue;
     end
        
@@ -115,7 +115,7 @@ for i=1:length(ExperimentList);
     
     
     % Slot into structure
-    if isempty(SeqDepPitch_AcrossBirds.birds);
+    if isempty(SeqDepPitch_AcrossBirds.birds)
         % then no birds slotted yet
         % start bird 1
         SeqDepPitch_AcrossBirds.birds{1}.experiment{1}.PlotLearningDir=PlotLearningDir;

@@ -2,6 +2,9 @@
 %% ===========================
 
 %% ####################### PREPROCESS
+% NOTE: must first extract for each experiemts FF separately, i.e. using each
+% experiemnt's analysis script.
+
 close all;
 GenStruct = lt_generalization_PreProc;
 

@@ -1,12 +1,58 @@
 function DATBYREND = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S2(TrialStruct, ...
     singleRendOnly, densitymethod, cutoffmethod, mintime_fromref, ...
     maxtime_fromref, ignoreLMANexpt)
+
+
+%% NOTE: checked on 7/31 everything good, except did not look closely at hihgh/lo dens stuff (previously did look at)..
+
+% % ======== what data to take?
+% % dotrain = 1; % during training?
+% singleRendOnly=1; % 1: only takes one datapt (first nontarg after the referen)
+% % if 0, then takes all rends in window
+% 
+% 
+% % ====== what data to use to compute density?
+% densitymethod = 'refperiod';
+% % refperiod: will use reference period
+% % entirebin: will use time from rendtion to maxtime_fromref (see maxtime_fromref below)
+% % beforefirstnontarg = will get number that is >= ref time(i.e.0) and < time of first nontarget post-reference.
+% 
+% 
+% % ============ method for decideing hi and lo density trials
+% cutoffmethod = 'medianslice';
+% % medianslice: for each nontarg bin, finds median for targ
+% % medianoverall: overall median of targ
+% % medianslice_rand: gets median by first addaing random jitter. useful for
+% % i) when even num bins. if only one y bin, then forces that to be in low
+% % density bin. if odd num bins, then will split favoring putting
+% % more data into low density category. 
+% % targffdev: then splits based on mean FF dev of target syllables 
+% 
+% 
+% % ======== summary plot: what time period to plot (locked to ref period)
+% % NOTE: This is also used to define period for estimating density if the
+% % choice above for densitymethod is entirebin.
+% % NOTE ONLY INPORTANT FOR DENSITY MEASURE.
+% mintime_fromref = 5;
+% maxtime_fromref = 30; % minutes
+% 
+% 
+% % =============== DEFAULTS
+% % singleRendOnly=0; % only take data up to first nontarg after the referen
+% % densitymethod = 'refperiod';
+% % cutoffmethod = 'medianslice';
+% % mintime_fromref = 5;
+% % maxtime_fromref = 30; % minutes
+% % minrends_inbin = 20;
+
+
 %% lt 6/13/18 - pulls out all data by rend (for all nontarget syls)
 
-if singleRendOnly==1
-    % needs to be this to make sense ...
-    densitymethod = 'beforefirstnontarg';
-end
+% if singleRendOnly==1
+%     % needs to be this to make sense ...
+%     densitymethod = 'beforefirstnontarg';
+% end
+% changed because this does not need to bet he case.
 
 
 %%
@@ -30,15 +76,16 @@ DATBYREND.Sylnum= [];
 DATBYREND.Sylcounter = [];
 DATBYREND.IsSame = [];
 DATBYREND.IsTarg = [];
+DATBYREND.LearnMag_regr = [];
 
 sylcount = 1;
 
 for i=1:Numbirds
     Numexpt = length(TrialStruct.birds(i).exptnum);
-%     birdname = TrialStruct.birds(i).birdname;
+    %     birdname = TrialStruct.birds(i).birdname;
     
     for ii=1:Numexpt
-%         exptname = TrialStruct.birds(i).exptnum(ii).exptname;
+        %         exptname = TrialStruct.birds(i).exptnum(ii).exptname;
         
         % ---------- SKIP IF NO DATA
         if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
@@ -58,9 +105,9 @@ for i=1:Numbirds
         end
         
         % ===================== INFOR ABOUT TARGET
-%         indtarg = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]==1);
-%         tvals_targ = TrialStruct.birds(i).exptnum(ii).sylnum(indtarg).Tvals;
-%         ffvals_targ = TrialStruct.birds(i).exptnum(ii).sylnum(indtarg).FFvals;
+        %         indtarg = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]==1);
+        %         tvals_targ = TrialStruct.birds(i).exptnum(ii).sylnum(indtarg).Tvals;
+        %         ffvals_targ = TrialStruct.birds(i).exptnum(ii).sylnum(indtarg).FFvals;
         
         % ############################################ SAME
         sylinds_this = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]==0);
@@ -70,9 +117,11 @@ for i=1:Numbirds
         for j=1:length(sylinds_this)
             
             indthis = sylinds_this(j);
-%             sylthis = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).syl;
+            %             sylthis = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).syl;
             samethis = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).INFO_similar;
             istargthis = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).INFO_istarget;
+            
+            
             
             % ################################# 1) COLLECT SINGING DENSITY
             if strcmp(densitymethod, 'refperiod')
@@ -83,9 +132,9 @@ for i=1:Numbirds
             elseif strcmp(densitymethod, 'entirebin')
                 maxtime_day = maxtime_fromref/(60*24);
                 mintime_day = -0.25/(60*24);
-%                 maxtime_day = (30-5)/(60*24);
-%                 mintime_day = -0.25/(60*24);
-%                 maxtime_day = 0.25/(60*24);
+                %                 maxtime_day = (30-5)/(60*24);
+                %                 mintime_day = -0.25/(60*24);
+                %                 maxtime_day = 0.25/(60*24);
                 
                 % ---------------- COUNT NUMBER OF targ and nontarg between
                 % ref syl and end of bin [NOTE: end is potentialy not exact
@@ -169,12 +218,12 @@ for i=1:Numbirds
                 cutoffs_y_targ = grpstats(ntarg_rand, nnontarg, {'median'});
                 cutoffs_x_nontarg = unique(nnontarg);
                 cutoffs_x_nontarg = unique(nnontarg(~isnan(nnontarg)));
-
+                
                 % ==== if any bin only has one y bin, then autamitcally
                 % assign it to low density
                 [ymin, ymax] = grpstats(ntarg, nnontarg, {'min', 'max'}); assert(length(ymin) == length(cutoffs_y_targ));
                 cutoffs_y_targ((ymax-ymin)==0) = 1000;
-
+                
                 [~, indstmp] = ismember(nnontarg, cutoffs_x_nontarg);
                 indstmp(indstmp==0) = 1; % temporarily make 1, since will convert to nan in a bit
                 % ---- for each rend, determine whether it was high or low
@@ -226,46 +275,137 @@ for i=1:Numbirds
             
             
             % ############################## NOTE DOWN AMOUNT OF LEARNING FOR THIS SYL
+%             learndir = TrialStruct.birds(i).exptnum(ii).targlearndir; % direction of learning at targ
+            % ===== 2 ways to be called significnat learnign: i) slope, ii)
+            % endpoint diff from baseline
+            
+            
+            % ---------- 1) First measure, slope
             WNon = TrialStruct.birds(i).exptnum(ii).WNontime;
             ttmp = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).Tvals;
-            fftmp = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).FFvals;
             indstrain = ttmp>WNon;
-            [b,bint] = lt_regress(fftmp(indstrain), ttmp(indstrain), 0);
-            isSigLearn = sign(bint(2,1))==sign(bint(2,2)); % if CI of slope does not overlap 0;
             
+            if (1) % this version take last 1 renditions of baseline as well (appends to onset)
+            ind1 = find(indstrain, 1, 'first');
+            ind2 = find(indstrain, 1, 'last');
+            if ind1>9
+                ind1 = ind1-10;
+            else
+                ind1 = 1;
+            end
+            ttmp = ttmp(ind1:ind2);
+            fftmp = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).FFvals(ind1:ind2);
+            else % this version takes only trials during training            
+            ttmp = ttmp(indstrain);
+            fftmp = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).FFvals(indstrain);
+            end
+            [b,bint] = lt_regress(fftmp, ttmp, 0); % slope of learning at nontarg
+            
+            
+            % ------- 2nd measure, last N rends
+                assert(all(diff(ttmp)>=0), 'expect to be sorted...');
+            if (1) % version 1, does one test for last N renditions.
+                NrendsOrig = 25;
+                Nrends = NrendsOrig;
+%                 Nrends = max([NrendsOrig floor(length(ttmp)/2)]);
+                if length(fftmp)<Nrends
+                    p_end = 1;
+                    ffendval = mean(fftmp);
+                else
+                    p_end = signrank(fftmp(end-Nrends+1:end));
+                    ffendval = mean(fftmp(end-Nrends+1:end));
+                end
+            elseif (0) % version 1 - does 3 tests on 3 last 10-rend bins. this is
+                % probably better as less prone to false positives.
+                if length(fftmp)<3*10
+                    p_end = 1;
+                    ffendval = mean(fftmp);
+                else
+                    [~, p1] = ttest(fftmp(end-9:end));
+                    [~, p2] = ttest(fftmp(end-19:end-10));
+                    [~, p3] = ttest(fftmp(end-29:end-20));
+                    p_end = max([p1 p2 p3]);
+                    ffendval = mean(fftmp(end-19:end));
+                end
+            elseif (0) % take first and last half
+                ntmp = round(length(fftmp)/2);
+%                 p_end = ranksum(fftmp(1:25), fftmp(end-24:end));
+                p_end = ranksum(fftmp(1:ntmp), fftmp(ntmp+1:end));
+                ffendval = mean(fftmp(ntmp+1:end));
+            end
+            
+            isSigLearn = (sign(bint(2,1))==sign(bint(2,2)) | p_end<0.01) & ... % if CI of slope does not overlap 0;
+                ffendval>0; % if slope is in direction of learning ...
+            %             isSigLearn = (sign(bint(2,1))==sign(bint(2,2))); % if slope is in direction of learning ...
+
             DATBYREND.SigLearn  = [DATBYREND.SigLearn; isSigLearn*ones(size(ishighdensity))];
             
-            
-            
-            
-            
-            
+            % --- also save learning magnitude
+            learnmag = (ttmp(end) - ttmp(1))*b(2);
+%             learnmag = fftmp(end) - fftmp(1);
+            DATBYREND.LearnMag_regr  = [DATBYREND.LearnMag_regr; learnmag*ones(size(ishighdensity))];
             
             % ############################## COLLECT FF AND TIME DEVIATIONS
             timedev = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_TimeDev;
             ffdev = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_FFDev;
             timedev_TARG = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_TimeDevTargs;
-            istrain = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).IsDurTrain;
+            
+            % ---------- ONLY KEEP FIRST RENDITION?
+            % i.e. only keep 1 redition, the first one that has positive
+            % timedev
+            if singleRendOnly==1
+                ntmp = length(timedev);
+                
+                % -------------- NONTARG
+                for nn = 1:ntmp
+                    indtmp = find(timedev{nn}>0, 1, 'first');
+                    
+                    if isempty(indtmp)
+                        timedev{nn} = [];
+                        ffdev{nn} = [];
+                    else
+                        timedev{nn} = timedev{nn}(indtmp);
+                        ffdev{nn} = ffdev{nn}(indtmp);
+                    end
+                end
+                
+                %                 % ------------ TARGET
+                %                 for nn = 1:ntmp
+                %                     indtmp = find(timedev_TARG{nn}>0, 1, 'first');
+                %
+                %                     if isempty(indtmp)
+                %                       timedev_TARG{nn} = [];
+                %                     else
+                %                       timedev_TARG{nn} = timedev_TARG{nn}(indtmp);
+                %                     end
+                %                 end
+            end
+            
             
             DATBYREND.FF_dev = [DATBYREND.FF_dev; ffdev];
             DATBYREND.Time_dev = [DATBYREND.Time_dev; timedev];
             DATBYREND.Time_dev_targ = [DATBYREND.Time_dev_targ; timedev_TARG];
+            
+            
+            % ===================== IS THIS DUERING TRAINING OR BASELINE?
+            istrain = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).IsDurTrain;
             DATBYREND.IsDurTrain = [DATBYREND.IsDurTrain; istrain];
-
             
             
+%             if i==14 & ii==1 & indthis==7
+%                 keyboard
+%             end
             
             
             
             % ###################### KEEP TRACK OF EXPT/SYL
-            
             DATBYREND.Birdnum= [DATBYREND.Birdnum; i*ones(size(istrain))];
             DATBYREND.Exptnum= [DATBYREND.Exptnum; ii*ones(size(istrain))];
             DATBYREND.Sylnum= [DATBYREND.Sylnum; indthis*ones(size(istrain))];
             DATBYREND.Sylcounter = [DATBYREND.Sylcounter; sylcount*ones(size(istrain))];
             DATBYREND.IsSame = [DATBYREND.IsSame; samethis*ones(size(istrain))];
             DATBYREND.IsTarg = [DATBYREND.IsTarg; istargthis*ones(size(istrain))];
-                        
+            
             sylcount = sylcount+1;
             
             

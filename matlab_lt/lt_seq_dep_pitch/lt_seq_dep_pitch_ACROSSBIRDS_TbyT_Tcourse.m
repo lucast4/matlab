@@ -67,6 +67,9 @@ Numbirds = length(TrialStruct.birds);
 
 %% CALCULATE FF DEVIATIONS
 
+disp('NOTE TO SELF: ffvals will be automatically flipped to be dir of learning (so no need to flip again later)');
+pause;
+
 % DATSTRUCT.AllBirdnum =[];
 % DATSTRUCT.AllExptnum =[];
 % DATSTRUCT.AllSylname ={};
@@ -123,9 +126,6 @@ for i=1:Numbirds
             % ============== subplot for this syl
             t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
             ff = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals;
-            istarg = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget;
-            issame = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_similar;
-            sylname = TrialStruct.birds(i).exptnum(ii).sylnum(ss).syl;
             
             % --------------- lines for base mean and 1std
             WNontime = TrialStruct.birds(i).exptnum(ii).WNontime;
@@ -135,8 +135,7 @@ for i=1:Numbirds
             indsbase = t<WNontime;
             %             indsbase = t<basedays(end)+1;
             ffmean_base = nanmean(ff(indsbase));
-            ffstd_base = std(ff(indsbase));
-            
+
             
             % --------------- subtract mean and flip if negative larning
             ff = (ff-ffmean_base).*targlearndir;
@@ -1394,6 +1393,9 @@ lt_plot_zeroline;
 % =============== BINS
 % xedges = [-65 -45 -25 -5 5 25 45 65]; % minutes
 xedges = [-80 -55 -30 -5 5 30 55 80]; % minutes
+xedges = [-60 -31:5:-1 1:5:31 60]; % minutes
+% xedges = [-50:15:-5 -0.5 0.5 5:15:50]; % minutes
+xedges = [-60 -30 -7 -0.5 0.5 7 30 60]; % minutes
 xcenters = xedges(1:end-1)+diff(xedges)/2;
 % xcenters = xedges(1:end-1)+binsize/2;
 
@@ -1401,7 +1403,7 @@ flipTargNontarg=0; % if 1, then for each targ/nontarg pair, flips the dataset
 % so that is target dev relative to target pitch, as function of nontarget
 % density [default =0];
 
-useMeanFFRef = 1; % 1: uses mean in window; 0; uses value for each rend
+useMeanFFRef = 0; % 1: uses mean in window; 0; uses value for each rend
 
 TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S5(TrialStruct, ...
     ignoreLMANexpt, tflankplot, twind_plot, flanktime_targ, flipTargNontarg, ...
@@ -1437,7 +1439,7 @@ lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S1;
 
 % ======== what data to take?
 % dotrain = 1; % during training?
-singleRendOnly=0; % only take data up to first nontarg after the referen
+singleRendOnly=1; % only take data up to first nontarg after the referen
 % if 0, then takes all rends
 
 
@@ -1450,7 +1452,7 @@ densitymethod = 'refperiod';
 
 
 % ============ method for decideing hi and lo density trials
-cutoffmethod = 'targffdev';
+cutoffmethod = 'medianoverall';
 % medianslice: for each nontarg bin, finds median for targ
 % medianoverall: overall median of targ
 % medianslice_rand: gets median by first addaing random jitter. useful for
@@ -1483,6 +1485,7 @@ assert(all(isnan(DATBYREND.IsDurTrain) == isnan(DATBYREND.Density_isHigh)), 'the
 assert(all(isnan(DATBYREND.Density_targ) == isnan(DATBYREND.Density_nontarg)), 'then nan likely matches up');
 
 
+
 %% =========== [PLOT DIAGNOSTIC] FOR INDIVIDUAL EXPERIMENTS
 
 if (1)
@@ -1494,7 +1497,7 @@ if (1)
 end
 
 % ========== PLOT MULTIPLE
-birdtoplot_list = [1:17];
+birdtoplot_list = [13:17];
 % birdtoplot_list = 1:3:17;
 expttoplot_list = [1:10];
 for bb=birdtoplot_list
@@ -1503,6 +1506,7 @@ for bb=birdtoplot_list
         bb, ee, mintime_fromref, maxtime_fromref, xedges);
    end
 end
+
 
 %% ========= [COLLECT FOR PLOTTING] SEPARATE BY HIGH AND LO DENS
 
@@ -1517,8 +1521,9 @@ densitymethod = 'default'; % then whatever was used to classify has high and low
 
 % ----------- min num trials in this bin...
 minrends_inbin = 20;
-minsongs_inbin = 2;
+minsongs_inbin = 1;
 
+% ============================ TRAINING
 [NtargCell, NnontargCell, FFbinnedCell, TbinnedCell, FFsinglebinMat, ...
     Nratio_hilo_targ, NumDatPerRend] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S3(DATBYREND, ...
     dotrain, dosametype, onlyifSigLearn, densitymethod, xedges, mintime_fromref, ...
@@ -1613,7 +1618,7 @@ indstoplot_base = find(indstoplot_base);
 
 
 %% ==================== [PLOT]
-plotTrainAndBase =1;
+plotTrainAndBase =0;
 
 
 if plotTrainAndBase == 0
@@ -1641,18 +1646,176 @@ end
 
 
 
+%% ################################################################
+%% ############################ NOT SEPARATING BY TARGET DENSITY
 
 
 
+%% ====================== extract binned data
+% ============================================ TRAIN
+dosametype = 1; % 1=same; 0: diff type;
+onlyifSigLearn = 0; % 1=yes, 0=don't care
+
+% ----------------- % method for equalizing density
+densitymethod = 'default'; % then whatever was used to classify has high and low density
+% FFwindow; % then from 0(inclusive) to whatever window used to get FFdev
+
+% ----------- min num trials in this bin...
+minrends_inbin = 20;
+minsongs_inbin = 2;
+
+% ============================= TRAINING
+dotrain = 1; % 1 = train, 0 = base
+[~, ~, FFbinnedCell, TbinnedCell, ~, ...
+    ~, NumDatPerRend, BirdNumMat] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_noDens(DATBYREND, ...
+    dotrain, dosametype, onlyifSigLearn, densitymethod, xedges, mintime_fromref, ...
+    maxtime_fromref, minrends_inbin, minsongs_inbin);
+
+
+% ============================= BASELINE
+dotrain = 0;
+[~, ~, FFbinnedCell_BASE, TbinnedCell_BASE, ~, ...
+    ~, NumDatPerRend_BASE, BirdNumMat_BASE] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_noDens(DATBYREND, ...
+    dotrain, dosametype, onlyifSigLearn, densitymethod, xedges, mintime_fromref, ...
+    maxtime_fromref, minrends_inbin, minsongs_inbin);
+
+%% =================== distrubution of labeling densityl;
+lt_figure; hold on;
+
+% === distribution
+lt_subplot(2,2,1); hold on;
+indstmp = ~isnan(NumDatPerRend);
+lt_plot_histogram(NumDatPerRend(indstmp));
+
+
+lt_subplot(2,2,2); hold on;
+xlabel('birdnum');
+ylabel('renditions per locked syl');
+
+indstmp = ~isnan(NumDatPerRend);
+x = BirdNumMat(indstmp);
+y = NumDatPerRend(indstmp);
+plot(x,y, 'ok');
+
+
+%% ===================== [PLOT] WHICH INDS TO PLOT?
+onlyPlotIfDenseLabeling = 0; % decides if dense by looking at number of datapoints
+% per rendition.
+labelthresh = 0; % in log2 units, only matters if onlyPlotIfDenseLabeling=1
+birdstokeep = [13:17]; % leave empty to take all birds
+
+% ================== 1) ONLY PLOT IF HAVE DATA FOR BOTH LO AND HIGH DENS
+% -------- 1) only plot if have data
+indstoplot = ~cellfun('isempty', FFbinnedCell);
+
+% -------- 2) only keep if dense labeling?
+if onlyPlotIfDenseLabeling==1
+     indstoplot = indstoplot & log2(NumDatPerRend)>labelthresh;
+end
+
+% --------- 3) birds to keep
+if ~isempty(birdstokeep)
+    indstoplot = indstoplot & ismember(BirdNumMat, birdstokeep);
+end
+
+
+% --------- FINAL, convert to numerical indeices
+indstoplot = find(indstoplot)';
 
 
 
+%% =================== [PLOT] SHOW SAMPLE SIZE
+
+lt_figure; hold on;
+
+% ############################ BINNED FF DEV 
+lt_subplot(3,2,1); hold on;
+
+for i=indstoplot
+
+    x = TbinnedCell{i};
+    y = FFbinnedCell{i};
+    plot(x,y, '-x', 'Color', 'b');
+end
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+xlim([-30 30]);
+
+% ############################ BINNED FF DEV (BASELINE)
+lt_subplot(3,2,2); hold on;
+
+for i=indstoplot
+
+    x = TbinnedCell_BASE{i};
+    y = FFbinnedCell_BASE{i};
+    plot(x,y, '-x', 'Color', 'b');
+end
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+xlim([-30 30]);
+
+
+% ############################## IN EACH BIN, COMPARE DAT VS. BASE
+lt_subplot(3,2,3); hold on;
+
+for i=indstoplot
+
+    x = TbinnedCell{i};
+    y = FFbinnedCell{i};
+    
+    xbase = TbinnedCell_BASE{i};
+    ybase = FFbinnedCell_BASE{i};
+    
+%     X = [xbase'-2 x'+2];
+%     Y = [ybase y];
+
+    for cc = xcenters
+       
+        X = [cc-2 cc+2];
+        Y = [ybase(xbase==cc) y(x==cc)];
+        
+        if length(Y)==2
+            plot(X, Y, '-');
+        end
+        
+    end
+%     for ii=1:size(X,1)
+%         plot(X(ii,:), Y(ii,:), '-');
+%     end
+end
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+xlim([-30 30]);
 
 
 
+% ############################ BINNED FF DEV [mean across syls] 
+lt_subplot(3,2,4); hold on;
+title('mean');
+X = [TbinnedCell{indstoplot}];
+Y = cell2mat(FFbinnedCell(indstoplot))';
+
+[ymean, ysem] = grpstats(Y, X, {'mean', 'sem'});
+xmean = unique(X);
+lt_plot(xmean, ymean, {'Errors', ysem, 'Color', 'k'});
 
 
-
+% % ###################################### TAKE ALL RENDS IN ONE BIN
+% lt_subplot(3,2,6); hold on;
+% 
+% Y = FFsinglebinMat(indstoplot,:);
+% X = [1 2];
+% plot(X, Y', '-', 'Color', [0.7 0.7 0.7]);
+% % -- means
+% lt_plot(X+0.1, mean(Y), {'Errors', lt_sem(Y)});
+% 
+% xlim([0 3]);
+% lt_plot_zeroline;
+% % --- signifnicace
+% [~, p] = ttest(Y(:,1), Y(:,2));
+% lt_plot_pvalue(p, 'ttest', 1);
+% 
+% 
 
 
 

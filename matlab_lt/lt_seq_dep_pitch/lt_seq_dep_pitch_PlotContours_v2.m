@@ -11,7 +11,7 @@ syls_unique=Params.PlotLearning.SylFields_Unique;
 datafield='data_WithOutlier';
 
 if ~exist('onlyPlotLMANdays', 'var');
-    onlyPlotLMANdays=0;
+    onlyPlotLMANdays=0; 
 end
 
 %% Plot all days - one subplot for each day
@@ -24,7 +24,7 @@ hfigs=[];
 
 
 daystoplot=1:length(AllDays_RawDatStruct);
-if onlyPlotLMANdays==1;
+if onlyPlotLMANdays==1
     try
         daystoplot=find(~cellfun(@isempty, Params.PlotLearning.MuscimolSchedule_ByDayInds));
     catch err
@@ -36,7 +36,7 @@ end
 Hsplots=[];
 day1_mean=[];
 
-for i=daystoplot;
+for i=daystoplot
     
     if isempty(AllDays_RawDatStruct{i})
         continue;

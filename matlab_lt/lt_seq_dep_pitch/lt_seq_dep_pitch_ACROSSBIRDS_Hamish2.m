@@ -5,7 +5,138 @@
 
 %% LT 6/20/16
 function lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds, Params, ...
-    plotsametype)
+    plotsametype, useHandLab, plotPC, collectAllSyls, PCtimeWindowUsingWN)
+
+%% HAND ENTERED time windows for pitch contours
+% NOTE: if there is WN during training, then this would be based on
+% abseline, so there is a chance will affect measure during WN training.
+% PCtimewindows = {'pu53wh88', 'SeqDepPitchLMAN', [19 21], ...
+%
+% PCtimewindows = {'pu11wh87', 'SeqDepPitchLMAN', [0.019 0.043], ...
+%     'pu11wh87', 'SeqDepPitchLMAN2', [0.018 0.045], ...
+%     'pu11wh87', 'SeqDepPitchLMAN3', [0.019 0.037], ...
+%     'pu11wh87', 'SeqDepPitchLMAN6', [0.019 0.044], ...
+%     'gr41gr90', 'SeqDepPitchLMAN', [0.02 0.04], ...
+%     'gr41gr90', 'SeqDepPitchLMAN2', [0.021 0.046], ...
+%     'rd23gr89', 'SeqDepPitchLMAN', [0.018 0.045], ...
+%     'rd23gr89',  'SeqDepPitchLMAN2', [0.019 0.029], ...
+%     'rd28pu64',  'SeqDepPitchLMAN', [0.023 0.047], ...
+%     'rd28pu64',  'SeqDepPitchLMAN2', [0.024 0.049], ...
+%     'bk34bk68',  'SeqDepPitchLMAN', [0.018 0.041], ...
+%     'bk34bk68',  'SeqDepPitchLMAN3', [0.017 0.038], ...
+%     'wh4wh77',  'SeqDepPitchLMAN', [0.029 0.043], ...
+%     'wh25pk77',  'SeqDepPitchLMAN', [0.027 0.037]}; % bird, expt, window (in sec),
+%
+
+PCtimewindows = {...
+    'pu11wh87', 'SeqDepPitchLMAN', 'b', [0.021 0.043], ...
+    'pu11wh87', 'SeqDepPitchLMAN', 'aB', [0.023 0.047], ...
+    'pu11wh87', 'SeqDepPitchLMAN', 'a', [0.058 0.081], ...
+    'pu11wh87', 'SeqDepPitchLMAN', 'c', [0.023 0.07], ...
+    'pu11wh87', 'SeqDepPitchLMAN', 'd', [0.018 0.033], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'b', [0.019 0.038], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'aB', [0.019 0.041], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'a', [0.057 0.07], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'd', [0.017 0.031], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'c', [0.017 0.055], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'b', [0.021 0.037], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'aB', [0.018 0.04], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'a', [], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'c', [0.027 0.065], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'd', [0.017 0.027], ...
+    'pu11wh87', 'SeqDepPitchLMAN6', 'b', [0.02 0.038], ...
+    'pu11wh87', 'SeqDepPitchLMAN6', 'a', [0.055 0.077], ...
+    'pu11wh87', 'SeqDepPitchLMAN6', 'c', [0.023 0.065], ...
+    'pu11wh87', 'SeqDepPitchLMAN6', 'd', [0.018 0.033], ...
+    'gr41gr90', 'SeqDepPitchLMAN', 'b', [0.021 0.04], ...
+    'gr41gr90', 'SeqDepPitchLMAN', 'c', [0.025 0.075], ...
+    'gr41gr90', 'SeqDepPitchLMAN', 'a', [0.063 0.082], ...
+    'gr41gr90', 'SeqDepPitchLMAN2', 'b', [0.021 0.042], ...
+    'gr41gr90', 'SeqDepPitchLMAN2', 'jbbacB', [0.022 0.039], ...
+    'gr41gr90', 'SeqDepPitchLMAN2', 'c', [0.028 0.08], ...
+    'gr41gr90', 'SeqDepPitchLMAN2', 'a', [0.062 0.082], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'dbB', [0.021 0.038], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'dB', [0.021 0.042], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'cB', [0.021 0.04], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'c', [0.018 0.066], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'd', [0.041 0.058], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'a', [0.047 0.065], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'h', [], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'b', [0.023 0.037], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'd', [0.039 0.045], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'a', [0.044 0.055], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'g', [0.036 0.052], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'c', [0.017 0.055], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'k', [0.019 0.029], ...
+    'rd28pu64',  'SeqDepPitchLMAN', 'b', [0.025 0.044], ...
+    'rd28pu64',  'SeqDepPitchLMAN', 'k', [], ...
+    'rd28pu64',  'SeqDepPitchLMAN', 'd', [0.032 0.037], ...
+    'rd28pu64',  'SeqDepPitchLMAN', 'a', [0.053 0.063], ...
+    'rd28pu64',  'SeqDepPitchLMAN2', 'b', [0.024 0.045], ...
+    'rd28pu64',  'SeqDepPitchLMAN2', 'd', [0.031 0.037], ...
+    'rd28pu64',  'SeqDepPitchLMAN2', 'a', [0.051 0.062], ...
+    'rd28pu64',  'SeqDepPitchLMAN2', 'k', [], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'jjB', [0.026 0.046], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'ljB', [0.026 0.046], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'jjbB', [0.02 0.038], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'ljbB', [0.02 0.038], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'a', [], ... % empty means ignore (noisy)
+    'bk34bk68',  'SeqDepPitchLMAN3', 'jjB', [0.024 0.043], ...
+    'bk34bk68',  'SeqDepPitchLMAN3', 'ljB', [0.024 0.043], ...
+    'bk34bk68',  'SeqDepPitchLMAN3', 'jjbB', [0.02 0.038], ...
+    'bk34bk68',  'SeqDepPitchLMAN3', 'ljbB', [0.02 0.038], ...
+    'bk34bk68',  'SeqDepPitchLMAN3', 'a', [], ... % empty means ignore (noisy)
+    'wh4wh77',  'SeqDepPitchLMAN', 'b', [0.029 0.041], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'n', [], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'c', [0.038 0.07], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'k', [0.017 0.023], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'a', [0.045 0.057], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'd', [], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'b', [0.027 0.037], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'hB', [0.017 0.03], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'kB', [0.017 0.03], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'h', [0.03 0.041], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'a', [0.042 0.069], ...
+    }; % bird, expt, window (in sec),
+%     'rd23gr89', 'SeqDepPitchLMAN', 'h', [0.033 0.055], ... ALTERNATIVE
+%     'wh4wh77',  'SeqDepPitchLMAN', 'n', [0.053 0.059], ... % ALTERNATIVE
+%     'wh4wh77',  'SeqDepPitchLMAN', 'd', [0.027 0.035], ... ALTE$RNATIVE.
+
+
+PCtimewindows_WN = {...
+    'pu11wh87', 'SeqDepPitchLMAN', 'bccB', [0.022 0.027], ...
+    'pu11wh87', 'SeqDepPitchLMAN2', 'abB', [0.016 0.022], ...
+    'pu11wh87', 'SeqDepPitchLMAN3', 'dccB', [0.021 0.037], ...
+    'pu11wh87', 'SeqDepPitchLMAN6', 'aB', [0.021 0.038], ...
+    'gr41gr90', 'SeqDepPitchLMAN', 'jBba', [0.024 0.04], ...
+    'gr41gr90', 'SeqDepPitchLMAN2', 'jbBa', [0.024 0.042], ...
+    'rd23gr89', 'SeqDepPitchLMAN', 'dB', [0.024 0.042], ...
+    'rd23gr89',  'SeqDepPitchLMAN2', 'cB', [0.023 0.037], ...
+    'rd28pu64',  'SeqDepPitchLMAN', 'kjB', [0.026 0.044], ...
+    'rd28pu64',  'SeqDepPitchLMAN2', 'jjB', [0.025 0.044], ...
+    'bk34bk68',  'SeqDepPitchLMAN', 'ljbB', [0.021 0.038], ...
+    'bk34bk68',  'SeqDepPitchLMAN3', 'jjbB', [0.021 0.036], ...
+    'wh4wh77',  'SeqDepPitchLMAN', 'cbB', [0.029 0.041], ...
+    'wh25pk77',  'SeqDepPitchLMAN', 'hbB', [0.027 0.037], ...
+    }; % bird, expt, window (in sec),
+
+% if collectAllSyls==1
+%     % ------ becuase currently only contains windows for targ and s-type
+%     disp('USING PREVIOUS PITCH CONTOUR WINDOWS...');
+%     PCtimewindows = {};
+% end
+
+%% ================= which hand coded time windows to use?
+
+if PCtimeWindowUsingWN==1
+   % then only gets target syllables, 
+    % using timw windows that were defined looking at boht base and WN
+    % trials.
+    PCtimewindows = PCtimewindows_WN;
+    disp('NOTE: only getting target syls for pitch contour. if ok then continue...');
+    pause 
+end
+    
 
 %% 1) SORT OUT ONLY THE THE EXPEIRMENTS THAT HAVE LMAN INACTIVATION DATA
 % copy strcuture, save backup.
@@ -20,22 +151,33 @@ takeDay2forExptWithNoDay1=1; % otherwise will throw out those experiments.
 
 %% ========================= PLOT EACH EXPERIMENTS
 
-       All_learndir = [];
-       All_basebiaspval = [];
-       All_FF_BASE_PBS = [];
-       All_FF_WN_PBS = [];
-       All_FF_BASE_MUSC = [];
-       All_FF_WN_MUSC = [];
-        All_Birdnum = [];
-        
-        All_WNdayrange = [];
-        
-       All_CV_BASE_PBS = [];
-       All_CV_WN_PBS = [];
-       All_CV_BASE_MUSC = [];
-       All_CV_WN_MUSC = [];
+All_learndir = [];
+All_basebiaspval = [];
+All_FF_BASE_PBS = [];
+All_FF_WN_PBS = [];
+All_FF_BASE_MUSC = [];
+All_FF_WN_MUSC = [];
+All_Birdnum = [];
 
-       
+All_WNdayrange = [];
+
+All_CV_BASE_PBS = [];
+All_CV_WN_PBS = [];
+All_CV_BASE_MUSC = [];
+All_CV_WN_MUSC = [];
+
+exptcount = 0;
+All_exptcounter = [];
+All_Istarg = [];
+All_Issame = [];
+
+
+% ------------ PC STUFF
+All_PitchCont_BASE_PBS = [];
+All_PitchCont_BASE_MUSC = [];
+All_PitchCont_WN_PBS = [];
+All_PitchCont_WN_MUSC = [];
+
 count = 0;
 for i=1:NumBirds
     birdname=SeqDepPitch_AcrossBirds.birds{i}.birdname;
@@ -46,20 +188,50 @@ for i=1:NumBirds
     %     subplotcols=2;
     %     fignums_alreadyused=[];
     %     hfigs=[];
-
+    
     for ii=1:numexpts
+        
         exptname=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.ExptID;
         targsyl=SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.targsyl;
-        sametypesyls = [SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique_STDS, ...
-            SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique_STSS];
         
+        % =============================== GET SET OF SYLS TO COLLECT
+        SylsToCollect = {};
+        if useHandLab==0
+            sametypesyls = [SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique_STDS, ...
+                SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique_STSS];
+        elseif useHandLab==1
+            % ------ go thru all syls and keep ones that are same type, but
+            % not target.
+            allsyls = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique;
+            
+            sametypesyls = {};
+            for j=1:length(allsyls)
+                syltmp = allsyls{j};
+                sametmp = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syltmp).similar_to_targ_HandLab;
+                targtmp = strcmp(syltmp, targsyl);
+                if sametmp==1 & targtmp==0
+                    sametypesyls = [sametypesyls syltmp];
+                end
+            end
+            disp([targsyl ' ====== ' sametypesyls]);
+        end
+        if collectAllSyls==1
+            % --- then collect targ, same, diff
+            SylsToCollect = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.SylFields_Unique;
+        else
+            % ---- then collect only targ, same
+            SylsToCollect = [{targsyl} sametypesyls];
+        end
+        
+        % ================================= WHICH syls to plot online
         if plotsametype==0
             SylsToPlot={targsyl};
         elseif plotsametype==1
             SylsToPlot = [{targsyl} sametypesyls];
         end
         
-        % ====== PLOT RAW DAT FOR THIS DAY TO COMPARE TO EXTRACTED STATS
+        
+        %% ====== PLOT RAW DAT FOR THIS DAY TO COMPARE TO EXTRACTED STATS
         plotLarge=1;
         BirdToPlot=birdname;
         ExptToPlot=exptname;
@@ -75,430 +247,569 @@ for i=1:NumBirds
             Params, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, ...
             plotRawFF, UseSylColors, flipsign, use_std, OverlayLMANStats, ...
             OverlayMUSC_days, plotLarge, plotRunningCV)
-       
+        
         count = count+1;
         
-       % ################################ COLLECT STATS
-%        ffminusbase_PBS = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.(targsyl).meanFF_pbs;
-%        ffminusbase_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.(targsyl).meanFF_musc;
-%        
-%        ffbase_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData_MUSC.Baseline.(targsyl).meanFF_WithinTimeWindow;
-%        ffbase_PBS = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData.Baseline.(targsyl).meanFF_WithinTimeWindow;
-%        
-%        
-%        fflearn_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.(targsyl)
-       
-       
-       % ############################## COLLECT STATS
-       DatThis = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning;
-       
-       if isfield(DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC, 'final_extracted_window')
-       
-       %% ============================================= MUSC
-       % ============================= BASE
-       tvals = DatThis.AllDays_PlotLearning.EpochData_MUSC.Baseline.(targsyl).Tvals_WithinTimeWindow;
-       ffvals = DatThis.AllDays_PlotLearning.EpochData_MUSC.Baseline.(targsyl).rawFF_WithinTimeWindow;
-       
-       [ffmean, ffstd] = grpstats(ffvals, floor(tvals), {'mean', 'std'}); % mean for each day
-       ffmean_BASE_MUSC = mean(ffmean); % mean of means
-       basedays = unique(floor(tvals));
-       % --- save for comparison
-       ffvals_base_MUSC = ffvals;
-       
-       % ############## CV
-       ffCV_BASE_MUSC = mean(ffstd./ffmean);
-       
-       
-       % ============================ DUR WN
-       % days to extract, during learing.
-       WNdays = DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.dayInds;
-       
-       % tvals, confirm that is same as previous extraction
-       tvals_OLD = DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.(targsyl).TvalsWithinWindow_MUSC;
-       tvals = cell2mat(DatThis.AllDays_PlotLearning.DataMatrix_MUSC.(targsyl).Tvals_WithinTimeWindow(WNdays));
-       assert(all(tvals == tvals_OLD), 'not aligned with previous data?');
-       
-       % mean of day means of FF
-       ffmean = cellfun(@mean, DatThis.AllDays_PlotLearning.DataMatrix_MUSC.(targsyl).FFvals_WithinTimeWindow(WNdays));
-       ffmean_WN_MUSC = mean(ffmean);
-       
-       ffstd = cellfun(@std, DatThis.AllDays_PlotLearning.DataMatrix_MUSC.(targsyl).FFvals_WithinTimeWindow(WNdays));
-       ffCV_WN_MUSC = mean(ffstd./ffmean);
-       
-       
-       %% ============================================= PBS
-       % ============================ BASE
-       tvals = DatThis.AllDays_PlotLearning.EpochData.Baseline.(targsyl).Tvals_WithinTimeWindow;
-       ffvals = DatThis.AllDays_PlotLearning.EpochData.Baseline.(targsyl).rawFF_WithinTimeWindow;
-       
-       % -- only keep days that overlap with MUSC baseline days
-       indstmp = ismember(floor(tvals), basedays);
-       tvals = tvals(indstmp);
-       ffvals = ffvals(indstmp);
-       
-       [ffmean, ffstd] = grpstats(ffvals, floor(tvals), {'mean', 'std'}); % mean for each day
-       ffmean_BASE_PBS = mean(ffmean); % mean of means
-       assert(all(unique(floor(tvals)) == basedays), 'PBS and MUSC not aligned...');
-       % --- save for comparison
-       ffvals_base_PBS = ffvals;
-       
-       % -------- CV
-       ffCV_BASE_PBS = mean(ffstd./ffmean);
-
-       
-
-       % =========================== DUR WN
-       % days to extract, during learing.
-       
-       % tvals, confirm that is same as previous extraction
-       tvals_OLD = DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.(targsyl).TvalsWithinWindow_PBS;
-       tvals = cell2mat(DatThis.AllDays_PlotLearning.DataMatrix.(targsyl).Tvals_WithinTimeWindow(WNdays));
-       assert(all(tvals == tvals_OLD), 'not aligned with previous data?');
-       
-       % mean of day means of FF
-       ffmean = cellfun(@mean, DatThis.AllDays_PlotLearning.DataMatrix.(targsyl).FFvals_WithinTimeWindow(WNdays));
-       ffmean_WN_PBS = mean(ffmean);
-       
-       % ------ CV
-       ffstd = cellfun(@std, DatThis.AllDays_PlotLearning.DataMatrix.(targsyl).FFvals_WithinTimeWindow(WNdays));
-       ffCV_WN_PBS = mean(ffstd./ffmean);
-       
-       %% ====================== PLOT EXTRACTED VALUES ON LEARNING
-       % TRAJECTORY
-       firstday = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.Params.SeqFilter.FirstDay;
-       basedayinds = lt_convert_EventTimes_to_RelTimes(firstday, basedays);
-       basedayinds = basedayinds.JustDays_rel;
-
-       % --- PBS
-       line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_PBS ffmean_BASE_PBS], 'Color', 'b', 'LineWidth', 3);
-       line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_PBS ffmean_WN_PBS], 'Color', 'b', 'LineWidth', 3);
-       
-       % --- MUSC
-       line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_MUSC ffmean_BASE_MUSC], 'Color', 'm', 'LineWidth', 3);
-       line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_MUSC ffmean_WN_MUSC], 'Color', 'm', 'LineWidth', 3);
-       
-       
-       % ############################# COLLECT STATS
-       learndir = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.targ_learn_dir;
-       All_learndir = [All_learndir; learndir];
-       
-       [~, p] = ttest2(ffvals_base_MUSC, ffvals_base_PBS);
-       if p<0.05
-           lt_plot_pvalue(p, 'base bias (ttest)', 1);
-       end
-       All_basebiaspval = [All_basebiaspval; p];
-       
-       All_FF_BASE_PBS = [All_FF_BASE_PBS; ffmean_BASE_PBS];
-       All_FF_WN_PBS = [All_FF_WN_PBS; ffmean_WN_PBS];
-       All_FF_BASE_MUSC = [All_FF_BASE_MUSC; ffmean_BASE_MUSC];
-       All_FF_WN_MUSC = [All_FF_WN_MUSC; ffmean_WN_MUSC];
-       
-       All_CV_BASE_PBS = [All_CV_BASE_PBS; ffCV_BASE_PBS];
-       All_CV_WN_PBS = [All_CV_WN_PBS; ffCV_WN_PBS];
-       All_CV_BASE_MUSC = [All_CV_BASE_MUSC; ffCV_BASE_MUSC];
-       All_CV_WN_MUSC = [All_CV_WN_MUSC; ffCV_WN_MUSC];
-       
-       
-       All_Birdnum = [All_Birdnum; i];
-       
-       WNday1 = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.WNTimeOnInd + ...
-           SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.NumEmptyDays_StartWN_FromZscoreCode;
-       All_WNdayrange = [All_WNdayrange; [WNdays(1) WNdays(end)]-WNday1+1];
-
-       
-       else
-          lt_plot_annotation(1, 'NOT COLLECTING DATA! no dat in final window...', 'm'); 
-       end
-       
-       
+        
+        %% ############################## COLLECT STATS
+        DatThis = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning;
+        
+        if isfield(DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC, 'final_extracted_window')
+            
+            %             SylsToCollect = [{targsyl}];
+            exptcount = exptcount+1;
+            
+            for ss = 1:length(SylsToCollect)
+                sylthis = SylsToCollect{ss};
+                istarg = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(sylthis).is_target;
+                if useHandLab==0
+                    issame = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(sylthis).similar_to_targ;
+                elseif useHandLab==1
+                    issame = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(sylthis).similar_to_targ_HandLab;
+                end
+                
+                %% ============================================= MUSC
+                % ============================= BASE
+                tvals = DatThis.AllDays_PlotLearning.EpochData_MUSC.Baseline.(sylthis).Tvals_WithinTimeWindow;
+                % ----------- 1) MEAN PITCH
+                basedays = unique(floor(tvals));
+                firstday = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.Params.SeqFilter.FirstDay;
+                basedayinds = lt_convert_EventTimes_to_RelTimes(firstday, basedays);
+                basedayinds = basedayinds.JustDays_rel;
+                
+                doMUSC = 1;
+                [ffmean_BASE_MUSC, ffCV_BASE_MUSC, ffvals_base_MUSC] = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub(SeqDepPitch_AcrossBirds, ...
+                    i, ii, basedayinds, sylthis, doMUSC);
+                % ------ 2) PITCH CONTOUR
+                [OUTSTRUCT] = ...
+                    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub2(SeqDepPitch_AcrossBirds, ...
+                    i, ii, sylthis, 'MUSC', basedayinds, PCtimewindows, PCtimeWindowUsingWN);
+                All_PitchCont_BASE_MUSC = [All_PitchCont_BASE_MUSC; OUTSTRUCT];
+                
+                
+                % ============================ DUR WN
+                WNdays = DatThis.AllDays_PlotLearning.EpochData.PBS_and_MUSC.final_extracted_window.dayInds;
+                % ------------ 1) MEAN PITCH
+                doMUSC = 1;
+                [ffmean_WN_MUSC, ffCV_WN_MUSC] = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub(SeqDepPitch_AcrossBirds, ...
+                    i, ii, WNdays, sylthis, doMUSC);
+                % ------------ 2) PITCH CONTOUR
+                [OUTSTRUCT] = ...
+                    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub2(SeqDepPitch_AcrossBirds, ...
+                    i, ii, sylthis, 'MUSC', WNdays, PCtimewindows, PCtimeWindowUsingWN);
+                All_PitchCont_WN_MUSC = [All_PitchCont_WN_MUSC; OUTSTRUCT];
+                
+                
+                
+                %% ============================================= PBS
+                % ============================ BASE
+                % ----- 1) MEAN PITCH
+                doMUSC = 0;
+                [ffmean_BASE_PBS, ffCV_BASE_PBS, ffvals_base_PBS] = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub(SeqDepPitch_AcrossBirds, ...
+                    i, ii, basedayinds, sylthis, doMUSC);
+                % ------ 2) PITCH CONTOUR
+                [OUTSTRUCT] = ...
+                    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub2(SeqDepPitch_AcrossBirds, ...
+                    i, ii, sylthis, 'PBS', basedayinds, PCtimewindows, PCtimeWindowUsingWN);
+                All_PitchCont_BASE_PBS = [All_PitchCont_BASE_PBS; OUTSTRUCT];
+                
+                
+                
+                % =========== DURING WN
+                % ----------- 1) MEAN PITCH
+                doMUSC = 0;
+                [ffmean_WN_PBS, ffCV_WN_PBS] = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub(SeqDepPitch_AcrossBirds, ...
+                    i, ii, WNdays, sylthis, doMUSC);
+                % ------------ 2) PITCH CONTOUR
+                [OUTSTRUCT] = ...
+                    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub2(SeqDepPitch_AcrossBirds, ...
+                    i, ii, sylthis, 'PBS', WNdays, PCtimewindows, PCtimeWindowUsingWN);
+                All_PitchCont_WN_PBS = [All_PitchCont_WN_PBS; OUTSTRUCT];
+                
+                
+                
+                
+                %% ====================== PLOT EXTRACTED VALUES ON LEARNING
+                % --- PBS
+                line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_PBS ffmean_BASE_PBS], 'Color', 'b', 'LineWidth', 3);
+                line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_PBS ffmean_WN_PBS], 'Color', 'b', 'LineWidth', 3);
+                
+                % --- MUSC
+                line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_MUSC ffmean_BASE_MUSC], 'Color', 'm', 'LineWidth', 3);
+                line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_MUSC ffmean_WN_MUSC], 'Color', 'm', 'LineWidth', 3);
+                
+                
+                %% ======================== PLOT PC?
+                if plotPC ==1
+                    Ntoplot = 20; % num renditions to contour;
+                    if istarg==1
+                        hsplots = [];
+                        lt_figure; hold on;
+                        ncol = 3;
+                        
+                        % ############################ BASELINE, PBS
+                        pcol = 'k';
+                        pcmat = All_PitchCont_BASE_PBS(end).All_PCmat{end};
+                        twind = All_PitchCont_BASE_PBS(end).All_twind(end,:);
+                        tbins = All_PitchCont_BASE_PBS(end).All_tbins{end};
+                        ffmat = All_PitchCont_BASE_PBS(end).All_ffvals{end};
+                        tt = tbins(twind);
+                        
+                        % ---------- 1) LOWER 20
+                        hsplot = lt_subplot(4,ncol,1); hold on;
+                        hsplots = [hsplots hsplot];
+                        title('BASE, PBS, lower ff');
+                        
+                        [~, indsort] = sort(ffmat);
+                        pcthis = pcmat(indsort(1:Ntoplot), :);
+                        plot(tbins, pcthis', '-', 'Color', pcol);
+                        % -- lines for twind
+                        line([tt(1) tt(1)], ylim, 'Color', 'r');
+                        line([tt(end) tt(end)], ylim, 'Color', 'r');
+                        
+                        % ---------- 1) HIGHER 20
+                        hsplot = lt_subplot(4,ncol,2); hold on;
+                        hsplots = [hsplots hsplot];
+                        title('BASE, PBS, higher ff');
+                        
+                        [~, indsort] = sort(ffmat);
+                        pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                        plot(tbins, pcthis', '-k', 'Color', pcol);
+                        % -- lines for twind
+                        line([tt(1) tt(1)], ylim, 'Color', 'r');
+                        line([tt(end) tt(end)], ylim, 'Color', 'r');
+                        
+                        % ----------- OVERLAY MEANS
+                        hsplot = lt_subplot(4, ncol, 3); hold on;
+                        hsplots = [hsplots, hsplot];
+                        title('overlaid means');
+                        % - lower 20 (PBS)
+                        pcthis = pcmat(indsort(1:Ntoplot), :);
+                        pcmean = mean(pcthis,1);
+                        pcsem = lt_sem(pcthis);
+                        shadedErrorBar(tbins, pcmean, pcsem, {'Color', [0.6 0.6 0.6]}, 1);
+                        
+                        % - higher 20 (PBS)
+                        pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                        pcmean = mean(pcthis,1);
+                        pcsem = lt_sem(pcthis);
+                        shadedErrorBar(tbins, pcmean, pcsem, {'Color', [0.6 0.6 0.6]}, 1);
+                        
+                        
+                        % ############################ BASELINE, MUSC
+                        pcol = 'r';
+                        pcmat = All_PitchCont_BASE_MUSC(end).All_PCmat{end};
+                        twind = All_PitchCont_BASE_MUSC(end).All_twind(end,:);
+                        tbins = All_PitchCont_BASE_MUSC(end).All_tbins{end};
+                        ffmat = All_PitchCont_BASE_MUSC(end).All_ffvals{end};
+                        tt = tbins(twind);
+                        
+                        if size(pcmat,1)>Ntoplot
+                            % ---------- 1) LOWER 20
+                            hsplot = lt_subplot(4,ncol,4); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('BASE, lower ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(1:Ntoplot), :);
+                            plot(tbins, pcthis', '-', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                            
+                            % ---------- 1) HIGHER 20
+                            hsplot = lt_subplot(4,ncol,5); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('BASE, higher ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                            plot(tbins, pcthis', '-k', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                        end
+                        
+                        % - OVERLAY MEANS - MUSC (all)
+                        lt_subplot(4, ncol, 3); hold on;
+                        pcthis = pcmat;
+                        pcmean = mean(pcthis,1);
+                        pcsem = lt_sem(pcthis);
+                        shadedErrorBar(tbins, pcmean, pcsem, {'Color', 'r'}, 1);
+                        
+                        
+                        
+                        % ############################ TRAIN, PBS
+                        pcol = 'k';
+                        pcmat = All_PitchCont_WN_PBS(end).All_PCmat{end};
+                        twind = All_PitchCont_WN_PBS(end).All_twind(end,:);
+                        tbins = All_PitchCont_WN_PBS(end).All_tbins{end};
+                        ffmat = All_PitchCont_WN_PBS(end).All_ffvals{end};
+                        tt = tbins(twind);
+                        
+                        if size(pcmat,1)>Ntoplot
+                            
+                            % ---------- 1) LOWER 20
+                            hsplot = lt_subplot(4,ncol,7); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('WN, lower ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(1:Ntoplot), :);
+                            plot(tbins, pcthis', '-', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                            
+                            % ---------- 1) HIGHER 20
+                            hsplot = lt_subplot(4,ncol,8); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('WN, higher ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                            plot(tbins, pcthis', '-k', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                            
+                            % ----------- OVERLAY MEANS
+                            hsplot = lt_subplot(4, ncol, 9); hold on;
+                            hsplots = [hsplots, hsplot];
+                            title('overlaid means');
+                            % - lower 20 (PBS)
+                            pcthis = pcmat(indsort(1:Ntoplot), :);
+                            pcmean = mean(pcthis,1);
+                            pcsem = lt_sem(pcthis);
+                            shadedErrorBar(tbins, pcmean, pcsem, {'Color', [0.6 0.6 0.6]}, 1);
+                            
+                            % - higher 20 (PBS)
+                            pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                            pcmean = mean(pcthis,1);
+                            pcsem = lt_sem(pcthis);
+                            shadedErrorBar(tbins, pcmean, pcsem, {'Color', [0.6 0.6 0.6]}, 1);
+                            
+                            
+                        end
+                        
+                        % ############################ TRAIN, MUSC
+                        pcol = 'r';
+                        pcmat = All_PitchCont_WN_MUSC(end).All_PCmat{end};
+                        twind = All_PitchCont_WN_MUSC(end).All_twind(end,:);
+                        tbins = All_PitchCont_WN_MUSC(end).All_tbins{end};
+                        ffmat = All_PitchCont_WN_MUSC(end).All_ffvals{end};
+                        tt = tbins(twind);
+                        
+                        if size(pcmat,1)>Ntoplot
+                            
+                            % ---------- 1) LOWER 20
+                            hsplot = lt_subplot(4,ncol,10); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('WN, lower ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(1:Ntoplot), :);
+                            plot(tbins, pcthis', '-', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                            
+                            % ---------- 1) HIGHER 20
+                            hsplot = lt_subplot(4,ncol,11); hold on;
+                            hsplots = [hsplots hsplot];
+                            title('WN, higher ff');
+                            
+                            [~, indsort] = sort(ffmat);
+                            pcthis = pcmat(indsort(end-Ntoplot+1:end), :);
+                            plot(tbins, pcthis', '-k', 'Color', pcol);
+                            % -- lines for twind
+                            line([tt(1) tt(1)], ylim, 'Color', 'r');
+                            line([tt(end) tt(end)], ylim, 'Color', 'r');
+                            
+                        end
+                        
+                        % - OVERLAY MEANS - MUSC (all)
+                        lt_subplot(4, ncol, 9); hold on;
+                        pcthis = pcmat;
+                        pcmean = mean(pcthis,1);
+                        pcsem = lt_sem(pcthis);
+                        shadedErrorBar(tbins, pcmean, pcsem, {'Color', 'r'}, 1);
+                        
+                        
+                        
+                        % ====================== format
+                        linkaxes(hsplots, 'xy');
+                        
+                        
+                    end
+                end
+                
+                %% ############################# COLLECT STATS
+                
+                learndir = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.targ_learn_dir;
+                All_learndir = [All_learndir; learndir];
+                
+                [~, p] = ttest2(ffvals_base_MUSC, ffvals_base_PBS);
+                if p<0.05
+                    lt_plot_pvalue(p, 'base bias (ttest)', 1);
+                end
+                All_basebiaspval = [All_basebiaspval; p];
+                
+                All_FF_BASE_PBS = [All_FF_BASE_PBS; ffmean_BASE_PBS];
+                All_FF_WN_PBS = [All_FF_WN_PBS; ffmean_WN_PBS];
+                All_FF_BASE_MUSC = [All_FF_BASE_MUSC; ffmean_BASE_MUSC];
+                All_FF_WN_MUSC = [All_FF_WN_MUSC; ffmean_WN_MUSC];
+                
+                All_CV_BASE_PBS = [All_CV_BASE_PBS; ffCV_BASE_PBS];
+                All_CV_WN_PBS = [All_CV_WN_PBS; ffCV_WN_PBS];
+                All_CV_BASE_MUSC = [All_CV_BASE_MUSC; ffCV_BASE_MUSC];
+                All_CV_WN_MUSC = [All_CV_WN_MUSC; ffCV_WN_MUSC];
+                
+                
+                All_Birdnum = [All_Birdnum; i];
+                All_exptcounter = [All_exptcounter; exptcount];
+                
+                WNday1 = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.WNTimeOnInd + ...
+                    SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.NumEmptyDays_StartWN_FromZscoreCode;
+                All_WNdayrange = [All_WNdayrange; [WNdays(1) WNdays(end)]-WNday1+1];
+                
+                All_Istarg = [All_Istarg; istarg];
+                All_Issame = [All_Issame; issame];
+            end
+            
+            
+        else
+            lt_plot_annotation(1, 'NOT COLLECTING DATA! no dat in final window...', 'm');
+        end
+        
+        
     end
 end
+
 disp(['Num expts plotted: ' num2str(count)]);
 
 
-%% ============= PLOT SUMMARY
-lt_figure; hold on;
+%% ################### PUT ALL DATA INTO STRUCTURE
 
-% --------
-lt_subplot(3,2,1); hold on;
-xlabel('baseline AFP bias (pos = dir of learning)');
-ylabel('FF minus base dur learn (dir of learn)');
-
-bias = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-learn_PBS = All_learndir.*(All_FF_WN_PBS - All_FF_BASE_PBS);
-learn_MUSC = All_learndir.*(All_FF_WN_MUSC - All_FF_BASE_PBS);
-for j=1:length(bias)
-    line([bias(j) bias(j)], [learn_PBS(j) learn_MUSC(j)], 'Color', [0.7 0.7 0.7]);
-end 
-plot(bias, learn_PBS, 'ko');
-plot(bias, learn_MUSC, 'ro');
-
-
-% ---------
-lt_subplot(3,2,2); hold on;
-xlabel('learn (targ dir)');
-ylabel('consolidated learning (hz)');
-
-allbias = All_FF_BASE_PBS - All_FF_BASE_MUSC;
-x = All_learndir.*(All_FF_WN_PBS - All_FF_BASE_PBS);
-y = All_learndir.*(All_FF_WN_MUSC - All_FF_BASE_PBS);
-
-% -- bias in direciton fo learing
-indstokeep = sign(allbias) == sign(All_learndir)
-
-xtmp = x(indstokeep);
-ytmp = y(indstokeep);
-plot(xtmp, ytmp, 'bo');
+DATSTRUCT.All_Birdnum = All_Birdnum;
+DATSTRUCT.All_CV_BASE_MUSC = All_CV_BASE_MUSC;
+DATSTRUCT.All_CV_BASE_PBS = All_CV_BASE_PBS;
+DATSTRUCT.All_CV_WN_MUSC = All_CV_WN_MUSC;
+DATSTRUCT.All_CV_WN_PBS = All_CV_WN_PBS;
+DATSTRUCT.All_FF_BASE_MUSC = All_FF_BASE_MUSC;
+DATSTRUCT.All_FF_BASE_PBS = All_FF_BASE_PBS;
+DATSTRUCT.All_FF_WN_MUSC = All_FF_WN_MUSC;
+DATSTRUCT.All_FF_WN_PBS = All_FF_WN_PBS;
+DATSTRUCT.All_Istarg = All_Istarg;
+DATSTRUCT.All_Issame = All_Issame;
+DATSTRUCT.All_PitchCont_BASE_MUSC = All_PitchCont_BASE_MUSC;
+DATSTRUCT.All_PitchCont_BASE_PBS = All_PitchCont_BASE_PBS;
+DATSTRUCT.All_PitchCont_WN_MUSC = All_PitchCont_WN_MUSC;
+DATSTRUCT.All_PitchCont_WN_PBS = All_PitchCont_WN_PBS;
+DATSTRUCT.All_WNdayrange = All_WNdayrange;
+DATSTRUCT.All_basebiaspval = All_basebiaspval;
+DATSTRUCT.All_exptcounter = All_exptcounter;
+DATSTRUCT.All_learndir = All_learndir;
 
 
-% -- bias in direciton opposite to learing
-indstokeep = sign(allbias) ~= sign(All_learndir);
+%% ########## COLLECT WIGGLE AND BASELINE BIAS [recalculated using new time window]
+% NOTE: if multiple days, then days mean across days of day stats.
+% NOTE: calcualte baseline bias using pitch countours and update time
+% windows
 
-xtmp = x(indstokeep);
-ytmp = y(indstokeep);
-plot(xtmp, ytmp, 'mo');
+% Indstoplot = find(All_Istarg==1);
+Indstoplot = find(All_Issame==1 | All_Issame==0); % uses all syllables
+NrendsORIG = 25; % renditions to take from edges (will minimize if not enough trials
+usemedian = 1; % if 0, then uses means. if 1, then uses MAD and medians
 
-% ---
-lt_plot_makesquare_plot45line(gca, 'k');
 
-% ---------
-lt_subplot(3,2,3); hold on;
-ylabel('fraction consolidation');
-xlabel('afp bias (in dir of learnig');
+% ============== VERSION 1 - using wiggle normalzied to MUSC wiggle
+normwiggle = 1; % if 1, then normalized wiggle to the wiggle for MUSC (matched sample size)
+DATSTRUCT = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub7(DATSTRUCT, Indstoplot, ...
+    NrendsORIG, usemedian, normwiggle);
 
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-y = (All_FF_WN_MUSC - All_FF_BASE_PBS)./(All_FF_WN_PBS - All_FF_BASE_PBS);
-lt_regress(y, x, 1);
-% ---- connect same bird with lines
-for j=1:NumBirds
-    indsthis = find(All_Birdnum==j);
+
+% ============== VERSION 2 - 
+normwiggle = 0; 
+DATSTRUCT = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub7(DATSTRUCT, Indstoplot, ...
+    NrendsORIG, usemedian, normwiggle);
+
+
+% ################################### IF WANT TO ALSO INCLUDE SAME
+% MESASUREMNTS BUT DURING WN TRAINING ...
+normwiggle = 0; % set to 0, since want to compare WN and base, so don't want 
+% to normalize to MUSC
+
+% FIRST, EXTRACT BASELINE
+DATSTRUCT = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub7(DATSTRUCT, Indstoplot, ...
+    NrendsORIG, usemedian, normwiggle);
+
+% SECOND, EXTRACT DURING TRAINING, AND ADD RELEVANT FIELDS TO DATSTRUCT
+doBase = 0;
+DATSTRUCT_TMP = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub7(DATSTRUCT, Indstoplot, ...
+    NrendsORIG, usemedian, normwiggle, doBase);
+
+% THIRD, ADD RELEVANT FIELDS FROM TRAINING TO BASELINE
+DATSTRUCT.Wiggle_WN = DATSTRUCT_TMP.Wiggle;
+
+
+%% ######################################## PITCH CONTOUR STUFF [WIGGLE]
+% ====== INCLUDES ALL SYLS (so can potentailly pseudoreplicate if have
+% multiple expriments in same bird - will need to account for that)]
+
+% NOTE: can try running twice based on the two versions above.
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub6(DATSTRUCT);
+
+
+
+%% ================= [PITCH CONTOUR/WIGGLE] SANITY CHECLS
+% Go into script and run;
+% NOTE: 
+% section 1: useful (plots raw contours for all syls)
+% section 2 (PBS vs MUSC) and section 3 (PBS vs PBS) less useful, since
+% subseumed by RAW plots below...
+
+
+if (0)
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub8;
+end
+
+%% ========================= [PLOT RAW DATA - CHOOSE SPECIFIC SYLLABLE]
+figcount=1;
+subplotrows=4;
+subplotcols=6;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+Nrends = NrendsORIG;
+indthis = 1;
+dd =1; % which day
+
+% ############################################ COMPARED TO MUSCIMOL
+default_type = 'MUSC';
+[fignums_alreadyused, hfigs, figcount, hsplot] = ...
+    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub5(default_type, DATSTRUCT, ...
+    indthis, Nrends, dd, ...
+    subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount)
+
+
+% ############################################ COMPARED TO PBS
+default_type = 'PBS';
+[fignums_alreadyused, hfigs, figcount, hsplot] = ...
+    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub5(default_type, DATSTRUCT, ...
+    indthis, Nrends, dd, ...
+    subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount)
+
+
+%% ========================= [PLOT RAW DATA FOR DIFFERENT SYLLABLES AS EXAMPLES]
+% NOTE: same as above, except iterate over syllables of choice.
+
+% ============================ MOIDIFY
+plotrends = 'low';
+% high or low, plots all syls, starting from eitehr high or low...
+
+% ====================== PLOT ALL, WITH PAUSES IN BETWEEN
+biasall = DATSTRUCT.BaseBiasAll;
+[~, IndSort] = sort(biasall);
+
+if strcmp(plotrends, 'low')
+indstoplot = IndSort';
+elseif strcmp(plotrends, 'high')
+% --- go from high to lo
+indstoplot = fliplr(indstoplot);
+end
+
+% =================================== RUNS
+figcount=1;
+subplotrows=4;
+subplotcols=6;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+dd =1; % which day
+Nrends = NrendsORIG;
+
+count = 0;
+for i = indstoplot
+    indthis = i;
     
-    xthis = x(indsthis);
-    ythis = y(indsthis);
-    
-    [~, indsort] = sort(xthis);
-    xthis = xthis(indsort);
-    ythis = ythis(indsort);
-    
-    for k=1:length(xthis)-1
-       line([xthis(k) xthis(k+1)], [ythis(k) ythis(k+1)], 'Color', [0.5 0.5 0.5]); 
+    if any(isnan(DATSTRUCT.All_PitchCont_BASE_PBS(indthis).All_twind(1,:)))
+        continue
     end
+    
+    % ############################################ COMPARED TO MUSCIMOL
+    default_type = 'MUSC';
+    [fignums_alreadyused, hfigs, figcount, hsplot] = ...
+        lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub5(default_type, DATSTRUCT, ...
+        indthis, Nrends, dd, ...
+        subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    
+    
+    % ############################################ COMPARED TO PBS
+    default_type = 'PBS';
+    [fignums_alreadyused, hfigs, figcount, hsplot] = ...
+        lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub5(default_type, DATSTRUCT, ...
+        indthis, Nrends, dd, ...
+        subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    
+    % ------------ DO PAUSE?
+    count = count+1;
+    if mod(count, 8)==0
+        pause
+        close all;
+    end
+    
+    
 end
-lt_plot_zeroline;
-lt_plot_zeroline_vert;
 
+%% ==================================== is ff distribution skewed in direction of bias?
 
-% ------
-lt_subplot(3,2,4); hold on;
-title('no difference in duration from learn day1');
-xlabel('afp bias, dir of learn');
-ylabel('days (b=1st; r=last)');
-
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-yblue = All_WNdayrange(:,1);
-yred = All_WNdayrange(:,2);
-
-% lt_regress(yblue, x, 1, 0, 1, 1, 'b');
-% lt_regress(yred, x, 1, 0, 1, 1, 'r');
-plot(x, yred+0.1, 'or');
-plot(x, yblue-0.1, 'ob');
-for i=1:length(x)
-line([x(i) x(i)], [yblue(i)-0.1 yred(i)+0.1], 'Color', [0.6 0.6 0.6]);
-end
-
-
-% ===================== CV CHANGE FROM BASELINE
-lt_subplot(3,2,5); hold on;
-xlabel('baseline AFP bias (pos = dir of learning)');
-ylabel('CV (bu=base; rd=Train)');
-title('PBS data');
-
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-y_blue = All_CV_BASE_PBS;
-y_mag = All_CV_WN_PBS;
-
-plot(x, y_blue, 'ob');
-plot(x, y_mag, 'or');
-for i=1:length(x)
-    if y_blue(i)>y_mag(i)
-        line([x(i) x(i)], [y_blue(i) y_mag(i)], 'Color', 'b'); 
+biasall =[];
+skewall = [];
+for j=1:length(DATSTRUCT.All_Birdnum)
+    
+    ff = DATSTRUCT.All_PitchCont_BASE_PBS(j).All_ffvals{1};
+    ffmusc = DATSTRUCT.All_PitchCont_BASE_MUSC(j).All_ffvals{1};
+    
+    % --- get bias
+    afpbias = mean(ff) - mean(ffmusc);
+    
+    
+    % ---- get metric of skew
+    if (1)
+        p = prctile(ff, [5 50 95]);
+    skew = (p(3) - p(2)) - (p(2) - p(1));
     else
-       line([x(i) x(i)], [y_blue(i) y_mag(i)], 'Color', 'r');
+        
     end
-end
-lt_plot_zeroline;
-
-% -----------------
-lt_subplot(3,2,6); hold on;
-xlabel('baseline AFP bias (pos = dir of learning)');
-ylabel('CV (bu=base; rd=Train)');
-title('MUSC data');
-
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-y_blue = All_CV_BASE_MUSC;
-y_mag = All_CV_WN_MUSC;
-
-plot(x, y_blue, 'ob');
-plot(x, y_mag, 'or');
-for i=1:length(x)
-    if y_blue(i)>y_mag(i)
-        line([x(i) x(i)], [y_blue(i) y_mag(i)], 'Color', 'b'); 
-    else
-       line([x(i) x(i)], [y_blue(i) y_mag(i)], 'Color', 'r');
-    end
-end
-lt_plot_zeroline;
-
-
-
-%% =========================== CV THINGS
-lt_figure; hold on;
-
-% ============== 1) 
-lt_subplot(3,2,1); hold on;
-xlabel('baseline AFP bias (pos = dir of learning)');
-ylabel('change in CV (difference)');
-title('PBS');
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-y = All_CV_WN_PBS - All_CV_BASE_PBS;
-lt_regress(y, x, 1);
-lt_plot_zeroline;
-
-% ============== 
-lt_subplot(3,2,2); hold on;
-xlabel('AGAINST -- TOWARDS');
-ylabel('Change in CV');
-title('PBS');
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-x = x>0;
-y = All_CV_WN_PBS - All_CV_BASE_PBS;
-
-% plot(x, y, 'ok');
-
-[ymean, ysem] = grpstats(y, x, {'mean', 'sem'});
-
-lt_plot([0 1]+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
-
-% --- lines between paired experiments
-for j=1:NumBirds
-    indsthis = find(All_Birdnum==j);
     
-    xthis = x(indsthis);
-    ythis = y(indsthis);
-%     
-%     [~, indsort] = sort(xthis);
-%     xthis = xthis(indsort);
-%     ythis = ythis(indsort);
-%     
-%     for k=1:length(xthis)-1
-%        line([xthis(k) xthis(k+1)], [ythis(k) ythis(k+1)], 'Color', [0.5 0.5 0.5]); 
-%     end
-    % plot with own jitter and color
-    xthis = xthis + 0.3*(rand-0.5);
-    pcol = 0.9*[rand rand rand];
-    lt_plot(xthis, ythis, {'Color', pcol});    
-end
-
-
-xlim([-1 2]);
-lt_plot_zeroline;
-p = ranksum(y(x==0), y(x==1));
-lt_plot_pvalue(p, 'ranksum',1);
-
-
-% ============== 
-lt_subplot(3,2,3); hold on;
-xlabel('AGAINST -- TOWARDS');
-ylabel('Change in CV');
-title('MUSC');
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-x = x>0;
-y = All_CV_WN_MUSC - All_CV_BASE_MUSC;
-
-% plot(x, y, 'ok');
-
-[ymean, ysem] = grpstats(y, x, {'mean', 'sem'});
-
-lt_plot([0 1]+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
-
-% --- lines between paired experiments
-for j=1:NumBirds
-    indsthis = find(All_Birdnum==j);
+    % -------------------- COOLECT
+    biasall = [biasall; afpbias];
+    skewall = [skewall; skew];
     
-    xthis = x(indsthis);
-    ythis = y(indsthis);
-%     
-%     [~, indsort] = sort(xthis);
-%     xthis = xthis(indsort);
-%     ythis = ythis(indsort);
-%     
-%     for k=1:length(xthis)-1
-%        line([xthis(k) xthis(k+1)], [ythis(k) ythis(k+1)], 'Color', [0.5 0.5 0.5]); 
-%     end
-    % plot with own jitter and color
-    xthis = xthis + 0.3*(rand-0.5);
-    pcol = 0.9*[rand rand rand];
-    lt_plot(xthis, ythis, {'Color', pcol});    
 end
 
-
-xlim([-1 2]);
-lt_plot_zeroline;
-p = ranksum(y(x==0), y(x==1));
-lt_plot_pvalue(p, 'ranksum',1);
-
-
-
-
-% ============== 1) 
-lt_subplot(3,2,4); hold on;
-xlabel('baseline AFP bias (pos = dir of learning)');
-ylabel('change in CV (difference)');
-title('MUSC');
-x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
-y = All_CV_WN_MUSC - All_CV_BASE_MUSC;
-lt_regress(y, x, 1);
-lt_plot_zeroline;
-
-
-% ============== 1) 
-lt_subplot(3,2,5); hold on;
-xlabel('magnitude of AFP bias (during train)');
-ylabel('change in CV (train - base)');
-title('PBS');
-x = All_learndir.*(All_FF_WN_PBS - All_FF_WN_MUSC);
-y = All_CV_WN_PBS - All_CV_BASE_PBS;
-lt_regress(y, x, 1);
-lt_plot_zeroline;
-
-% ===============
-lt_subplot(3,2,6); hold on;
-xlabel('magnitude of AFP bias, baseline normalized (during train)');
-ylabel('change in CV (train - base)');
-title('PBS');
-x =  All_learndir.* ((All_FF_WN_PBS - All_FF_BASE_PBS) - (All_FF_WN_MUSC - All_FF_BASE_MUSC));
-y = All_CV_WN_PBS - All_CV_BASE_PBS;
-lt_regress(y, x, 1);
-lt_plot_zeroline;
-
-
-%% ========== BASELINE BIAS A FUNCTION OF BASELINE PITCH (PBS)
 
 lt_figure; hold on;
-
-xlabel('baseline pitch (PBS)');
-ylabel('baseline pitch (MUSC)');
-
-x = All_FF_BASE_PBS;
-y = All_FF_BASE_MUSC;
-
-plot(x,y, 'ok');
-lt_plot_makesquare_plot45line(gca, 'b');
+xlabel('baseline bias');
+ylabel('skew');
+lt_regress(skewall, biasall, 1);
 
 
 
+%% ############################ TARGET SYL ONLY
+
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub3(DATSTRUCT)
 
 
+
+
+%% ########################### TARG + SAMETYPE
+
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub4(DATSTRUCT)
 
 
 

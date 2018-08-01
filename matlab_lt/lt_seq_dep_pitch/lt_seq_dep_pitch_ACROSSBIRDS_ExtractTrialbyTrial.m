@@ -1,5 +1,13 @@
 function [TrialStruct, Params] = lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
     OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame)
+%% 7/31/18 - lt, fix
+% fixing slight issue where for LMAN experiments collected deviation FF,
+% while non-LMAN collected raw FF. did not affect any subsequent analyses,
+% because they all used deviation from baseline.
+
+usefix =1; % leave at 1 - default. sets all to use raw FF
+
+%%
 
 % OnlyExptsWithNoStartDelay= 0 ;
 % TakeIntoAccountStartDelay = 1;
@@ -16,11 +24,11 @@ Params.DayWindow = DayWindow; %
 
 %% =========== only significnat learning?
 if onlyIfSignLearn==1
-filter='learning_metric';
-[SeqDepPitch_AcrossBirds, NumBirds]=lt_seq_dep_pitch_ACROSSBIRDS_ExtractStruct(...
-    SeqDepPitch_AcrossBirds, filter);
-% 40.34hz
-% 0.8z
+    filter='learning_metric';
+    [SeqDepPitch_AcrossBirds, NumBirds]=lt_seq_dep_pitch_ACROSSBIRDS_ExtractStruct(...
+        SeqDepPitch_AcrossBirds, filter);
+    % 40.34hz
+    % 0.8z
 end
 
 %% lt 8/18/17 - perform cross correlation analysis, to look at lag of generalization
@@ -54,7 +62,11 @@ for i=1:NumBirds
         % ------ what data to use?
         LMANinactivated = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.LMANinactivated;
         if LMANinactivated==1
-            datafield_ff='FFvals_DevFromBase_WithinTimeWindow';
+            if usefix==1
+                datafield_ff='FFvals_WithinTimeWindow';
+            elseif usefix==0
+                datafield_ff='FFvals_DevFromBase_WithinTimeWindow';
+            end
             datafield_tvals='Tvals_WithinTimeWindow';
         else
             datafield_ff='FFvals';
@@ -107,7 +119,7 @@ for i=1:NumBirds
         
         % ================ COLLECT SOME GENERAL INFOR FOR THIS EXPT
         assert(~isempty(BaseDays),'asdfasd');
-           
+        
         TrialStruct.birds(i).exptnum(ii).BaseDays = BaseDays;
         TrialStruct.birds(i).exptnum(ii).WNDays = WNDays;
         TrialStruct.birds(i).exptnum(ii).WNday1 = WNday1;
@@ -135,13 +147,12 @@ for i=1:NumBirds
             FFvals = [];
             Tvals = [];
             for jj=DaysToExtract
+                ffvals = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_ff){jj};
+                tvals = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_tvals){jj};
                 
                 if LMANinactivated ==0
-                    ffvals = cell2mat(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_ff){jj});
-                    tvals = cell2mat(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_tvals){jj});
-                else
-                    ffvals = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_ff){jj};
-                    tvals = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.AllDays_PlotLearning.DataMatrix.(syl).(datafield_tvals){jj};
+                    ffvals = cell2mat(ffvals);
+                    tvals = cell2mat(tvals);
                 end
                 
                 % ---- COLLECT
@@ -165,7 +176,7 @@ for i=1:NumBirds
             Tvals = Tvals(inds);
             FFvals = FFvals(inds);
             Tvals_datenum = Tvals_datenum(inds);
-
+            
             % ---- OUT
             TrialStruct.birds(i).exptnum(ii).sylnum(j).syl = syl;
             TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals = Tvals;
@@ -180,13 +191,13 @@ for i=1:NumBirds
             % extracted learning value
             
             if DayWindow(1)==-2 & DayWindow(2)==4
-            % last 2 days
-            ffmeanWN = mean(FFvals(Tvals>=WNDays(end-1)));
-            ffmeanBase = mean(FFvals(Tvals< BaseDays(2)+1));
-            
-            learnval = (ffmeanWN - ffmeanBase);
-            
-            assert(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).LEARNING.learning_metric.mean - learnval < 10, 'assfasd');
+                % last 2 days
+                ffmeanWN = mean(FFvals(Tvals>=WNDays(end-1)));
+                ffmeanBase = mean(FFvals(Tvals< BaseDays(2)+1));
+                
+                learnval = (ffmeanWN - ffmeanBase);
+                
+                assert(SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).LEARNING.learning_metric.mean - learnval < 10, 'assfasd');
             end
             
         end

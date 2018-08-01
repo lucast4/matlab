@@ -1,10 +1,16 @@
 function TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Conv(TrialStruct, ParamsTrial, ...
-    GenStruct)
+    GenStruct, addWithinSongTime, sortbytime)
 
 %% lt 5/30/18 - Combines generalizationstruct (for neural learning) with seq dep pitch
 % Note: see lt_generalization_MasterScript for GenStruct
 
 %%
+
+% addWithinSongTime = 1; % if 1, then resolution is to within song. otherwise 
+% time is time of song. NOTE: this currently only works for experiments
+% from Genstruct (i.e. neural expts.)
+
+% sortbytime = 1; % then sorts all trials before including
 
 throwOutRendsPostWNOff = 1; % 
 
@@ -67,12 +73,23 @@ for i=1:numexpt_gen
         tvals_dnum = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.datenum_song_SecRes];
         
         % ------- ADD ON WITHIN SONG TIMING
-        if (0)
+        if addWithinSongTime==1
         tvals_dnum_withinsong = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.time_withinsong];
         % convert within song time to day
         tvals_dnum_withinsong = tvals_dnum_withinsong./(60*60*24);
         tvals_dnum = tvals_dnum + tvals_dnum_withinsong;
         end
+        
+        
+        % ============== sort by time?
+        if sortbytime==1
+            [~, indsort] = sort(tvals_dnum);
+            
+            tvals_dnum = tvals_dnum(indsort);
+            ff = ff(indsort);
+            
+        end
+        
         
         % =============== only keep trials before end of learni
         if throwOutRendsPostWNOff==1
@@ -87,6 +104,7 @@ for i=1:numexpt_gen
         % ---- is this target? same type?
         istarg = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsTarg(mm);
         issame = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsSame(mm);
+        
         
         % =========== PUT INTO OUTPUT STRUCT
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).syl = motifname;

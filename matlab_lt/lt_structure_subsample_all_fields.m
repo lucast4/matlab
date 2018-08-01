@@ -1,5 +1,5 @@
 function Struct_out=lt_structure_subsample_all_fields(Struct_in, inds, takevert)
-%% lt 7/5/17 - 
+%% lt 7/5/17 -
 % takevert =1 allows for 2d arrays, and will sampel along 1st dim .
 
 if ~exist('takevert', 'var')
@@ -11,15 +11,15 @@ end
 
 % e.g.
 % == INPUT:
-% Struct_in = 
-% 
+% Struct_in =
+%
 %     x: [1x100 double]
 %     y: [1x100 double]
 %     z: {[1]  'asdf'  '3'  [4]  [4]  'asdfasd'}
-%     
+%
 % inds=1:5;
-% 
-% 
+%
+%
 % == Output:
 % Struct_out=
 %     x: [1 2 3 4 5]
@@ -32,14 +32,17 @@ end
 
 % === make function handle to take subset of inds
 if takevert==1
-    
-func=@(x)x(inds,:);
+    func=@(x)x(inds,:);
 else
-func=@(x)x(inds);
+    func=@(x)x(inds);
 end
 
 % === if inds are logical array, make sure is same length as all fields
-functmp = @(x)numel(x);
+if takevert==1
+    functmp = @(x)size(x,1);
+else
+    functmp = @(x)numel(x);
+end
 tmpout = structfun(functmp, Struct_in);
 assert(length(unique(tmpout))==1, 'problem: not all fields are smae length');
 if islogical(inds)
@@ -53,4 +56,4 @@ Struct_out=structfun(func, Struct_in,'UniformOutput',0);
 
 
 
-    
+

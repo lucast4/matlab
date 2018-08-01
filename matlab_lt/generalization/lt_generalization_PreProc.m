@@ -10,8 +10,17 @@ ind = 0;
 
 
 % ####################################### NEURAL RECORDING EXPERIMENTS
+% ====== bk7 - LearnLMAN1 
+% laerning about 30-50hz over a day to next morning. Not great learning but 
+% could include.
+
+% ====== bk7 - LearnLMAN2
+% NO LEARNING - about 10hz learning, just one day...
+
+
 
 % ====== wh6pk36 - LMANlearn2
+% NOTE: ALL LABELED
 birdname = 'wh6pk36';
 exptname = 'LMANlearn2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -25,6 +34,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % ====== bu77wh13 - LMANlearn1
+% NOTE: ALL LABELED (up to first switch)
 birdname = 'bu77wh13';
 exptname = 'LMANlearn1';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -36,9 +46,32 @@ GenStruct.expt(ind).DAT = DATSTRUCT;
 GenStruct.expt(ind).Params = Params;
 
 
-% ======= br92br54 - ADD
+% ======= br92br54 - LMANlearn2
+% WEAK/NO learning (don't use) [like 0-20 hz over entire day]
 
-% ======= or74bk35
+% ======= br92br54 - LMANlearn3
+% NO LEARNING
+
+% ======= br92br54 - LMANlearn4
+% NO LEARNING (at least on first day) - some weak learning later. Also
+% problem is starts from UP, so no clear baseline.
+% POTENTIALLY can look at prelearning day. but I am not sure, doesn't look
+% like substantial learning there either.
+
+% ======= br92br54 - LMANlearn5
+% NO LEARNING - also 2 different targets ...
+
+% ======= br92br54 - LMANlearn6
+% NO LEARNING - also dirving 2 contexts in opposite directions
+
+% ======= br92br54 - LMANlearn7
+% HAVE NOT CHECKED, but likely NO LEARNING 
+% also, washout before learning was only today (i.e. ended previous
+% experiment same day that learning began).
+
+
+% ======= or74bk35 - LMANnearal2
+% NOTE: ALL LABELED.
 birdname = 'or74bk35';
 exptname = 'LMANneural2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -50,8 +83,30 @@ GenStruct.expt(ind).DAT = DATSTRUCT;
 GenStruct.expt(ind).Params = Params;
 
 
+% ======= or74bk35 - LMANlearn3
+% NO, dirving 2 contexts in opposite directions, no clear learning in one
+% day...
+
+
+% ======= pu59wh78 - RAlearn1
+% NOTE: could add (there is learning for target of (b), but not useful
+% becuase there is no nontarget (i.e. even if use (h), all h occur in same
+% motif as b, so confounded by acute WN effects
+if (0)
+birdname = 'pu69wh78';
+exptname = 'RAlearn1';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
+end
+
 
 % ======= pu69wh78 - RALMANlearn1
+% ALL LABELED!!
 birdname = 'pu69wh78';
 exptname = 'RALMANlearn1';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -70,14 +125,17 @@ GenStruct.expt(ind).Params = Params;
 
 
 % ======= pu69wh78 - RALMANOvernightLearn1
-%  NOTE: added target in middle of first day ...
+%  NOTE: added target in middle of first day ... only 3.5 hours for
+%  learning for first target, so do not use.
 
 
 % ======= wh44wh39 - RALMANlearn1
 % NOTE: added target middle of first day, and no clear learning before
 % then.
 
+
 % ======= wh44wh39 - RALMANlearn2
+% LABELED ALL!
 birdname = 'wh44wh39';
 exptname = 'RALMANlearn2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -90,6 +148,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % =======
+% ALL LABELED!
 birdname = 'wh44wh39';
 exptname = 'RALMANlearn3';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
