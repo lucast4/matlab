@@ -35,11 +35,10 @@ function lt_autolabel_FixHandCheckedSyls(fnames, sylnum, vlsorfn, vlsorind)
     Inds=find(labels_all~='-');
     sylnum_handlabeled=length(labels_all);
     
-    if sylnum~=sylnum_handlabeled;
-        disp('WARNING - hand labeled # of syl does not match actual number, can cause autolabeling frameshift error - check evsonganaly thresholding');
-    else
-        disp('GOOD - hand labeled num of syl is correct');
-    end
+    
+    assert(sylnum==sylnum_handlabeled, 'WARNING - hand labeled # of syl does not match actual number, can cause autolabeling frameshift error - check evsonganaly thresholding');
+    disp('GOOD - hand labeled num of syl is correct');
+    
     
     lt_jc_fndlbl(vlsorind,vlsorfn,Inds,labels_all,1);
     

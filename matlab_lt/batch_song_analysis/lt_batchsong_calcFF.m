@@ -88,8 +88,8 @@ for i=1:length(ListOfDirs)
         end
         end
         
-        tmp = load([fname '.not.mat']);
-        inds = regexp(tmp.labels, ['[' sylstoget ']']);
+        datnotmat = load([fname '.not.mat']);
+        inds = regexp(datnotmat.labels, ['[' sylstoget ']']);
         
         if isempty(inds)
             % then desired syl is not labeled, skip
@@ -99,11 +99,19 @@ for i=1:length(ListOfDirs)
         end
         
         % ------- LOAD SONG FILE
-        [frequency_parameters, songdat] = pj_readIntanNoGui_AudioOnly(fname);
-        fs = frequency_parameters.amplifier_sample_rate;
+        [~, ~, fext] = fileparts(fname);
+        
+        if strcmp(fext, '.cbin')
+            % then is evtaf file
+            [songdat,fs]=evsoundin('', fname, 'obs0');
+        elseif strcmp(fext, '.rhd')
+            % then is intan file
+            [frequency_parameters, songdat] = pj_readIntanNoGui_AudioOnly(fname);
+            fs = frequency_parameters.amplifier_sample_rate;
+        end
         
         % =============== EXTRACT FF
-        FFall = nan(1,length(tmp.labels));
+        FFall = nan(1,length(datnotmat.labels));
         
         % --- for plotting each syl
         figcount=1;
@@ -117,16 +125,22 @@ for i=1:length(ListOfDirs)
         for j=inds
             
             % =============== extract FF
-            syl = tmp.labels(j);
+            syl = datnotmat.labels(j);
 %             disp(syl);
             
             % ---- EXTRACT SOUND SEGEMENT
-            ons = tmp.onsets(j) - paddur*1000;
-            off = tmp.offsets(j) + paddur*1000;
+            ons = datnotmat.onsets(j) - paddur*1000;
+            off = datnotmat.offsets(j) + paddur*1000;
             
             ons = round(fs*ons/1000); % - convert to samps
             off = round(fs*off/1000);
             
+            if off>length(songdat)
+                off = length(songdat);
+            end
+            if ons<1
+                ons=1;
+            end
             syldat = songdat(ons:off);
             
             

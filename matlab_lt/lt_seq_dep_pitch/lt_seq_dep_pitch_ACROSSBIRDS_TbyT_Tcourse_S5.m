@@ -1,8 +1,26 @@
 function TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S5(TrialStruct, ...
     ignoreLMANexpt, tflankplot, twind_plot, flanktime_targ, flipTargNontarg, ...
-    useMeanFFRef)
+    useMeanFFRef, collectTarg, songasrend)
 %%
 % twind_plot = [-tflankplot tflankplot]; % for rend-locking, how much flanking time to plot (hrs)
+if ~exist('songasrend', 'var')
+    collect_targ_learn=1;
+elseif songasrend==1
+    % i.e. can only collect trial locked stuff at target if looking at
+    % songs.
+    collect_targ_learn=1;
+else
+    collect_targ_learn = 0;
+end
+
+%% by default gets just same and diff.
+
+if ~exist('collectTarg', 'var')
+    collectTarg = [];
+end
+if isempty(collectTarg)
+    collectTarg = 0;
+end
 
 %% note: checked closely on 7/31, everything is correct.
 
@@ -39,8 +57,12 @@ for i=1:Numbirds
         
         % =============== for a single target, go thru all the sametype syls
         Sylind_targ = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]); assert(length(Sylind_targ)==1, 'only allowed one targ...');
-        Sylinds_others = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]==0);
         
+        if collectTarg == 1
+        Sylinds_toget = 1:length(TrialStruct.birds(i).exptnum(ii).sylnum); 
+        elseif collectTarg == 0
+        Sylinds_toget = find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]==0);
+        end
         
         % ================= COLLECT TARG DATA
         %             ffdev_targ= TrialStruct.birds(i).exptnum(ii).sylnum(indtarg).ff_deviations;
@@ -50,8 +72,8 @@ for i=1:Numbirds
         
         % ===================== GO THRU ALL NONTARG SYLS. FOR EACH REND COLLECT
         % DATA
-        for j=1:length(Sylinds_others)
-            indthis = Sylinds_others(j);
+        for j=1:length(Sylinds_toget)
+            indthis = Sylinds_toget(j);
             
             if flipTargNontarg==0
                 % default
@@ -59,7 +81,7 @@ for i=1:Numbirds
                 ffvals_nontarg = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).FFvals;
                 
                 t_targ = TrialStruct.birds(i).exptnum(ii).sylnum(Sylind_targ).Tvals;
-                
+                ffvals_targ = TrialStruct.birds(i).exptnum(ii).sylnum(Sylind_targ).FFvals;
             elseif flipTargNontarg==1
                 t_nontarg = TrialStruct.birds(i).exptnum(ii).sylnum(Sylind_targ).Tvals;
                 ffvals_nontarg = TrialStruct.birds(i).exptnum(ii).sylnum(Sylind_targ).FFvals;
@@ -80,8 +102,8 @@ for i=1:Numbirds
             Nnontargs = nan(nrends,1);
             Targtimes = cell(nrends,1);
             IsTrain = nan(nrends,1);
-            
-            
+            LearnLocal = nan(nrends, 1);
+            LearnLocal_Targ = nan(nrends, 1);
             
             % ======================= GO THRU ALL NTARG RENDS
             for r=1:nrends
@@ -160,6 +182,37 @@ for i=1:Numbirds
                 istrain = t_this>WNon;
                 
                 
+                % ==================== STATS FOR LOCAL LEARNING (E.G.
+                % RECENT DEVIATION)
+                if r>1
+                    locallearn = ffvals_nontarg(r) - ffvals_nontarg(r-1);
+                else
+                    locallearn = nan;
+                end
+                
+                % =================== LOCAL LEARNING FOR TARGET RENDITIONS
+                % AT SAME TIME AS THIS RENDITION.
+                % -- can only do this if using song as rend
+                if collect_targ_learn ==1
+                    indtargtmp = find(t_targ == t_this);
+                    assert(length(indtargtmp)<2, 'why multiple target rends for this nontarg?');
+                    
+                    if isempty(indtargtmp)
+                        % -- ignore
+                        locallearn_targ = nan;
+                    elseif indtargtmp<2
+                        % ignore
+                        locallearn_targ = nan;
+                    else
+                        % --- collect
+                        locallearn_targ = ffvals_targ(indtargtmp) - ffvals_targ(indtargtmp-1);
+                    end
+                    
+                else
+                    locallearn_targ = nan;
+                end
+                
+                
                 % ======================= SAVE FOR THIS REND
                 Tvals{r} = t_flank;
                 FFvals{r} = ff_flank;
@@ -167,7 +220,8 @@ for i=1:Numbirds
                 Nnontargs(r) = sum(ind_refNtarg);
                 Targtimes{r} = targtimes_this;
                 IsTrain(r) = istrain;
-                
+                LearnLocal(r) = locallearn;
+                LearnLocal_Targ(r) = locallearn_targ;
             end
             
             % =============== SAVE FOR THIS SYL
@@ -177,6 +231,9 @@ for i=1:Numbirds
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_NNonTargRendsInRef = Nnontargs;
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_TimeDevTargs = Targtimes;
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).IsDurTrain = IsTrain;
+            
+            TrialStruct.birds(i).exptnum(ii).sylnum(indthis).LearnLocal = LearnLocal;
+            TrialStruct.birds(i).exptnum(ii).sylnum(indthis).LearnLocal_Targ = LearnLocal_Targ;
             
         end
         

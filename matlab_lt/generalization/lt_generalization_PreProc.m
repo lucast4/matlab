@@ -1,11 +1,79 @@
-function GenStruct = lt_generalization_PreProc
+function GenStruct = lt_generalization_PreProc(ListOfExperiments)
 %% lt - extracts genearlization structure. combines syl names if required.
 
 %% ################## COLLECT ALL LEARNING DATA
 GenStruct = struct;
 ind = 0;
 
+
+if (1)
+    for i=1:length(ListOfExperiments)
+
+        birdname = ListOfExperiments{i}{1};
+exptname = ListOfExperiments{i}{2};
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
+
+    end
+    
+else
+
 % ############################# SEQ DEP PITCH EXPERIMENTS
+% ==============
+% NOTE: ALL LABELED. AUTOALBEL NOT GREAT, see label notes, but is OK.
+birdname = 'wh25pk77';
+exptname = 'SeqDepPitchLMAN';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
+
+
+% ==============
+% NOTE: ALL LABELED
+birdname = 'pu11wh87';
+exptname = 'SeqDepPitchLMAN';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
+
+
+% NOTE: ALL LABELED
+birdname = 'pu11wh87';
+exptname = 'SeqDepPitchShift2';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
+
+
+% ====== 
+% NOTE: ALL LABELED
+birdname = 'pu53wh88';
+exptname = 'SeqDepPitchShift3';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
 
 
 
@@ -20,7 +88,7 @@ ind = 0;
 
 
 % ====== wh6pk36 - LMANlearn2
-% NOTE: ALL LABELED
+% NOTE: ALL LABELED, INCLUDING ALL BASE
 birdname = 'wh6pk36';
 exptname = 'LMANlearn2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -34,7 +102,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % ====== bu77wh13 - LMANlearn1
-% NOTE: ALL LABELED (up to first switch)
+% NOTE: ALL LABELED (up to first switch), INCLUDING ALL BASE
 birdname = 'bu77wh13';
 exptname = 'LMANlearn1';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -71,7 +139,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % ======= or74bk35 - LMANnearal2
-% NOTE: ALL LABELED.
+% NOTE: ALL LABELED, INCLUDING ALL BASE
 birdname = 'or74bk35';
 exptname = 'LMANneural2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -106,7 +174,7 @@ end
 
 
 % ======= pu69wh78 - RALMANlearn1
-% ALL LABELED!!
+% ALL LABELED!! INCLUDING ALL BASE
 birdname = 'pu69wh78';
 exptname = 'RALMANlearn1';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -135,7 +203,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % ======= wh44wh39 - RALMANlearn2
-% LABELED ALL!
+% LABELED ALL! INCLUDING ALL BASE
 birdname = 'wh44wh39';
 exptname = 'RALMANlearn2';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -148,7 +216,7 @@ GenStruct.expt(ind).Params = Params;
 
 
 % =======
-% ALL LABELED!
+% ALL LABELED! INCLUDING ALL BASE
 birdname = 'wh44wh39';
 exptname = 'RALMANlearn3';
 [DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
@@ -163,7 +231,7 @@ GenStruct.expt(ind).Params = Params;
 % ====== wh44wh39 - RALMANlearn4
 % NOTE: no learning ...
 
-
+end
 %% ############### FIGURE OUT WHAT IS TRAINING WINDOW
 % ----- DEFAULT, first siwtch time. if ~exist, then ceiling of last day.
 % ----- OLD, from WN onset to min([end of first day, switch time]);

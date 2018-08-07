@@ -189,6 +189,10 @@ for i=1:length(Indstoplot)
         % --- collect across days
         afpbias_allday = [afpbias_allday afpbias];
         %         BaseBiasAll(i) = afpbias;
+       
+        
+        % ########################## PITCH CV?
+        
         
     end
     

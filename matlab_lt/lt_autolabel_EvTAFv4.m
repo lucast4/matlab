@@ -1,4 +1,15 @@
-function [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, config, syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat)
+function [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, ...
+    config, syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat, ...
+    skipWAV)
+%% can choose to make wav or not - for FP check (dafault is to make)
+if ~exist('skipWAV', 'var')
+    skipWAV = [];
+end
+if isempty(skipWAV)
+    skipWAV = 1;
+end
+
+
 %% LT 5/18/15 - Autolabel song files by using simulation of evtafv4. given template files (in .evconfig format), assigns any detects as the desired syllable
 % e.g. inputs:
 % batch = 'batch.labeled.all';
@@ -116,7 +127,7 @@ while (1)
         eval(['!cp ' fn '.not.mat ' OldNotMatdir]);
         
         % second, decide whether to replace, or simply append
-        if overwrite_notmat==1;
+        if overwrite_notmat==1
             % delete old notmat
             eval(['!rm ' fn '.not.mat'])
             
@@ -140,20 +151,23 @@ while (1)
     for ii = 1:length(ttimes)
         pp=find(((onsets-SylBoundsAdd)<=ttimes(ii)) & ((offsets+SylBoundsAdd)>=ttimes(ii))); % notes coinciding with ttime
         
-        if (length(pp)>0); % multiple notes...
+        if (length(pp)>0) % multiple notes...
             %                 labels(pp(1))=sylLabel; % greater than 1 is almost certainly multiple trigs, unless SylBoundsAdd was set larger than smallest gap dur, take 1st syl with trig.
             try % try to stick flanking sequence in. if fails, then fits as much as possible on either side.
+                labels(pp(1)-NumLabelsPre:pp(1)+NumLabelsPost); % do this to make sure that these positions alread exist. if they don't then will catch,
+                % and will trim down labels tring to fit.
                 labels(pp(1)-NumLabelsPre:pp(1)+NumLabelsPost)=LabelStr; % greater than 1 is almost certainly multiple trigs, unless SylBoundsAdd was set larger than smallest gap dur, take 1st syl with trig.
             catch err
                 disp(['error: song ' num2str(ii) ' could not fit entire label string, will fill with what I can']);
                 
                 % find out how much of label can stick in there.
-                if pp(1)-1<NumLabelsPre;
+                if pp(1)-1<NumLabelsPre
                     Npre=pp(1)-1;
                 else
                     Npre=NumLabelsPre;
                 end
-                if length(onsets)-pp(1)<NumLabelsPost;
+                
+                if length(onsets)-pp(1)<NumLabelsPost
                     Npost=length(onsets)-pp(1);
                 else
                     Npost=NumLabelsPost;
@@ -165,6 +179,7 @@ while (1)
         end
     end
     
+    assert(length(labels) == length(onsets), 'huh?');
     
     % == Save notmat and update counter
     fname=fn;
@@ -186,9 +201,10 @@ eval(['!cp ' batch ' ' batch_new])
 
 
 %% ======================= TO CHECK ACCURACY - isolates all syls labeled and saves to .wav - open and check by eye.
+if skipWAV==0
 [fnames, sylnum]=lt_jc_chcklbl(batch, syl.targ, 0.025,0.025,'','','');
 [vlsorfn vlsorind]=jc_vlsorfn(batch, syl.targ,'','');
-
+end
 % Troubleshooting, enter syl name you want to find song of.
 % [fnames, sylnum]=lt_jc_chcklbl(batch,'x', 0.025,0.025,'','','');
 % [vlsorfn vlsorind]=jc_vlsorfn(batch,'x','','');

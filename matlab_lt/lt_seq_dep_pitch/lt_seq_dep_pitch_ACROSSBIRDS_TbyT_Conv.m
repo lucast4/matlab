@@ -6,13 +6,13 @@ function TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Conv(TrialStruct, Param
 
 %%
 
-% addWithinSongTime = 1; % if 1, then resolution is to within song. otherwise 
+% addWithinSongTime = 1; % if 1, then resolution is to within song. otherwise
 % time is time of song. NOTE: this currently only works for experiments
 % from Genstruct (i.e. neural expts.)
 
 % sortbytime = 1; % then sorts all trials before including
 
-throwOutRendsPostWNOff = 1; % 
+throwOutRendsPostWNOff = 1; %
 
 %% ======= first confgirm that format for base dates already converted
 
@@ -33,6 +33,7 @@ for i=1:numexpt_gen
     nummotifs = length(motiflist);
     WNon_datenum = GenStruct.expt(i).Params.Datenum_LearnWind_On;
     WNoff_datenum = GenStruct.expt(i).Params.Datenum_LearnWind_Off;
+    
     
     % ====================================== only continue if there is one
     % target
@@ -72,12 +73,20 @@ for i=1:numexpt_gen
         ff = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.ff];
         tvals_dnum = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.datenum_song_SecRes];
         
+        istarg = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsTarg(mm);
+        issame = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsSame(mm);
+        
+        % =================== CATCH SONG, ETC
+        isWNhit = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.isWNhit];
+        isCatch = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.isCatchsong];
+        
+        
         % ------- ADD ON WITHIN SONG TIMING
         if addWithinSongTime==1
-        tvals_dnum_withinsong = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.time_withinsong];
-        % convert within song time to day
-        tvals_dnum_withinsong = tvals_dnum_withinsong./(60*60*24);
-        tvals_dnum = tvals_dnum + tvals_dnum_withinsong;
+            tvals_dnum_withinsong = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.time_withinsong];
+            % convert within song time to day
+            tvals_dnum_withinsong = tvals_dnum_withinsong./(60*60*24);
+            tvals_dnum = tvals_dnum + tvals_dnum_withinsong;
         end
         
         
@@ -87,8 +96,12 @@ for i=1:numexpt_gen
             
             tvals_dnum = tvals_dnum(indsort);
             ff = ff(indsort);
+            isWNhit = isWNhit(indsort);
+            isCatch = isCatch(indsort);
             
         end
+        
+        % ---- is this target? same type?
         
         
         % =============== only keep trials before end of learni
@@ -97,21 +110,25 @@ for i=1:numexpt_gen
             
             tvals_dnum(indstoremove) = [];
             ff(indstoremove) = [];
+            isWNhit(indstoremove) = [];
+            isCatch(indstoremove) = [];
+            
         end
         
         tvalsall = [tvalsall, tvals_dnum];
         
-        % ---- is this target? same type?
-        istarg = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsTarg(mm);
-        issame = GenStruct.expt(i).DAT_MotifRenamed.Motifs_IsSame(mm);
         
         
         % =========== PUT INTO OUTPUT STRUCT
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).syl = motifname;
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).Tvals_datenum = tvals_dnum';
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).FFvals = ff';
+        TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).isWNhit = isWNhit';
+        TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).isCatch = isCatch';
+        
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).INFO_istarget = istarg;
         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).INFO_similar = issame;
+        
         %         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).INFO_missingsomedat = '';
         %         TrialStruct.birds(indbird).exptnum(indexpt).sylnum(mm).INFO_SylDimensions = '';
     end
@@ -132,7 +149,7 @@ for i=1:numexpt_gen
     tmp = lt_convert_EventTimes_to_RelTimes(firstday, WNon_datenum);
     TrialStruct.birds(indbird).exptnum(indexpt).WNontime = tmp.FinalValue;
     
-    % ============== 
+    % ==============
     disp(['added ' bname '-' ename '!']);
 end
 

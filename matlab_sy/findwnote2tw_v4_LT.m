@@ -102,7 +102,7 @@ while (1)
     dat_otherchans = {};
     if rd.nchan>1
         for i=2:rd.nchan
-       [dat_otherchans{i-1},fs]=ReadDataFile(fnn(1:pos(end)-1),num2str(i-1)); 
+        [dat_otherchans{i-1},fs]=ReadDataFile(fnn(1:pos(end)-1),num2str(i-1)); 
         end 
     end
     
@@ -168,7 +168,7 @@ while (1)
         % ----------------------------------------------
         % FREQUENCY CALCULATION - spectrum taken at one time bin (sepcified
         % by timeshift)
-        if calcFFT==1;
+        if calcFFT==1
             fdattmp=abs(fft(dattmp)).^2;
             fvals=[0:length(fdattmp)/2]*fs/(length(fdattmp));
             fvals=[fvals,-fvals(end-1:-1:2)];

@@ -3,7 +3,7 @@
 % (v4) or not (Amp);
 % v4: seconds resol, when file start, not including pre-buffer
 
-function [dtnm]=fn2date(fn,varargin);
+function [dtnm]=fn2date(fn,varargin)
 %dtnm=fn2date(fn);
 
 ISWAV=0;

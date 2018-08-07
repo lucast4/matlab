@@ -15,6 +15,7 @@
 %% LT 10/31/14 - modified to have output wav file include name of syl and timestamp, and to output fnames
 % Also gives number of syls found.
 function [fnames, sylnum]=lt_jc_chcklbl(bt, NT, PRETIME, POSTTIME, PRENT, POSTNT, CS)
+
 %creates wav file containing all labelled syllables from cbin files
 fnames={};
 

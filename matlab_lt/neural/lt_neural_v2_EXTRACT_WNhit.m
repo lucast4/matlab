@@ -7,7 +7,7 @@ function lt_neural_v2_EXTRACT_WNhit(SummaryStruct, FFparamsAll, overWrite, ...
 % relative to amount of extracted data.
 
 refractPeriod = 0.05; % any diffs between max audio datapoints considered same unless diff greater than this.
-%% 
+%%
 
 % overWrite = 1;
 % plotSpec = 0; % to plot raw spec overlayed with PC and windows.
@@ -59,19 +59,19 @@ for z = 1:Numbirds
         chan = datstruct.channel;
         extractSound=1;
         [SongDat, NeurDat, ~] = lt_neural_ExtractDat(batchf, chan, extractSound);
-          
-% === TAKE ENTIRE SONG CONCATED FILE, AND EXTRACT TIMES OF ALL WN
+        
+        % === TAKE ENTIRE SONG CONCATED FILE, AND EXTRACT TIMES OF ALL WN
         tmp = find(SongDat.AllSongs > 3.2);
-
-
+        
+        
         %% ------- SAVE
         cd(datstruct.dirname);
         
         % - dat
         save(filenamedatFF, 'FFvals');
         save(filenamedatPC, 'PCvals');
- 
-      % - params
+        
+        % - params
         Params = struct;
         Params.cell_of_FFtimebins = cell_of_FFtimebins;
         Params.cell_of_freqwinds = cell_of_freqwinds;
@@ -84,7 +84,7 @@ for z = 1:Numbirds
         save(filenameparams, 'Params');
         
     end
-end  
+end
 
 %% troubleshooting
 if (0)
@@ -121,21 +121,21 @@ if (0)
                 
             end
             try
-            ind = find(strcmp(Params.cell_of_freqwinds, sylname));
-            freqmin = Params.cell_of_freqwinds{ind+1}(1);
-            freqmax = Params.cell_of_freqwinds{ind+1}(2);
-            line(xlim, [freqmin freqmin]);
-            line(xlim, [freqmax freqmax]);
-            
-            ind = find(strcmp(Params.cell_of_FFtimebins, sylname));
-            tmin = Params.cell_of_FFtimebins{ind+1}(1);
-            tmax = Params.cell_of_FFtimebins{ind+1}(2);
-            line([tmin tmin], ylim);
-            line([tmax tmax], ylim);
+                ind = find(strcmp(Params.cell_of_freqwinds, sylname));
+                freqmin = Params.cell_of_freqwinds{ind+1}(1);
+                freqmax = Params.cell_of_freqwinds{ind+1}(2);
+                line(xlim, [freqmin freqmin]);
+                line(xlim, [freqmax freqmax]);
+                
+                ind = find(strcmp(Params.cell_of_FFtimebins, sylname));
+                tmin = Params.cell_of_FFtimebins{ind+1}(1);
+                tmax = Params.cell_of_FFtimebins{ind+1}(2);
+                line([tmin tmin], ylim);
+                line([tmax tmax], ylim);
             catch err
             end
         end
     end
 end
-    
+
 

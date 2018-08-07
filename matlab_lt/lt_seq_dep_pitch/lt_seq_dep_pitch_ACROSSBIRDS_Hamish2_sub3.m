@@ -308,6 +308,54 @@ lt_regress(y, x, 1);
 lt_plot_zeroline;
 
 
+%% ############## CHANGE IN PITCH CV, USING RE-WINDOWED PC 
+% rewindowing was done for pitch contour analysis. I reanalyze here
+% becaosem I am more confident in the re-windowed pitch
+
+nsyls = length(DATSTRUCT.All_PitchCont_BASE_PBS);
+
+Yall = nan(nsyls, 2); % PBS CV [baseline, training]; mean of day CVs
+for j=1:nsyls
+    
+    % --------------- BASELINE
+    if (0)
+        func_cv = @(x)(std(x)/mean(x));
+        ccthis = mean(cellfun(func_cv, DATSTRUCT.All_PitchCont_BASE_PBS(j).All_ffvals)); % mean of day CV
+        Yall(j,1) = ccthis;
+    else
+        twind = DATSTRUCT.All_PitchCont_BASE_PBS(j).All_twind(1,:);
+        nday = length(DATSTRUCT.All_PitchCont_BASE_PBS(j).All_PCmat);
+        cvall = [];
+        for dd=1:nday
+            pc_all = DATSTRUCT.All_PitchCont_BASE_PBS(j).All_PCmat{dd};
+            ff = mean(pc_all(:, twind(1):twind(2)), 2);
+            cvthis = std(ff)/mean(ff);
+            cvall = [cvall cvthis];
+        end
+        cvmean = mean(cvall);
+        Yall(j,1) = cvmean;
+    end
+    % -------------- WN
+    func_cv = @(x)(std(x)/mean(x));
+    ccthis = mean(cellfun(func_cv, DATSTRUCT.All_PitchCont_WN_PBS(j).All_ffvals)); % mean of day CV
+    Yall(j,2) = ccthis;
+end
+
+% ================
+lt_figure; hold on;
+
+% -------------- 1)
+lt_subplot(3,2,1); hold on
+title('PBS, change in CV (WN minus base)');
+xlabel('old CV (using original extracted pitch');
+ylabel('new CV (using new time window for PC');
+
+x = All_CV_WN_PBS - All_CV_BASE_PBS;
+y = Yall(:,2) - Yall(:,1);
+
+plot(x,y, 'ok');
+lt_plot_makesquare_plot45line(gca, 'r');
+
 %% ############# CHANGE IN WIGGLE AS FUNCTION OF DIRECTION OF LEARNING
 % ============================= EXTRACT SUMMARY OF WIGGLES
 if isfield(DATSTRUCT, 'Wiggle_WN')

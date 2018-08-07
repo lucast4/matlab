@@ -105,6 +105,11 @@ for i=1:Numbirds
             TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals(indsoutliers) = [];
             TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals_datenum(indsoutliers) = [];
             TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals(indsoutliers) = [];
+            
+            if isfield(TrialStruct.birds(i).exptnum(ii).sylnum(ss), 'isWNhit')
+                TrialStruct.birds(i).exptnum(ii).sylnum(ss).isWNhit(indsoutliers) = [];
+                TrialStruct.birds(i).exptnum(ii).sylnum(ss).isCatch(indsoutliers) = [];
+            end
         end
     end
 end

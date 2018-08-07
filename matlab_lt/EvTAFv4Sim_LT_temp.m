@@ -122,7 +122,7 @@ fclose(fid);
 
 
 
-AllSongsAllTrigsCollected=struct; 
+AllSongsAllTrigsCollected=struct;
 
 for IFile=1:length(inputfiles)
     %loop over every file in the batchfile
@@ -175,12 +175,12 @@ for IFile=1:length(inputfiles)
         
         % --------------------------
         % Collect data for all detects across all songs.
-
+        
         AllSongsAllTrigsCollected(IFile).data_OfflineAllDetects=[AllSongsAllTrigsCollected(IFile).data_OfflineAllDetects; ...
             ND_EvSimDone(iND).AllTrigs.TriggerTimes*1e3, ones(size(ND_EvSimDone(iND).AllTrigs.TriggerTimes))*(iND-1), ND_EvSimDone(iND).AllTrigs.FFVals, ND_EvSimDone(iND).AllTrigs.AmpVals];
-
+        
         % ----------------------------
-            
+        
     end
     
     % old version, LT changed to below
@@ -209,15 +209,21 @@ for IFile=1:length(inputfiles)
     % ==== SAVE INFORMATION ABOUT ACTUAL TRIGGERS (ONLINE)
     % 1) Note down actual triggers - trig note
     AllSongsAllTrigsCollected(IFile).data_OnlineTrigs.ttimes=rd.ttimes;
-    for iii=1:length(rd.pbname); % get notenum of triggers
+    for iii=1:length(rd.pbname) % get notenum of triggers
         ind=findstr(rd.pbname{iii},'Templ');
         
         if isempty(ind) % then this is likley a manual trig. ignore it.
-            assert(any(findstr(rd.pbname{iii},'Manual Trig')), 'PROBLEM, why si this not a real template or a manual trig?');
-
-                    AllSongsAllTrigsCollected(IFile).data_OnlineTrigs.trignotes(iii)=nan;
-
-                    continue
+            
+            if (0)
+                % i decided to ignore this assertion because soemtimes get
+                % "FB" and I am not sure if that is manual or actual
+                % trigger, so just ignore.
+                assert(any(findstr(rd.pbname{iii},'Manual Trig')), 'PROBLEM, why si this not a real template or a manual trig?');
+            end
+            
+            AllSongsAllTrigsCollected(IFile).data_OnlineTrigs.trignotes(iii)=nan;
+            
+            continue
         end
         
         % == trig note
@@ -246,21 +252,22 @@ for IFile=1:length(inputfiles)
     for iii=1:length(rd.pbname); % get notenum of triggers
         ind=findstr(rd.pbname{iii},'Templ');
         
-                if isempty(ind) % then this is likley a manual trig. ignore it.
-            assert(any(findstr(rd.pbname{iii},'Manual Trig')), 'PROBLEM, why si this not a real template or a manual trig?');
-
-        rd.trignoteActualTrig(iii)=nan;
-
-                    continue
+        if isempty(ind) % then this is likley a manual trig. ignore it.
+            if (0) % ignore because sometimes is not manual trig but is OK...
+                assert(any(findstr(rd.pbname{iii},'Manual Trig')), 'PROBLEM, why si this not a real template or a manual trig?');
+            end
+            rd.trignoteActualTrig(iii)=nan;
+            
+            continue
         end
-
+        
         rd.trignoteActualTrig(iii)=str2num(rd.pbname{iii}(ind+8));
     end
-
-%         rd.FreqValsActualTrig=SimTrigInfoActual(:,3); % left out.  can
-%         get FF from comparing ttimes to offline ttimes
-
-
+    
+    %         rd.FreqValsActualTrig=SimTrigInfoActual(:,3); % left out.  can
+    %         get FF from comparing ttimes to offline ttimes
+    
+    
     
     % ================== Write All Offline trigs to rec file (i.e. all Detects)
     if ~isempty(SimTrigInfoAll); % i.e. this song contains at least one trig.
@@ -277,12 +284,12 @@ for IFile=1:length(inputfiles)
         
     end
     
-        
     
-    wrtrecf_LT_evtafv4(fn,rd,1); 
-%     wrtrecf(fn,rd,1);
     
-
+    wrtrecf_LT_evtafv4(fn,rd,1);
+    %     wrtrecf(fn,rd,1);
+    
+    
     % ========== old debug code
     %for iND=1:length(ND)
     %disp(['IND  = ',num2str(iND)]);

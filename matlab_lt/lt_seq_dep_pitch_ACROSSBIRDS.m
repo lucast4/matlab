@@ -772,8 +772,8 @@ lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial);
 % ============== [RAW PLOT] DAY VS. NIGHT LEARNING AND GENERALIZATION
 close all;
 ignoreDiffType=0;
-birdtoplot = 'bk34bk68';
-expttoplot = 'SeqDepPitchLMAN3'; % blank if don't care
+birdtoplot = 'rd28pu64';
+expttoplot = 'SeqDepPitch'; % blank if don't care
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
     ignoreDiffType, birdtoplot, expttoplot);
 %  % TO DO:
@@ -785,6 +785,7 @@ close all;
 ignoreLMANexpt=1; % usually 1, since they lack full day label
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt);
+
 
 % #################################### COMBINE WITH GENERALIZATION STRUCT
 % ================ [OPTIONAL] CONVERT BASELINE INDICATOR TO ACCOMOATE
@@ -825,16 +826,22 @@ songasrend = 1; % if 1, then instead of rends, uses songs.
 if songasrend==1
     assert(addWithinSongTime==0, 'since uses same datenum to decide that is same song');
 end
+singleRendOnly=1; % if 1, then takes first dat post rend. otherwise takes all flank.
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt, songasrend);
+    ignoreLMANexpt, songasrend, singleRendOnly);
 
-
-if (0) % BACKUP
-close all;
-ignoreLMANexpt=1; % usually 1, since they lack full day label
-plotraw = 0;
-lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt, plotraw);
+% ######################## saving struccture
+if (0)
+    savedir = '/bluejay5/lucas/analyses/generalization/';
+    save([savedir 'GenStruct.mat'], 'GenStruct');
+    save([savedir 'SeqDepPitch_AcrossBirds.mat'], 'SeqDepPitch_AcrossBirds');
+    save([savedir 'TrialStruct.mat'], 'TrialStruct');
+end
+if (0)
+    savedir = '/bluejay5/lucas/analyses/generalization/';
+    load([savedir 'GenStruct.mat']);
+    load([savedir 'SeqDepPitch_AcrossBirds.mat']);
+    load([savedir 'TrialStruct.mat']);
 end
 
 % ============= 2) CROSS CORRELATION analyses

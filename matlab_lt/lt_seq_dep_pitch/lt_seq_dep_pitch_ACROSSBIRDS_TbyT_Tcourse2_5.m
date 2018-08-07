@@ -1,5 +1,5 @@
-function [OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_1(DATBYREND, TrialStruct, syltype, gettrain, ...
-    getsiglearn, birdstoget, plotraw, edgelist, minrendsinbin, colorscheme)
+function [OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_5(DATBYREND, TrialStruct, ...
+    Inds_sylcounter, gettrain, plotraw, edgelist, minrendsinbin, colorscheme)
 
 %% different ways of entering birsd to get
 
@@ -38,19 +38,6 @@ function [OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_1(DATBYREND, T
 
 %%
 
-if strcmp(syltype, 'same')
-    getsame = 1;
-    gettarg = 0;
-elseif strcmp(syltype, 'diff')
-    getsame = 0;
-    gettarg = 0;
-elseif strcmp(syltype, 'targ')
-    getsame = 1;
-    gettarg = 1;
-end
-
-%%
-
 if length(edgelist)>1
     % then don't want to plot too many raw plots
     plotraw = 0;
@@ -74,26 +61,13 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-sylmax = max(DATBYREND.Sylcounter);
 
-% --- collect
-%%
-for edge1 = edgelist
-    Xall = [];
-    Yall = [];
-    
-    for ss = 1:sylmax
-        
-        if getsiglearn==1
-            sigthis = 1;
-        else
-            sigthis = [0 1];
-        end
+%% ============= 1) PLOT SMOOTHED
+
+    for ss = Inds_sylcounter
         
         for gg = GetTrainList
-            indsthis = DATBYREND.IsSame==getsame & DATBYREND.IsDurTrain==gg ...
-                & DATBYREND.IsTarg==gettarg & ismember(DATBYREND.SigLearn, sigthis) ...
-                & DATBYREND.Sylcounter==ss;
+            indsthis = DATBYREND.IsDurTrain==gg & DATBYREND.Sylcounter==ss;
             
             if ~any(indsthis)
                 continue
@@ -106,27 +80,12 @@ for edge1 = edgelist
             siglearn = unique(DATBYREND.SigLearn(indsthis));
             
             
-            if ~isempty(birdstoget)
-                
-                if isnumeric(birdstoget)
-                if ismember(bnum, birdstoget)==0
-                    continue
-                end
-                elseif strcmp(birdstoget, 'notSDP')
-                    % then only if not from SDP experiments
-                    isSDP = unique(DATBYREND.Isfrom_SDP(indsthis));
-                    if isSDP==1
-                        continue
-                    end
-                end
-            end
-            
-            
             % ============================ PLOT RAW DAT, AND SMOOTHED RUNNING
             tthis = cell2mat(DATBYREND.Time_dev(indsthis));
             tthis = tthis*(24*60);
             
             ffthis = cell2mat(DATBYREND.FF_dev(indsthis));
+            
             
             % --------- get 3 bins
             xedgethis = [0 edge1 prctile(tthis(tthis>edge1), [50]) max(tthis)];
@@ -207,33 +166,27 @@ for edge1 = edgelist
     
     
     
-    %% plot summary for this edge value.
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots hsplot];
-    title(['summary, each syl, edge1 = ' num2str(edge1) 'min']);
-    
-    for j=1:size(Xall,1)
-        plot(Xall(j, :), Yall(j,:), '-o');
-    end
-    Ymean = mean(Yall,1);
-    Ysem = lt_sem(Yall);
-    Xmean = mean(Xall, 1);
-    lt_plot_bar(Xmean, Ymean, {'Errors', Ysem, 'Color', 'k'});
-    
-    % --- test each bin vs. 0
-    for j=1:size(Yall,2)
-        %        [~, p]= ttest(Yall(:,j));
-        p= signrank(Yall(:,j));
-        lt_plot_text(Xmean(j), Ymean(j), [num2str(p)], 'm');
-    end
-    
-    % ---- test bin2 vs 3
-    %     [~, p]= ttest(Yall(:,2), Yall(:,3));
-    p = signrank(Yall(:,2), Yall(:,3));
-    lt_plot_text(mean(Xmean(2:3)), max(Yall(:,3)), ['2vs3, p=' num2str(p)], 'r');
-end
-
-%% ========== save for output
-OUTSTRUCT.Tmean_binned = Xall;
-OUTSTRUCT.FFdevMean_binned = Yall;
-
+%     %% plot summary for this edge value.
+%     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+%     hsplots = [hsplots hsplot];
+%     title(['summary, each syl, edge1 = ' num2str(edge1) 'min']);
+%     
+%     for j=1:size(Xall,1)
+%         plot(Xall(j, :), Yall(j,:), '-o');
+%     end
+%     Ymean = mean(Yall,1);
+%     Ysem = lt_sem(Yall);
+%     Xmean = mean(Xall, 1);
+%     lt_plot_bar(Xmean, Ymean, {'Errors', Ysem, 'Color', 'k'});
+%     
+%     % --- test each bin vs. 0
+%     for j=1:size(Yall,2)
+%         %        [~, p]= ttest(Yall(:,j));
+%         p= signrank(Yall(:,j));
+%         lt_plot_text(Xmean(j), Ymean(j), [num2str(p)], 'm');
+%     end
+%     
+%     % ---- test bin2 vs 3
+%     %     [~, p]= ttest(Yall(:,2), Yall(:,3));
+%     p = signrank(Yall(:,2), Yall(:,3));
+%     lt_plot_text(mean(Xmean(2:3)), max(Yall(:,3)), ['2vs3, p=' num2str(p)], 'r');

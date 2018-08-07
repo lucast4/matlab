@@ -84,8 +84,15 @@ for i=1:Numbirds
             
             
             % --------------- lines for base mean and 1std
+            
+            if isfield(TrialStruct.birds(i).exptnum(ii), 'BaseDays')
             basedays = TrialStruct.birds(i).exptnum(ii).BaseDays;
             indsbase = t<basedays(end)+1;
+            else
+            indsbase = t<TrialStruct.birds(i).exptnum(ii).WNontime;    
+            end
+            
+            
             ffmean_base = mean(ff(indsbase));
             ffstd_base = std(ff(indsbase));
             shadedErrorBar([t(1) t(end)], [ffmean_base ffmean_base], ...
@@ -114,7 +121,11 @@ for i=1:Numbirds
             end
             
             % ------------------- put lines for expt onset
-            baseend = TrialStruct.birds(i).exptnum(ii).BaseDays(end);
+            if isfield(TrialStruct.birds(i).exptnum(ii), 'BaseDays')
+                   baseend = TrialStruct.birds(i).exptnum(ii).BaseDays(end);
+            else
+                    baseend = TrialStruct.birds(i).exptnum(ii).WNontime-1;
+            end
             line([baseend+1 baseend+1], ylim, 'Color', 'k','LineStyle', '--');
             
             
