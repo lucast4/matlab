@@ -40,7 +40,10 @@ for i=1:length(Inds_sylcounter)
     
     % ############################## COLLECT STUFF
     % ========= 1) bin all data by magnitude of local learnig
-    
+    wnhits = DATBYREND.WN_hits(indsthis);
+    wnmiss = DATBYREND.WN_miss(indsthis);
+    DATTMP(i).wnhits = wnhits;
+    DATTMP(i).wnmiss = wnmiss;
     
     % ========= 2) collect [locallearn, first trial dev]
     functmp = @(x)(x(1));
@@ -50,6 +53,8 @@ for i=1:length(Inds_sylcounter)
     DATTMP(i).learnlocal = learnlocal;
     DATTMP(i).ffdev_first = ffdev_first;
     DATTMP(i).tdev_first = tdev_first;
+    
+    
     
     
     if (0)

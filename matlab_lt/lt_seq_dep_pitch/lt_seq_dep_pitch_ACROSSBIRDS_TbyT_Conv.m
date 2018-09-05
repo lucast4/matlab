@@ -80,6 +80,10 @@ for i=1:numexpt_gen
         isWNhit = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.isWNhit];
         isCatch = [GenStruct.expt(i).DAT_MotifRenamed.motif(mm).rendnum.isCatchsong];
         
+%         disp(isWNhit)
+%         if isempty(isWNhit)
+%             keyboard
+%         end
         
         % ------- ADD ON WITHIN SONG TIMING
         if addWithinSongTime==1

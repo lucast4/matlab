@@ -95,6 +95,10 @@ DATBYREND.IsCatch = [];
 DATBYREND.LearnLocal = [];
 DATBYREND.LearnLocal_targ = [];
 
+          DATBYREND.WN_hits = [];
+          DATBYREND.WN_miss = [];
+
+          
 sylcount = 1;
 
 for i=1:Numbirds
@@ -462,6 +466,15 @@ for i=1:Numbirds
             %                 keyboard
             %             end
             
+            % ======================
+%                 if i==1 & ii==4
+%                     keyboard
+%                 end
+            nhits = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nhits;
+            nmiss = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nmiss;
+          DATBYREND.WN_hits = [DATBYREND.WN_hits; nhits];
+          DATBYREND.WN_miss = [DATBYREND.WN_miss; nmiss];
+
             
             % ============================ LOCAL LAERNING
             learnlocal = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).LearnLocal;
@@ -487,6 +500,10 @@ for i=1:Numbirds
                 'INFO_SylDimensions'); % only SDP experiments have this. all SDP expts have this.
             
             
+%             if sylcount==30
+%                 keyboard
+%             end
+%             
             % ###################### KEEP TRACK OF EXPT/SYL
             DATBYREND.Birdnum= [DATBYREND.Birdnum; i*ones(size(istrain))];
             DATBYREND.Exptnum= [DATBYREND.Exptnum; ii*ones(size(istrain))];

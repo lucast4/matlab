@@ -1,5 +1,5 @@
 function [SlopesAll, Learn_And_FFdevAll] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_7(DATTMP, ...
-    use_nminus2, plotON, twind)
+    use_nminus2, plotON, twind, plotWNhits)
 
 % ==
 % twind = [0 2]; % seconds, min and max time devs to consider.
@@ -19,7 +19,11 @@ fnames = fieldnames(DATTMP);
 
 figcount=1;
 subplotrows=4;
+if plotWNhits==1
+    subplotcols = 2;
+else
 subplotcols=length(fnames);
+end
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
@@ -57,6 +61,7 @@ for j=1:length(DATTMP.Train)
             % ================
             if plotON==1
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                title([fname]);
                 hsplots = [hsplots hsplot];
                 %                 title([bname '-' ename ',' fname]);
                 xlabel('local learn (n minus n-1)');
@@ -71,7 +76,11 @@ for j=1:length(DATTMP.Train)
                     y = DATTMP.(fname)(j).ffdev_first;
                 end
                 t = DATTMP.(fname)(j).tdev_first;
+                % ---- extract info about WN hits
+                wnhits = DATTMP.(fname)(j).wnhits;
+                wnmiss = DATTMP.(fname)(j).wnmiss;
                 
+                % =================== COLLECT DESIRED RENDS
                 if isempty(twind)
                     if strcmp(learndirthis, 'neg')
                         indtmp = x<medthresh;
@@ -85,8 +94,13 @@ for j=1:length(DATTMP.Train)
                         indtmp = x>medthresh & t>=twind(1) & t<=twind(2);
                     end
                 end
-                x = x(indtmp); y = y(indtmp);
+                x = x(indtmp); 
+                y = y(indtmp);
+                wnhits = wnhits(indtmp);
+                wnmiss = wnmiss(indtmp);
                 
+                
+                % ================== PLOT
                 if length(x)>=minrends
                     % ----------------- 1) SLOPE
                     if plotON==1
@@ -99,6 +113,28 @@ for j=1:length(DATTMP.Train)
                     bint = nan(2,2);
                     x = [];
                     y = [];
+                end
+                
+                % ------- PLOT WN HITS
+                if plotON==1
+                    if plotWNhits==1
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots hsplot];
+                        %                 title([bname '-' ename ',' fname]);
+                        ylabel('hits(r), miss(b)');
+                        plot(x, wnhits, 'xr');
+                        plot(x, wnmiss, 'xb');
+                        
+                        % -- plot binned
+                        [~, indtmp] = sort(x);
+                        wnhits_sm = lt_running_stats(wnhits(indtmp), 10);
+                        wnmiss_sm = lt_running_stats(wnmiss(indtmp), 10);
+                        x_sm = lt_running_stats(x(indtmp), 10);
+                        lt_plot(x_sm.Mean(1:2:end), wnhits_sm.Mean(1:2:end), ...
+                            {'Errors', wnhits_sm.SEM(1:2:end), 'Color', 'r'});
+                        lt_plot(x_sm.Mean(1:2:end), wnmiss_sm.Mean(1:2:end), ...
+                            {'Errors', wnmiss_sm.SEM(1:2:end), 'Color', 'b'});
+                    end
                 end
             else
                 b = nan(2,1);
