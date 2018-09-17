@@ -452,6 +452,16 @@ lt_regress(OUTSTRUCT_RA.AllPair_pitchrho, OUTSTRUCT_RA.AllPair_fraterho, 1, 0);
 lt_plot_makesquare_plot45line(gca, 'k');
 
 
+
+
+
+%% #######################################################################
+%% ####################### PLOTS USING FR, E.G. FR DIFF CORR WITH PR(TRANS?)
+
+
+
+
+
 %% ################ RUNNING HISTOGRAM DISTANCE AS DISTANCE METRIC
 
 lt_neural_v2_CTXT_Distance();

@@ -67,8 +67,8 @@ CorrSong_MUSC_pairs=[];
 
 CorrSong_PBS_pairs_OldVer = [];
 CorrSong_MUSC_pairs_OldVer = [];
-                    CorrMotif_PBS_pairs_OldVer = [];
-                    CorrMotif_MUSC_pairs_OldVer = [];
+CorrMotif_PBS_pairs_OldVer = [];
+CorrMotif_MUSC_pairs_OldVer = [];
 
 CorrMotif_PBS_pairs=[];
 CorrMotif_MUSC_pairs=[];
@@ -184,13 +184,13 @@ if NullControl_splitday==0
                 
                 LearnHzAll = [LearnHzAll learnhz];
                 LearnHzTargAll = [LearnHzTargAll learnhz_targ];
-
+                
                 istarg = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).is_target;
                 IsTargAll = [IsTargAll istarg];
                 
                 targlearndir = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.INFORMATION.targ_learn_dir;
                 TargLearnDir = [TargLearnDir targlearndir];
-
+                
                 distfromtarg = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Syl_ID_Dimensions.(syl).distance_from_targ;
                 DistFromTarg = [DistFromTarg distfromtarg];
                 
@@ -272,18 +272,18 @@ if NullControl_splitday==0
                         else
                             doMotifCorr=1;
                         end
-                            
+                        
                         if doMotifCorr==1
-                        % =========== PBS
-                        ffvalsMOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.FFvals(:,[sylpos1 sylpos2]);
-                        tvalsMOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.Tvals;
-                        
-                        % ========= MUSC
-                        ffvalsMOTIF_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline_MUSC.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.FFvals(:,[sylpos1 sylpos2]);
-                        tvalsMOTIF_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline_MUSC.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.Tvals;
-                        
-                        % --- sanity check
-%                         ffvals1MOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.day_data{1}.data_WithOutlier{1};
+                            % =========== PBS
+                            ffvalsMOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.FFvals(:,[sylpos1 sylpos2]);
+                            tvalsMOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.Tvals;
+                            
+                            % ========= MUSC
+                            ffvalsMOTIF_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline_MUSC.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.FFvals(:,[sylpos1 sylpos2]);
+                            tvalsMOTIF_MUSC = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.baseline_MUSC.data_ParsedIntoSubclasses{motifnum1}.sub_class{1}.Tvals;
+                            
+                            % --- sanity check
+                            %                         ffvals1MOTIF = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_RegExpr.AllDays_RegExpr.day_data{1}.data_WithOutlier{1};
                         else
                             
                         end
@@ -420,7 +420,7 @@ if NullControl_splitday==0
                                 ff1_daymeans_trials(tdays==day,:) = repmat(ff1_daymeans(eachday==day,:), sum(tdays==day), 1);
                             end
                             ffvalsMOTIF_MUSC = ff1 - ff1_daymeans_trials;
-
+                            
                         end
                         
                         % ================== RECALC
@@ -751,31 +751,31 @@ if NullControl_splitday==0
                     % ======= if same syl, how many syls shared in
                     % context?
                     sylsshared = nan;
-                        if strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==0
-                            % -- no syls shared
-                            sylsshared=0;
-                        elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
-                                & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==0
-                            % then only one syl shared
-                            sylsshared=1;
-                        elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
-                                & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==1
-                            % then two syls shared
-                            sylsshared=2;
-                        elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
-                                & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==1 ...
-                                & strcmp(SylID1.three_syl_back, SylID2.three_syl_back)==1
-                            sylsshared=3;
-                            
-                            % === figure out if actually 3 syls shared
-                            %                            SylID1
-                        end
+                    if strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==0
+                        % -- no syls shared
+                        sylsshared=0;
+                    elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
+                            & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==0
+                        % then only one syl shared
+                        sylsshared=1;
+                    elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
+                            & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==1
+                        % then two syls shared
+                        sylsshared=2;
+                    elseif strcmp(SylID1.preceding_syl, SylID2.preceding_syl)==1 ...
+                            & strcmp(SylID1.two_syl_back, SylID2.two_syl_back)==1 ...
+                            & strcmp(SylID1.three_syl_back, SylID2.three_syl_back)==1
+                        sylsshared=3;
+                        
+                        % === figure out if actually 3 syls shared
+                        %                            SylID1
+                    end
                     
                     if doMotifCorr==0
                         corrmotifPBS = nan;
                         corrmotifMUSC = nan;
                     end
-                       
+                    
                     % ======= are they on same motif? if so how far apart?
                     issamemotif = nan;
                     numsylsbetween = nan;
@@ -985,13 +985,13 @@ OUTSTRUCT.singlesyls.PitchTvalsPBS = PitchTvalsPBS;
 OUTSTRUCT.singlesyls.PitchTvalsMUSC = PitchTvalsMUSC;
 OUTSTRUCT.singlesyls.PitchFFvalsPBS = PitchFFvalsPBS;
 OUTSTRUCT.singlesyls.PitchFFvalsMUSC = PitchFFvalsMUSC;
-                OUTSTRUCT.singlesyls.LearnHzAll = LearnHzAll;
-                OUTSTRUCT.singlesyls.LearnHzTargAll = LearnHzTargAll;
-                OUTSTRUCT.singlesyls.IsTargAll = IsTargAll;
+OUTSTRUCT.singlesyls.LearnHzAll = LearnHzAll;
+OUTSTRUCT.singlesyls.LearnHzTargAll = LearnHzTargAll;
+OUTSTRUCT.singlesyls.IsTargAll = IsTargAll;
 OUTSTRUCT.singlesyls.TargLearnDir = TargLearnDir;
-             OUTSTRUCT.singlesyls.DistFromTarg = DistFromTarg;
-             
-             
+OUTSTRUCT.singlesyls.DistFromTarg = DistFromTarg;
+
+
 OUTSTRUCT.pairedsyls.CorrSong_PBS_pairs=CorrSong_PBS_pairs;
 OUTSTRUCT.pairedsyls.CorrSong_MUSC_pairs=CorrSong_MUSC_pairs;
 OUTSTRUCT.pairedsyls.CorrSong_PBS_pairs_OldVer =CorrSong_PBS_pairs_OldVer;
@@ -1007,8 +1007,8 @@ OUTSTRUCT.pairedsyls.NumSylsSharedInContext = NumSylsSharedInContext;
 
 
 %% ###### compare new vs. old method correlations
-    if reCalcOldMethodKeepingNanSongs ==1
-        lt_figure; hold on
+if reCalcOldMethodKeepingNanSongs ==1
+    lt_figure; hold on
     
     % ==== pbs
     lt_subplot(4,1,1); hold on;
@@ -1027,12 +1027,12 @@ OUTSTRUCT.pairedsyls.NumSylsSharedInContext = NumSylsSharedInContext;
     lt_subplot(4,1,3); hold on;
     title('PBS (motif)');
     plot(CorrMotif_PBS_pairs_OldVer, CorrMotif_PBS_pairs, 'ok');
-
+    
     lt_subplot(4,1,4); hold on;
     title('musc (motif)');
     plot(CorrMotif_MUSC_pairs_OldVer, CorrMotif_MUSC_pairs, 'ok');
     
-    end
+end
 
 %% =============== FIRST, collect data (for all pairs)
 %                 AcousVec_PBS=[AcousVec_PBS acoustic_vec_PBS'];

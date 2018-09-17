@@ -1,5 +1,5 @@
 function lt_neural_v2_ANALY_LearnAllSylPlot(MOTIFSTATS_Compiled, ...
-    MeanSubtract, BirdsToPlot)
+    MeanSubtract, BirdsToPlot, ExptToPlot)
 
 % BirdsToPlot = {'pu69wh78'}, leave emxpty if plot all.
 %% lt 11/5/17 - plots learning for all training expts (separates into targ, nontarg ctxt, nontarg syl)
@@ -23,6 +23,12 @@ for i=1:NumBirds
 %         
 %         birdname = SummaryStruct.birds(i).birdname;
         exptname = ListOfExpts{ll};
+        
+        if ~isempty(ExptToPlot)
+            if ~any(strcmp(ExptToPlot, exptname))
+                continue
+            end
+        end
         
         if ~isfield(MOTIFSTATS.params, 'TargSyls')
             disp('PROBLEM - TargSyls not in Params');

@@ -18,17 +18,17 @@ end
 
 DatenumsAll = sort(unique(DatenumsAll));
 FirstDay = datestr(DatenumsAll(1), 'ddmmmyyyy');
-% 
+%
 % %% --- plot each syl
 % lt_figure; hold on;
 % plotcols = lt_make_plot_colors(NumNeurons, 0, 0);
 % hsplots = [];
-% 
-% 
+%
+%
 % % =================== targ syl
 % SylsToPlot = TargSyls;
 % for i=1:NumNeurons
-%     
+%
 %     hsplot = lt_subplot(3, 1,1); hold on;
 %     hsplots = [hsplots hsplot];
 %     plotcols_targs = lt_make_plot_colors(length(SylsToPlot), 0, 0);
@@ -36,29 +36,29 @@ FirstDay = datestr(DatenumsAll(1), 'ddmmmyyyy');
 %         targind = find(strcmp(motif_regexpr_str, SylsToPlot{ii}));
 %         datenumstmp = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.song_datenum];
 %         ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
-%         
+%
 %         % ----------
 %         tmp = lt_convert_EventTimes_to_RelTimes(FirstDay, datenumstmp);
 %         tvals = tmp.FinalValue;
-%         
-%         
+%
+%
 %         plot(tvals, ffvals, 'o', 'Color', plotcols_targs{ii});
 %         if i == NumNeurons
 %             ylabel('ff');
 %             lt_plot_text(tvals(end)+0.04, ffvals(end), SylsToPlot{ii}, plotcols_targs{ii});
 %         end
 %     end
-%     
+%
 %     fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay)
-%     
+%
 % end
-% 
+%
 % % ====================== targ syl, nontarg context
 % SylsToPlot = MOTIFSTATS.params.SameTypeSyls;
 % if ~isempty(SylsToPlot)
-%    
+%
 % for i=1:NumNeurons
-%     
+%
 %     hsplot = lt_subplot(3, 1,2); hold on;
 %     hsplots = [hsplots hsplot];
 %     plotcols_targs = lt_make_plot_colors(length(SylsToPlot), 0, 0);
@@ -66,27 +66,27 @@ FirstDay = datestr(DatenumsAll(1), 'ddmmmyyyy');
 %         targind = find(strcmp(motif_regexpr_str, SylsToPlot{ii}));
 %         datenumstmp = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.song_datenum];
 %         ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
-%         
+%
 %         % ----------
 %         tmp = lt_convert_EventTimes_to_RelTimes(FirstDay, datenumstmp);
 %         tvals = tmp.FinalValue;
-%         
-%         
+%
+%
 %         plot(tvals, ffvals, 'o', 'Color', plotcols_targs{ii});
 %         if i == NumNeurons
 %             ylabel('ff');
 %             lt_plot_text(tvals(end)+0.04, ffvals(end), SylsToPlot{ii}, plotcols_targs{ii});
 %         end
 %     end
-%     
+%
 %     fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay)
 % end
 % end
-% 
+%
 % % ===================== other syl
 % SylsToPlot = MOTIFSTATS.params.DiffTypeSyls;
 % for i=1:NumNeurons
-%     
+%
 %     hsplot = lt_subplot(3, 1,3); hold on;
 %     hsplots = [hsplots hsplot];
 %     plotcols_targs = lt_make_plot_colors(length(SylsToPlot), 0, 0);
@@ -98,23 +98,23 @@ FirstDay = datestr(DatenumsAll(1), 'ddmmmyyyy');
 %             continue
 %         end
 %         ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
-%         
+%
 %         % ----------
 %         tmp = lt_convert_EventTimes_to_RelTimes(FirstDay, datenumstmp);
 %         tvals = tmp.FinalValue;
-%         
-%         
+%
+%
 %         plot(tvals, ffvals, 'o', 'Color', plotcols_targs{ii});
 %         if i == NumNeurons
 %             ylabel('ff');
 %             lt_plot_text(tvals(end)+0.04, ffvals(end), SylsToPlot{ii}, plotcols_targs{ii});
 %         end
 %     end
-%     
+%
 %     fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay)
 % end
-% 
-% 
+%
+%
 % % =================================
 % linkaxes(hsplots, 'x');
 
@@ -164,8 +164,8 @@ for ii=1:length(SylsToPlot)
     ffvals = ffvalsAll(indstmp);
     
     if MeanSubtract ==1
-    baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
-    ffvals = ffvals - baseFF;
+        baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
+        ffvals = ffvals - baseFF;
     end
     
     plot(tvals, ffvals, 'x', 'Color', plotcols_targs{ii});
@@ -173,7 +173,7 @@ for ii=1:length(SylsToPlot)
     tvals = lt_running_stats(tvals, binsize);
     ffvals = lt_running_stats(ffvals, binsize);
     shadedErrorBar(tvals.Median, ffvals.Mean, ffvals.SEM, {'Color', plotcols_targs{ii}}, 1);
-%     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
+    %     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
     
     lt_plot_text(tvals.Median(end)+0.04, ffvals.Mean(end), SylsToPlot{ii}, plotcols_targs{ii});
 end
@@ -184,54 +184,57 @@ fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay);
 % ====================== targ syl, nontarg context
 SylsToPlot = MOTIFSTATS.params.SameTypeSyls;
 if ~isempty(SylsToPlot)
-
-hsplot = lt_subplot(3, 1,2); hold on;
-hsplots = [hsplots hsplot];
-plotcols_targs = lt_make_plot_colors(length(SylsToPlot), 0, 0);
-for ii=1:length(SylsToPlot)
-    targind = find(strcmp(motif_regexpr_str, SylsToPlot{ii}));
     
-    tvalsAll = [];
-    ffvalsAll = [];
-    for i=1:NumNeurons
+    hsplot = lt_subplot(3, 1,2); hold on;
+    hsplots = [hsplots hsplot];
+    plotcols_targs = lt_make_plot_colors(length(SylsToPlot), 0, 0);
+    for ii=1:length(SylsToPlot)
+        targind = find(strcmp(motif_regexpr_str, SylsToPlot{ii}));
         
-        if isempty(MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract)
-            continue
+        tvalsAll = [];
+        ffvalsAll = [];
+        for i=1:NumNeurons
+            
+            if isempty(MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract)
+                continue
+            end
+            datenumstmp = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.song_datenum];
+            ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
+            
+            % ----------
+            tmp = lt_convert_EventTimes_to_RelTimes(FirstDay, datenumstmp);
+            tvals = tmp.FinalValue;
+            
+            tvalsAll = [tvalsAll tvals];
+            ffvalsAll = [ffvalsAll ffvals];
+            
         end
-        datenumstmp = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.song_datenum];
-        ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
         
-        % ----------
-        tmp = lt_convert_EventTimes_to_RelTimes(FirstDay, datenumstmp);
-        tvals = tmp.FinalValue;
         
-        tvalsAll = [tvalsAll tvals];
-        ffvalsAll = [ffvalsAll ffvals];
+        [~, indstmp] = unique(tvalsAll);
+        tvals = tvalsAll(indstmp);
+        ffvals = ffvalsAll(indstmp);
         
+        if MeanSubtract ==1
+            baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
+            ffvals = ffvals - baseFF;
+        end
+        
+        plot(tvals, ffvals, 'x', 'Color', plotcols_targs{ii});
+        
+        
+        tvals = lt_running_stats(tvals, binsize);
+        ffvals = lt_running_stats(ffvals, binsize);
+        if length(tvals.Median)>1
+        shadedErrorBar(tvals.Median, ffvals.Mean, ffvals.SEM, {'Color', plotcols_targs{ii}}, 1);
+        %     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
+        end
+        lt_plot_text(tvals.Median(end)+0.04, ffvals.Mean(end), SylsToPlot{ii}, plotcols_targs{ii});
     end
-    
-    
-    [~, indstmp] = unique(tvalsAll);
-    tvals = tvalsAll(indstmp);
-    ffvals = ffvalsAll(indstmp);
-    
-    if MeanSubtract ==1
-    baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
-    ffvals = ffvals - baseFF;
-    end
-    
-    plot(tvals, ffvals, 'x', 'Color', plotcols_targs{ii});
-    
-    tvals = lt_running_stats(tvals, binsize);
-    ffvals = lt_running_stats(ffvals, binsize);
-    shadedErrorBar(tvals.Median, ffvals.Mean, ffvals.SEM, {'Color', plotcols_targs{ii}}, 1);
-%     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
-    
-    lt_plot_text(tvals.Median(end)+0.04, ffvals.Mean(end), SylsToPlot{ii}, plotcols_targs{ii});
+    lt_plot_zeroline;
+    fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay);
 end
-lt_plot_zeroline;
-fn_plot_learning_lines(SummaryStruct_onebird, TargSyls, FirstDay);
-end
+
 
 % ===================== other syl
 SylsToPlot = MOTIFSTATS.params.DiffTypeSyls;
@@ -248,7 +251,7 @@ for ii=1:length(SylsToPlot)
         if isempty(MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract)
             continue
         end
-          
+        
         datenumstmp = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.song_datenum];
         ffvals = [MOTIFSTATS.neurons(i).motif(targind).SegmentsExtract.FF_val];
         
@@ -264,15 +267,15 @@ for ii=1:length(SylsToPlot)
     if length(tvals)<binsize*2 | all(isnan(tvals))
         continue
     end
-        
+    
     
     [~, indstmp] = unique(tvalsAll);
     tvals = tvalsAll(indstmp);
     ffvals = ffvalsAll(indstmp);
     
     if MeanSubtract ==1
-    baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
-    ffvals = ffvals - baseFF;
+        baseFF = mean(ffvals(tvals < switchtime_hrs.FinalValue));
+        ffvals = ffvals - baseFF;
     end
     
     plot(tvals, ffvals, 'x', 'Color', plotcols_targs{ii});
@@ -280,7 +283,7 @@ for ii=1:length(SylsToPlot)
     tvals = lt_running_stats(tvals, binsize);
     ffvals = lt_running_stats(ffvals, binsize);
     shadedErrorBar(tvals.Median, ffvals.Mean, ffvals.SEM, {'Color', plotcols_targs{ii}}, 1);
-%     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
+    %     plot(tvals.Median, ffvals.Mean, '.', 'Color', plotcols_targs{ii});
     
     lt_plot_text(tvals.Median(end)+0.04, ffvals.Mean(end), SylsToPlot{ii}, plotcols_targs{ii});
 end

@@ -514,9 +514,8 @@ lt_neural_v2_ANALY_FRsmooth_CompSylTypes(OUTDAT, MOTIFSTATS_Compiled, ...
 % ###################### [v2] COMPARE SYLTYPES
 close all;
 nshuff = 1000;
-usediffFromBase = 1; % if 0, then also norms to global drift.
 [rhomean_dat, rhomean_shuff] = lt_neural_v2_ANALY_FRsmooth_CompSylTypes3(OUTDAT,...
-    SwitchStruct, MOTIFSTATS_Compiled, nshuff, usediffFromBase);
+    SwitchStruct, MOTIFSTATS_Compiled, nshuff);
 lt_figure; hold on;
 title('shuff and dat');
 xlabel('corr with targ fr smooth');
