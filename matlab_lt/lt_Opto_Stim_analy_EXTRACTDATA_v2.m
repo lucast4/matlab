@@ -1,5 +1,15 @@
-function [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params)
+function [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params, ...
+    SepBySyl, savefigs)
 
+% ==== if 1, then  will make an extra subdir specifying which syl this
+% analysis is for.
+if ~exist('SepBySyl', 'var')
+    SepBySyl = 0;
+end
+
+if ~exist('savefigs', 'var')
+    savefigs = 1;
+end
 
 %% LT 4/7/15 - v2 - modified saving so overwrites instead of making new subdir
 
@@ -589,8 +599,16 @@ end
 
 
 % PUT folder name into params
-Params.savefolder=[savefolder '/' Params.ExptID] ;
-
+if SepBySyl==0
+    Params.SepBySyl=0;
+    Params.savefolder=[savefolder '/' Params.ExptID] ;
+elseif SepBySyl==1
+    syltag = [Params.PreNote '_' Params.SylTarg];
+    Params.SepBySyl=1;
+    Params.savefolder=[savefolder '/' Params.ExptID '/' syltag] ;
+    mkdir(Params.savefolder)
+    cd(Params.savefolder);
+end
 
 
 % if there is already a save file here, move it to old folder.
@@ -623,8 +641,10 @@ fclose(fid1);
 
 mkdir('FIGURES')
 cd('FIGURES')
+if savefigs==1
 mkdir('ExtractData');
 lt_save_all_figs
+end
 cd ..
 
 

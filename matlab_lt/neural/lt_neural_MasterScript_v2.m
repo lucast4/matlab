@@ -4,11 +4,11 @@
 %% EXTRACT
 clear all; close all; fclose all;
 BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {'X'}; % if want Sam/Mel data, must include "RAmel"
+BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 1;
+LearningOnly = 0;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
@@ -41,6 +41,7 @@ lt_neural_DISP_AllUnits(SummaryStruct);
 
 lt_neural_DISP_AllPopUnits(SummaryStruct);
 
+
 %% check fs for all
 
 numbirds = length(SummaryStruct.birds);
@@ -72,6 +73,13 @@ lt_neural_v2_PRE_RemvSongDat(SummaryStruct)
 if (0)
     lt_neural_v2_PRE_RefinalizeNeur
 end
+
+%% ==================== 1) Get list of all song files and correspond chans.
+[Allbird_Fnames, Allbird_chanlist, Allbird_birdnum] = lt_neural_tools_allsongs(SummaryStruct);
+
+%%  ==== GET COHERENCE AND SPECTROGRAMS OF LFP FOR ALL SONGS
+close all;
+lt_neural_Coher_Extract(SummaryStruct);
 
 %% EXTRACT FF AND SAVE
 close all;

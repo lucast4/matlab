@@ -9,16 +9,19 @@ LearnKeepOnlyBase = 0;
 saveOn = 1;
 OrganizeByExpt =0;
 collectFF=1;
-    Params_regexp.motif_predur = [];
-    Params_regexp.motif_postdur = [];
-    Params_regexp.preAndPostDurRelSameTimept = 1;
-    Params_regexp.RemoveIfTooLongGapDur = [];
-    Params_regexp.extractDirSong = 1;
-    
+Params_regexp.motif_predur = [];
+Params_regexp.motif_postdur = [];
+Params_regexp.preAndPostDurRelSameTimept = 1;
+Params_regexp.RemoveIfTooLongGapDur = [];
+Params_regexp.extractDirSong = 1;
+
 MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
     collectWNhit, LearnKeepOnlyBase, saveOn, onlyCollectTargSyl, OrganizeByExpt,...
     collectFF, [], Params_regexp);
 
+
+%% ==== MAKE SURE SUMMARY STRCUT IS THE CORRECT ONE
+SummaryStruct = MOTIFSTATS_Compiled.SummaryStruct;
 
 %% ==== REMOVE DIR SONG
 MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
@@ -29,6 +32,8 @@ MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStru
 % clear MOTIFSTATS_Compiled;
 
 
+%% #######################################################################
+%% ############################# OLD STUFF
 %% ================ PLOT [CORRELATION WITH FF]
 close all;
 xcov_dattotake = [-0.01 0.05];
@@ -40,12 +45,30 @@ binsize_spk = 0.0025;
 MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
     xcov_dattotake, xcovwindmax, binsize_spk);
 
- %% ==== 2) EXTRACT LEARNING SWITCH STRUCT
+
+%% #######################################################################
+%% ############################# LEARNING STUFF;
+%% ==== 2) EXTRACT LEARNING SWITCH STRUCT
 
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 
+
+%% =========== SUMMARIZE LEARNING TRAJECTORY (PLUS NEURON SETS)
+close all;
+
+% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+% motiftoplot = 'c(b)';
+BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'};
+motiftoplot = 'aa(b)';
+
+lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
+    SummaryStruct, BirdExptPairsToPlot, motiftoplot);
+
+
+%% #######################################################################
+%% ############################# CROSS CORR CHANGE DURING LAERNING
 %% ================ PLOT CROSS CORR WRT TO LEARNING
-close all; 
+close all;
 BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn4'};
 % BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
 SwitchToPlot = [2];
@@ -57,7 +80,7 @@ lt_neural_POPLEARN_Plot(MOTIFSTATS_pop, SwitchStruct, BirdExptPairsToPlot, ...
 
 %% ================ SUMMARIZE CROSS CORRELATION OVER COURSE OF EXPERIMENT
 % over multiple switches
-close all; 
+close all;
 exptnum = [1];
 birdnum = [2];
 BregionWantedList = {{'LMAN', 'RA'}};
@@ -83,19 +106,9 @@ windowmean = [-0.05 0.02]; % window, in s, relative to lag = 0;
 SkipIfTargsDiffSyls = 1; % skips switches where targets are different syl types.
 
 lt_neural_POPLEARN_SummaryPlot3(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
-    birdnum, windowmean, SkipIfTargsDiffSyls)        
+    birdnum, windowmean, SkipIfTargsDiffSyls)
 
 
-%% =========== SUMMARIZE LEARNING TRAJECTORY (PLUS NEURON SETS)
-close all;
-
-% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
-% motiftoplot = 'c(b)';
-BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'};
-motiftoplot = 'aa(b)';
-
-lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
-    SummaryStruct, BirdExptPairsToPlot, motiftoplot);
 
 
 %% [GOOD] ################ FOR EACH BIRD, SUMMARIZE ACROSS ALL EXPTS
@@ -112,86 +125,65 @@ lt_neural_POPLEARN_SumTraj(MOTIFSTATS_pop, SwitchStruct, ...
     metadatstruct, bregionwanted);
 
 %% ================ PLOT PAIRED RASTERS WRT TO LEARNING
-BirdExptPairsToPlot = {};
-SwitchToPlot = [2];
-TypeOfPairToPlot = {'LMAN-RA'}; % e.g. 'LMAN-RA' (in alphabetical order)
+% [IN PROGRESS!!!]
+lt_neural_POPLEARN_PairRast
 
-numbirds = length(SwitchStruct.bird);
-for i=1:numbirds
+
+
+
+%% ###################################################################
+%% ############################################ COHERENCE
+% OVERALL: for each motif, look at coherence of raw data, aligned to syl
+% onset. Does that change during learning?
+
+% NOTE: to see some old progress, see:
+lt_neural_MasterScript_Pop;
+
+
+%% ============= VARIOUS PLOTS OF COHERENCE
+i=1;
+ii=1;
+
+numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons);
+
+for ss = 1:numsets
     
-    numexpts = length(SwitchStruct.bird(i).exptnum);
-    birdname = SwitchStruct.bird(i).birdname;
+    dat = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(ss);
     
-    for ii=1:numexpts
-        
-        numswitches = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
-        exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
-        
-        % ----------------- ONLY PLOT SPECIFIC BIRD?
-        if ~isempty(BirdExptPairsToPlot)
-           
-            ind1 = find(strcmp(BirdExptPairsToPlot, birdname));
-            ind2 = find(strcmp(BirdExptPairsToPlot, exptname));
+    nummotifs = length(dat.motif);
+    
+    for mm=1:nummotifs
+       
+        % ======= GET LIST OF CHANNELS AND ASSOCIATED BRAIN REGIONS
+        numneur = length(dat.motif(mm).SegExtr_neurfakeID);
+        Chanlist = [];
+        Bregionlist = {};
+        for n=1:numneur
+            nID = dat.motif(mm).SegExtr_neurfakeID(n).neurID_orig;
+            chan = SummaryStruct.birds(i).neurons(nID).channel;
+            bregion = SummaryStruct.birds(i).neurons(nID).NOTE_Location;
             
-            if ~any(ind1+1 == ind2)
-                disp(['SKIPPED ' birdname '-' exptname]);
-                continue
-            end
-            
+            Chanlist = [Chanlist; chan];
+            Bregionlist = [Bregionlist; bregion];
         end
         
-        % ----------------- GO THRU ALL SWITCHES
-        for iii=1:numswitches
-            
-            if ~isempty(SwitchToPlot)
-               if ~any(SwitchToPlot == iii)
-                   continue
-               end
-            end
-            
-            % ---- for this switch, figure out which populations have data
-            % overlapping the onset (i.e. has data both pre and post swictch)
-            swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(iii);
-            numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons);
-            
-            for ss = 1:numsets
-                songfiles = MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_songfiles{ss};
-                songtimes = datenum(songfiles, 'yymmdd_HHMMSS');
-                
-                inds_pre = find(songtimes>swthis.switchdnum_previous & songtimes<swthis.switchdnum);
-                inds_post = find(songtimes>swthis.switchdnum & songtimes<swthis.switchdnum_next);
-                
-                if isempty(inds_pre) | isempty(inds_post)
-                    continue
-                else
-                    disp(['analyzing: ' birdname '-' exptname '-sw' num2str(iii) '-neurset' num2str(ss)]);
-                end
-                
-                
-                
-                % ############################################### ANALYSIS/PLOTS
-                DAT = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(ss);
-                motiflist = {DAT.motif.regexpstr};
-                neurlist = MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons{ss};
-                
-                % ============ for each pair of neurons, plot paired
-                % rasters
-                % -- go thru all pairs of neurons, only plot if is desired
-                % type of pair
-                for j=1:length(neurlist)
-                    for jj=j+1:length(neurlist)
-                   
-                        n1 = neurlist(j);
-                        n2 = neurlist(jj);
-                        
-                        % ----- check what pair of brain region
-                        
-                        
-                    end
-                end
-                
-                
-            end
-        end
+        % ====== FOR EACH PAIR OF CHAN COLLECT ALL TRIALS IN REGEXP
+        
+        segextract = dat.motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
+        chan1 = Chanlist(1);
+        chan2 = Chanlist(2);
+        
+        
+        
     end
 end
+    
+    
+    
+    
+    
+    
+    
+
+
+

@@ -1,4 +1,10 @@
-function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow(StatsStruct,Params,RunStats,KeepOutliers)
+function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow(StatsStruct,Params,RunStats,KeepOutliers, ...
+    savefigs)
+%% lt 9/29/18 - 
+if ~exist('savefigs', 'var')
+    savefigs =1;
+end
+
 %% LT 4/7/15 - v2 - overwrites StatsStruct to save space.  Naming convention changed to assist automaticity. finds pitch outliers based on variant of tukey's method, within userdefined windows.
 % = 0, saves outlier inds, but does not remove from data.
 % RunStats=1 lt_Opto_Stim_analy_PLOT_TimeWindow_Statistics_v2 to plot and run stats
@@ -17,9 +23,9 @@ NumFields=length(Params.FieldsToCheck); % which trial classes? (e.g. stim vs. no
 PreDur=1000*Params.PreDur;
 StimDur=Params.StimDur;
 
-        if ~exist('KeepOutliers','var');
-            KeepOutliers=1; % will include outliers in data
-        end
+if ~exist('KeepOutliers','var');
+    KeepOutliers=1; % will include outliers in data
+end
 
 %% FIRST, PLOT PCs to allow user to determine ideal tiem windows
 
@@ -174,8 +180,8 @@ for iii=1:NumFields;
     sp_mean=StatsStruct.(fieldname).sp_mean;
     sm_log_mean=StatsStruct.(fieldname).sm_log_mean;
     
-        sm=StatsStruct.(fieldname).sm;
-        sm_log=log(sm);
+    sm=StatsStruct.(fieldname).sm;
+    sm_log=log(sm);
     
     
     % First, take log of sp
@@ -526,350 +532,350 @@ end
 
 %% PLOT TIMEWINDOW STATS
 if (0)
-PlotColors=lt_make_plot_colors(NumFields,0);
-TimeWindFields=Params.TimeField;
-NumTimeWinds=length(TimeWindFields);
-
-% PITCH
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    title(timewind);
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot individual vals
-        Y=StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.vals;
-        X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
-        plot(X,Y,'o','Color',PlotColors{ii});
-        ylabel('Hz');
-        
-        % plot mean vals
-        hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig5,Params.FieldsToCheck);
-lt_subtitle('Pitch (MEAN), all trials, sorted by time window and trial');
-
-% PITCH - using median
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    title(timewind);
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot individual vals
-        Y=StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.vals;
-        X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
-        plot(X,Y,'o','Color',PlotColors{ii});
-        ylabel('Hz');
-        
-        % plot mean vals
-        hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.median,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig5,Params.FieldsToCheck);
-lt_subtitle('Pitch (MEDIAN), all trials, sorted by time window and trial');
-
-
-
-% AMPLITUDE
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot individual vals
-        Y=StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.vals_log;
-        X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
-        plot(X,Y,'o','Color',PlotColors{ii});
-        ylabel('Amplitude (log)');
-        % plot mean vals
-        hfig6(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig6,Params.FieldsToCheck);
-lt_subtitle('Amplitude, all trials, sorted by time window and trial');
-
-
-
-% ENTROPY
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot individual vals
-        Y=StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.vals;
-        X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
-        plot(X,Y,'o','Color',PlotColors{ii});
-        ylabel('W. Entropy (log)');
-        % plot mean vals
-        hfig7(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig7,Params.FieldsToCheck);
-lt_subtitle('Entropy, all trials, sorted by time window and trial');
-
-
-
-%% PLOT AS ABOVE, BUT WITHOUT SCATTER OF DATA - just means and SEM
-
-PlotColors=lt_make_plot_colors(NumFields,0);
-TimeWindFields=Params.TimeField;
-NumTimeWinds=length(TimeWindFields);
-
-% PITCH
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    title(timewind); ylabel('Hz');
-    
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot mean vals
-        hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig5,Params.FieldsToCheck);
-lt_subtitle('Pitch (MEAN/SEM), sorted by time window and trial');
-
-
-% PITCH - median
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    title(timewind); ylabel('Hz');
-    
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot mean vals
-        hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.median,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig5,Params.FieldsToCheck);
-lt_subtitle('Pitch (MEDIAN/SEM), sorted by time window and trial');
-
-
-
-% AMPLITUDE
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    ylabel('Amplitude (log)');
-    
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot mean vals
-        hfig6(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig6,Params.FieldsToCheck);
-lt_subtitle('Amplitude, sorted by time window and trial');
-
-
-
-% ENTROPY
-figure; hold on;
-for i=1:NumTimeWinds;
-    timewind=TimeWindFields{i};
-    subplot(1,NumTimeWinds,i); hold on;
-    ylabel('W. Entropy (log)');
-    for ii=1:NumFields; % for each trail type
-        fieldname=Params.FieldsToCheck{ii};
-        
-        % plot mean vals
-        hfig7(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.mean,...
-            StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
-    end
-end
-
-legend(hfig7,Params.FieldsToCheck);
-lt_subtitle('Entropy, sorted by time window and trial');
-
-
-
-
-%% PLOT HISTOGRAM
-if (0); % I usually ignore, so just not plot for now.
-    numbins=20;
-    
-    % determine subplot sizes
-    [~, row_plots, col_plots]=lt_get_subplot_size(NumTimeWinds,NumTimeWinds);
-    
+    PlotColors=lt_make_plot_colors(NumFields,0);
+    TimeWindFields=Params.TimeField;
+    NumTimeWinds=length(TimeWindFields);
     
     % PITCH
     figure; hold on;
-    for i=1:length(TimeWindFields);
-        timefield=TimeWindFields{i};
-        subplot(row_plots,col_plots,i); hold on;
-        title(timefield);
-        
-        % determine what edges to use for hist (based on max and min of all trial
-        % types)
-        XX=[];
-        for ii=1:NumFields; % all trial types
-            fieldname=Params.FieldsToCheck{ii};
-            XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.vals];
-        end
-        xmin=min(XX);
-        xmax=max(XX);
-        centers=linspace(xmin-20,xmax+20,numbins);
-        
-        
-        vals=[];
-        % get histogram and plot
-        for ii=1:NumFields; % all trial types
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        title(timewind);
+        for ii=1:NumFields; % for each trail type
             fieldname=Params.FieldsToCheck{ii};
             
-            % PITCH
-            vals=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.vals;
-            [N,~]= hist(vals,centers);
+            % plot individual vals
+            Y=StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.vals;
+            X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
+            plot(X,Y,'o','Color',PlotColors{ii});
+            ylabel('Hz');
             
-            % get probability density
-            Npdf=N/sum(N);
-            
-            % plot
-            hpdf1(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
-            
-            % Mark mean and sem
-            Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.mean;
-            Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.SEM;
-            
-            line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
-            line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
-            
-            
+            % plot mean vals
+            hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
         end
-        legend(hpdf1,Params.FieldsToCheck);
     end
-    lt_subtitle('Pitch');
+    
+    legend(hfig5,Params.FieldsToCheck);
+    lt_subtitle('Pitch (MEAN), all trials, sorted by time window and trial');
+    
+    % PITCH - using median
+    figure; hold on;
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        title(timewind);
+        for ii=1:NumFields; % for each trail type
+            fieldname=Params.FieldsToCheck{ii};
+            
+            % plot individual vals
+            Y=StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.vals;
+            X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
+            plot(X,Y,'o','Color',PlotColors{ii});
+            ylabel('Hz');
+            
+            % plot mean vals
+            hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.median,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
+        end
+    end
+    
+    legend(hfig5,Params.FieldsToCheck);
+    lt_subtitle('Pitch (MEDIAN), all trials, sorted by time window and trial');
+    
     
     
     % AMPLITUDE
     figure; hold on;
-    for i=1:length(TimeWindFields);
-        timefield=TimeWindFields{i};
-        subplot(row_plots,col_plots,i); hold on;
-        title(timefield);
-        
-        % determine what edges to use for hist (based on max and min of all trial
-        % types)
-        XX=[];
-        for ii=1:NumFields; % all trial types
-            fieldname=Params.FieldsToCheck{ii};
-            XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.vals_log];
-        end
-        xmin=min(XX);
-        xmax=max(XX);
-        centers=linspace(xmin-1,xmax+1,numbins);
-        
-        
-        vals=[];
-        % get histogram and plot
-        for ii=1:NumFields; % all trial types
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        for ii=1:NumFields; % for each trail type
             fieldname=Params.FieldsToCheck{ii};
             
-            % PITCH
-            vals=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.vals_log;
-            [N,~]= hist(vals,centers);
-            
-            % get probability density
-            Npdf=N/sum(N);
-            
-            % plot
-            hpdf2(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
-            
-            % Mark mean and sem
-            Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.mean;
-            Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.SEM;
-            
-            line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
-            line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
-            
-            
+            % plot individual vals
+            Y=StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.vals_log;
+            X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
+            plot(X,Y,'o','Color',PlotColors{ii});
+            ylabel('Amplitude (log)');
+            % plot mean vals
+            hfig6(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
         end
-        legend(hpdf2,Params.FieldsToCheck);
     end
-    lt_subtitle('Amplitude');
+    
+    legend(hfig6,Params.FieldsToCheck);
+    lt_subtitle('Amplitude, all trials, sorted by time window and trial');
+    
     
     
     % ENTROPY
     figure; hold on;
-    for i=1:length(TimeWindFields);
-        timefield=TimeWindFields{i};
-        subplot(row_plots,col_plots,i); hold on;
-        title(timefield);
-        
-        % determine what edges to use for hist (based on max and min of all trial
-        % types)
-        XX=[];
-        for ii=1:NumFields; % all trial types
-            fieldname=Params.FieldsToCheck{ii};
-            XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.vals];
-        end
-        xmin=min(XX);
-        xmax=max(XX);
-        centers=linspace(xmin-1,xmax+1,numbins);
-        
-        
-        vals=[];
-        % get histogram and plot
-        for ii=1:NumFields; % all trial types
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        for ii=1:NumFields; % for each trail type
             fieldname=Params.FieldsToCheck{ii};
             
-            % PITCH
-            vals=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.vals;
-            [N,~]= hist(vals,centers);
-            
-            % get probability density
-            Npdf=N/sum(N);
-            
-            % plot
-            hpdf3(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
-            
-            % Mark mean and sem
-            Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.mean;
-            Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.SEM;
-            
-            line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
-            line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
-            
-            
+            % plot individual vals
+            Y=StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.vals;
+            X=0.5*ii-0.4+0.3*rand(length(Y),1); % random values to disperse vals
+            plot(X,Y,'o','Color',PlotColors{ii});
+            ylabel('W. Entropy (log)');
+            % plot mean vals
+            hfig7(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
         end
-        legend(hpdf3,Params.FieldsToCheck);
     end
-    lt_subtitle('Entropy');
     
-end
-
+    legend(hfig7,Params.FieldsToCheck);
+    lt_subtitle('Entropy, all trials, sorted by time window and trial');
+    
+    
+    
+    %% PLOT AS ABOVE, BUT WITHOUT SCATTER OF DATA - just means and SEM
+    
+    PlotColors=lt_make_plot_colors(NumFields,0);
+    TimeWindFields=Params.TimeField;
+    NumTimeWinds=length(TimeWindFields);
+    
+    % PITCH
+    figure; hold on;
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        title(timewind); ylabel('Hz');
+        
+        for ii=1:NumFields; % for each trail type
+            fieldname=Params.FieldsToCheck{ii};
+            
+            % plot mean vals
+            hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
+        end
+    end
+    
+    legend(hfig5,Params.FieldsToCheck);
+    lt_subtitle('Pitch (MEAN/SEM), sorted by time window and trial');
+    
+    
+    % PITCH - median
+    figure; hold on;
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        title(timewind); ylabel('Hz');
+        
+        for ii=1:NumFields; % for each trail type
+            fieldname=Params.FieldsToCheck{ii};
+            
+            % plot mean vals
+            hfig5(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.median,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Pitch.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
+        end
+    end
+    
+    legend(hfig5,Params.FieldsToCheck);
+    lt_subtitle('Pitch (MEDIAN/SEM), sorted by time window and trial');
+    
+    
+    
+    % AMPLITUDE
+    figure; hold on;
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        ylabel('Amplitude (log)');
+        
+        for ii=1:NumFields; % for each trail type
+            fieldname=Params.FieldsToCheck{ii};
+            
+            % plot mean vals
+            hfig6(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).Ampl.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
+        end
+    end
+    
+    legend(hfig6,Params.FieldsToCheck);
+    lt_subtitle('Amplitude, sorted by time window and trial');
+    
+    
+    
+    % ENTROPY
+    figure; hold on;
+    for i=1:NumTimeWinds;
+        timewind=TimeWindFields{i};
+        subplot(1,NumTimeWinds,i); hold on;
+        ylabel('W. Entropy (log)');
+        for ii=1:NumFields; % for each trail type
+            fieldname=Params.FieldsToCheck{ii};
+            
+            % plot mean vals
+            hfig7(ii)=errorbar(0.5*ii-0.25,StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.mean,...
+                StatsStruct.(fieldname).WINDOWED.(timewind).WEntropy.SEM,'s','Color','k','MarkerFaceColor',PlotColors{ii}, 'MarkerSize',8);
+        end
+    end
+    
+    legend(hfig7,Params.FieldsToCheck);
+    lt_subtitle('Entropy, sorted by time window and trial');
+    
+    
+    
+    
+    %% PLOT HISTOGRAM
+    if (0); % I usually ignore, so just not plot for now.
+        numbins=20;
+        
+        % determine subplot sizes
+        [~, row_plots, col_plots]=lt_get_subplot_size(NumTimeWinds,NumTimeWinds);
+        
+        
+        % PITCH
+        figure; hold on;
+        for i=1:length(TimeWindFields);
+            timefield=TimeWindFields{i};
+            subplot(row_plots,col_plots,i); hold on;
+            title(timefield);
+            
+            % determine what edges to use for hist (based on max and min of all trial
+            % types)
+            XX=[];
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.vals];
+            end
+            xmin=min(XX);
+            xmax=max(XX);
+            centers=linspace(xmin-20,xmax+20,numbins);
+            
+            
+            vals=[];
+            % get histogram and plot
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                
+                % PITCH
+                vals=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.vals;
+                [N,~]= hist(vals,centers);
+                
+                % get probability density
+                Npdf=N/sum(N);
+                
+                % plot
+                hpdf1(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
+                
+                % Mark mean and sem
+                Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.mean;
+                Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).Pitch.SEM;
+                
+                line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
+                line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
+                
+                
+            end
+            legend(hpdf1,Params.FieldsToCheck);
+        end
+        lt_subtitle('Pitch');
+        
+        
+        % AMPLITUDE
+        figure; hold on;
+        for i=1:length(TimeWindFields);
+            timefield=TimeWindFields{i};
+            subplot(row_plots,col_plots,i); hold on;
+            title(timefield);
+            
+            % determine what edges to use for hist (based on max and min of all trial
+            % types)
+            XX=[];
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.vals_log];
+            end
+            xmin=min(XX);
+            xmax=max(XX);
+            centers=linspace(xmin-1,xmax+1,numbins);
+            
+            
+            vals=[];
+            % get histogram and plot
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                
+                % PITCH
+                vals=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.vals_log;
+                [N,~]= hist(vals,centers);
+                
+                % get probability density
+                Npdf=N/sum(N);
+                
+                % plot
+                hpdf2(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
+                
+                % Mark mean and sem
+                Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.mean;
+                Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).Ampl.SEM;
+                
+                line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
+                line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
+                
+                
+            end
+            legend(hpdf2,Params.FieldsToCheck);
+        end
+        lt_subtitle('Amplitude');
+        
+        
+        % ENTROPY
+        figure; hold on;
+        for i=1:length(TimeWindFields);
+            timefield=TimeWindFields{i};
+            subplot(row_plots,col_plots,i); hold on;
+            title(timefield);
+            
+            % determine what edges to use for hist (based on max and min of all trial
+            % types)
+            XX=[];
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                XX=[XX StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.vals];
+            end
+            xmin=min(XX);
+            xmax=max(XX);
+            centers=linspace(xmin-1,xmax+1,numbins);
+            
+            
+            vals=[];
+            % get histogram and plot
+            for ii=1:NumFields; % all trial types
+                fieldname=Params.FieldsToCheck{ii};
+                
+                % PITCH
+                vals=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.vals;
+                [N,~]= hist(vals,centers);
+                
+                % get probability density
+                Npdf=N/sum(N);
+                
+                % plot
+                hpdf3(ii)=plot(centers,Npdf,'-','Color',PlotColors{ii});
+                
+                % Mark mean and sem
+                Xmean=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.mean;
+                Xsem=StatsStruct.(fieldname).WINDOWED.(timefield).WEntropy.SEM;
+                
+                line([Xmean Xmean],[0.0075*(ii-1) 0.0075*ii],'Color',PlotColors{ii},'LineWidth',2);
+                line([Xmean-Xsem Xmean+Xsem],[0.0075*ii 0.0075*ii]-0.0037,'Color',PlotColors{ii},'LineWidth',2);
+                
+                
+            end
+            legend(hpdf3,Params.FieldsToCheck);
+        end
+        lt_subtitle('Entropy');
+        
+    end
+    
 end
 %% SAVE
 disp('Saving...')
@@ -893,9 +899,9 @@ fclose(fid1);
 %     mkdir('FIGURES/TimeWindow');
 %     cd('FIGURES/TimeWindow');
 % end
-% 
+%
 % lt_save_all_figs;
-% 
+%
 % cd('../../');
 
 disp('Done!')

@@ -1,4 +1,9 @@
-function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_OverTime_v2(StatsStruct, Params,saveON,KeepOutliers)
+function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_OverTime_v2(StatsStruct, ...
+    Params,saveON,KeepOutliers, savefigs)
+%% lt 9/29/18 - 
+if ~exist('savefigs', 'var')
+    savefigs =1;
+end
 %% LT 4/7/15 - v2 - overwrites structures to, save. changes dir format. better representation of running avg.
 % KeepOutliers=0 (plots without Outliers), 1( plots with).
 
@@ -203,6 +208,7 @@ if saveON==1;
     fclose(fid1);
     
     % save figs
+    if savefigs==1
     try
         cd('FIGURES/OverTime');
     catch err
@@ -212,7 +218,7 @@ if saveON==1;
     
     lt_save_all_figs;
     cd('../../');
-    
+    end
 end
 
 disp('Done!');

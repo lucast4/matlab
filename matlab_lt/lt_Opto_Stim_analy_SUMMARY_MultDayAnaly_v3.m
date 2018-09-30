@@ -1,5 +1,19 @@
 
-function lt_Opto_Stim_analy_SUMMARY_MultDayAnaly_v3(Params_metadata, Params_glob, KeepOutliers)
+function lt_Opto_Stim_analy_SUMMARY_MultDayAnaly_v3(Params_metadata, Params_glob, KeepOutliers, SepBySyl)
+%% LT 9/28/18 - does separate analyses for different desired syls.
+% Running this function does analysis for one syl. is modified from
+% original version do make this analysis in subdir for specific syl...
+
+% SepBySyl = 1; % then saves this in its own subdir (with name given by syl)
+if ~exist('SepBySyl', 'var')
+    SepBySyl = 0;
+end
+
+if SepBySyl==1
+    Params_glob.Delete_old_analysis_folder=0;
+    % can't be 1, since it if SepBySyl=1 then this will look for and delete
+    % delete higher level folder containing all the individual syls. 
+end
 %% LT version 3 - 7/9/15 - MODIFIED TO AUTOMATICALLY FIND DIR NAMES (uses lt_metadata analysis)
 % IMPORTANT: dirs must be structured as (for e.g.)
 % /bluejay4/lucas/birds/pk32/070115_Reversion1_preWN_STIMoff
@@ -79,7 +93,7 @@ NumDirs=length(MetadataStruct_filtered);
 
 %% RUN - go through all dirs and run analysis.
 
-for i=1:NumDirs;
+for i=1:NumDirs
     close all;
     clear StatsStruct
     
@@ -97,30 +111,34 @@ for i=1:NumDirs;
     
     % === STIM or NO STIM? (important to determine whether use 'All'; or
     % 'StimCatch' and 'StimNotCatch')
-    if strcmp(MetadataStruct_filtered(i).notes, 'STIMoff');
+    if strcmp(MetadataStruct_filtered(i).notes, 'STIMoff')
         Params.ExptID='All';
-    elseif strcmp(MetadataStruct_filtered(i).notes, 'STIMon');
+    elseif strcmp(MetadataStruct_filtered(i).notes, 'STIMon')
         Params.ExptID='Stim';
     else
         disp('PROBLEM - for one dir not sure if is stim or not (i.e. STIMoff or STIMon not in name)');
+        return
     end
+  
     
     % ===== DELETE OLD OPTO ANALYSIS FOLDER IF IT EXISTS (AND IF DESIRED)
-    if Params_glob.Delete_old_analysis_folder==1;
-        if exist('lt_Opto_Stim_analy_v2','dir')==7; % then folder exists
+    if Params_glob.Delete_old_analysis_folder==1
+        if exist('lt_Opto_Stim_analy_v2','dir')==7 % then folder exists
             !rm -r lt_Opto_Stim_analy_v2
         end
     end
     
     
     % ==== EXTRACT DATA
-    [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params);
+    savefigs = 0;
+    [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params, ...
+        SepBySyl, savefigs);
     
     
     % ===== PROCESS DATA
-    if strcmp(Params.ExptID, 'All');
+    if strcmp(Params.ExptID, 'All')
         Params.FieldsToCheck{1}='All';
-    elseif strcmp(Params.ExptID, 'Stim');
+    elseif strcmp(Params.ExptID, 'Stim')
             Params.FieldsToCheck{1}='NotStim';
             Params.FieldsToCheck{2}='StimCatch';
             Params.FieldsToCheck{3}='StimNotCatch';
@@ -140,7 +158,7 @@ for i=1:NumDirs;
     % ======= EXTRACT TIME WINDOW DATA
     close all
     
-    for j=1:length(Params.TimeWindowList);
+    for j=1:length(Params.TimeWindowList)
         TimeWind = Params.TimeWindowList{j};
         if ceil(Params.TimeWindowList{j})~=Params.TimeWindowList{j}; % means that there is fraction
             Params.TimeField{j}=['Wind' num2str(floor(TimeWind(1))) 'fr_' num2str(floor(TimeWind(2))) 'frms']; % put "fr" at end to signify fraction
@@ -151,12 +169,15 @@ for i=1:NumDirs;
     
     % RUN
     RunStats=1;
-    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_v2(StatsStruct,Params,RunStats,KeepOutliers);
+    savefigs = 0;
+    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_v2(StatsStruct,Params, ...
+        RunStats,KeepOutliers, savefigs);
     
     
     % ===== PLOT OVER TIME
     Params.SmthBin=15; % smooth # rends
-    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_OverTime_v2(StatsStruct,Params,1,KeepOutliers);
+    savefigs = 0;
+    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_TimeWindow_OverTime_v2(StatsStruct,Params,1,KeepOutliers, savefigs);
     close all;
     
 end
