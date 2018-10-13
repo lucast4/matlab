@@ -56,7 +56,7 @@ for i=1:numbirds
             % --- skip if no switch
             learndir = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).learningDirs{2};
             if learndir==0
-            continue
+                continue
             end
             
             
@@ -177,7 +177,10 @@ end
 
 set(gca, 'XTick', 1:3, 'XTickLabel', {'targ', 'same', 'diff'});
 
-
-
+% ================= BELOW, PLOT ALL WITHOUT CARING ABOUT
+lt_figure; hold on;
+title('learning at targ');
+xlabel('hz, learn dir');
+lt_plot_histogram(LearnAll(:,1));
 
 

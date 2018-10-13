@@ -1489,8 +1489,8 @@ assert(all(isnan(DATBYREND.Density_targ) == isnan(DATBYREND.Density_nontarg)), '
 %% =========== [PLOT DIAGNOSTIC] FOR INDIVIDUAL EXPERIMENTS
 
 if (1)
-    birdtoplot = 13;
-    expttotplot = 1;
+    birdtoplot = 10;
+    expttotplot =2;
     
     lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S7(DATBYREND, TrialStruct, ...
         birdtoplot, expttotplot, mintime_fromref, maxtime_fromref, xedges);

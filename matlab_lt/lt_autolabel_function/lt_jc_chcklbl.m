@@ -55,8 +55,9 @@ fclose(fid);
 %to label and splice together into one vector
 syllwv1=[];
 sylnum=0;
-for ii = 1:length(files);
+for ii = 1:length(files)
     fn=files(ii).fn;
+    disp(fn);
     if exist([fn,'.not.mat'],'file')
         load([fn,'.not.mat']);
     else
@@ -87,7 +88,7 @@ for ii = 1:length(files);
     NPOST=ceil(POSTTIME*fs);%time after syllable in samples
     srchstr=[PRENT,NT,POSTNT];
 
-    pp=findstr(labels,srchstr)+length(PRENT);
+    pp=strfind(labels,srchstr)+length(PRENT);
     if ~isempty(pp)>0;
         for jj=1:length(pp)
             onind=fix(round(onsets(pp(jj))*1e-3*fs));%onset time into samples

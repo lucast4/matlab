@@ -1,5 +1,5 @@
 function lt_neural_v2_ANALY_FRsmooth_BasePlots(OUTDAT, MOTIFSTATS_Compiled, ...
-    SwitchStruct, epochtoplot)
+    SwitchStruct, epochtoplot, plotDevFromBase, plotNormMeasures)
 %% ####################### GETTING DEVIATION FROM BASELINE SMOOTHED FR
 
 % prctile_divs = [33 66 100]; % percentiles to divide up data by
@@ -11,13 +11,14 @@ function lt_neural_v2_ANALY_FRsmooth_BasePlots(OUTDAT, MOTIFSTATS_Compiled, ...
 % nbasetime = 60; % 60 minutes bnefore first WN trial is min time for baseline
 % nbasetime = []; % 60 minutes bnefore first WN trial is min time for baseline
 
+numbirds = length(SwitchStruct.bird);
+maxneur = max(OUTDAT.All_neurnum);
 
 %% ############# PLOTS OF RAW DATA
 %%
 % nbase = 20; % get last 20 renditions
+if plotDevFromBase==1
 
-numbirds = length(SwitchStruct.bird);
-maxneur = max(OUTDAT.All_neurnum);
 
 for i=1:numbirds
     
@@ -60,6 +61,7 @@ for i=1:numbirds
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 title(['targ']);
                 ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn)]});
+                ylabel('raw dev from baseline');
                 %     ylabel(['neur ' num2str(nn) ', sw' num2str(ss)]);
                 hsplots = [hsplots hsplot];
                 indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
@@ -161,11 +163,11 @@ for i=1:numbirds
         end
     end
 end
-
+end
 
 %% ############ ACCOUNT FOR DRIFT (take deviation from mean across al syls)
+if plotNormMeasures==1
 numbirds = length(SwitchStruct.bird);
-
 for i=1:numbirds
     
     numexpts = length(SwitchStruct.bird(i).exptnum);
@@ -220,7 +222,7 @@ for i=1:numbirds
                 
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn)]});
-                
+                title('deviation from glob mean');
                 % -- diff
                 pcol = 'r';
                 plot(tbin, Yall_diff(:, Sameall==0 & Targall==0), 'Color', pcol);
@@ -249,7 +251,7 @@ for i=1:numbirds
                 % [abs balue]
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn)]});
-                
+                title('abs dev from glob mean');
                 
                 % -- diff
                 pcol = 'r';
@@ -272,6 +274,7 @@ for i=1:numbirds
                 % ############################# PLOT 3 - mean across syls
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn)]});
+                title('abs dev from glob mean, avg within syl type');
                 
                 % -- diff
                 pcol = 'r';
@@ -301,5 +304,6 @@ for i=1:numbirds
             end
         end
     end
+end
 end
 

@@ -5,6 +5,8 @@ function [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ..
     keepRawSongDat, suppressout, collectWNhit, collectWholeBoutPosition, LearnKeepOnlyBase, ...
     preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, clustnum, extractDirSong, ...
     keepRawNeuralDat)
+%% lt 10/2/18 - now extracts within file time of token.
+
 %% lt 4/9/18 - now able to extract raw neural data
 
 % keepRawNeuralDat = 1; % NOTE: will be bandpass filtered in spike range
@@ -300,7 +302,7 @@ if strcmp(regexpr_str, 'WHOLEBOUTS')
     end
     
     % --- if want to use last syl as token.
-    if UseLastSylAsToken==1;
+    if UseLastSylAsToken==1
         tokenExtents=bout_lastsyls;
         startinds=bout_lastsyls;
         endinds=bout_lastsyls;
@@ -744,7 +746,7 @@ for i=1:length(tokenExtents)
     
     %% =============== FIGURE OUT POSITION OF MOTIF WITHIN ITS BOUT
     if collectWholeBoutPosition==1
-        ind; % current syl posotion
+        ind = tokenExtents(i); % current syl posotion
         
         boutnum = find(wholebout_firstsyls<=ind & wholebout_lastsyls>=ind);
         if length(boutnum)==0
@@ -814,7 +816,12 @@ for i=1:length(tokenExtents)
     end
     
     
-    % +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    %% ============== WITHIN SONG TIMING OF TOKEN
+    
+    WithinSong_TokenOns = SongDat.AllWithinFileOnset(tokenExtents(i));
+    SegmentsExtract(i).WithinSong_TokenOns=WithinSong_TokenOns;
+    
+    %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if isfield(NeurDat, 'spikes_cat')
         % then is my data
         SegmentsExtract(i).spk_Clust=spk_ClustTimes(:,1)';

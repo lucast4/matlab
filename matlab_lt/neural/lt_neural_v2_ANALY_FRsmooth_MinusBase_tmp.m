@@ -16,12 +16,11 @@ function OUTDAT = lt_neural_v2_ANALY_FRsmooth_MinusBase(OUTDAT, SwitchStruct,...
 
 %% ####################### FOR EACH MOTIF/NEURON, SUBTRACT BASELINE SM FR
 lt_figure; hold on;
-title('baseline and last epoch data windows');
-ylaball = {};
+
 
 numbirds = length(SwitchStruct.bird);
 maxneur = max(OUTDAT.All_neurnum);
-ycount = 1;
+
 AllMinusBase_FRmeanAll = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_FRsemAll = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_tbinAll = cell(size(OUTDAT.All_FRsmooth,1),1);
@@ -30,16 +29,10 @@ AllBase_FRsmooth_Lo = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_PitchZ = nan(size(OUTDAT.All_FRsmooth,1), length(prctile_divs));
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
-    birdname = SwitchStruct.bird(i).birdname;
     for ii=1:numexpts
-        exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+        
         numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
         for ss = 1:numswitch
-            
-            indstmp = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss);
-            if ~any(indstmp)
-                continue
-            end
             
             % ################### SECOND, PLOT SMOOTH FR FOR ALL SYLS, SUBTRACT BASE
             for nn=1:maxneur
@@ -57,10 +50,10 @@ for i=1:numbirds
                     if ss==1 & nbasetime_ignoreswitch1==1
                         % then ignore base time
                         [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent);
+                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, [])
                     else
                         [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, nbasetime);
+                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, nbasetime)
                     end
                     
                     % =========== SAVE
@@ -74,28 +67,8 @@ for i=1:numbirds
             end
             
             % ========== COLLECT TO PLOT ACROSS SWITCHES
-            disp('NOTE: This might not be perfectly accurate if different neurons for this switch have different duration data');
-            disp('In that case will only thne reflect timing for the last neuron iterated over');
             
-            timetolock = timesbase(end);
-            tbasetmp = (timesbase-timetolock)*24;
-            line([min(tbasetmp) max(tbasetmp)], [ycount ycount], 'LineWidth', 2, 'Color','r');
-            
-            twntmp = (TimesAll{end}-timetolock)*24;
-%             ffzwntmp = PitchmeanAll(end)*learndir;
-            line([min(twntmp) max(twntmp)], [ycount ycount], 'LineWidth', 2, 'Color', 'r');
-            
-            line([max(tbasetmp) min(twntmp)], [ycount ycount], 'Color', [0.7 0.7 0.7], 'LineStyle', '--')
-            
-            
-            % --- note down expt
-            strthis = [birdname '-' exptname(end-5:end) '-sw' num2str(ss)];
-%             lt_plot_text(max(twntmp)+0.1, ycount, strthis, 'k');
-            ylaball = [ylaball; strthis];
-             ycount = ycount+1;
-             
         end
-       line([xlim], [ycount-0.5 ycount-0.5], 'Color', [0.3 0.3 0.7]);
     end
 end
 
@@ -106,8 +79,6 @@ OUTDAT.AllBase_FRsmooth_Hi = AllBase_FRsmooth_Hi;
 OUTDAT.AllBase_FRsmooth_Lo = AllBase_FRsmooth_Lo;
 OUTDAT.AllMinusBase_PitchZ = AllMinusBase_PitchZ;
 
-set(gca, 'YTick', 1:ycount-1);
-set(gca, 'YTickLabel', ylaball);
 end
 
 

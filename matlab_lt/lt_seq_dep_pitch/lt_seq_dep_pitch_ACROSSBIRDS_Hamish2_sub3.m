@@ -155,6 +155,104 @@ end
 lt_plot_zeroline;
 
 
+%% ========== SAME ANALYSES, BUT MUSC AND PBS SUBTRACTING THEIR RESPECTIVE BASELINES
+lt_figure; hold on;
+
+% --------
+lt_subplot(3,2,1); hold on;
+xlabel('baseline AFP bias (pos = dir of learning)');
+ylabel('FF minus base dur learn (dir of learn)');
+title('MUSC NORM TO MUSC');
+
+bias = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+learn_PBS = All_learndir.*(All_FF_WN_PBS - All_FF_BASE_PBS);
+learn_MUSC = All_learndir.*(All_FF_WN_MUSC - All_FF_BASE_MUSC);
+for j=1:length(bias)
+    line([bias(j) bias(j)], [learn_PBS(j) learn_MUSC(j)], 'Color', [0.7 0.7 0.7]);
+end
+plot(bias, learn_PBS, 'ko');
+plot(bias, learn_MUSC, 'ro');
+lt_regress(learn_MUSC, bias, 1);
+
+
+% ---------
+lt_subplot(3,2,2); hold on;
+xlabel('against -- towards');
+ylabel('FF minus base dur learn (dir of learn)');
+title('MUSC NORM TO MUSC');
+x = [1 2];
+Y = {};
+Y{1} = learn_MUSC(bias<0);
+Y{2} = learn_MUSC(bias>0);
+lt_plot_MultDist(Y, x, 1, 'k');
+
+
+% ---------
+lt_subplot(3,2,3); hold on;
+xlabel('learn (targ dir)');
+ylabel('consolidated learning (hz)');
+title('MUSC NORM TO MUSC');
+
+allbias = All_FF_BASE_PBS - All_FF_BASE_MUSC;
+x = All_learndir.*(All_FF_WN_PBS - All_FF_BASE_PBS);
+y = All_learndir.*(All_FF_WN_MUSC - All_FF_BASE_MUSC);
+
+% -- bias in direciton fo learing
+indstokeep = sign(allbias) == sign(All_learndir);
+
+xtmp = x(indstokeep);
+ytmp = y(indstokeep);
+plot(xtmp, ytmp, 'bo');
+
+
+% -- bias in direciton opposite to learing
+indstokeep = sign(allbias) ~= sign(All_learndir);
+
+xtmp = x(indstokeep);
+ytmp = y(indstokeep);
+plot(xtmp, ytmp, 'mo');
+
+% ---
+lt_plot_makesquare_plot45line(gca, 'k');
+
+% ---------
+lt_subplot(3,2,4); hold on;
+ylabel('fraction consolidation');
+xlabel('afp bias (in dir of learnig');
+title('MUSC NORM TO MUSC');
+
+x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+y = (All_FF_WN_MUSC - All_FF_BASE_MUSC)./(All_FF_WN_PBS - All_FF_BASE_PBS);
+lt_regress(y, x, 1);
+% ---- connect same bird with lines
+for j=1:NumBirds
+    indsthis = find(All_Birdnum==j);
+    
+    xthis = x(indsthis);
+    ythis = y(indsthis);
+    
+    [~, indsort] = sort(xthis);
+    xthis = xthis(indsort);
+    ythis = ythis(indsort);
+    
+    for k=1:length(xthis)-1
+        line([xthis(k) xthis(k+1)], [ythis(k) ythis(k+1)], 'Color', [0.5 0.5 0.5]);
+    end
+end
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
+
+% ---------
+lt_subplot(3,2,5); hold on;
+xlabel('against -- towards');
+ylabel('fraction consol');
+title('MUSC NORM TO MUSC');
+Y = {};
+Y{1} = y(x<0);
+Y{2} = y(x>0);
+lt_plot_MultDist(Y, [1 2], 1, 'k');
+
 
 %% ========== BASELINE BIAS A FUNCTION OF BASELINE PITCH (PBS)
 
@@ -306,6 +404,30 @@ x =  All_learndir.* ((All_FF_WN_PBS - All_FF_BASE_PBS) - (All_FF_WN_MUSC - All_F
 y = All_CV_WN_PBS - All_CV_BASE_PBS;
 lt_regress(y, x, 1);
 lt_plot_zeroline;
+
+%%  ############# baseline: magntiude of AFP bias correlate with magnitude of CV change?
+
+lt_figure; hold on;
+
+% ----------- SIGNED VALUE
+lt_subplot(2,2,1); hold on;
+xlabel('base bias');
+ylabel('CV (PBS - MUSC)');
+bias = All_FF_BASE_PBS - All_FF_BASE_MUSC;
+cv = All_CV_BASE_PBS - All_CV_BASE_MUSC;
+plot(bias, cv, 'ok')
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
+lt_subplot(2,2,2); hold on;
+xlabel('base bias (abs val)');
+ylabel('CV (PBS - MUSC)');
+bias = abs(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+cv = All_CV_BASE_PBS - All_CV_BASE_MUSC;
+plot(bias, cv, 'ok');
+lt_regress(cv, bias, 1, 0, 1, 1);
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
 
 
 %% ############## CHANGE IN PITCH CV, USING RE-WINDOWED PC 

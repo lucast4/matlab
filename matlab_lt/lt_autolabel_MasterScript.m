@@ -100,15 +100,58 @@ lt_autolabel_FixHandCheckedSyls(fnames, sylnum, vlsorfn, vlsorind)
 
 lt_autolabel
 
-%% ======= EVTAFV4 sim version, but good workflow if doing multiple configs
-% AND ITERATION OVER DAY
+%% ########################################################################
+%% ################################# AUTOLABEL, WORKFLOW MULTIPLE CONFIGS
+%% ================ TeSTING CONFIG FILE
+if (0)
+    close all;
+    batchf= 'BatchAll.LABELED';
+    get_WN_hits=0;
+    get_offline_match=1;
+    get_FF=0;
+    
+    syl = 'b';
+    syl_pre = 'ab';
+    syl_post = '';
+    % config= '/bluejay3/lucas/birds/pu53wh88/config.evconfig2'; % before 2/16 templ change
+    config= '/bluejay5/lucas/birds/pu53wh88/config_AL_aB.evconfig2';
+    NoteNum = 0;
+    
+    
+    check_stuff=lt_check_hit_templ_freq_v2_EvTAFv4Sim(batchf, syl, syl_pre, ...
+        syl_post, get_WN_hits, get_offline_match, get_FF, config, NoteNum);
+end
+
+% ================ TeSTING CONFIG FILE
+if (0)
+    close all;
+    batchf= 'BatchAll.LABELED';
+    get_WN_hits=0;
+    get_offline_match=1;
+    get_FF=0;
+    
+    syl = 'b';
+    syl_pre = 'c';
+    syl_post = '';
+    % config= '/bluejay3/lucas/birds/pu53wh88/config.evconfig2'; % before 2/16 templ change
+    config= '/bluejay5/lucas/birds/pu53wh88/config_AL_cB.evconfig2';
+    NoteNum = 0;
+    
+    
+    check_stuff=lt_check_hit_templ_freq_v2_EvTAFv4Sim(batchf, syl, syl_pre, ...
+        syl_post, get_WN_hits, get_offline_match, get_FF, config, NoteNum);
+end
+
+
+
+%% ##################################### AUTOLABEL 
 clear all; close all;
 
 % ========================= 0) ECTRACT DIRECTORIRES
-basedir = '/bluejay5/lucas/birds/pu53wh88';
-date_range_base={'10Feb2015','12Feb2015'};
-date_range_WN={'14Feb2015','16Feb2015'};
-experiment = 'SeqDepPitchShift3';
+basedir = '/bluejay5/lucas/birds/bu6bu98';
+date_range_base={'27Sep2018','29Sep2018'};
+date_range_WN={'30Sep2018','30Sep2018'};
+experiment = 'Reversion1';
 
 % -------- COLLECT METADAT
 cd(basedir);
@@ -134,16 +177,12 @@ ListOfDirs = [ListOfDirs1 ListOfDirs2];
 for j=1:length(ListOfDirs)
 
     % ==================== 0) go to day folder
-    cd(ListOfDirs(j).dirname);
-    
+    cd([basedir '/' ListOfDirs(j).dirname]);
     
     % ==================== 1) extract all s
-    lt_make_batch(3);
-    lt_cleandirAuto('batch', 1000, 5, 5);
-    % randsamp('batch.keep', 0.1);
-    % batch = 'batch.keep.rand';
-    randsamp('batch.keep', 0.05);
-    batch = 'batch.keep.rand';
+    lt_make_batch(4);
+%     lt_cleandirAuto('batch.rec_FB', 1000, 5, 5);
+    batch = 'batch.rec_FB';
     
     % ==================== 2) move old .notmat
     if ~exist('OLDNOTMAT_SeqDepPitch', 'dir')
@@ -153,12 +192,12 @@ for j=1:length(ListOfDirs)
         disp('not making OLDNOTMAT_SeqDepPitch, since already made!!');
     end
     
-    
     % ==================== 3) run autolabel
     % ---- GENERAL PARAMS
-    ampThresh=30000;
+    ampThresh=12000;
     min_dur=30;
-    min_int=3;
+    min_int=5;
+    sm_win = 4;
     
     % ---- MOTIF 1 [abB] [not labeling abb(b) % since WN target is ab(b)]
     config= '/bluejay5/lucas/birds/pu53wh88/config_AL_aB.evconfig2';
@@ -168,7 +207,8 @@ for j=1:length(ListOfDirs)
     NoteNum=0;
     overwrite_notmat=1; % will always make backup folder
     
-    [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, config, syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat);
+    [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, config, ...
+        syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat, [], sm_win);
     
     
     % ------ MOTIF 2 [accBb]
@@ -179,21 +219,31 @@ for j=1:length(ListOfDirs)
     NoteNum=0;
     overwrite_notmat=0; % will always make backup folder
     
-    [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, config, syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat);
+    [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, config, ...
+        syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat, [], sm_win);
     
     
-    % ================ 4) MAKE WAV FILE TO LOOK FOR FALSE POSITIVES
-    sylstocheck = {syl.targ};  % cell array of all syls you want to check.
-    
-    for j=1:length(sylstocheck)
-        [fnames, sylnum]=lt_jc_chcklbl(batch, sylstocheck{j}, 0.025,0.025,'','','');
-        [vlsorfn vlsorind]=jc_vlsorfn(batch, sylstocheck{j},'','');
-    end
     
 end
 
+%% ============ MAKE WAVE FILES TO LOOK FOR FALSE POSITIVES
 
-% ============ 2) Use evsonganaly manually on the .wav file created above
+syl = 'b';
+presyl = 'a';
+[fnames, sylnum]=lt_jc_chcklbl(batch, syl, 0.025,0.025, presyl,'','');
+[vlsorfn vlsorind]=jc_vlsorfn(batch, syl, presyl,'');
+
+syl = 'c';
+presyl = 'c';
+[fnames, sylnum]=lt_jc_chcklbl(batch, syl, 0.025,0.025, presyl,'','');
+[vlsorfn vlsorind]=jc_vlsorfn(batch, syl, presyl,'');
+
+syl = 'b';
+presyl = 'cb';
+[fnames, sylnum]=lt_jc_chcklbl(batch, syl, 0.025,0.025, presyl,'','');
+[vlsorfn vlsorind]=jc_vlsorfn(batch, syl, presyl,'');
+
+%% ============ 2) Use evsonganaly manually on the .wav file created above
 % (contains only the syls you chose)
 % INSTRUCTIONS: 
 % 1) open .wav file using evsonganaly
@@ -203,7 +253,6 @@ end
 evsonganaly
 
 
-% ============ 3) Replace hand-checekd mislabeld syls 
+%% ============ 3) Replace hand-checekd mislabeld syls 
 lt_autolabel_FixHandCheckedSyls(fnames, sylnum, vlsorfn, vlsorind)
-
 

@@ -75,6 +75,18 @@ GenStruct.expt(ind).exptname = exptname;
 GenStruct.expt(ind).DAT = DATSTRUCT;
 GenStruct.expt(ind).Params = Params;
 
+% ====== 
+% NOTE: ONLY LABELED 2 WN DAYS (SOME OTHER DAYS AL, BUT DID NOT CHECK)
+% (OTHER DAYS NEED TO REDO AL BECUASE BATCH WAS NOT COMPLETE)
+birdname = 'bk34bk68';
+exptname = 'SeqDepPitchLMAN3';
+[DATSTRUCT, Params] = lt_generalization_database(birdname, exptname);
+% --- add to overall data structure
+ind = ind+1;
+GenStruct.expt(ind).birdname = birdname;
+GenStruct.expt(ind).exptname = exptname;
+GenStruct.expt(ind).DAT = DATSTRUCT;
+GenStruct.expt(ind).Params = Params;
 
 
 % ####################################### NEURAL RECORDING EXPERIMENTS

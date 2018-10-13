@@ -131,28 +131,38 @@ for i=1:NumDirs
     
     % ==== EXTRACT DATA
     savefigs = 0;
+    plotfigs = 0;
     [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params, ...
-        SepBySyl, savefigs);
+        SepBySyl, savefigs, plotfigs);
+    
+    
+    % ====== CREATE A NEW FIELD CALLED NotStim_StimCatch, which combines
+    % those two into one. 
+    % important if on a given day there is both catch song (one epoch) and
+    % catch trials (another epoch).
+    DatStructCompiled.NotStim_StimCatch = [DatStructCompiled.NotStim DatStructCompiled.StimCatch];
+    % -- sort in temporal order of trials
+    ttmp = [DatStructCompiled.NotStim_StimCatch.datenum];
+    [~, indtmp] = sort(ttmp);
+    DatStructCompiled.NotStim_StimCatch = DatStructCompiled.NotStim_StimCatch(indtmp);
     
     
     % ===== PROCESS DATA
     if strcmp(Params.ExptID, 'All')
         Params.FieldsToCheck{1}='All';
     elseif strcmp(Params.ExptID, 'Stim')
-            Params.FieldsToCheck{1}='NotStim';
-            Params.FieldsToCheck{2}='StimCatch';
-            Params.FieldsToCheck{3}='StimNotCatch';
-%         if isempty(DatStructCompiled.StimCatch) & ~isempty(DatStructCompiled.NotStim)
-%             Params.FieldsToCheck{1}='Stim';
-%             Params.FieldsToCheck{2}='NotStim';
-%         else
-%             Params.FieldsToCheck{1}='StimCatch';
-%             Params.FieldsToCheck{2}='StimNotCatch';
-%         end
+%             Params.FieldsToCheck{1}='NotStim';
+%             Params.FieldsToCheck{2}='StimCatch';
+%             Params.FieldsToCheck{3}='StimNotCatch';
+% modified: now already combines everything before runnign analyses below.
+            Params.FieldsToCheck{1}='NotStim_StimCatch';
+            Params.FieldsToCheck{2}='StimNotCatch';
     end
     
     % RUN
-    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_Compare2_v2(DatStructCompiled,Params);
+    plotfigs=0;
+    [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_Compare2_v2(DatStructCompiled,Params, ...
+        plotfigs);
     
     
     % ======= EXTRACT TIME WINDOW DATA

@@ -1,4 +1,10 @@
-function lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial)
+function lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial, ...
+    BirdExptIncluded)
+% ======= 
+if ~exist('BirdExptIncluded', 'var') % this is list of birds to plot (2 cols,[bird expt])(get from later function)
+    BirdExptIncluded = [];
+end
+
 %% plots time range for data across all syls, days, and expts
 
 
@@ -20,6 +26,15 @@ for i=1:Numbirds
     for ii=1:Numexpt
         exptname = TrialStruct.birds(i).exptnum(ii).exptname;
         
+        if ~isempty(BirdExptIncluded)
+            
+            if ~any(BirdExptIncluded(:,1)==i & BirdExptIncluded(:,2)==ii)
+            disp('skipping bird, not in desired list BirdExptIncluded..');
+                % thne skip this bird
+                continue
+            end
+                
+        end
         % ========================figure
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
         title([birdname '-' exptname]);

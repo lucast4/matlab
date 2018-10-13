@@ -4,11 +4,11 @@
 %% EXTRACT
 clear all; close all; fclose all;
 BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
+BrainArea = {'LMAN'}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 0;
+LearningOnly = 1;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
@@ -81,6 +81,15 @@ end
 close all;
 lt_neural_Coher_Extract(SummaryStruct);
 
+%% ==== EXTRACTION - WITHIN SONG TIMING OF EACH IND
+numbirds = length(SummaryStruct.birds);
+for i=1:numbirds
+    numneurons = length(SummaryStruct.birds(i).neurons);
+    for ii=1:numneurons
+
+        lt_neural_v2_EXTRACT_WithinSongTimings(SummaryStruct, i, ii);
+    end
+end
 %% EXTRACT FF AND SAVE
 close all;
 lt_neural_v2_PRE_ExtrFF;

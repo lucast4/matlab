@@ -45,7 +45,10 @@ AllSongs=nan(1, sum([metaDat.numSamps]));
 AllLabels=[];
 AllOnsets=[];
 AllOffsets=[];
-AllSongNum = []; 
+AllSongNum = [];
+AllFilenames = {};
+AllWithinFileOnset = [];
+
 cumulative_filedur=0; % keeps track as concatenating
 
 if extractSound==1
@@ -103,6 +106,9 @@ for i=1:length(metaDat)
         AllOnsets=[AllOnsets onsets_cum'];
         AllOffsets=[AllOffsets offsets_cum'];
         AllSongNum = [AllSongNum ones(1, length(tmp.labels))*i];
+        
+%         AllFilenames = {};
+        AllWithinFileOnset = [AllWithinFileOnset (tmp.onsets/1000)'];
     else
 %         disp(['NOTE: miossing .not.mat for ' metaDat(i).filename ' (SKIPPING)']);
     end
@@ -110,6 +116,7 @@ for i=1:length(metaDat)
     filedur=metaDat(i).numSamps/metaDat(i).fs;
     cumulative_filedur=cumulative_filedur + filedur;
     
+    AllFilenames = {metaDat(AllSongNum).filename};
 end
 % toc
 
@@ -150,6 +157,10 @@ SongDat.AllSongs=single(AllSongs);
 end
 
 
+%% ============ for each label, extract within song timing
+
+
+
 %% ============ keep only a single cluster?
 
 if ~isempty(clustToKeep)
@@ -173,6 +184,8 @@ SongDat.AllLabels=AllLabels;
 SongDat.AllOnsets=AllOnsets;
 SongDat.AllOffsets=AllOffsets;
 SongDat.AllSongNum=AllSongNum;
+SongDat.AllFilenames = AllFilenames;
+SongDat.AllWithinFileOnset = AllWithinFileOnset;
 NeurDat.spikes_cat=spikes_cat;
 NeurDat.metaDat=metaDat;
 Params.batchf=batchf;

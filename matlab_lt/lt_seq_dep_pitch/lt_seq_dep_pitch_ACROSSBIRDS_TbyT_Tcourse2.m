@@ -1,4 +1,4 @@
-function lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
+function [DATBYREND, TrialStruct] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, songasrend, singleRendOnly)
 
 %% 7/31/18 - lt diverged from lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse, here
@@ -11,11 +11,24 @@ function lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ..
 Numbirds = length(TrialStruct.birds);
 
 %% ======= CONVERT TO USING SONG AS REND?
+
 if songasrend==1
-    disp('CONVERTING FROM USING RENDS TO USING SONGS!');
-%    disp('REMOVING isWN information for now. figure out way to summarize WN hit info for song by song');
-    disp('SUMMARIZING isWN information by num hits and misses');
-      for i=1:Numbirds
+    TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_SongRend(TrialStruct);
+end
+
+%% ====== CONVERT ALL FF TO FF DEVIATION FROM BASELINE (IN LEARN DIR)
+% AND DECIDE IF USE SONG AS REND
+
+if ~isfield(TrialStruct, 'FFalreadyFlippedLearnDir')
+    TrialStruct.FFalreadyFlippedLearnDir = 0;
+end
+
+if TrialStruct.FFalreadyFlippedLearnDir==0
+    disp('NOTE TO SELF: ffvals will be automatically flipped to be dir of learning (so no need to flip again later)');
+    pause;
+    
+    
+    for i=1:Numbirds
         Numexpt = length(TrialStruct.birds(i).exptnum);
         
         for ii=1:Numexpt
@@ -26,84 +39,52 @@ if songasrend==1
                 continue
             end
             
-            Numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-            disp([num2str(i) '-' num2str(ii)]);
-            % ================== go thru all syls
-            for ss =1:Numsyls
+            % --------- ignore if lMAN?
+            if ignoreLMANexpt==1
+                if isfield(TrialStruct.birds(i).exptnum(ii), 'LMANinactivated')
+                    % if no field then is not LMAN inact experiemts...
+                    isLMAN = TrialStruct.birds(i).exptnum(ii).LMANinactivated;
+                    if isLMAN==1
+                        disp(['[is LMAN] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
+                        continue
+                    end
+                end
+            end
             
+            Numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+            %         birdname =  TrialStruct.birds(i).birdname;
+            %         exptname = TrialStruct.birds(i).exptnum(ii).exptname;
+            targlearndir = TrialStruct.birds(i).exptnum(ii).targlearndir;
+            
+            % =========== collect syls for this experiment
+            %         ffedges_allsyls =[];
+            %         tedges_allsyls = [];
+            %         istarg_allsyls = [];
+            %         issame_allsyls =[];
+            %         sylnames_allsyls = {};
+            
+            % ===================== FOR ALL SYLS, each rendition collect time and
+            % deviation from running avg.
+            for ss =1:Numsyls
+                
+                % ============== subplot for this syl
                 t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
-                t_dnum = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals_datenum;
                 ff = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals;
                 
-                if isfield(TrialStruct.birds(i).exptnum(ii).sylnum(ss), 'isCatch')
-                    iscatch = TrialStruct.birds(i).exptnum(ii).sylnum(ss).isCatch;
-                    if isempty(iscatch)
-                        iscatch = nan(size(ff));
-                    end
-                else
-                    iscatch = nan(size(ff));
-                end
+                % --------------- lines for base mean and 1std
+                WNontime = TrialStruct.birds(i).exptnum(ii).WNontime;
                 
-                if isfield(TrialStruct.birds(i).exptnum(ii).sylnum(ss), 'isWNhit')
-                    isWN = TrialStruct.birds(i).exptnum(ii).sylnum(ss).isWNhit;
-                else
-                    isWN = nan(size(ff));
-                end
+                %             basedays = TrialStruct.birds(i).exptnum(ii).BaseDays;
+                %             wndays = TrialStruct.birds(i).exptnum(ii).WNDays;
+                indsbase = t<WNontime;
+                %             indsbase = t<basedays(end)+1;
+                ffmean_base = nanmean(ff(indsbase));
                 
-                % ----------------- GO THRU EACH SONG AND COLLECT
-                ff_songs = grpstats(ff, t, {'mean'});
+                assert(abs(targlearndir)==1);
                 
-                [~, indtmp] = unique(t);
-                t_songs = t(indtmp);
-                t_dnum = t_dnum(indtmp);
-                
-                assert(length(t_songs) == length(ff_songs));
-                
-                % --------- CATCH
-                % assumes that catch covers entire song, so just take
-                % median.
-                iscatch_song = grpstats(iscatch, t, {'mean'});
-                assert(all(ismember(iscatch_song(~isnan(iscatch_song)), [0 1])), 'some songs with mixed catch/nc?');
-
-                % ------- WN
-                % - remove trial by trial WN hit
-                if (0) % DONT DO THIS, this was before I foudn way to extract hits over song.
-                    if isfield(TrialStruct.birds(i).exptnum(ii).sylnum, 'isWNhit')
-                    TrialStruct.birds(i).exptnum(ii).sylnum = ...
-                        rmfield(TrialStruct.birds(i).exptnum(ii).sylnum, 'isWNhit');
-                    end
-                end
-                
-                % collect number of WN hits/escapes
-                if all(isnan(isWN))
-                    %                   wn_num = zeros(size(t_songs));
-                    %                   wn_mean = zeros(size(t_songs));
-                    wn_nhits = nan(size(t_songs));
-                    wn_nmiss = nan(size(t_songs));
-                else
-                    [wn_num, wn_mean] = grpstats(isWN, t, {'numel', 'mean'});
-                    wn_nhits = wn_mean.*wn_num;
-                    wn_nmiss = wn_num - wn_nhits;
-                    assert(all(wn_nhits == floor(wn_nhits)), 'shoud be int');
-                    assert(all(wn_nmiss == floor(wn_nmiss)), 'should be int');
-                end
-                
-%                 if i==1 & ii==4 & ...
-%                         TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget==1
-%                     keyboard
-%                 end
-%                 if i==1 & ii==4                        
-%                     keyboard
-%                 end
-                    
-                % ----------------- PUT BACK INTO STRUCTURE
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals = ff_songs;
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals = t_songs;
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals_datenum = t_dnum;
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).isCatch = iscatch_song;
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).WN_nhits = wn_nhits;
-                TrialStruct.birds(i).exptnum(ii).sylnum(ss).WN_nmiss = wn_nmiss;
-                
+                % --------------- subtract mean and flip if negative larning
+                ff = (ff-ffmean_base).*targlearndir;
+                TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals = ff;
                 
                 % ------------- for all renditions calculate deviation from
                 % recent trials
@@ -114,82 +95,8 @@ if songasrend==1
             end
         end
     end
-end
-
-%% ====== CONVERT ALL FF TO FF DEVIATION FROM BASELINE (IN LEARN DIR)
-% AND DECIDE IF USE SONG AS REND
-
-disp('NOTE TO SELF: ffvals will be automatically flipped to be dir of learning (so no need to flip again later)');
-pause;
-
-for i=1:Numbirds
-    Numexpt = length(TrialStruct.birds(i).exptnum);
+    TrialStruct.FFalreadyFlippedLearnDir = 1;
     
-    for ii=1:Numexpt
-        
-        % ---------- SKIP IF NO DATA
-        if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
-            disp(['[no DATA] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
-            continue
-        end
-        
-        % --------- ignore if lMAN?
-        if ignoreLMANexpt==1
-            if isfield(TrialStruct.birds(i).exptnum(ii), 'LMANinactivated')
-                % if no field then is not LMAN inact experiemts...
-                isLMAN = TrialStruct.birds(i).exptnum(ii).LMANinactivated;
-                if isLMAN==1
-                    disp(['[is LMAN] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
-                    continue
-                end
-            end
-        end
-        
-        Numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-        %         birdname =  TrialStruct.birds(i).birdname;
-        %         exptname = TrialStruct.birds(i).exptnum(ii).exptname;
-        targlearndir = TrialStruct.birds(i).exptnum(ii).targlearndir;
-        
-        % =========== collect syls for this experiment
-        %         ffedges_allsyls =[];
-        %         tedges_allsyls = [];
-        %         istarg_allsyls = [];
-        %         issame_allsyls =[];
-        %         sylnames_allsyls = {};
-        
-        % ===================== FOR ALL SYLS, each rendition collect time and
-        % deviation from running avg.
-        
-        for ss =1:Numsyls
-            
-            
-            
-            % ============== subplot for this syl
-            t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
-            ff = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals;
-            
-            % --------------- lines for base mean and 1std
-            WNontime = TrialStruct.birds(i).exptnum(ii).WNontime;
-            
-            %             basedays = TrialStruct.birds(i).exptnum(ii).BaseDays;
-            %             wndays = TrialStruct.birds(i).exptnum(ii).WNDays;
-            indsbase = t<WNontime;
-            %             indsbase = t<basedays(end)+1;
-            ffmean_base = nanmean(ff(indsbase));
-            
-            
-            % --------------- subtract mean and flip if negative larning
-            ff = (ff-ffmean_base).*targlearndir;
-            TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFvals = ff;
-            
-            % ------------- for all renditions calculate deviation from
-            % recent trials
-            % === method1 - fit regression line to one hour of data
-            % (directly preceding this rendition...) record deviation from
-            % that hour's prediction
-            
-        end
-    end
 end
 
 %% ========== FOR ALL RENDS, COMPUTE FLANKING RENDITIONS (FF AND T DEV)
@@ -350,7 +257,7 @@ TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S5(TrialStruct, ...
 
 % ======== what data to take?
 % dotrain = 1; % during training?
-% singleRendOnly=1; 
+% singleRendOnly=1;
 densitymethod = 'refperiod';
 cutoffmethod = 'medianslice';
 mintime_fromref = 5;
@@ -577,7 +484,7 @@ xlim([-30 30]);
 getsame = 1;
 gettrain = 1;
 getsiglearn = 0;
-birdstoget = 1:2;
+birdstoget = 10;
 nbin = 10; % for smothing;
 
 % ===================================== 1) RAW DATA FOR ALL SYLS
@@ -887,10 +794,10 @@ plotsmooth = 1;
 logtime = 1;
 
 % ---- hand enter edges (in units of min)
-xedges_hand = []; % leave expty if want to automatically 
-% xedges_hand = [0 0.32 2 xedges(end)]; % leave expty if want to automatically 
-% xedges_hand = [0 0.32 xedges(end)]; % leave expty if want to automatically 
-% xedges_hand = [0 1 xedges(end)]; % leave expty if want to automatically 
+xedges_hand = []; % leave expty if want to automatically
+% xedges_hand = [0 0.32 2 xedges(end)]; % leave expty if want to automatically
+% xedges_hand = [0 0.32 xedges(end)]; % leave expty if want to automatically
+% xedges_hand = [0 1 xedges(end)]; % leave expty if want to automatically
 % segment into 3 bins (before value in edgelist above, then split rest by
 % median)
 
@@ -955,15 +862,15 @@ end
 % ================= 3) EXTRACT DATA FOR ALL SYLS
 gettrain = 1;
 plotraw = 0;
-edgelist = [3]; % list of edges to use
+edgelist = [2]; % list of edges to use
 minrendsinbin = 4;
 colorscheme = 'learnsig';
 plotsmooth = 0;
 logtime = 1;
 xedges_hand = []; % leave expty if want to automatically
 % xedges_hand = [0 1 5 xedges(end)]; % leave expty if want to automatically
-normtobase = 2; % 2: then norms to catch 
-use2bins = 1; % then will take only "early" and "late". if 0. then takes 3 bins .
+normtobase = 0; % 2: then norms to catch
+use2bins = 0; % then will take only "early" and "late". if 0. then takes 3 bins .
 
 [OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_3(DATBYREND, TrialStruct, ...
     Inds_sylcounter, gettrain, plotraw, edgelist, minrendsinbin, colorscheme, ...
@@ -983,7 +890,7 @@ hsplots = [];
 
 FFdevMeanAll = struct;
 TdevMeanAll = struct;
-
+LearnDirAll = [];
 count = 1;
 
 for i = 1:nbirds
@@ -997,6 +904,7 @@ for i = 1:nbirds
         % =============== FOR THIS EXPERIMENT, PLOT TARG, SAME, DIFF
         bname = TrialStruct.birds(i).birdname;
         ename = TrialStruct.birds(i).exptnum(ii).exptname;
+        learndir = TrialStruct.birds(i).exptnum(ii).targlearndir;
         
         % ----------- target
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -1012,8 +920,9 @@ for i = 1:nbirds
         ff = OUTSTRUCT.FFdevMean_binned(indsthis, :);
         ffsem = OUTSTRUCT.FFdevSEM_binned(indsthis, :);
         
-        lt_plot(t, ff, {'Errors', ffsem, 'Color', pcol}); 
+        lt_plot(t, ff, {'Errors', ffsem, 'Color', pcol});
         lt_plot_zeroline;
+        lt_plot_text(t(2), ff(2)+15, ['learndir:' num2str(learndir)], 'm');
         
         % ----------- SAME
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -1066,23 +975,23 @@ for i = 1:nbirds
         ffsem = OUTSTRUCT.FFdevSEM_binned(indsthis, :);
         plot(t, ff, 'o', 'Color', pcol);
         plot(nanmean(t,1), nanmean(ff,1), 'LineWidth', 2, 'Color', pcol);
-                FFdevMeanAll(count).targ = nanmean(ff,1)';
-TdevMeanAll(count).targ = nanmean(t, 1)';
-
-                % ----------- SAME
+        FFdevMeanAll(count).targ = nanmean(ff,1)';
+        TdevMeanAll(count).targ = nanmean(t, 1)';
+        
+        % ----------- SAME
         pcol = 'b';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
-         Inds_IsTarg==0 & Inds_IsSame==1;
+            Inds_IsTarg==0 & Inds_IsSame==1;
         
         t = OUTSTRUCT.Tmean_binned(indsthis, :);
         ff = OUTSTRUCT.FFdevMean_binned(indsthis, :);
         ffsem = OUTSTRUCT.FFdevSEM_binned(indsthis, :);
-        plot(t, ff, 'o', 'Color', pcol);        
+        plot(t, ff, 'o', 'Color', pcol);
         plot(nanmean(t,1), nanmean(ff,1), 'LineWidth', 2, 'Color', pcol);
         FFdevMeanAll(count).same = nanmean(ff,1)';
         TdevMeanAll(count).same = nanmean(t, 1)';
-
-% --------------- DIFF
+        
+        % --------------- DIFF
         pcol = 'r';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
             Inds_IsTarg==0 & Inds_IsSame==0;
@@ -1090,13 +999,16 @@ TdevMeanAll(count).targ = nanmean(t, 1)';
         t = OUTSTRUCT.Tmean_binned(indsthis, :);
         ff = OUTSTRUCT.FFdevMean_binned(indsthis, :);
         ffsem = OUTSTRUCT.FFdevSEM_binned(indsthis, :);
-        plot(t, ff, 'o', 'Color', pcol);        
+        plot(t, ff, 'o', 'Color', pcol);
         plot(nanmean(t,1), nanmean(ff,1), 'LineWidth', 2, 'Color', pcol);
-                FFdevMeanAll(count).diff = nanmean(ff,1)';
+        FFdevMeanAll(count).diff = nanmean(ff,1)';
         TdevMeanAll(count).diff = nanmean(t, 1)';
         
-                % --- 
+        % ---
         lt_plot_zeroline;
+        
+        % ============== COLLECT TARG LEARN DIR
+        LearnDirAll = [LearnDirAll; learndir];
         
         
         % ====================== OVERLAY SMOOTHED FUNCTIONS
@@ -1108,7 +1020,7 @@ TdevMeanAll(count).targ = nanmean(t, 1)';
         pcol = 'k';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
             Inds_IsTarg==1;
-
+        
         for j=find(indsthis)
             if isempty(OUTSTRUCT.Tsm_alltrials{j})
                 continue
@@ -1121,7 +1033,7 @@ TdevMeanAll(count).targ = nanmean(t, 1)';
         pcol = 'b';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
             Inds_IsTarg==0 & Inds_IsSame==1;
-
+        
         for j=find(indsthis)
             if isempty(OUTSTRUCT.Tsm_alltrials{j})
                 continue
@@ -1135,7 +1047,7 @@ TdevMeanAll(count).targ = nanmean(t, 1)';
         pcol = 'r';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
             Inds_IsTarg==0 & Inds_IsSame==0;
-
+        
         for j=find(indsthis)
             if isempty(OUTSTRUCT.Tsm_alltrials{j})
                 continue
@@ -1149,42 +1061,42 @@ TdevMeanAll(count).targ = nanmean(t, 1)';
         % ========================= PLOT DISTRIBUTIONS OF TIME DEVIATIONS
         % targ
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-%         hsplots = [hsplots hsplot];
+        %         hsplots = [hsplots hsplot];
         title(['n adjacent rends']);
-                
+        
         pcol = 'k';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
             Inds_IsTarg==1;
         
         tdevs = cell2mat(OUTSTRUCT.Tdev_alltrials(indsthis));
-        if ~isempty(tdevs)           
-        [~, Xcenters] = lt_plot_histogram(tdevs, '' , 1, 1, '', 1, pcol);
+        if ~isempty(tdevs)
+            [~, Xcenters] = lt_plot_histogram(tdevs, '' , 1, 1, '', 1, pcol);
         end
         
         % SAME
         pcol = 'b';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
-         Inds_IsTarg==0 & Inds_IsSame==1;
+            Inds_IsTarg==0 & Inds_IsSame==1;
         
         tdevs = cell2mat(OUTSTRUCT.Tdev_alltrials(indsthis));
-        if ~isempty(tdevs)           
+        if ~isempty(tdevs)
             lt_plot_histogram(tdevs, Xcenters , 1, 1, '', 1, pcol);
         end
         
         % DIFF
         pcol = 'r';
         indsthis = Inds_birdnum==i & Inds_exptnum==ii & ...
-         Inds_IsTarg==0 & Inds_IsSame==0;
+            Inds_IsTarg==0 & Inds_IsSame==0;
         
         tdevs = cell2mat(OUTSTRUCT.Tdev_alltrials(indsthis));
-        if ~isempty(tdevs)           
+        if ~isempty(tdevs)
             lt_plot_histogram(tdevs, Xcenters , 1, 1, '', 1, pcol);
         end
         
         %- --- overlay edges
         t_edges = median(OUTSTRUCT.Xedgesall(indsthis, :),1);
         for j=1:length(t_edges)
-           line([t_edges(j) t_edges(j)], ylim);
+            line([t_edges(j) t_edges(j)], ylim);
         end
         
         
@@ -1245,19 +1157,58 @@ ysem = lt_sem([FFdevMeanAll.(fname)]');
 lt_plot(xmean, ymean, {'Errors', ysem, 'Color', pcol});
 
 % ---
-        lt_plot_zeroline;
+lt_plot_zeroline;
 
 
 % ============ COMPARE TARG TO SAME
+% lt_subplot(3,2,2); hold on;
+% ylabel('same - targ (hz)');
+% title('each expt, mean over syls');
+% xlabel('time dev');
+% 
+% y = [FFdevMeanAll.same] - [FFdevMeanAll.targ];
+% x = [TdevMeanAll.same];
+% 
+% plot(x, y, '-ob');
+% lt_plot_zeroline;
+% 
+% % --- significance
 lt_subplot(3,2,2); hold on;
+ylabel('targ - same (hz)');
+title('each expt, mean over syls');
+xlabel('time dev');
+
+% y = [FFdevMeanAll.targ] - [FFdevMeanAll.same];
+y = [FFdevMeanAll.same] - [FFdevMeanAll.targ];
+x = [TdevMeanAll.same];
+
+plot(x, y, '-ob');
+lt_plot_zeroline;
+
+ymean = nanmean(y,2);
+ysem = lt_sem(y');
+x = nanmean(x,2);
+lt_plot_bar(x, ymean', {'Errors', ysem, 'FaceAlpha', 0.2})
+
+% --- significance
+p = signrank(y(1,:));
+lt_plot_text(x(1), y(1), ['p=' num2str(p)], 'r');
+
+p = signrank(y(1,:), mean(y([2:3],:),1));
+lt_plot_text(x(2), y(2), ['(vs)p=' num2str(p)], 'r');
+
+% =========== COMBINE LAST 2 BINS INTO ONE
+lt_subplot(3,2,5); hold on;
 ylabel('same - targ (hz)');
 title('each expt, mean over syls');
 xlabel('time dev');
 
 y = [FFdevMeanAll.same] - [FFdevMeanAll.targ];
+ytmp = [y(1,:); mean(y([2 3], :))];
 x = [TdevMeanAll.same];
+xtmp = [x(1,:); mean(x([2 3], :))];
 
-plot(x, y, '-ob');
+plot(xtmp, ytmp, '-ob');
 lt_plot_zeroline;
 
 
@@ -1280,7 +1231,7 @@ plot(xsame, ysame, '-b');
 lt_plot(nanmean(xsame,2), nanmean(ysame, 2), {'Errors', lt_sem(ysame'), 'Color', 'b'});
 lt_plot_zeroline;
 
-% =========== ACCOUNT FOR TOTAL LEARNING - 
+% =========== ACCOUNT FOR TOTAL LEARNING -
 lt_subplot(3,2,3); hold on;
 title('k=targ; bu=same');
 xlabel('ffdev (bin1)');
@@ -1291,7 +1242,7 @@ bin1_inds = 1;
 if use2bins==1
     bin2_inds=2;
 else
-bin2_inds = 2:3; % average over if multiple
+    bin2_inds = 2:3; % average over if multiple
 end
 
 % --------------- TARG
@@ -1313,20 +1264,20 @@ lt_plot(ff_bin1, ff_bin2, {'Color', pcol});
 
 % ---- line connecting
 for j=1:length(FFdevMeanAll)
-   
+    
     x1 = mean(FFdevMeanAll(j).targ(bin1_inds));
     x2 = mean(FFdevMeanAll(j).same(bin1_inds));
     
     y1 = mean(FFdevMeanAll(j).targ(bin2_inds));
     y2 = mean(FFdevMeanAll(j).same(bin2_inds));
-   
+    
     line([x1 x2], [y1 y2], 'Color', 'm');
 end
 
 lt_plot_makesquare_plot45line(gca, 'r');
 
 
-% ==================================== 
+% ====================================
 lt_subplot(3,2,6); hold on;
 title('deviations, late minus early');
 xlabel('targ --- same');
@@ -1456,18 +1407,18 @@ lt_plot_zeroline;
 
 %% ################## plots, comparing training to baseline
 if (0) % IN PROGRESS!!!
-gettrain = 2;
-% 0: only base
-% 1: only train;
-% 2: both train and base, side by side
-plotraw = 1;
-edgelist = [3]; % list of edges to use
-minrendsinbin = 4;
-colorscheme = 'learnsig';
-% choices: bird; learnsig
-
-[OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_5(DATBYREND, TrialStruct, ...
-    Inds_sylcounter, gettrain, plotraw, edgelist, minrendsinbin, colorscheme);
+    gettrain = 2;
+    % 0: only base
+    % 1: only train;
+    % 2: both train and base, side by side
+    plotraw = 1;
+    edgelist = [3]; % list of edges to use
+    minrendsinbin = 4;
+    colorscheme = 'learnsig';
+    % choices: bird; learnsig
+    
+    [OUTSTRUCT] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_5(DATBYREND, TrialStruct, ...
+        Inds_sylcounter, gettrain, plotraw, edgelist, minrendsinbin, colorscheme);
 end
 
 
@@ -1726,7 +1677,7 @@ for i=1:length(Inds_sylcounter)
         YsmAll{x} = [];
     end
     % --- get binned
-    tbins = discretize(ttmp, xbinedge_this); 
+    tbins = discretize(ttmp, xbinedge_this);
     [ffbinmean, ffbinsem] = grpstats(fftmp, tbins, {'mean', 'sem'});
     tbinmean = unique(tbins(~isnan(tbins)));
     YbinAll{x} = ffbinmean;
@@ -1798,7 +1749,7 @@ for i=1:length(Inds_sylcounter)
             YsmAll{x} = [];
         end
         % --- get binned
-    tbins = discretize(ttmp, xbinedge_this);
+        tbins = discretize(ttmp, xbinedge_this);
         [ffbinmean, ffbinsem] = grpstats(fftmp, tbins, {'mean', 'sem'});
         tbinmean = unique(tbins(~isnan(tbins)));
         YbinAll{x} = ffbinmean;
@@ -1831,7 +1782,7 @@ for i=1:length(Inds_sylcounter)
             YsmAll{x} = [];
         end
         % --- get binned
-    tbins = discretize(ttmp, xbinedge_this);
+        tbins = discretize(ttmp, xbinedge_this);
         [ffbinmean, ffbinsem] = grpstats(fftmp, tbins, {'mean', 'sem'});
         tbinmean = unique(tbins(~isnan(tbins)));
         YbinAll{x} = ffbinmean;
@@ -1906,328 +1857,328 @@ lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y)});
 
 
 %% ######################## PREDICTING LEARNING BY LOCAL LEARNING, HIT, AND CATCH
-DATTMP = struct;
-% NOTE: DO NOT CHANGE ORDER!! of following 3 extractions...
-use_targ_locallearn = 1;
-use_nminus2 = 0; % if 1, then use n-2 as local learning. if 0. thne use n-1. 
-
-if ~strcmp(syltype, 'targ')
-    % then should use minus 1, so deviations will be agaiunst your own syl
-    use_nminus2 = 0;
-end
-   
-% ------------------ TRAINING, NOTCATCH
+% DATTMP = struct;
+% % NOTE: DO NOT CHANGE ORDER!! of following 3 extractions...
+% use_targ_locallearn = 1;
+% use_nminus2 = 0; % if 1, then use n-2 as local learning. if 0. thne use n-1.
+%
+% if ~strcmp(syltype, 'targ')
+%     % then should use minus 1, so deviations will be agaiunst your own syl
+%     use_nminus2 = 0;
+% end
+%
+% % ------------------ TRAINING, NOTCATCH
 istrain = 1;
 iscatch = 0;
 DATTMP.Train = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_6(DATBYREND, ...
     TrialStruct, Inds_sylcounter, istrain, iscatch, use_targ_locallearn);
 
-% ------------------ TRAINING, CATCH
-istrain = 1;
-iscatch = 1;
-DATTMP.Catch = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_6(DATBYREND, ...
-    TrialStruct, Inds_sylcounter, istrain, iscatch, use_targ_locallearn);
-
-% ------------------ BASELINE, C/NC
-istrain = 0;
-iscatch = [0 1];
-DATTMP.Base = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_6(DATBYREND, ...
-    TrialStruct, Inds_sylcounter, istrain, iscatch, use_targ_locallearn);
-
-% ------------------ use the local learning for the syllable of interest,
-% or for the target syllable in that experiment?
-
-
-
-%% ########################### PLOT (absolute balue of local earning - i.e. 
-% more dwivation from mmedian predict more laernign?)
-
-figcount=1;
-subplotrows=4;
-subplotcols=3;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-takeabs = 1; % takes absolute value of local learn (i.e. might predict strong increase in next
-% trial when current trial is more deviated from local.
-fnames = fieldnames(DATTMP);
-for j=1:length(DATTMP.Train)
-    
-    for fname = fnames'
-        fname = fname{1};
-        % ================
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        hsplots = [hsplots hsplot];
-%         title([bname '-' ename ',' fname]);
-        xlabel('local learn (n minus n-1)');
-        ylabel('ff dev (n+1 minus n-1)');
-        
-        try
-            if use_targ_locallearn==1
-            x = DATTMP.(fname)(j).learnlocal;    
-            else
-            x = DATTMP.(fname)(j).learnlocal;
-            end
-            if use_nminus2==1
-            y = DATTMP.(fname)(j).ffdev_first + DATTMP.(fname)(j).learnlocal;
-            else
-            y = DATTMP.(fname)(j).ffdev_first;
-            end
-            if takeabs==1
-                x = abs(x);
-            end
-            plot(x, y, 'x');
-            lt_plot_makesquare_plot45line(gca, 'b');
-            lt_regress(y, x, 0, 0, 1, 1, 'r', 1);
-        catch err
-        end
-    end
-end
-
-linkaxes(hsplots, 'xy');
-
-
-
-%% ==================================== EXTRACT SLOPES (TRAIN, CATCH, BASE)
-% =========== 1) COLLECT 
-plotON = 1;
-plotWNhits = 1;
-[SlopesAll, Learn_And_FFdevAll] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_7(DATTMP, ...
-    use_nminus2, plotON, [], plotWNhits);
-
-
-% ########################### PLOT (separately plots positive and negative
-% deviations)
-if use_nminus2==0
-    lt_figure;
-    lt_plot_text(0, 0.5, 'NOTE: using (n-2)-(n-1) for ffdev');
-end
-
-% ========== SUMMARY PLOT
-lt_figure; hold on;
-excludeIfMissCatch = 1;
-
-% =========
-lt_subplot(3,2,1); hold on;
-xlabel('NEG(train) - NEG(catch) | POS(train) - POS(catch)');
-ylabel('slope (trial n+2 vs trial n+1)');
-
-Y = SlopesAll(:, [1 2 4 5]);
-if excludeIfMissCatch==1
-    Y = Y(~any(isnan(Y)'), :);
-end
-x = 1:size(Y,2);
-plot(x,Y, '-ok');
-xlim([0 5]);
-lt_plot_zeroline;
-
-% ----------
-lt_subplot(3,2, 2); hold on;
-xlabel('NEG -- POS -- AVERAGE(POS,NEG)');
-ylabel('slope (subtract catch, pos = more learning than catch)');
-Ythis = [Y(:,1)-Y(:,2) Y(:,3)-Y(:,4)];
-Ythis(:,1) = -Ythis(:,1); % flip so that positive is more learning than catch.
-Ythis = [Ythis mean(Ythis, 2)]; % take average for 3rd column.
-x = 1:size(Ythis,2);
-plot(x, Ythis, '-ok');
-xlim([0 3]);
-lt_plot_zeroline;
-
-% ============ REPLOT ALL DATA, USING MEASURE WHERE UP IS MORE LEARNING
-Yadaptive = [1-SlopesAll(:,1:3) SlopesAll(:,4:6)];
-
-% --------------- 1) all slopes
-lt_subplot(3,2,3); hold on;
-excludeIfMissCatch = 1;
-xlabel('NEG(train) - NEG(catch) - NEG(base) | POS(train) - POS(catch) - POS(catch)');
-ylabel('slope (trial n+2 vs trial n+1) [adaptive dir]');
-
-Y = Yadaptive;
-if excludeIfMissCatch==1
-    Y = Y(~any(isnan(Y)'), :);
-end
-x = 1:size(Y,2);
-for j=1:size(Y,1)
-    plot(x, Y(j,:), '-ok');
-end
-xlim([0 7]);
-
-% ---------------- 2) MEAN DEVIATIONS
-lt_subplot(3,2,4); hold on;
-excludeIfMissCatch = 1;
-xlabel('NEG(train) - NEG(catch) - NEG(base) | POS(train) - POS(catch) - POS(catch)');
-ylabel('mean ffdev (trial n+2 minus n)');
-
-Y = Learn_And_FFdevAll;
-if excludeIfMissCatch==1
-    Y = Y(~any(isnan(SlopesAll)'), :);
-end
-
-functmp = @(x)(mean(x(:,2)));
-FFdev_mean = cell2mat(cellfun(functmp, Y, 'UniformOutput', 0));
-
-x = 1:size(FFdev_mean,2);
-plot(x, FFdev_mean, '-ok');
-xlim([0 7]);
-lt_plot_zeroline;
-
-
-
-%% =============== COLLECT SLOPES, SEPARATING BY TIME BIN OF DEVIATION
-tbinedges = [2]; % minutes, will fill in the edges
-
-% ========== COLLECT MULTIPLE TIME BINS AND PLOT
-plotON = 0;
-twind = [2 60];
-[SlopesAll, Learn_And_FFdevAll] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_7(DATTMP, ...
-    use_nminus2, plotON, twind);
-
-
-%% ============= CROSS CORRELATION OF DEVIATIONS
-
-maxwind = 50;
-fnames = fieldnames(DATTMP);
-
-CCAll = cell(length(DATTMP.Train), 3); % [syls x [train, catch, base]];
-for j=1:length(DATTMP.Train)
-    rowcount = 1;
-    for fname = fnames'
-        fname = fname{1};
-        
-        if length(DATTMP.(fname))>=j
-        y1 = DATTMP.(fname)(j).learnlocal;
-        y2 = DATTMP.(fname)(j).ffdev_first;
-        
-        if any(isnan(y1)) | any(isnan(y2))
-            assert(sum(isnan(y1))/length(y1) < 0.2, 'too much nans...');
-            assert(sum(isnan(y2))/length(y2) < 0.2, 'too much nans...');
-
-            indstmp = any(isnan([y1 y2])');
-            y1(indstmp) = [];
-            y2(indstmp) = [];
-        end
-       
-        [cc, lags] = xcov(y1, y2, 20, 'coeff');
-       
-        
-        else
-            cc = [];
-            lags = [];
-        end
-        
-        % ============
-        CCAll{j, rowcount} = cc;
-        rowcount = rowcount+1;
-    end
-end
-
-% ============== IMAPORTANT
-lt_figure;
-lt_plot_text(0, 0.5, 'NOTE: do not plot catch, since they are not temporally sequenced...');
-
-
-% ================ plot
-figcount=1;
-subplotrows=4;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-onlykeepfull=1;
-if onlykeepfull==1
-   CCAll(any(cellfun(@isempty, CCAll)'), :) = [];
-end
-
-
-% ====== 1) overlay all xcovs
-pcollist = {'r', 'm', 'k'};
-for j=1:size(CCAll,1)
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots =[hsplots hsplot];
-
-% ---- train
-    indtmp = 1;
-    pcol = 'r';
-    
-    cc = CCAll{j, indtmp};
-    plot(lags, cc, '-', 'Color', pcol);
-    
-%     % ---- catch
-%     indtmp = 2;
-%     pcol = 'm';
-%     
+% % ------------------ TRAINING, CATCH
+% istrain = 1;
+% iscatch = 1;
+% DATTMP.Catch = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_6(DATBYREND, ...
+%     TrialStruct, Inds_sylcounter, istrain, iscatch, use_targ_locallearn);
+%
+% % ------------------ BASELINE, C/NC
+% istrain = 0;
+% iscatch = [0 1];
+% DATTMP.Base = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_6(DATBYREND, ...
+%     TrialStruct, Inds_sylcounter, istrain, iscatch, use_targ_locallearn);
+%
+% % ------------------ use the local learning for the syllable of interest,
+% % or for the target syllable in that experiment?
+%
+%
+%
+% %% ########################### PLOT (absolute balue of local earning - i.e.
+% % more dwivation from mmedian predict more laernign?)
+%
+% figcount=1;
+% subplotrows=4;
+% subplotcols=3;
+% fignums_alreadyused=[];
+% hfigs=[];
+% hsplots = [];
+%
+% takeabs = 1; % takes absolute value of local learn (i.e. might predict strong increase in next
+% % trial when current trial is more deviated from local.
+% fnames = fieldnames(DATTMP);
+% for j=1:length(DATTMP.Train)
+%
+%     for fname = fnames'
+%         fname = fname{1};
+%         % ================
+%         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+%         hsplots = [hsplots hsplot];
+% %         title([bname '-' ename ',' fname]);
+%         xlabel('local learn (n minus n-1)');
+%         ylabel('ff dev (n+1 minus n-1)');
+%
+%         try
+%             if use_targ_locallearn==1
+%             x = DATTMP.(fname)(j).learnlocal;
+%             else
+%             x = DATTMP.(fname)(j).learnlocal;
+%             end
+%             if use_nminus2==1
+%             y = DATTMP.(fname)(j).ffdev_first + DATTMP.(fname)(j).learnlocal;
+%             else
+%             y = DATTMP.(fname)(j).ffdev_first;
+%             end
+%             if takeabs==1
+%                 x = abs(x);
+%             end
+%             plot(x, y, 'x');
+%             lt_plot_makesquare_plot45line(gca, 'b');
+%             lt_regress(y, x, 0, 0, 1, 1, 'r', 1);
+%         catch err
+%         end
+%     end
+% end
+%
+% linkaxes(hsplots, 'xy');
+%
+%
+%
+% %% ==================================== EXTRACT SLOPES (TRAIN, CATCH, BASE)
+% % =========== 1) COLLECT
+% plotON = 1;
+% plotWNhits = 1;
+% [SlopesAll, Learn_And_FFdevAll] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_7(DATTMP, ...
+%     use_nminus2, plotON, [], plotWNhits);
+%
+%
+% % ########################### PLOT (separately plots positive and negative
+% % deviations)
+% if use_nminus2==0
+%     lt_figure;
+%     lt_plot_text(0, 0.5, 'NOTE: using (n-2)-(n-1) for ffdev');
+% end
+%
+% % ========== SUMMARY PLOT
+% lt_figure; hold on;
+% excludeIfMissCatch = 1;
+%
+% % =========
+% lt_subplot(3,2,1); hold on;
+% xlabel('NEG(train) - NEG(catch) | POS(train) - POS(catch)');
+% ylabel('slope (trial n+2 vs trial n+1)');
+%
+% Y = SlopesAll(:, [1 2 4 5]);
+% if excludeIfMissCatch==1
+%     Y = Y(~any(isnan(Y)'), :);
+% end
+% x = 1:size(Y,2);
+% plot(x,Y, '-ok');
+% xlim([0 5]);
+% lt_plot_zeroline;
+%
+% % ----------
+% lt_subplot(3,2, 2); hold on;
+% xlabel('NEG -- POS -- AVERAGE(POS,NEG)');
+% ylabel('slope (subtract catch, pos = more learning than catch)');
+% Ythis = [Y(:,1)-Y(:,2) Y(:,3)-Y(:,4)];
+% Ythis(:,1) = -Ythis(:,1); % flip so that positive is more learning than catch.
+% Ythis = [Ythis mean(Ythis, 2)]; % take average for 3rd column.
+% x = 1:size(Ythis,2);
+% plot(x, Ythis, '-ok');
+% xlim([0 3]);
+% lt_plot_zeroline;
+%
+% % ============ REPLOT ALL DATA, USING MEASURE WHERE UP IS MORE LEARNING
+% Yadaptive = [1-SlopesAll(:,1:3) SlopesAll(:,4:6)];
+%
+% % --------------- 1) all slopes
+% lt_subplot(3,2,3); hold on;
+% excludeIfMissCatch = 1;
+% xlabel('NEG(train) - NEG(catch) - NEG(base) | POS(train) - POS(catch) - POS(catch)');
+% ylabel('slope (trial n+2 vs trial n+1) [adaptive dir]');
+%
+% Y = Yadaptive;
+% if excludeIfMissCatch==1
+%     Y = Y(~any(isnan(Y)'), :);
+% end
+% x = 1:size(Y,2);
+% for j=1:size(Y,1)
+%     plot(x, Y(j,:), '-ok');
+% end
+% xlim([0 7]);
+%
+% % ---------------- 2) MEAN DEVIATIONS
+% lt_subplot(3,2,4); hold on;
+% excludeIfMissCatch = 1;
+% xlabel('NEG(train) - NEG(catch) - NEG(base) | POS(train) - POS(catch) - POS(catch)');
+% ylabel('mean ffdev (trial n+2 minus n)');
+%
+% Y = Learn_And_FFdevAll;
+% if excludeIfMissCatch==1
+%     Y = Y(~any(isnan(SlopesAll)'), :);
+% end
+%
+% functmp = @(x)(mean(x(:,2)));
+% FFdev_mean = cell2mat(cellfun(functmp, Y, 'UniformOutput', 0));
+%
+% x = 1:size(FFdev_mean,2);
+% plot(x, FFdev_mean, '-ok');
+% xlim([0 7]);
+% lt_plot_zeroline;
+%
+%
+%
+% %% =============== COLLECT SLOPES, SEPARATING BY TIME BIN OF DEVIATION
+% tbinedges = [2]; % minutes, will fill in the edges
+%
+% % ========== COLLECT MULTIPLE TIME BINS AND PLOT
+% plotON = 0;
+% twind = [2 60];
+% [SlopesAll, Learn_And_FFdevAll] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_7(DATTMP, ...
+%     use_nminus2, plotON, twind);
+%
+%
+% %% ============= CROSS CORRELATION OF DEVIATIONS
+%
+% maxwind = 50;
+% fnames = fieldnames(DATTMP);
+%
+% CCAll = cell(length(DATTMP.Train), 3); % [syls x [train, catch, base]];
+% for j=1:length(DATTMP.Train)
+%     rowcount = 1;
+%     for fname = fnames'
+%         fname = fname{1};
+%
+%         if length(DATTMP.(fname))>=j
+%         y1 = DATTMP.(fname)(j).learnlocal;
+%         y2 = DATTMP.(fname)(j).ffdev_first;
+%
+%         if any(isnan(y1)) | any(isnan(y2))
+%             assert(sum(isnan(y1))/length(y1) < 0.2, 'too much nans...');
+%             assert(sum(isnan(y2))/length(y2) < 0.2, 'too much nans...');
+%
+%             indstmp = any(isnan([y1 y2])');
+%             y1(indstmp) = [];
+%             y2(indstmp) = [];
+%         end
+%
+%         [cc, lags] = xcov(y1, y2, 20, 'coeff');
+%
+%
+%         else
+%             cc = [];
+%             lags = [];
+%         end
+%
+%         % ============
+%         CCAll{j, rowcount} = cc;
+%         rowcount = rowcount+1;
+%     end
+% end
+%
+% % ============== IMAPORTANT
+% lt_figure;
+% lt_plot_text(0, 0.5, 'NOTE: do not plot catch, since they are not temporally sequenced...');
+%
+%
+% % ================ plot
+% figcount=1;
+% subplotrows=4;
+% subplotcols=2;
+% fignums_alreadyused=[];
+% hfigs=[];
+% hsplots = [];
+%
+% onlykeepfull=1;
+% if onlykeepfull==1
+%    CCAll(any(cellfun(@isempty, CCAll)'), :) = [];
+% end
+%
+%
+% % ====== 1) overlay all xcovs
+% pcollist = {'r', 'm', 'k'};
+% for j=1:size(CCAll,1)
+%     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+%     hsplots =[hsplots hsplot];
+%
+% % ---- train
+%     indtmp = 1;
+%     pcol = 'r';
+%
 %     cc = CCAll{j, indtmp};
 %     plot(lags, cc, '-', 'Color', pcol);
-    
-    % ---- base
-    indtmp = 3;
-    pcol = 'k';
-    
-    cc = CCAll{j, indtmp};
-    plot(lags, cc, '-', 'Color', pcol);
-    
-    % ======
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-end
-    
-linkaxes(hsplots, 'xy');
-
-lt_figure; hold on;
-title('r=train; k=base');
-    CCAlltmp = cellfun(@transpose, CCAll, 'UniformOutput', 0);
-for i=[1 3]
-    lt_subplot(2,2,i); hold on;
-    xlabel('local laerning (trial n+1 minus n)');
-    ylabel('ffdev (usually trial n+2 minus trial n+1)');
-    
-    pcol = pcollist{i};
-    
-    ccall = cell2mat(CCAlltmp(:, i));
-%     
-%     ccall = reshape(cell2mat(CCAll(:,i)), size(CCAll,1), []);
-
-    plot(lags, ccall, '-k');
-    ymean = mean(ccall,1);
-    ysem = lt_sem(ccall);
-    x = 1:length(ymean);
-    
-    lt_plot(lags, ymean, {'Errors', ysem, 'Color', pcol});
-    
-    % ======
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-end
-
-    % ======== subtract  base from train
-    ccall_train = cell2mat(CCAlltmp(:, 1));
-    ccall_base = cell2mat(CCAlltmp(:, 3));
-    
-    ccnorm = ccall_train - ccall_base;
-    
-    lt_subplot(2,2,4); hold on;
-    xlabel('local laerning (trial n+1 minus n)');
-    ylabel('ffdev (usually trial n+2 minus trial n+1)');
-    title('train minus base');
-    pcol = 'b';
-    
-    plot(lags, ccnorm, '-k');
-    ymean = mean(ccnorm,1);
-    ysem = lt_sem(ccnorm);
-    x = 1:length(ymean);
-    
-    lt_plot(lags, ymean, {'Errors', ysem, 'Color', pcol});
-    
-    
-
-
-
-
-
-
-
+%
+% %     % ---- catch
+% %     indtmp = 2;
+% %     pcol = 'm';
+% %
+% %     cc = CCAll{j, indtmp};
+% %     plot(lags, cc, '-', 'Color', pcol);
+%
+%     % ---- base
+%     indtmp = 3;
+%     pcol = 'k';
+%
+%     cc = CCAll{j, indtmp};
+%     plot(lags, cc, '-', 'Color', pcol);
+%
+%     % ======
+%     lt_plot_zeroline;
+%     lt_plot_zeroline_vert;
+% end
+%
+% linkaxes(hsplots, 'xy');
+%
+% lt_figure; hold on;
+% title('r=train; k=base');
+%     CCAlltmp = cellfun(@transpose, CCAll, 'UniformOutput', 0);
+% for i=[1 3]
+%     lt_subplot(2,2,i); hold on;
+%     xlabel('local laerning (trial n+1 minus n)');
+%     ylabel('ffdev (usually trial n+2 minus trial n+1)');
+%
+%     pcol = pcollist{i};
+%
+%     ccall = cell2mat(CCAlltmp(:, i));
+% %
+% %     ccall = reshape(cell2mat(CCAll(:,i)), size(CCAll,1), []);
+%
+%     plot(lags, ccall, '-k');
+%     ymean = mean(ccall,1);
+%     ysem = lt_sem(ccall);
+%     x = 1:length(ymean);
+%
+%     lt_plot(lags, ymean, {'Errors', ysem, 'Color', pcol});
+%
+%     % ======
+%     lt_plot_zeroline;
+%     lt_plot_zeroline_vert;
+% end
+%
+%     % ======== subtract  base from train
+%     ccall_train = cell2mat(CCAlltmp(:, 1));
+%     ccall_base = cell2mat(CCAlltmp(:, 3));
+%
+%     ccnorm = ccall_train - ccall_base;
+%
+%     lt_subplot(2,2,4); hold on;
+%     xlabel('local laerning (trial n+1 minus n)');
+%     ylabel('ffdev (usually trial n+2 minus trial n+1)');
+%     title('train minus base');
+%     pcol = 'b';
+%
+%     plot(lags, ccnorm, '-k');
+%     ymean = mean(ccnorm,1);
+%     ysem = lt_sem(ccnorm);
+%     x = 1:length(ymean);
+%
+%     lt_plot(lags, ymean, {'Errors', ysem, 'Color', pcol});
+%
+%
+%
+%
+%
+%
+%
+%
+%
 
 
 

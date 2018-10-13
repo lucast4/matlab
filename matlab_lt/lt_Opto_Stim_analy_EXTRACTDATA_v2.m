@@ -1,5 +1,5 @@
 function [DatStructCompiled, Params]=lt_Opto_Stim_analy_EXTRACTDATA_v2(Params, ...
-    SepBySyl, savefigs)
+    SepBySyl, savefigs, plotfigs)
 
 % ==== if 1, then  will make an extra subdir specifying which syl this
 % analysis is for.
@@ -11,6 +11,7 @@ if ~exist('savefigs', 'var')
     savefigs = 1;
 end
 
+showfigs =1;
 %% LT 4/7/15 - v2 - modified saving so overwrites instead of making new subdir
 
 
@@ -433,138 +434,148 @@ end
 
 if isfield(SylDat, 'dat_otherchans') && strcmp(Params.ExptID, 'Stim')
     
-    % ========================= CONVERSION
-    AllDifferences_LaserOnset = []; % sanity check - rec file and pulse show same times?
-    AllDifferences_LaserOffset = [];
-    
-    LaserOnsets_CatchTrials = []; % sanity check - this should be empty
-    for i=1:length(SylDat)
+    try
+        % ========================= CONVERSION
+        AllDifferences_LaserOnset = []; % sanity check - rec file and pulse show same times?
+        AllDifferences_LaserOffset = [];
         
-        %     figure; hold on; lt_plot_histogram(SylDat(i).dat_otherchans{1}, '', 1, 1, '', 0, 'k');
-        
-        tmp = diff(SylDat(i).dat_otherchans{1});
-        
-        %     figure; hold on;
-        %     lt_plot_histogram(tmp, '', 1, 0, '', '', 'k')
-        
-        if max(tmp) > 100*median(abs(tmp)) & min(tmp) < -100*median(abs(tmp));
-            % then this is stim trial
-            ThrCrosses = midcross(SylDat(i).dat_otherchans{1}, Params.Fs);
-%             assert(mod(length(ThrCrosses), 2)==0, 'THR CROSSES FOR LASER NOT EVEN!');
-            if mod(length(ThrCrosses), 2)~=0
-                % then 'THR CROSSES FOR LASER NOT EVEN!. assume that first
-                % cross is onset of first stim...
-            LaserOnsets_secFromSegmentOn = ThrCrosses(1:2:end-2);
-            LaserOffsets_secFromSegmentOn = ThrCrosses(2:2:end-1);
+        LaserOnsets_CatchTrials = []; % sanity check - this should be empty
+        for i=1:length(SylDat)
+            
+            %     figure; hold on; lt_plot_histogram(SylDat(i).dat_otherchans{1}, '', 1, 1, '', 0, 'k');
+            
+            tmp = diff(SylDat(i).dat_otherchans{1});
+            
+            %     figure; hold on;
+            %     lt_plot_histogram(tmp, '', 1, 0, '', '', 'k')
+            
+            if max(tmp) > 100*median(abs(tmp)) & min(tmp) < -100*median(abs(tmp));
+                % then this is stim trial
+                ThrCrosses = midcross(SylDat(i).dat_otherchans{1}, Params.Fs);
+                %             assert(mod(length(ThrCrosses), 2)==0, 'THR CROSSES FOR LASER NOT EVEN!');
+                if mod(length(ThrCrosses), 2)~=0
+                    % then 'THR CROSSES FOR LASER NOT EVEN!. assume that first
+                    % cross is onset of first stim...
+                    LaserOnsets_secFromSegmentOn = ThrCrosses(1:2:end-2);
+                    LaserOffsets_secFromSegmentOn = ThrCrosses(2:2:end-1);
+                else
+                    LaserOnsets_secFromSegmentOn = ThrCrosses(1:2:end-1);
+                    LaserOffsets_secFromSegmentOn = ThrCrosses(2:2:end);
+                end
             else
-            LaserOnsets_secFromSegmentOn = ThrCrosses(1:2:end-1);
-            LaserOffsets_secFromSegmentOn = ThrCrosses(2:2:end);
+                LaserOnsets_secFromSegmentOn = [];
+                LaserOffsets_secFromSegmentOn = [];
             end
-        else
-            LaserOnsets_secFromSegmentOn = [];
-            LaserOffsets_secFromSegmentOn = [];
-        end
-        
-        SylDat(i).LaserOnsets_secFromSegmentOn = LaserOnsets_secFromSegmentOn;
-        SylDat(i).LaserOffsets_secFromSegmentOn = LaserOffsets_secFromSegmentOn;
-        
-        
-        % ================= CONFIRM THAT MATCHES TRIG ONSET EXTRACTED FROM REC
-        % FILE
-        lasernote = ['Note' num2str(Params.notenum_stim)];
-        laser_catch = SylDat(i).MostRecentTrig.(lasernote).TrigCatch;
-        laser_time_onset = 1000*Params.PreDur - SylDat(i).MostRecentTrig.(lasernote).TimeSince; % milseconds
-        
-        if ~isempty(laser_catch) & ~isempty(LaserOnsets_secFromSegmentOn);
-            if laser_catch == 1
-                % then there should be no pulse recorded
-                LaserOnsets_CatchTrials =[LaserOnsets_secFromSegmentOn'];
-                
-            else
-                pulseonset_recfile = laser_time_onset+Params.StimDelay;
-                AllDifferences_LaserOnset = [AllDifferences_LaserOnset ...
-                    pulseonset_recfile-1000*LaserOnsets_secFromSegmentOn(1)];
-                
-                pulseoffset_recfile = [laser_time_onset+Params.StimDelay + Params.StimDur];
-                AllDifferences_LaserOffset = [AllDifferences_LaserOffset ...
-                    pulseoffset_recfile-1000*LaserOffsets_secFromSegmentOn(end)];
-            end
-        else
-            % then no laser at all;
-            LaserOnsets_CatchTrials =[LaserOnsets_secFromSegmentOn'];
-        end
-        
-        
-        
-        % ==== TROUBLESHOOTING - overlay raw data, trigger time, and actual
-        % pulses (and digitally extracted pulses)
-        if (0)
-            figure; hold on;
             
-            lt_subplot(3,1,1); hold on;
-            plot(SylDat(i).datt, 'k');
-            plot(SylDat(i).dat_otherchans{1}, 'r');
+            SylDat(i).LaserOnsets_secFromSegmentOn = LaserOnsets_secFromSegmentOn;
+            SylDat(i).LaserOffsets_secFromSegmentOn = LaserOffsets_secFromSegmentOn;
             
             
-            
-            lt_subplot(3,1,2); hold on;
-            lt_plot_spectrogram(SylDat(i).datt, Params.Fs, 1, 1);
-            plot(1000*(1:length(SylDat(i).dat_otherchans{1}))/Params.Fs, SylDat(i).dat_otherchans{1}, 'g');
-            
-            %     LaserOnsetTime = SylDat(i). % in sec, relative to window on
-            %    SylDat.ttimes
+            % ================= CONFIRM THAT MATCHES TRIG ONSET EXTRACTED FROM REC
+            % FILE
             lasernote = ['Note' num2str(Params.notenum_stim)];
             laser_catch = SylDat(i).MostRecentTrig.(lasernote).TrigCatch;
             laser_time_onset = 1000*Params.PreDur - SylDat(i).MostRecentTrig.(lasernote).TimeSince; % milseconds
             
-            
-            if laser_catch==0
-                line([laser_time_onset laser_time_onset], ylim, 'Color', 'g');
-                lt_plot_text(laser_time_onset+20, 1000, ['STIM ON'], 'g');
-            else
-                line([laser_time_onset laser_time_onset], ylim, 'Color', 'b');
-                lt_plot_text(laser_time_onset+20, 1000, ['stim off (catch)'], 'b');
-                
-            end
-            
-            % ---- overlay extracted digital
-            if isempty(SylDat(i).LaserOnsets_secFromSegmentOn)
-                lt_plot_text(laser_time_onset+20, 2000, ['NO DIG stim extracted'], 'b');
-            else
-                % -- plot extracted digitals
-                for j=1:length(SylDat(i).LaserOnsets_secFromSegmentOn)
-                    line(1000*[SylDat(i).LaserOnsets_secFromSegmentOn(j) ...
-                        SylDat(i).LaserOffsets_secFromSegmentOn(j)], [5000 5000], 'Color', 'b',...
-                        'LineWidth', 2);
+            if ~isempty(laser_catch) & ~isempty(LaserOnsets_secFromSegmentOn);
+                if laser_catch == 1
+                    % then there should be no pulse recorded
+                    LaserOnsets_CatchTrials =[LaserOnsets_secFromSegmentOn'];
+                    
+                else
+                    pulseonset_recfile = laser_time_onset+Params.StimDelay;
+                    AllDifferences_LaserOnset = [AllDifferences_LaserOnset ...
+                        pulseonset_recfile-1000*LaserOnsets_secFromSegmentOn(1)];
+                    
+                    pulseoffset_recfile = [laser_time_onset+Params.StimDelay + Params.StimDur];
+                    AllDifferences_LaserOffset = [AllDifferences_LaserOffset ...
+                        pulseoffset_recfile-1000*LaserOffsets_secFromSegmentOn(end)];
                 end
+            else
+                % then no laser at all;
+                LaserOnsets_CatchTrials =[LaserOnsets_secFromSegmentOn'];
             end
             
-            pause; close all;
+            
+            
+            % ==== TROUBLESHOOTING - overlay raw data, trigger time, and actual
+            % pulses (and digitally extracted pulses)
+            if (0)
+                figure; hold on;
+                
+                lt_subplot(3,1,1); hold on;
+                plot(SylDat(i).datt, 'k');
+                plot(SylDat(i).dat_otherchans{1}, 'r');
+                
+                
+                
+                lt_subplot(3,1,2); hold on;
+                lt_plot_spectrogram(SylDat(i).datt, Params.Fs, 1, 1);
+                plot(1000*(1:length(SylDat(i).dat_otherchans{1}))/Params.Fs, SylDat(i).dat_otherchans{1}, 'g');
+                
+                %     LaserOnsetTime = SylDat(i). % in sec, relative to window on
+                %    SylDat.ttimes
+                lasernote = ['Note' num2str(Params.notenum_stim)];
+                laser_catch = SylDat(i).MostRecentTrig.(lasernote).TrigCatch;
+                laser_time_onset = 1000*Params.PreDur - SylDat(i).MostRecentTrig.(lasernote).TimeSince; % milseconds
+                
+                
+                if laser_catch==0
+                    line([laser_time_onset laser_time_onset], ylim, 'Color', 'g');
+                    lt_plot_text(laser_time_onset+20, 1000, ['STIM ON'], 'g');
+                else
+                    line([laser_time_onset laser_time_onset], ylim, 'Color', 'b');
+                    lt_plot_text(laser_time_onset+20, 1000, ['stim off (catch)'], 'b');
+                    
+                end
+                
+                % ---- overlay extracted digital
+                if isempty(SylDat(i).LaserOnsets_secFromSegmentOn)
+                    lt_plot_text(laser_time_onset+20, 2000, ['NO DIG stim extracted'], 'b');
+                else
+                    % -- plot extracted digitals
+                    for j=1:length(SylDat(i).LaserOnsets_secFromSegmentOn)
+                        line(1000*[SylDat(i).LaserOnsets_secFromSegmentOn(j) ...
+                            SylDat(i).LaserOffsets_secFromSegmentOn(j)], [5000 5000], 'Color', 'b',...
+                            'LineWidth', 2);
+                    end
+                end
+                
+                pause; close all;
+            end
+            
+            
         end
         
+        if plotfigs==1
+        if showfigs==0
+            f = figure('visible', 'off'); hold on;
+            
+        elseif showfigs==1
+            f = figure('visible', 'on'); hold on;
+        end
+        lt_subplot(3,1,1); hold on;
+        xlabel('onsets (rec file, accounting for delay minus dig input) (ms)');
+        if ~isempty(AllDifferences_LaserOnset)
+            lt_plot_histogram(AllDifferences_LaserOnset, '', 1, 0, '', '' ,'k');
+        end
         
-    end
-    
-    lt_figure; hold on;
-    lt_subplot(3,1,1); hold on;
-    xlabel('onsets (rec file, accounting for delay minus dig input) (ms)');
-    if ~isempty(AllDifferences_LaserOnset)
-    lt_plot_histogram(AllDifferences_LaserOnset, '', 1, 0, '', '' ,'k');
-    end
-    
-    lt_subplot(3,1,2); hold on;
-    xlabel('offsets (rec file, accounting for delay minus dig input) (ms)');
+        lt_subplot(3,1,2); hold on;
+        xlabel('offsets (rec file, accounting for delay minus dig input) (ms)');
         if ~isempty(AllDifferences_LaserOffset)
-lt_plot_histogram(AllDifferences_LaserOffset, '', 1, 0, '', '' ,'k');
+            lt_plot_histogram(AllDifferences_LaserOffset, '', 1, 0, '', '' ,'k');
         end
         
         lt_subplot(3,1,3); hold on;
         xlabel('THIS SHOULD BE EMPTY - laser onsets on catch trials(rec file) (ms)');
-    if ~isempty(LaserOnsets_CatchTrials)
-        lt_plot_histogram(LaserOnsets_CatchTrials, '', 1, 0, '', '' ,'k');
+        if ~isempty(LaserOnsets_CatchTrials)
+            lt_plot_histogram(LaserOnsets_CatchTrials, '', 1, 0, '', '' ,'k');
+            
+        end
+        end
+    catch err
+        % sometimes not all have this field...
     end
-    
-    
     % ==== REMOVE RAW SYLDAT
     SylDat = rmfield(SylDat, 'dat_otherchans');
     
@@ -590,10 +601,10 @@ catch err
 end
 
 % 2nd dir
-try 
+try
     cd(Params.ExptID);
 catch err
-    mkdir(Params.ExptID); 
+    mkdir(Params.ExptID);
     cd(Params.ExptID);
 end
 
@@ -614,15 +625,15 @@ end
 % if there is already a save file here, move it to old folder.
 FilesInDir=dir('*.mat');
 
-if length(FilesInDir)>0; 
+if length(FilesInDir)>0;
     
-    try 
+    try
         cd('OldAnalysis');
         
     catch err
         mkdir('OldAnalysis');
         cd('OldAnalysis');
-
+        
     end
     
     mkdir(['Moved_' savetime]);
@@ -642,8 +653,12 @@ fclose(fid1);
 mkdir('FIGURES')
 cd('FIGURES')
 if savefigs==1
-mkdir('ExtractData');
-lt_save_all_figs
+    mkdir('ExtractData');
+    if showfigs==0
+        saveas(f, 'figure1', 'fig');
+    else
+        lt_save_all_figs;
+    end
 end
 cd ..
 

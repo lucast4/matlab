@@ -26,11 +26,11 @@ if shuffSylType==1
                     
                     if shuffonlynontargs==1
                         % -- then only get nontargs
-                    indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
-                        & OUTDAT.All_neurnum==nn & OUTDAT.All_istarg==0);
+                        indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
+                            & OUTDAT.All_neurnum==nn & OUTDAT.All_istarg==0);
                     elseif shuffonlynontargs==0
-                    indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
-                        & OUTDAT.All_neurnum==nn);
+                        indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
+                            & OUTDAT.All_neurnum==nn);
                     end
                     
                     if ~any(indsthis)
@@ -38,13 +38,14 @@ if shuffSylType==1
                     end
                     
                     % ================ SHUFFLE INDS AND REPLACE SYL TYPES
+%                     disp(['shuff: ' num2str(i) '-' num2str(ii) '-' num2str(ss) '-' num2str(nn)]);
                     indstmp = indsthis(randperm(length(indsthis)));
-%                     disp([num2str(indstmp') '-' num2str(indsthis')]);
+                    %                     disp([num2str(indstmp') '-' num2str(indsthis')]);
                     OUTDAT.All_issame(indsthis) = OUTDAT.All_issame(indstmp);
                     OUTDAT.All_istarg(indsthis) = OUTDAT.All_istarg(indstmp);
                     OUTDAT.All_motifnum(indsthis) = OUTDAT.All_motifnum(indstmp);
-%                     OUTDAT.All_FF(indsthis, :) = OUTDAT.All_FF(indstmp, :);
-%                     OUTDAT.All_FF_t(indsthis, :) = OUTDAT.All_FF_t(indstmp, :);
+                    %                     OUTDAT.All_FF(indsthis, :) = OUTDAT.All_FF(indstmp, :);
+                    %                     OUTDAT.All_FF_t(indsthis, :) = OUTDAT.All_FF_t(indstmp, :);
                     
                 end
             end
@@ -61,7 +62,7 @@ AllMinusAllMinusDiff_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % above, on
 AllOnlyMinusDiff_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then abs dev from mean of diff type
 % --- not absolute balues
 AllDevDiff_NotAbs = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then dev from mean of diff typ
-
+AllDevAll_NotAbs = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then dev from mean of all syls
 
 for i=1:numbirds
     
@@ -99,6 +100,7 @@ for i=1:numbirds
                 
                 % ############################# DEVIATION FROM DIFF TYPE
                 YdevFromDiff = Yall - mean(Yall(:, Sameall==0 & Targall==0), 2);
+                YdevFromAll = Yall - mean(Yall, 2);
                 
                 % ############################# ABSOLUTE VALUES
                 % === for each one, get absolute value deviation from mean
@@ -121,6 +123,7 @@ for i=1:numbirds
                     % ===== not absoute values
                     AllOnlyMinusBase_FRsmooth{indsthis(j)} = Yall_orig(:,j)';
                     AllDevDiff_NotAbs{indsthis(j)} = YdevFromDiff(:,j);
+                    AllDevAll_NotAbs{indsthis(j)} = YdevFromAll(:,j);
                     
                     % === absolute values
                     AllMinusAll_FRsmooth{indsthis(j)} = Yall(:,j)';
@@ -132,11 +135,13 @@ for i=1:numbirds
         end
     end
 end
+OUTDAT.AllDevAll_NotAbs = AllDevAll_NotAbs;
 OUTDAT.AllDevDiff_NotAbs = AllDevDiff_NotAbs;
 OUTDAT.AllOnlyMinusBase_FRsmooth = AllOnlyMinusBase_FRsmooth;
 OUTDAT.AllMinusAll_FRsmooth = AllMinusAll_FRsmooth;
 OUTDAT.AllMinusAllMinusDiff_FRsmooth = AllMinusAllMinusDiff_FRsmooth;
 OUTDAT.AllOnlyMinusDiff_FRsmooth = AllOnlyMinusDiff_FRsmooth;
+
 
 
 %%

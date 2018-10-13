@@ -1,6 +1,6 @@
 function [fnames, sylnum, vlsorfn, vlsorind]=lt_autolabel_EvTAFv4(batch, ...
     config, syl, NoteNum, ampThresh, min_dur, min_int, overwrite_notmat, ...
-    skipWAV)
+    skipWAV, sm_win)
 %% can choose to make wav or not - for FP check (dafault is to make)
 if ~exist('skipWAV', 'var')
     skipWAV = [];
@@ -9,6 +9,13 @@ if isempty(skipWAV)
     skipWAV = 1;
 end
 
+
+if ~exist('sm_win', 'var')
+    sm_win = [];
+end
+if isempty(sm_win)
+    sm_win = 2.0; % ms.
+end
 
 %% LT 5/18/15 - Autolabel song files by using simulation of evtafv4. given template files (in .evconfig format), assigns any detects as the desired syllable
 % e.g. inputs:
@@ -40,7 +47,7 @@ end
 %% Default params
 
 CHANSPEC='obs0'; % for opening labview files
-sm_win=2; % used for saving notmat
+% sm_win=2; % used for saving notmat
 
 SylBoundsAdd=16; % in ms, how much time to remove from onset and add to offset in permissive window for labeling? I make it 0.016s (2 fft bins)
 % this is useful for the time when a syl is fragmented (e.g. problem
@@ -117,7 +124,7 @@ while (1)
         
         % then create new notmat
         [datFull,fs]=evsoundin('',fn,CHANSPEC);
-        sm=SmoothData(datFull,fs,1,'hanningfirff');
+        sm=SmoothData(datFull,fs,1,'hanningfirff', 512, 0.8, sm_win);
         sm(1)=0.0; sm(end)=0.0;
         [ons,offs]=SegmentNotesJC(sm,fs,min_int,min_dur,ampThresh);
         onsets=ons*1e3;offsets=offs*1e3;
@@ -133,7 +140,7 @@ while (1)
             
             % then create new notmat
             [datFull,fs]=evsoundin('',fn,CHANSPEC);
-            sm=SmoothData(datFull,fs,1,'hanningfirff');
+            sm=SmoothData(datFull,fs,1,'hanningfirff', 512, 0.8, sm_win);
             sm(1)=0.0;sm(end)=0.0;
             [ons,offs]=SegmentNotesJC(sm,fs,min_int,min_dur,ampThresh);
             onsets=ons*1e3;offsets=offs*1e3;
@@ -204,6 +211,11 @@ eval(['!cp ' batch ' ' batch_new])
 if skipWAV==0
 [fnames, sylnum]=lt_jc_chcklbl(batch, syl.targ, 0.025,0.025,'','','');
 [vlsorfn vlsorind]=jc_vlsorfn(batch, syl.targ,'','');
+else
+    fnames = [];
+    sylnum = [];
+    vlsorfn = [];
+    vlsorind = [];
 end
 % Troubleshooting, enter syl name you want to find song of.
 % [fnames, sylnum]=lt_jc_chcklbl(batch,'x', 0.025,0.025,'','','');

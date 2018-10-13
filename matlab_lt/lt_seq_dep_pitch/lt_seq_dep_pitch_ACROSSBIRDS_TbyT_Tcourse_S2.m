@@ -425,7 +425,10 @@ for i=1:Numbirds
                 
             end
             
-            
+%             if std(cell2mat(ffdev))>500
+%                 disp('STOPPED');
+%                 keyboard
+%             end
             DATBYREND.FF_dev = [DATBYREND.FF_dev; ffdev];
             DATBYREND.Time_dev = [DATBYREND.Time_dev; timedev];
             DATBYREND.Time_dev_targ = [DATBYREND.Time_dev_targ; timedev_TARG];
@@ -470,8 +473,13 @@ for i=1:Numbirds
 %                 if i==1 & ii==4
 %                     keyboard
 %                 end
+try
             nhits = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nhits;
             nmiss = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nmiss;
+catch err
+    nhits = nan;
+    nmiss = nan;
+end
           DATBYREND.WN_hits = [DATBYREND.WN_hits; nhits];
           DATBYREND.WN_miss = [DATBYREND.WN_miss; nmiss];
 

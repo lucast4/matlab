@@ -148,71 +148,50 @@ for i=1:NumStructs
     
     
     % CHANGE NAMES TO FIT FOLLOWING CODE:
-    % === 2 versions, dependiong on what code was used to extract
-    % statistics before running this code.
-    if any(strcmp(trialfields, 'NotStim_StimCatch'))
-        %% THEN is NEW version (stim day). should have exactly 2 fields:
-        % NotStim_StimCatch and StimNotCatch
-%         assert(length(trialfields)==2);
-%         assert(any(strcmp(trialfields, 'StimNotCatch')));
-        % =========== CHANGE THE NAME TO StimCatch to match old plotting
-        % conventions in this function
-        sts.StatsStruct.StimCatch = sts.StatsStruct.NotStim_StimCatch;
-        sts.StatsStruct = rmfield(sts.StatsStruct, 'NotStim_StimCatch');
-    elseif length(trialfields)==1
-        % --- then should be a nonstim day... [could be new or old version.
-        assert(strcmp(trialfields{1}, 'All'));
-    else
-        %% THEN MUST BE OLD VERSION (stim day)::
-        % change NotStim to StimCatch
-        if any(strcmp(trialfields,'NotStim'))
-            % make sure StimCatch does not already exist;
-            if ~any(strcmp(trialfields,'StimCatch'))
-                % stimnotcatch is not there
-                sts.StatsStruct.StimCatch=sts.StatsStruct.NotStim;
-                sts.StatsStruct=rmfield(sts.StatsStruct,'NotStim');
-            else
-                %             % ============= combine them
-                %             tmp_stimcatch = sts.StatsStruct.StimCatch;
-                %             tmp_notstim = sts.StatsStruct.NotStim;
-                %
-                %             windlist = fieldnames(tmp_stimcatch.WINDOWED);
-                %             for jjj=1:length(windlist)
-                %                 windthis = windlist{jjj};
-                %
-                %                 t = [tmp_stimcatch.WINDOWED.(windthis).Time         tmp_notstim.WINDOWED.(windthis).Time];
-                %                 ff = [tmp_stimcatch.WINDOWED.(windthis).Pitch       tmp_notstim.WINDOWED.(windthis).Pitch];
-                %                 ampl = [tmp_stimcatch.WINDOWED.(windthis).Ampl      tmp_notstim.WINDOWED.(windthis).Ampl];
-                %                 WE = [tmp_stimcatch.WINDOWED.(windthis).WEntropy    tmp_notstim.WINDOWED.(windthis).WEntropy];
-                %
-                %                 %
-                %             end
-                %
-                % stimnotcatch already exists
-                lt_figure; hold on;
-                lt_plot_text(0.5,0.5, ...
-                    'NotStim and StimCatch in same day of structure - will keep both instead of overwriting NotStim (i.e. will not plot NotStim)', 'r');
-                %             disp('problem - both NotStim and StimCatch in same day of structure - will overwrite, need to modify code to support this')
-            end
+    % change NotStim to StimCatch
+    if any(strcmp(trialfields,'NotStim'))
+        % make sure StimCatch does not already exist;
+        if ~any(strcmp(trialfields,'StimCatch'))
+            % stimnotcatch is not there
+            sts.StatsStruct.StimCatch=sts.StatsStruct.NotStim;
+            sts.StatsStruct=rmfield(sts.StatsStruct,'NotStim');
+        else
+%             % ============= combine them
+%             tmp_stimcatch = sts.StatsStruct.StimCatch;
+%             tmp_notstim = sts.StatsStruct.NotStim;
+%             
+%             windlist = fieldnames(tmp_stimcatch.WINDOWED);
+%             for jjj=1:length(windlist)
+%                 windthis = windlist{jjj};
+%                 
+%                 t = [tmp_stimcatch.WINDOWED.(windthis).Time         tmp_notstim.WINDOWED.(windthis).Time];
+%                 ff = [tmp_stimcatch.WINDOWED.(windthis).Pitch       tmp_notstim.WINDOWED.(windthis).Pitch];
+%                 ampl = [tmp_stimcatch.WINDOWED.(windthis).Ampl      tmp_notstim.WINDOWED.(windthis).Ampl];
+%                 WE = [tmp_stimcatch.WINDOWED.(windthis).WEntropy    tmp_notstim.WINDOWED.(windthis).WEntropy];
+%                 
+%                 % 
+%             end
+%             
+            % stimnotcatch already exists
+            lt_figure; hold on;
+            lt_plot_text(0.5,0.5, ...
+                'NotStim and StimCatch in same day of structure - will keep both instead of overwriting NotStim (i.e. will not plot NotStim)', 'r');
+%             disp('problem - both NotStim and StimCatch in same day of structure - will overwrite, need to modify code to support this')
         end
-        
-        % change Stim to StimNotCatch
-        if any(strcmp(trialfields,'Stim'));
-            % make sure StimNotCatch does not already exist;
-            if ~any(strcmp(trialfields,'StimNotCatch'));
-                % stimnotcatch is not there
-                sts.StatsStruct.StimNotCatch=sts.StatsStruct.Stim;
-                sts.StatsStruct=rmfield(sts.StatsStruct,'Stim');
-            else
-                % stimnotcatch already exists
-                disp('problem - both Stim and StimNotCatch in same day of structure - will onlyo plot StimNotCatch')
-            end
-        end
-        
     end
     
-
-    % if bot
+    % change Stim to StimNotCatch
+    if any(strcmp(trialfields,'Stim'));
+        % make sure StimNotCatch does not already exist;
+        if ~any(strcmp(trialfields,'StimNotCatch'));
+            % stimnotcatch is not there
+            sts.StatsStruct.StimNotCatch=sts.StatsStruct.Stim;
+            sts.StatsStruct=rmfield(sts.StatsStruct,'Stim');
+        else
+            % stimnotcatch already exists
+            disp('problem - both Stim and StimNotCatch in same day of structure - will onlyo plot StimNotCatch')
+        end
+    end
     
     
     % Get current trial fields
@@ -289,7 +268,7 @@ NumDays=PARAMS.global.LastDate_num-PARAMS.global.FirstDate_num+1;
 % time fields (makes compatible with stuff below that finds stim epochs
 % assuming all time windows have same trial inds
 
-for ii=1:NumDays
+for ii=1:NumDays;
     if ~isempty(DATSTRUCT.data{ii})
         % how many trial types today? e.g. StimCatch
         trialtypes=fieldnames(DATSTRUCT.data{ii}.timewindow{1});
@@ -404,9 +383,9 @@ end
 
 %% COMBINE ALL NON-STIM DATA (i.e. stim catch and not-stim) AND SMOOTH that data
 
-for i=1:length(TimeFieldsOfInterest) % for each window of interest
+for i=1:length(TimeFieldsOfInterest); % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
-    for ii=1:NumDays
+    for ii=1:NumDays;
         if ~isempty(DATSTRUCT.data{ii})
             
             % how many trial types today? e.g. StimCatch
@@ -428,10 +407,6 @@ for i=1:length(TimeFieldsOfInterest) % for each window of interest
                 
                 Y_baseline=DATSTRUCT.data{ii}.timewindow{i}.StimCatch.(statfield);
                 T_baseline=DATSTRUCT.data{ii}.timewindow{i}.StimCatch.timevals;
-            elseif sum(strcmp(trialtypes,'All'))==0 && sum(strcmp(trialtypes,'NotStim_StimCatch'))==1;
-                
-                Y_baseline=DATSTRUCT.data{ii}.timewindow{i}.NotStim_StimCatch.(statfield);
-                T_baseline=DATSTRUCT.data{ii}.timewindow{i}.NotStim_StimCatch.timevals;
             end
             
             % sort them so in temporal order
@@ -449,7 +424,7 @@ end
 
 
 %% DETECT STIMULATION EPOCHS (any stimulation that is preceded by a non-stim epoch)
-try
+
 % Tvals_diff_TOT=[]; % accumulates all diffs, across days
 % for i=1:length(TimeFieldsOfInterest); % for each window of interest
 %     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
@@ -695,10 +670,6 @@ for ii=1:NumDays;
             
         end
     end
-end
-catch err
-    figure; hold on;
-    lt_plot_text(0,0.5, 'skip stimepoch (catch err)');
 end
 
 

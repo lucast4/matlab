@@ -51,7 +51,8 @@ collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract au
     collectWNhit, 0, 1, 0, 1, 1, [], Params_regexp);
 
 
-% =========== PICK OUT SAME TYPE/DIFF [LEANRING SPECIFIC]
+%% =========== [PREPROCESSING REQUIRED]
+% =============== PICK OUT SAME TYPE/DIFF [LEANRING SPECIFIC]
 numbirds = length(MOTIFSTATS_Compiled.birds);
 for i=1:numbirds
     birdname = MOTIFSTATS_Compiled.birds(i).birdname;
@@ -85,7 +86,7 @@ end
 
 
 
-% ==== FOR EACH LEARNING EXPERIMENT, PLOT TIMELINE OF NEURONS AND LEARNING
+%% ==== FOR EACH LEARNING EXPERIMENT, PLOT TIMELINE OF NEURONS AND LEARNING
 close all;
 NumBirds = length(SummaryStruct.birds);
 for i=1:NumBirds
@@ -116,7 +117,18 @@ for i=1:NumBirds
     end
 end
 
+%% ======================== PLOT LEARNING (hz), SIMPLE VERSION
+bnum = 1;
+enum = 1;
 
+summarystruct_tmp = MOTIFSTATS_Compiled.birds(bnum).exptnum(enum).SummaryStruct;
+motifstats = MOTIFSTATS_Compiled.birds(bnum).exptnum(enum).MOTIFSTATS;
+
+exptname = MOTIFSTATS_Compiled.birds(bnum).exptnum(enum).exptname;
+birdname = MOTIFSTATS_Compiled.birds(bnum).birdname;
+
+lt_neural_v2_ANALY_LearningPlot1(summarystruct_tmp, motifstats);
+title([birdname '-' exptname]);
 %% ================================== PLOT LEARNING (ALL SYLS)
 close all
 MeanSubtract =1; % subtract baseline mean?
@@ -251,10 +263,10 @@ lt_neural_v2_ANALY_Swtch_Tcourse(MOTIFSTATS_Compiled, SwitchStruct, ...
 
 
 % ========================= TIMECOURSES, BINNING BY TIME, showing smoothed
-% FR and rasters
+% FR and rasters [GOOD]
 close all;
-birdname_get = 'wh44wh39'; % keep empty if want all.
-exptname_get = 'RALMANlearn4';
+birdname_get = 'pu69wh78'; % keep empty if want all.
+exptname_get = 'RALMANlearn1';
 switchnum_get = [1];
 plotneurzscore=0;
 FFzscore =1;
@@ -287,7 +299,7 @@ close all;
 birdname_get = ''; % JUST FOR PLOTTING
 exptname_get = ''; 
 switchnum_get = [];
-Bregion = {'LMAN'};
+Bregion = {'RA'};
 plotneurzscore=0;
 FFzscore =1;
 onlyPlotTargNontarg=1;
@@ -408,9 +420,9 @@ lt_neural_v2_ANALY_Swtch_LME(DATSylMot)
 clear OUTDAT
 % *************************************** EXTRACTION
 onlyFirstSwitch = 0; % then only first switch...
-onlyIfSameTarg = 1; % only if targ are all same sylalbl;es
+onlyIfSameTarg = 1; % only if targ are all same sylalbles
 % BirdsToPlot = {'pu69wh78', 'wh44wh39'};
-BrainLocation = {'RA'};
+BrainLocation = {'LMAN'};
 BirdsToPlot = {};
 % BrainLocation = {};
 throwoutlonggap = 0; % gap betwen end of base and start of train.
@@ -435,39 +447,55 @@ OUTDAT = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffSylType, .
     epochtoplot, plotOn);
 
 
+
 % *************************************** PLOTS
+% ####################### PLOTTING RAW DATA
 % ============== PLOT ALL NEURONS/MOTIFS [FIRING RATE]
 close all;
 lt_neural_v2_ANALY_FRsmooth_Plot(OUTDAT, MOTIFSTATS_Compiled, SwitchStruct)
 
 % =========== 2) PLOT EACH DATAPOINT (i.e. raw dat)
 % epochtoplot = 3; % i.e. out of the epochs decided by prctile_divs
+close all
+plotDevFromBase =0;
+plotNormMeasures = 1;
 lt_neural_v2_ANALY_FRsmooth_BasePlots(OUTDAT, MOTIFSTATS_Compiled, ...
-    SwitchStruct, epochtoplot)
-
-% ========== 3) SUMMARY ANALYSIS 
-% NOTE, CAN COMPARE TO SHUFFLE AS WELL
-close all;
-% -- what epoch to plot (dividing up learning into percentiles)
-analytype = 'AllOnlyMinusDiff_FRsmooth';
-doShuff=1;
-syltypesneeded = [1 1 1];
-lt_neural_v2_ANALY_FRsmooth_BaseMinu(OUTDAT, SwitchStruct, ...
-    epochtoplot, analytype, doShuff, syltypesneeded);
+    SwitchStruct, epochtoplot, plotDevFromBase, plotNormMeasures)
 
 % ========== 4) PLOT RAW DAT, INCLUDING DERIVED MEASURES
 close all;
 % corrwindow = [-0.04 0.06];
-corrwindow = [-0.11 0.01];
+% corrwindow = [-0.11 0.01];
+corrwindow = [-0.08 0.03];
 dontclosefig=1;
 ignoreDiff = 1;
 lt_neural_v2_ANALY_FRsmooth_Plot2(OUTDAT, MOTIFSTATS_Compiled, SwitchStruct, ...
     corrwindow, dontclosefig, ignoreDiff);
 
-% ================= SUMMARIZE - PREDICT FR CHANGE BASED ON LEARNING?
+% =========== SUMMARY OF DATA THAT IS COLELCTED (I.E. TIMING, NUM SWITCHES,
+% ETC)
+
+
+
+% ########################## SUMMARY ANALYSES
+% ========== 3) ABSOLUTE VALUE OF LEARNING GREATER AT TARGET? 
+% NOTE, CAN COMPARE TO SHUFFLE AS WELL
 close all;
-corrwindow = [-0.08 0.04];
-corrwindow = [-0.05 0.05];
+% -- what epoch to plot (dividing up learning into percentiles)
+analytype = 'AllOnlyMinusDiff_FRsmooth';
+% analytype = 'AllMinusAll_FRsmooth';
+doShuff=1;
+syltypesneeded = [1 0 1];
+premotorwind = [-0.08 0.03];
+nshuffs = 1000;
+lt_neural_v2_ANALY_FRsmooth_BaseMinu(OUTDAT, SwitchStruct, ...
+    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs);
+
+
+% ========== 4) PREDICT FR CHANGE BASED ON LEARNING?
+close all;
+corrwindow = [-0.08 0.03];
+% corrwindow = [-0.05 0.05];
 syltypesneeded = [1 0 1];
 analytoplot = 'AllDevDiff_NotAbs';
 % analytoplot = 'AllMinusBase_FRmeanAll';
@@ -475,7 +503,7 @@ syltoplot = 'targ';
 % syltypesneeded = [1 1 1];
 docorrvsdiff = 1; % default is 1 
 onlyPlotIfAllTargSameDir=1;
-onlyIfLearnCorrectDir = 1; % onoy applies to summary plots
+onlyIfLearnCorrectDir = 0; % onoy applies to summary plots
 doregression = 0; % mixed effects model.
 plotRaw = 0; % i.e. each experiment broken out.
 plotSummary = 1;
@@ -485,25 +513,26 @@ OutStruct = lt_neural_v2_ANALY_FRsmooth_PredLearn(OUTDAT, MOTIFSTATS_Compiled, .
     doregression, plotRaw, plotSummary);
 
 
-% ######################### TO ITERATE OVER MULTIPLE TIME WINDOWS 
+% ------------  TO ITERATE OVER MULTIPLE TIME WINDOWS 
 % [USES ABOVE CODE]
 close all;
 timeshift = 0.01;
-windsize = 0.1;
+windsize = 0.08;
 syltoplot = 'targ';
 syltypesneeded = [1 0 1];
 analytoplot = 'AllDevDiff_NotAbs';
-onlyIfLearnCorrectDir = 0;
+onlyIfLearnCorrectDir = 1;
 lt_neural_v2_ANALY_FRsmooth_PredLMult(OUTDAT, MOTIFSTATS_Compiled, ...
     SwitchStruct, syltoplot, timeshift, windsize, syltypesneeded, ...
     epochtoplot, analytoplot, onlyIfLearnCorrectDir);
 
-% ######################## TO ITERATE OVER MULTIPLE TIME WINDOWS AND EPOCHS
+% --------- TO ITERATE OVER MULTIPLE TIME WINDOWS AND EPOCHS
 % [USES ABOVE CODE]
 lt_neural_v2_ANALY_FRsmooth_PredLMult2
 
 
-% ####################### [v1] CHANGE IN FR SIMILAR FOR SAME TYPE?
+
+% =============== [v1] CHANGE IN FR SIMILAR FOR SAME TYPE?
 timewind = [-0.08 0.02];
 onlyifonetarget = 1; % haven't coded up for two targets yet..
 usediffFromBase = 1; % if 0, then also norms to global drift.
@@ -511,19 +540,43 @@ syltypesneeded = [1 1 1];
 lt_neural_v2_ANALY_FRsmooth_CompSylTypes(OUTDAT, MOTIFSTATS_Compiled, ...
     SwitchStruct, timewind, onlyifonetarget, usediffFromBase, syltypesneeded);
 
+
+
 % ###################### [v2] COMPARE SYLTYPES
 close all;
-nshuff = 1000;
+nshuff = 5000;
 usediffFromBase = 1; % if 0, then also norms to global drift.
-[rhomean_dat, rhomean_shuff] = lt_neural_v2_ANALY_FRsmooth_CompSylTypes3(OUTDAT,...
-    SwitchStruct, MOTIFSTATS_Compiled, nshuff, usediffFromBase);
+plotdifftype = 1;
+[rhomean_dat, rhomean_shuff, rhomean_dat_diff, rhomean_shuff_diff] ...
+    = lt_neural_v2_ANALY_FRsmooth_CompSylTypes3(OUTDAT,...
+    SwitchStruct, MOTIFSTATS_Compiled, nshuff, usediffFromBase, plotdifftype, ...
+    epochtoplot);
+
+
 lt_figure; hold on;
+
+% ==== 1) 
+lt_subplot(2,2,1); hold on;
 title('shuff and dat');
-xlabel('corr with targ fr smooth');
+xlabel('targ-same corr');
 lt_plot_histogram(rhomean_shuff)
 line([rhomean_dat rhomean_dat], ylim, 'Color', 'r');
-p = (sum(rhomean_shuff>rhomean_dat)+1)/(nshuff+1);
+p = (sum(rhomean_shuff>=rhomean_dat)+1)/(nshuff+1);
 lt_plot_pvalue(p, 'vs shuff', 1);
+
+% ==== 2)
+lt_subplot(2,2,2); hold on;
+title('shuff and dat');
+xlabel('[targ-smae corr] - [targ-diff corr]');
+diffshuff = rhomean_shuff - rhomean_shuff_diff;
+diffdat = rhomean_dat - rhomean_dat_diff;
+lt_plot_histogram(diffshuff);
+line([diffdat diffdat],  ylim, 'Color', 'r');
+p = (sum(diffshuff>=diffdat)+1)./(nshuff+1);
+lt_plot_pvalue(p, 'vs shuff', 1);
+
+
+
 % ***************************************************************
 % TROUBLESHOOTING - to plot time points for all trials.
 if (0)

@@ -1,4 +1,9 @@
-function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_Compare2(DatStructCompiled,Params)
+function [StatsStruct, Params]=lt_Opto_Stim_analy_PLOT_Compare2(DatStructCompiled,Params, ...
+    plotfigs)
+
+if ~exist('plotfigs', 'var')
+    plotfigs=1;
+end
 %% LT 4/30/15 - stopped saving spectrograms, takes up too much memory.
 
 %% LT 4/7/15 - v2, saves overwriting old stuff in directory, instead of making new subdirectory
@@ -148,78 +153,83 @@ end
 tPC=Params.tf_bins.tPC;
 tSP=Params.tf_bins.tSP;
 fSP=Params.tf_bins.fSP;
-
-for iii=1:NumFields;
-    
-    fieldname=Params.FieldsToCheck{iii};
-    NumSyls=length(DatStructCompiled.(fieldname));
-    figure; hold on;
-    
-    % 1) PC
-    PC=StatsStruct.(fieldname).PC;
-    
-    
-    h1(1)=subplot(4,1,1); hold on;
-    plot(tPC*1000,PC,'LineStyle','--','Color',[0.6 0.6 0.6]) % plot all pitch contours in light shade
-    plot(tPC*1000,mean(PC'),'Linewidth',2)
-    ylabel('Frequency (Hz)')
-    title([fieldname ': Pitch contours, Specgram, W.Entropy, and Amplitude. n=' num2str(NumSyls) '.']);
-    xlim([tPC(1)*1000 tPC(end)*1000])
-    
-    % 2) SPEC
-    sp_mean=StatsStruct.(fieldname).sp_mean;
-    
-    
-    % first, convert any sp values of 0 to non-zero(to the lowest value present);
-    % solves problem of taking log of 0
-    pp=find(sp_mean>0);
-    mntmp = min(min(sp_mean(pp)));
-    pp=find(sp_mean==0);
-    sp_mean(pp) = mntmp;
-    
-    % second, take log
-    sptemp=log(sp_mean);
-    sptemp = sptemp - min(min(sptemp));
-    sptemp = uint8(((2^8) - 1)*(sptemp./max(max(sptemp)))); % SAVE SOME MEMORY 8X less than 64 bit double
-    
-    h1(2)=subplot(4,1,2); hold on;
-    imagesc(tSP*1000, fSP, sptemp);
-    ylabel('Frequency (hz)');
-    axis([tSP(1) tSP(end) fSP(1) fSP(end)]);
-    
-    
-    
-    % 3) Weiner Entropy
-    h1(3)=subplot(4,1,3); hold on;
-    WE=StatsStruct.(fieldname).WEntropyTimecourse;
-    
-    plot(tSP*1000,WE,'LineStyle','--','Color',[0.6 0.6 0.6]);
-    plot(tSP*1000,mean(WE,2),'Linewidth',2,'Color','r'); % mean
-    
-    ylabel('(log) Weiner Entropy (-inf to 0)');
-    
-    
-    
-    % 4) Amplitude
-    sm_log_mean=StatsStruct.(fieldname).sm_log_mean;
-    sm_log=StatsStruct.(fieldname).sm_log;
-
-    tSM=linspace(tSP(1),tSP(end),length(sm_log_mean));
-    h1(4)=subplot(4,1,4); hold on;
-    
-    % individual contours
-    plot(tSM*1000,sm_log,'LineStyle','--','Color',[0.6 0.6 0.6]); % individual contours
-    plot(tSM*1000,sm_log_mean','Linewidth',2); % mean
-    ylabel('Smoothed Amplitude (log scale)')
-    xlim([tSP(1) tSP(end)])
-    xlabel(['Time (ms); aligned at ' num2str(PreDur) 'ms'])
-    
-    
-    lt_Opto_Stim_analy_PLOT_Compare2_PLOTSTIMS
-    linkaxes(h1,'x');
-    
+if plotfigs==1
+    for iii=1:NumFields;
+        
+        fieldname=Params.FieldsToCheck{iii};
+        NumSyls=length(DatStructCompiled.(fieldname));
+        figure; hold on;
+        
+        % 1) PC
+        PC=StatsStruct.(fieldname).PC;
+        
+        
+        h1(1)=subplot(4,1,1); hold on;
+        plot(tPC*1000,PC,'LineStyle','--','Color',[0.6 0.6 0.6]) % plot all pitch contours in light shade
+        plot(tPC*1000,mean(PC'),'Linewidth',2)
+        ylabel('Frequency (Hz)')
+        title([fieldname ': Pitch contours, Specgram, W.Entropy, and Amplitude. n=' num2str(NumSyls) '.']);
+        xlim([tPC(1)*1000 tPC(end)*1000])
+        
+        % 2) SPEC
+        sp_mean=StatsStruct.(fieldname).sp_mean;
+        
+        
+        % first, convert any sp values of 0 to non-zero(to the lowest value present);
+        % solves problem of taking log of 0
+        pp=find(sp_mean>0);
+        mntmp = min(min(sp_mean(pp)));
+        pp=find(sp_mean==0);
+        sp_mean(pp) = mntmp;
+        
+        % second, take log
+        sptemp=log(sp_mean);
+        sptemp = sptemp - min(min(sptemp));
+        sptemp = uint8(((2^8) - 1)*(sptemp./max(max(sptemp)))); % SAVE SOME MEMORY 8X less than 64 bit double
+        
+        h1(2)=subplot(4,1,2); hold on;
+        imagesc(tSP*1000, fSP, sptemp);
+        ylabel('Frequency (hz)');
+        axis([tSP(1) tSP(end) fSP(1) fSP(end)]);
+        
+        
+        
+        % 3) Weiner Entropy
+        h1(3)=subplot(4,1,3); hold on;
+        WE=StatsStruct.(fieldname).WEntropyTimecourse;
+        
+        plot(tSP*1000,WE,'LineStyle','--','Color',[0.6 0.6 0.6]);
+        plot(tSP*1000,mean(WE,2),'Linewidth',2,'Color','r'); % mean
+        
+        ylabel('(log) Weiner Entropy (-inf to 0)');
+        
+        
+        
+        % 4) Amplitude
+        sm_log_mean=StatsStruct.(fieldname).sm_log_mean;
+        sm_log=StatsStruct.(fieldname).sm_log;
+        
+        tSM=linspace(tSP(1),tSP(end),length(sm_log_mean));
+        h1(4)=subplot(4,1,4); hold on;
+        
+        % individual contours
+        plot(tSM*1000,sm_log,'LineStyle','--','Color',[0.6 0.6 0.6]); % individual contours
+        plot(tSM*1000,sm_log_mean','Linewidth',2); % mean
+        ylabel('Smoothed Amplitude (log scale)')
+        xlim([tSP(1) tSP(end)])
+        xlabel(['Time (ms); aligned at ' num2str(PreDur) 'ms'])
+        
+        
+        lt_Opto_Stim_analy_PLOT_Compare2_PLOTSTIMS
+        linkaxes(h1,'x');
+        
+    end
+else
+% just to get for params
+fieldname=Params.FieldsToCheck{1};
+        sm_log_mean=StatsStruct.(fieldname).sm_log_mean;
+        tSM=linspace(tSP(1),tSP(end),length(sm_log_mean));
 end
-
 Params.tf_bins.tSM=tSM;
 
 %% PLOT - OVERLAY FIELDS ON SAME PLOT

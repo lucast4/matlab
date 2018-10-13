@@ -1,7 +1,11 @@
-function All_RhoTargSame = lt_neural_v2_ANALY_FRsmooth_CompSylTypes2(OUTDAT, MOTIFSTATS_Compiled, ...
-    SwitchStruct, timewind, usediffFromBase, syltypesneeded, plotOn)
+function [All_RhoTargSame, All_RhoTargDiff] = lt_neural_v2_ANALY_FRsmooth_CompSylTypes2(OUTDAT, MOTIFSTATS_Compiled, ...
+    SwitchStruct, timewind, usediffFromBase, syltypesneeded, plotOn, collectDiffType, epochtoplot)
 if ~exist('plotOn', 'var')
     plotOn = 1;
+end
+
+if ~exist('collectDiffType', 'var')
+    collectDiffType=0;
 end
 %% ###################### LIMIT TO NEURONS THAT CONTAIN ALL SYL TYPES?
 
@@ -58,10 +62,14 @@ numbirds = length(SwitchStruct.bird);
 %% COLLECT DAT
 
 All_RhoTargSame = {};
+All_RhoTargDiff = {};
 All_birdnum = [];
 All_enum = [];
 All_sw = [];
 All_neur = [];
+All_LearnZ_TargSame = {};
+All_LearnZ_TargDiff= {};
+All_LearnZ_targ = [];
 
 % 
 % % ==========
@@ -86,6 +94,10 @@ for i=1:numbirds
                 disp('skip!!');
                 continue
             end
+            
+            % ==== what is learndir?
+            learndir = unique([SwitchStruct.bird(i).exptnum(ii).switchlist(ss).learningDirs{2:2:end}]);
+            assert(length(learndir)==1);
             
             % ################### SECOND, PLOT SMOOTH FR FOR ALL SYLS, SUBTRACT BASE
             for nn=1:maxneur
@@ -130,13 +142,16 @@ for i=1:numbirds
                 indstokeep_t = t>=timewind(1) & t<timewind(2);
                 frmatAll = frmatAll(:, indstokeep_t);
                 
-                % ======= FOR ALL PAIRS OF TARG-SAMETYPE, COLLECT PAIRWISE
-                % CORRELATIONS
+                
+                % ########### [SAME TYPE]FOR ALL PAIRS COLLECT PAIRWISE CORRELATIONS
                 istarg = OUTDAT.All_istarg(indsthis);
                 issame = OUTDAT.All_issame(indsthis);
+                pitchz = OUTDAT.AllMinusBase_PitchZ(indsthis, epochtoplot);
+                
                 
                 indssub_targ = find(istarg==1);
                 indssub_same = find(istarg==0 & issame==1);
+                indssub_diff = find(istarg==0 & issame==0);
                 assert(length(indssub_same)>0);
                 
 %                 disp('---');
@@ -144,6 +159,7 @@ for i=1:numbirds
 %                 disp(indssub_targ);
                 
                 rhoall = [];
+                learnZ_targsame = [];
                 for j=indssub_targ'
                     for jj=indssub_same'
                         
@@ -152,9 +168,45 @@ for i=1:numbirds
                             
                         rhoall = [rhoall; rho];
                         
+                        
+                        % =============== COLLECT LEARNING
+                        learnZ_targsame = [learnZ_targsame; pitchz(jj)*learndir];
                     end
+                    All_LearnZ_targ = [All_LearnZ_targ; learndir*pitchz(j)];
                 end
                 
+                % ================== OUTPUT
+                All_RhoTargSame = [All_RhoTargSame; rhoall];
+                All_LearnZ_TargSame = [All_LearnZ_TargSame; learnZ_targsame];
+                
+                
+                % ########### [DIFF TYPE]FOR ALL PAIRS COLLECT PAIRWISE CORRELATIONS
+                if collectDiffType ==1
+                    rhoall = [];
+                    learnZ_targdiff = [];
+                    for j=indssub_targ'
+                        for jj=indssub_diff'
+                            
+                            % ==== get corr for this targ and same type
+                            rho = corr(frmatAll(j, :)', frmatAll(jj,:)');
+                            
+                            rhoall = [rhoall; rho];
+                            
+                            
+                            % =============== COLLECT LEARNING
+                            learnZ_targdiff = [learnZ_targdiff; pitchz(jj)*learndir];
+
+                        end
+                    end
+                    
+                    % ================== OUTPUT
+                    All_RhoTargDiff = [All_RhoTargDiff; rhoall];
+                    All_LearnZ_TargDiff = [All_LearnZ_TargDiff; learnZ_targdiff];
+                end
+                
+                
+                
+               
                 
 %                 
 %                 
@@ -173,8 +225,6 @@ for i=1:numbirds
 %                 rhoTargSameDiff{2} = rho_same;
 %                 rhoTargSameDiff{3} = rho_diff;
 %                 
-                % ================== OUTPUT
-                All_RhoTargSame = [All_RhoTargSame; rhoall];
                 All_birdnum = [All_birdnum; i];
                 All_enum = [All_enum; ii];
                 All_sw = [All_sw; ss];
@@ -201,10 +251,95 @@ if plotOn==1
 lt_figure;
 
 % ========= 1) distribtuion
+xcenters = -0.95:0.1:0.95;
 lt_subplot(3,2,1); hold on;
 xlabel('corr')
-title('targ-same');
-lt_plot_histogram(cell2mat(All_RhoTargSame))
+title('targ-same(k), targ-diff(r) [indiv syls]');
+lt_plot_histogram(cell2mat(All_RhoTargSame), xcenters, 1, 1, [], 1, 'k');
+lt_plot_histogram(cell2mat(All_RhoTargDiff), xcenters, 1, 1, [], 1, 'r');
+lt_plot_zeroline_vert;
+
+
+% ========== one value for each switch
+indsgrp = lt_tools_grp2idx({All_birdnum, All_enum, All_sw});
+rho_same = grpstats(cellfun(@mean, All_RhoTargSame), indsgrp, {'mean'});
+rho_diff = grpstats(cellfun(@mean, All_RhoTargDiff), indsgrp, {'mean'});
+lt_subplot(3,2,2); hold on;
+xlabel('rho(targ-same');
+ylabel('rho(targ-diff');
+title('one value each switch');
+plot(rho_same, rho_diff, 'ok');
+lt_plot_makesquare_plot45line(gca, 'b');
+
+% ========== one value for each expt
+indsgrp = lt_tools_grp2idx({All_birdnum, All_enum});
+rho_same = grpstats(cellfun(@mean, All_RhoTargSame), indsgrp, {'mean'});
+rho_diff = grpstats(cellfun(@mean, All_RhoTargDiff), indsgrp, {'mean'});
+lt_subplot(3,2,3); hold on;
+xlabel('rho(targ-same');
+ylabel('rho(targ-diff');
+title('one value each expt');
+plot(rho_same, rho_diff, 'ok');
+lt_plot_makesquare_plot45line(gca, 'b');
+
+
+% ======== SPLIT INTO HIGH AND LOW CORR - RLEATED TO LEARNING?
+% --- one datapoint for each switch
+indsgrp = lt_tools_grp2idx({All_birdnum, All_enum, All_sw});
+rho_same = grpstats(cellfun(@mean, All_RhoTargSame), indsgrp, {'mean'});
+rho_diff = grpstats(cellfun(@mean, All_RhoTargDiff), indsgrp, {'mean'});
+learntarg = grpstats(All_LearnZ_targ, indsgrp, {'mean'});
+
+learn_same = grpstats(cellfun(@mean, All_LearnZ_TargSame), indsgrp, {'mean'});
+learn_diff = grpstats(cellfun(@nanmean, All_LearnZ_TargDiff), indsgrp, {'mean'});
+
+% ======================== SAME TYUPE
+lt_subplot(3,2,5); hold on;
+title('high corr(r); low corr (b)');
+xlabel('targ learn (z)');
+ylabel('sametype learn (z)');
+
+% --- high corr
+indstmp = rho_same>median(rho_same);
+pcol = 'r';
+x = learntarg(indstmp);
+y = learn_same(indstmp);
+plot(x,y, 'o', 'Color', pcol);
+
+% --- low corr
+indstmp = rho_same<=median(rho_same);
+pcol = 'b';
+x = learntarg(indstmp);
+y = learn_same(indstmp);
+plot(x,y, 'o', 'Color', pcol);
+
+lt_plot_makesquare_plot45line(gca, 'k')
+
+
+% ======================= DIFF TYPE
+lt_subplot(3,2,6); hold on;
+title('high corr(r); low corr (b)');
+xlabel('targ learn (z)');
+ylabel('diff learn (z)');
+
+% --- high corr
+indstmp = rho_diff>median(rho_diff);
+pcol = 'r';
+x = learntarg(indstmp);
+y = learn_diff(indstmp);
+plot(x,y, 'o', 'Color', pcol);
+
+% --- low corr
+indstmp = rho_diff<=median(rho_diff);
+pcol = 'b';
+x = learntarg(indstmp);
+y = learn_diff(indstmp);
+plot(x,y, 'o', 'Color', pcol);
+
+lt_plot_makesquare_plot45line(gca, 'k')
+
+
+
 end
 
 %% ======== OUTPUT

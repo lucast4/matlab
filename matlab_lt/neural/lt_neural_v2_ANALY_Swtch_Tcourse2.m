@@ -264,11 +264,11 @@ for i=1:Numbirds
                     % --- line for neural analysis window
                     line([MotifStats.params.motif_predur+premotorWind(1) ...
                         MotifStats.params.motif_predur+premotorWind(1)], ylim,  ...
-                        'LineStyle' ,'-', 'Color', 'm');
+                        'LineStyle' ,'-', 'Color', 'r');
                     
                     line([MotifStats.params.motif_predur+premotorWind(2) ...
                         MotifStats.params.motif_predur+premotorWind(2)], ylim,  ...
-                        'LineStyle' ,'-', 'Color', 'm');
+                        'LineStyle' ,'-', 'Color', 'r');
                     
                     % --- line dividing bins
                     for kk=1:length(binTrialInds)

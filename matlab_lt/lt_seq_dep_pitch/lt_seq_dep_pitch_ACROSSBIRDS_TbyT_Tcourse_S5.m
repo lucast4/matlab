@@ -4,7 +4,7 @@ function TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S5(TrialStruct,
 %%
 % twind_plot = [-tflankplot tflankplot]; % for rend-locking, how much flanking time to plot (hrs)
 if ~exist('songasrend', 'var')
-    collect_targ_learn=1;
+    collect_targ_learn=0;
 elseif songasrend==1
     % i.e. can only collect trial locked stuff at target if looking at
     % songs.
@@ -225,6 +225,10 @@ for i=1:Numbirds
             end
             
             % =============== SAVE FOR THIS SYL
+            if std(cell2mat(FFvals))>500
+               disp('asfdas');
+                keyboard
+            end
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_TimeDev = Tvals;
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_FFDev = FFvals;
             TrialStruct.birds(i).exptnum(ii).sylnum(indthis).RefLocked_NTargRendsInRef = Ntargs;

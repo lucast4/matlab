@@ -1,5 +1,13 @@
 %% LT 10/8/15 - each point is paired vectors (X, Y). will plot in square and plot 45 degress line
-function hplot=lt_plot_45degScatter(X, Y, color, PlotOn, normalplot)
+function hplot=lt_plot_45degScatter(X, Y, color, PlotOn, normalplot, Xerr, Yerr)
+
+if ~exist('Xerr', 'var')
+    %  this shoudl be vector of same length as X (Nx1)
+    Xerr = [];
+end
+if ~exist('Yerr', 'var');
+    Yerr = [];
+end
 
 if ~exist('normalplot', 'var')
     normalplot = 1
@@ -38,4 +46,16 @@ if PlotOn==1
     else
     lt_plot(X, Y, {'Color',color});
     end
+end
+
+% --- plot error bars
+if ~isempty(Xerr)
+   for j=1:length(Xerr)
+       line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'Color', 'k');
+   end
+end
+if ~isempty(Yerr)
+   for j=1:length(Yerr)
+       line([X(j) X(j)], [Y(j)-Yerr(j) Y(j)+Yerr(j)], 'Color', 'k');
+   end
 end

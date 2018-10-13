@@ -752,21 +752,19 @@ lt_seq_dep_pitch_ACROSSBIRDS_MotifInputDays_v2(SeqDepPitch_AcrossBirds, PARAMS, 
 close all;
 
 % ============= 1) extract trial by trial data
-% params (day/night analysis)
+% ------- PARAMS FOR OVERDAY, OVERNIGHT:
 OnlyExptsWithNoStartDelay= 0;
 DayWindow = [-3 4]; % [-2 4] mean 2 base days and 1st 4 learning days
 onlyIfSignLearn = 1;
 useHandLabSame= 1;
-% DayWindow = [-3 3]; % [-2 4] mean 2 base days and 1st 4 learning days
-% onlyIfSignLearn = 1;
-% useHandLabSame= 0;
 [TrialStruct, ParamsTrial] = ...
     lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
     OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame);
 
 % ============== PLOT RANGE OF TIMEPOINTS WITH SINGING DATA
 close all;
-lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial);
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial, ...
+    BirdExptIncluded);
 
 
 % ============== [RAW PLOT] DAY VS. NIGHT LEARNING AND GENERALIZATION
@@ -783,8 +781,17 @@ lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
 % ============ [ANALYSIS PLOT] average 
 close all;
 ignoreLMANexpt=1; % usually 1, since they lack full day label
-lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt);
+scalemethod = '';
+% lastdaymean: mean of last day becomes 1
+combineSylsInExpt=0; % if 0, datapt is syls, if 1, datapt is experiments
+threshOnSametype = 0; % threshold is 0 for mean of mrinig and night of last day.
+onlyifhaveAllSylTypes = 1; % 1 then needs targ, same, diff...
+% onlyifhaveDataAllDays = 1;
+throwoutnan=1; % then any syl must have dat across all days...
+plotEachExptRaw=1; % then all syls, overlay ff and extracted edges.
+[BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
+    ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
+    onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw);
 
 
 % #################################### COMBINE WITH GENERALIZATION STRUCT
@@ -808,9 +815,9 @@ plotRawFF = 0; % if 1, then plots raw FF showing wghich are outliers.
 TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Outli(TrialStruct, plotRawFF);
 
 
-% ###########################3 TIMECOURSE ANALYSIS (mom-to-mom change in
+% ########################### TIMECOURSE ANALYSIS (mom-to-mom change in
 % nontarg)
-% =============[ VERSION 1]
+% =============[ VERSION 1] 
 % raw plots, a lot of analyses. see VERSION 2 for streamlined important
 % stuff
 close all;
@@ -819,7 +826,10 @@ plotraw = 0;
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, plotraw);
 
-% ========== [VERSION 2] (IMPORTANT)
+
+% ################################ [VERSION 2] (IMPORTANT)
+% %%%%%%%%%%%%%%%%% V1 - all analyses in same expt. broken out in v2
+% ================= 1) EXTRACT DATBYREND (one for each experiment)
 close all;
 ignoreLMANexpt=1; % usually 1, since they lack full day label
 songasrend = 1; % if 1, then instead of rends, uses songs. 
@@ -830,19 +840,83 @@ singleRendOnly=1; % if 1, then takes first dat post rend. otherwise takes all fl
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, songasrend, singleRendOnly);
 
+
+% %%%%%%%%%%%%%%%%% V2 - modular version of v1 above.
+% ========= 1) EXTRACT
+close all;
+ignoreLMANexpt=1; % usually 1, since they lack full day label
+songasrend = 1; % if 1, then instead of rends, uses songs. 
+if songasrend==1
+    assert(addWithinSongTime==0, 'since uses same datenum to decide that is same song');
+end
+singleRendOnly=1; % if 1, then takes first dat post rend. otherwise takes all flank.
+[DATBYREND, TrialStruct] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Extract(TrialStruct, ...
+    ParamsTrial, ignoreLMANexpt, songasrend, singleRendOnly);
+
+% ======== 2) TIMECOURSE OF FF DEVIATIONS (VS. T DEV)
+
+
+% ======== 2b) "bout to bout" structure
+close all;
+addtoibitime = 0; % minutes, to add on to each specific ibi.
+userankcorr = 1; % for slope of ffdev vs. numpreshortgaps
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_bouts(DATBYREND, TrialStruct, addtoibitime, ...
+    userankcorr);
+
+
+% ======== 3) MOMENT TO MOMENT LEARNING (BASED ON CATCH)
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Moment(DATBYREND, TrialStruct)
+
+
+% ###################### DAY/NIGHT LEARNING, USING ONLY NON-SDP EXPERIMENTS
+% [I.E. FULLY LABELED]
+% NOTE: needs work. 1) not enough days. 2) use linear fit to subtract
+% baseline. 3) why so noisey?
+close all;
+% ListOfExperiments = {...
+%     {'wh25pk77', 'SeqDepPitchLMAN'}, ...
+%     {'pu11wh87', 'SeqDepPitchLMAN'}, ...
+%     {'pu11wh87', 'SeqDepPitchShift2'}, ...
+%     {'pu53wh88', 'SeqDepPitchShift3'}, ...
+%     {'pu53wh88', 'SeqDepPitchShift'}, ...
+%     {'bk34bk68', 'SeqDepPitchLMAN3'}, ...
+%     };
+ListOfExperiments = {...
+    {'pu11wh87', 'SeqDepPitchShift2'}, ...
+    {'pu53wh88', 'SeqDepPitchShift3'}, ...
+    {'pu53wh88', 'SeqDepPitchShift'}, ...
+    };
+baseNormMethod = 'onemean';
+% 'onemean'; % one value over all ff rends in base
+% 'circadian' % time bins, subtract circadian fluctuation.
+edgemethod = 'edgemean';
+% regression ; edges of slope
+% edgemean =  bin edges
+plotEachExptRaw = 1; % then plots extracted edfges over raw data.
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_daynight2(TrialStruct, ListOfExperiments, ...
+    ParamsTrial, baseNormMethod, edgemethod, plotEachExptRaw);
+
+
+
+
 % ######################## saving struccture
 if (0)
+    % SAVE
     savedir = '/bluejay5/lucas/analyses/generalization/';
     save([savedir 'GenStruct.mat'], 'GenStruct');
     save([savedir 'SeqDepPitch_AcrossBirds.mat'], 'SeqDepPitch_AcrossBirds');
     save([savedir 'TrialStruct.mat'], 'TrialStruct');
 end
 if (0)
+    % LOAD
     savedir = '/bluejay5/lucas/analyses/generalization/';
     load([savedir 'GenStruct.mat']);
     load([savedir 'SeqDepPitch_AcrossBirds.mat']);
     load([savedir 'TrialStruct.mat']);
 end
+
+
 
 % ============= 2) CROSS CORRELATION analyses
 close all;
@@ -1314,7 +1388,7 @@ if (0)
     plotPC = 0; % for raw plots..
     % --- which syls to collect
     collectAllSyls = 1; % if 0, then only targ and same...
-    PCtimeWindowUsingWN = 1; % defgault 0; if 1, then only gets target syllables, 
+    PCtimeWindowUsingWN = 0; % defgault 0; if 1, then only gets target syllables, 
     % using timw windows that were defined looking at boht base and WN
     % trials.
      

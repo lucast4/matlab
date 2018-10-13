@@ -153,7 +153,7 @@ if plotRaw==1
                     frcorr_hi = corr(ybase_hi, ydev);
                     frcorr_lo = corr(ybase_lo, ydev);
                     
-                    if docorrvsdiff ==1
+                    if docorrvsdiff ==1 % 2 methods for getting difference in correlations
                         frcorr_himinuslo = corr(ybase_himinuslo, ydev);
                     elseif docorrvsdiff==0
                         % then get corr vs. hi and lo, and then subtract

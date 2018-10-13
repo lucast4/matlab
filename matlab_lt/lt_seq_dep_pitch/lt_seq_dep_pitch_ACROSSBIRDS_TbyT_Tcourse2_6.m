@@ -31,7 +31,7 @@ for i=1:length(Inds_sylcounter)
     ffthis = DATBYREND.FF_dev(indsthis);
     tthis = DATBYREND.Time_dev(indsthis);
     if use_targ_locallearn==1
-    learnlocal = DATBYREND.LearnLocal_targ(indsthis);
+        learnlocal = DATBYREND.LearnLocal_targ(indsthis);
     else
         learnlocal = DATBYREND.LearnLocal(indsthis);
     end
