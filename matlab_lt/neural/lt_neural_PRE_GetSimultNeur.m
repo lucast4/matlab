@@ -13,7 +13,7 @@ for i=1:numbirds
     
     % ======= skip if this is sam/mel RA data
     if isfield(SummaryStruct.birds(i).neurons(1), 'isRAsobermel')
-       continue
+        continue
     end
     
     for exptthis = ListOfExpt
@@ -80,7 +80,6 @@ for i=1:numbirds
         setToRemove = [];
         for setnum = 1:length(Sets_neurons)
             if length(Sets_neurons{setnum})<2
-                
                 setToRemove = [setToRemove setnum];
             end
         end

@@ -60,7 +60,9 @@ end
 if plotON==1;
 lt_figure; hold on;
 for i=1:numdays
-    
+    if isempty(DATSTRUCT.data{i})
+        continue
+    end
     fieldsthis = fieldnames(DATSTRUCT.data{i}.timewindow{twind});
     
     for fthis = fieldsthis'
@@ -134,7 +136,7 @@ for i=1:numdays
     
     f1 = DATSTRUCT.data{i}.timewindow{twind}.StimCatch.ffvals;
     t1 = DATSTRUCT.data{i}.timewindow{twind}.StimCatch.timevals_dnum;
-    
+        
     % -------- check that distributions for tvals are similar
     assert(ranksum(t1, t2)>0.01, 'are time values different? then is problem as this assumes interleaves stim/nostim');
     
@@ -159,6 +161,17 @@ for i=1:numdays
 end
 
 
+%% ######### GET ORIGINAL DATA FOR EACH DAY
+
+for i=1:numdays
+    
+    if isempty(DATSTRUCT.data{i})
+        continue
+    end
+    
+    
+    
+end
 %% =============== PLOT
 if plotON==1
 lt_figure; hold on;

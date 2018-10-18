@@ -350,7 +350,6 @@ chanamp = SummaryStruct.birds(i).neurons(nn).channel;
 [a, b] = fileparts(SummaryStruct.birds(i).neurons(nn).dirname);
 
 ntrials = length(segextract);
-tic
 for j=1:ntrials
     
     % ======== figure out filename and time within file
@@ -375,13 +374,13 @@ for j=1:ntrials
     % ----------------- extract location within dat that you care about.
     t = [1:length(dat)]/frequency_parameters.amplifier_sample_rate;
     indthis = t>=ontime_motif & t<=offtime_motif;
-    datthis = dat(indthis);
+    datthis = single(dat(indthis));
     
     
     % ##################### GET LFP 
     % ---- FILTER (0.5 to 400hz) (2pole bessel?)
     [datfilt,neuralFiltLow,neuralFiltHi] =lt_neural_filter(datthis, frequency_parameters, 1, ...
-    5, 400);
+    1, 400);
     
     if (0)
     figure; hold on;
@@ -391,18 +390,13 @@ for j=1:ntrials
     
     % ---- DOWNSAMPLE
     fs_new = 1500;
-    factor = floor(frequency_parameters.amplifier_sample_rate/fs_new);
-    datfilt = downsample(datfilt, factor);
-    datfilt = single(datfilt);
-    if (0)
-        lt_figure; hold on;
-        plot(t, datfilt, 'b');
-        plot(t(1:factor:end), datfilt_dn, 'r');
+    datfilt_dn = downsample(datfilt, floor(frequency_parameters.amplifier_sample_rate/fs_new));
+    
+    if (00
+        
     end
-    
-    
 end
-toc
+
 
 
 %% ################# DIR vs UNDIR ###

@@ -178,7 +178,7 @@ if doShuff==1
         shuffSylType = 1;
         plotOn = 0;
         [OUTDAT_tmp] = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffSylType, ...
-            epochtoplot, plotOn);
+            epochtoplot, plotOn, 0, syltypesneeded);
 %         [OUTDAT_tmp] = fn_summaryplot(OUTDAT, SwitchStruct, shuffSylType, ...
 %             epochtoplot, plotOn);
         

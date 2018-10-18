@@ -1,0 +1,115 @@
+function SwitchCohStruct = lt_neural_Coher_LearnExtr(COHSTRUCT, MOTIFSTATS_pop, SwitchStruct, pairtoget)
+%% lt 10/12/18 - extract lerning related coherence dataset
+
+% pairtoget = 'LMAN-RA';
+removeifnan=0; % if 1, then runs into rpoblem of not saving some motfis. if 0 then incomoplete dat?
+
+%%
+SwitchCohStruct = struct;
+numbirds = length(SwitchStruct.bird);
+for i=1:numbirds
+    numexpts = length(SwitchStruct.bird(i).exptnum);
+    for ii=1:numexpts
+        numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
+        for ss=1:numswitch
+            
+            % =========== for this switch, get edge times and switch time
+            tstart = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_previous;
+            tswitch = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
+            tend = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_next;
+            
+            % =========== Find channel pairs that have data both pre and post.
+            numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons);
+            setskept = [];
+            for k=1:numsets
+                %    COHSTRUCT.bird(i).experiment(ii).setnum(k).motif(1);
+                nummotifs = length(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif);
+                
+                
+                for mm=1:nummotifs
+                    if isempty(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif(mm).SegExtr_neurfakeID)
+                        continue
+                    end
+                    segextract = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
+                    
+                    tvals = [segextract.song_datenum];
+                    
+                    % ---- ARE THERE BOTH PRE AND POST TVALS?
+                    if ~any(tvals>tstart & tvals<tswitch) | ~any(tvals>tswitch & tvals<tend)
+                        % then don't keep...
+                        continue
+                    end
+                    
+                    %         disp(k);
+                    % =============== SAVE DATA FOR THIS MOTIF
+                    cohdat = COHSTRUCT.bird(i).experiment(ii).setnum(k).motif(mm);
+                    motifname = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif(mm).regexpstr;
+                    if isempty(motifname)
+                        keyboard
+                    end
+                    indtmp = strcmp(cohdat.bregionpairs_sorted, pairtoget);
+                    indtmp_num = find(indtmp);
+                    if ~any(indtmp)
+                        continue
+                    end
+                    
+                    % ---- collect all coherence across all pairs
+                    numchanpairs = length(indtmp_num);
+                    tmp = size(cohdat.Coh_ChpairByTrial{1});
+                    cohmatall = nan(tmp(1), tmp(2), length(cohdat.Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
+                    for j=1:numchanpairs
+                        intmpthis = indtmp_num(j);
+                        cohmat = lt_neural_Coher_Cell2Mat(cohdat.Coh_ChpairByTrial(intmpthis,:));
+                        cohmatall(:,:,:,j) = cohmat;
+                    end
+                    
+                    %                     cohmat = lt_neural_Coher_Cell2Mat(cohdat.Coh_ChpairByTrial(indtmp,:));
+                    bregionpair = cohdat.bregionpairs_sorted(indtmp);
+                    chanpair = cohdat.Chanpairs(indtmp,:);
+                    tvals = [segextract.song_datenum];
+                    ffvals = [segextract.FF_val];
+                    assert(length(tvals)==size(cohmat,3));
+                    
+                    if removeifnan==1
+                        if any(isnan(cohmatall(:)))
+                            disp('NOTE: currenrtly skipping those with nans in coherence (becasue size of array is rong... should fix')
+                            continue
+                        end
+                    end
+                    
+                    % ======================= WHAT WIL CALL BASELINE AND WN
+                    % INDS?
+                    indsbase = find(tvals>tstart & tvals<tswitch);
+                    indsWN = find(tvals>tswitch & tvals<tend);
+                    
+                    % -------------- take second half of WN inds
+                    indsbase = indsbase(round(length(indsbase)/2):end);
+                    indsWN = indsWN(round(length(indsWN)/2):end);
+                    
+                    
+                    % ====================== SAVE OUTPUT
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).motifname = motifname;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals = tvals;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals = ffvals;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair = bregionpair;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpair = chanpair;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch = indsbase;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch = indsWN;
+                    setskept = [setskept k];
+                end
+            end
+            %             try
+            %             if any(isempty({SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).motifname}))
+            %                 keyboard
+            %             end
+            %             catch err
+            %             end
+            % --- sanity check, confirm that for any switch at most only
+            % one set of neurons is included.
+            if ~isempty(setskept)
+                assert(length(unique(setskept))==1, 'if this fails, then must combine across sets...');
+            end
+        end
+    end
+end

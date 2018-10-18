@@ -129,6 +129,7 @@ birdname = MOTIFSTATS_Compiled.birds(bnum).birdname;
 
 lt_neural_v2_ANALY_LearningPlot1(summarystruct_tmp, motifstats);
 title([birdname '-' exptname]);
+
 %% ================================== PLOT LEARNING (ALL SYLS)
 close all
 MeanSubtract =1; % subtract baseline mean?
@@ -383,7 +384,7 @@ neuralmetricname = 'NEURvsbase_FRcorr';
 % ---- filtering data by learning at target
 % note: if multiple targets then will filter on just first target...
 plotLearnStatsOn = 0; %
-OnlyKeepSigLearn = 1; % either regression or end training has be significant.
+OnlyKeepSigLearn = 0; % either regression or end training has be significant.
 learnsigalpha = 0.05; % for deciding that an experiment showed "no learning"
 
 % ---- ONLY KEEP SWITCHES STARTING FROM WN OFF
@@ -417,12 +418,18 @@ lt_neural_v2_ANALY_Swtch_LME(DATSylMot)
 
 
 %% ============= LEARNING CHANGE, SEPARATE BY BASELINE FR-PITCH CORRELATION
+% ================== DIAGNOSTIC
+if (0)
+    sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, ss, motifthis);
+end
+
+
 clear OUTDAT
 % *************************************** EXTRACTION
-onlyFirstSwitch = 0; % then only first switch...
+onlyFirstSwitch = 1; % then only first switch...
 onlyIfSameTarg = 1; % only if targ are all same sylalbles
 % BirdsToPlot = {'pu69wh78', 'wh44wh39'};
-BrainLocation = {'LMAN'};
+BrainLocation = {'RA'};
 BirdsToPlot = {};
 % BrainLocation = {};
 throwoutlonggap = 0; % gap betwen end of base and start of train.
@@ -490,6 +497,10 @@ premotorwind = [-0.08 0.03];
 nshuffs = 1000;
 lt_neural_v2_ANALY_FRsmooth_BaseMinu(OUTDAT, SwitchStruct, ...
     epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs);
+
+% ============= v2, PLOTS DISTRIBUTIONS FOR EACH NEURON
+lt_neural_v2_ANALY_FRsmooth_BaseMinu2(OUTDAT, SwitchStruct, ...
+    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs)
 
 
 % ========== 4) PREDICT FR CHANGE BASED ON LEARNING?

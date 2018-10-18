@@ -12,7 +12,7 @@ Numbirds = length(MOTIFSTATS_Compiled.birds);
 for i=1:Numbirds
     
     numexpts = length(SummaryStruct.birds(i).exptnum_pop);
-
+    
     MOTIFSTATS_pop.birds(i).birdname = SummaryStruct.birds(i).birdname;
     MOTIFSTATS_pop.birds(i).params = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.params;
     for ii=1:numexpts

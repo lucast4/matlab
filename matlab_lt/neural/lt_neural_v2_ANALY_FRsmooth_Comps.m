@@ -1,5 +1,5 @@
 function OUTDAT = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffSylType, ...
-    epochtoplot, plotOn, shuffonlynontargs)
+    epochtoplot, plotOn, shuffonlynontargs, syltypestoshuffle)
 %% also collects params for learning.
 %% lt 9/12/18 - comparisons between syl types
 % epochtoplot = 3; % i.e. out of the epochs decided by prctile_divs
@@ -8,6 +8,12 @@ function OUTDAT = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffS
 
 if ~exist('shuffonlynontargs', 'var')
     shuffonlynontargs = 0;
+end
+% syltypestoshuffle = [1 1 1] for all, [1 0 1] for only targ-diff types, etc.
+        % if this is not empty, then will dominate over the other things
+        % that specify shuffle types
+if ~exist('syltypestoshuffle', 'var')
+    syltypestoshuffle =[];
 end
 %% DO SHUFFLE?
 % ===============
@@ -31,6 +37,18 @@ if shuffSylType==1
                     elseif shuffonlynontargs==0
                         indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
                             & OUTDAT.All_neurnum==nn);
+                    end
+                    
+                    % ================= latest version of syl types decider
+                    if ~isempty(syltypestoshuffle)
+                        if all(syltypestoshuffle==[1 0 1])
+                            % then shuffle between targ and diff
+                            indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
+                                & OUTDAT.All_neurnum==nn & (OUTDAT.All_istarg==1 | OUTDAT.All_issame==0));
+                        else
+                            disp('NOT WRITTEN YET!');
+                            return
+                        end
                     end
                     
                     if ~any(indsthis)
