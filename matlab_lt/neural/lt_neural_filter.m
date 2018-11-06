@@ -3,6 +3,7 @@ function [datfilt,neuralFiltLow,neuralFiltHi] =lt_neural_filter(dat, frequency_p
 %% lt 8/17/16 - bandpass filters intan neural data.
 
 % dat, vector
+% if dat is mat, then treats each column is separate vector
 % frequency_parameters, from intan file (or just the fs num,ber, e.g.
 % 25000)
 % waveclusver=1, then filters same way wave_clus does. else does
@@ -10,7 +11,7 @@ function [datfilt,neuralFiltLow,neuralFiltHi] =lt_neural_filter(dat, frequency_p
 
 
 % default, use wave_clus version
-if ~exist('waveclusver', 'var')
+if ~exist('use_waveclusver', 'var')
     use_waveclusver=1;
 end
 
@@ -28,10 +29,11 @@ catch err
     fs=frequency_parameters;
 end
 
+
 %% ==== make neural filter
 if use_waveclusver==0
     %% then do butterworth bandpath
-    N=4;
+    N=2;
     
     % if neuralFiltLow<min([frequency_parameters.actual_lower_bandwidth, ...
     %         frequency_parameters.actual_dsp_cutoff_frequency])

@@ -1,19 +1,17 @@
-function COHSTRUCT = lt_neural_Coher_ExtrCohStruct(MOTIFSTATS_pop, SummaryStruct, ...
-    MOTIFSTATS_Compiled)
-%% lt 10/12/18 - extract structure holding coherence for all motifs
+function LFPSTRUCT = lt_neural_LFP_ExtractStruct(MOTIFSTATS_pop, SummaryStruct, ...
+    MOTIFSTATS_Compiled, skipifOnlyOneChan, BirdsToPlot, SetsToSkip)
+%% lt 10/29/18 - analogous to lt_neural_Coher_ExtrCohStruct except extracts LFP and them get spectrogram.
 
-motif_predur = MOTIFSTATS_Compiled.birds(1).MOTIFSTATS.params.motif_predur;
-motif_postdur = MOTIFSTATS_Compiled.birds(1).MOTIFSTATS.params.motif_postdur;
-PrePostRelSameTime = MOTIFSTATS_Compiled.birds(1).Params_regexp.preAndPostDurRelSameTimept;
-assert(~isempty(PrePostRelSameTime), 'then I have to check what empty means by default...');
+% BirdsToPlot = {'pu69wh78', 'wh44wh39'};
+% % SetsToSkip = {'1-2-2'};
+% SetsToSkip = {};
 
 %%
+motif_predur = MOTIFSTATS_Compiled.birds(1).MOTIFSTATS.params.motif_predur;
+extrapad = 0.05; % collect extra (sec) on edges.
 
-BirdsToPlot = {'pu69wh78', 'wh44wh39'};
-% SetsToSkip = {'1-2-2'};
-SetsToSkip = {};
-
-COHSTRUCT = struct;
+%%
+LFPSTRUCT = struct;
 % ==============
 numbirds = length(SummaryStruct.birds);
 for i=1:numbirds
@@ -43,18 +41,24 @@ for i=1:numbirds
             dat = MOTIFSTATS_pop.birds(i).exptnum(ee).DAT.setnum(ss);
             nummotifs = length(dat.motif);
             
-            
-            % ================== FOR THIS SET, COLLECT ALL COHERENCE DATA
+            % ================== FOR THIS SET, COLLECT ALL LFP DATA
             Neurlist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_neurons{ss};
-            Fnamelist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_songfiles{ss};
-            %     dirname = SummaryStruct.birds(i).neurons(Neurlist(1)).dirname;
+%             Fnamelist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_songfiles{ss};
+%             %     dirname = SummaryStruct.birds(i).neurons(Neurlist(1)).dirname;
             Chanlist = [SummaryStruct.birds(i).neurons(Neurlist).channel];
-            Chanlist_sort = sort(Chanlist);
+%             Chanlist_sort = sort(Chanlist);
             Bregionlist = {SummaryStruct.birds(i).neurons(Neurlist).NOTE_Location};
+            [~, indsort] = sort(Chanlist);
+            Chanlist = Chanlist(indsort);
+            Bregionlist = Bregionlist(indsort);
+            
+            
             
             % ----- only one chan, then skip
+            if skipifOnlyOneChan==1
             if length(unique(Chanlist))==1
                 continue
+            end
             end
             
             % --- get dirname
@@ -66,11 +70,8 @@ for i=1:numbirds
             dirname_main = unique(dirname_main); assert(length(dirname_main)==1);
             dirname_main = dirname_main{1};
             
-            % ---- for coherence folder
-            dircoh = [dirname_main '/COHERENCE'];
-            
-            
-            % =============== FOR EACH MOTIF, COLLECT ALL TRIALS FOR ALL CHAN PAIRS
+            % =============== FOR EACH MOTIF, COLLECT ALL TRIALS FOR ALL
+            % CHANNELS
             for mm=1:nummotifs
                 disp(['motif ' num2str(mm)]);
                 if isempty(dat.motif(mm).SegExtr_neurfakeID)
@@ -79,22 +80,23 @@ for i=1:numbirds
                 
                 % --- segextract is shared across channels
                 segextract = dat.motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
-                neurthis = dat.motif(mm).SegExtr_neurfakeID(1).neurID_orig;
+%                 neurthis = dat.motif(mm).SegExtr_neurfakeID(1).neurID_orig;
+
                 
-                
-                % =============== EXTRACT COHERENCE FOR THIS MOTIF ACROSS ALL CHANS
-                % AND TRIALS
-                [CohAllTrials, Chanpairs, t_relons, ffbins] = lt_neural_Coher_GetAllMotifsChans(...
-                    SummaryStruct, i, neurthis, segextract, Chanlist, motif_predur, motif_postdur,PrePostRelSameTime);
-                
+                % ================ COLLECT LFP FOR ALL CHANNELS
+                [LFPall, Tall] = lt_neural_QUICK_Segextr_GetLFP(segextract, dirname_main, Chanlist, ...
+                    motif_predur, extrapad);
+
                 % ============== COLLECT
-                
-                COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Coh_ChpairByTrial = CohAllTrials;
-                COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanpairs = Chanpairs;
-                COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = t_relons;
-                COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).ffbins = ffbins;
+                LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).LFP_chanbytrial = LFPall;
+                LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanlist = Chanlist;
+                LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Bregionlist = Bregionlist;
+                LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = Tall{1};
+%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Coh_ChpairByTrial = CohAllTrials;
+%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanpairs = Chanpairs;
+%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = t_relons;
+%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).ffbins = ffbins;
             end
         end
     end
 end
-

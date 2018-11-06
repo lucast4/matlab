@@ -314,8 +314,10 @@ plot(f, S, '-ok');
 clear all; close all;
 lt_switch_chronux(1);
 sfile = '/bluejay5/lucas/birds/wh44wh39/NEURAL/021518_Rec3/wh44wh39_180215_105438.rhd';
-ChansToPlot = [15 17 18 20 21 22];
-BrainRegions = {'LMAN', 'RA','RA','RA','RA', 'RA'};
+% ChansToPlot = [15 17 18 20 21 22];
+% BrainRegions = {'LMAN', 'RA','RA','RA','RA', 'RA'};
+ChansToPlot = [15 17 21];
+BrainRegions = {'LMAN', 'RA', 'RA'};
 
 % ============ 1) extract dat
 [amplifier_data,board_dig_in_data,frequency_parameters, board_adc_data, ...
@@ -338,16 +340,16 @@ end
 %% ====== SPECTROGRAM OF LFP
 % ---- for each region get spectrogram and plot
 % for j=1:length(DatAll)
-   
-    datall = [DatAll.datraw];
-        params = struct;
-        params.Fs = fs;
-        params.fpass = [30 1000];
-        movingwin = [0.1 0.005];
-        
-        
+
+datall = [DatAll.datraw];
+params = struct;
+params.Fs = fs;
+params.fpass = [5 150];
+movingwin = [0.1 0.005];
+
+
 [S, t, f] = mtspecgramc(datall, movingwin, params);
-        
+
 % ====================================  plot [spectrograms]
 figcount=1;
 subplotrows=length(DatAll)+1;
@@ -362,16 +364,22 @@ lt_plot_spectrogram(board_adc_data, fs, 1, 0);
 
 % --- then plot each neural spectrogram
 for j=1:length(DatAll)
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-hsplots = [hsplots hsplot];
-title(['ch' num2str(DatAll(j).chan_amp) '[' DatAll(j).bregion ']']);
-imagesc(t, f, 10*log10(S(:,:, j)'));
-axis tight;
-ylim([1/(movingwin(1)) params.fpass(2)]);
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots hsplot];
+    title(['ch' num2str(DatAll(j).chan_amp) '[' DatAll(j).bregion ']']);
+    imagesc(t, f, 10*log10(S(:,:, j)'));
+    axis tight;
+    ylim([1/(movingwin(1)) params.fpass(2)]);
 end
 linkaxes(hsplots, 'x');
 colormap('jet');
         
+%% ======================= SPECTRUM
+chantmp = 1;
+spectrum = mean(S(:,:,chantmp),1);
+lt_figure; hold on;
+plot(f, 10*log10(spectrum), '-k');
+
 
 %% ====================================  plot [raw unfiltered dat]
 figcount=1;
@@ -396,6 +404,8 @@ dat = DatAll(j).datraw;
 % --- filter neural data
 dat = lt_neural_filter(dat, fs, 0, 1, 300);
 plot(t, dat, '-k');
+dat = lt_neural_filter(dat, fs, 0, 25, 45);
+plot(t, dat, '-r');
 axis tight;
 end
 linkaxes(hsplots, 'x');

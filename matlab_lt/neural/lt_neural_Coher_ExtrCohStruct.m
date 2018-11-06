@@ -88,7 +88,6 @@ for i=1:numbirds
                     SummaryStruct, i, neurthis, segextract, Chanlist, motif_predur, motif_postdur,PrePostRelSameTime);
                 
                 % ============== COLLECT
-                
                 COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Coh_ChpairByTrial = CohAllTrials;
                 COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanpairs = Chanpairs;
                 COHSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = t_relons;

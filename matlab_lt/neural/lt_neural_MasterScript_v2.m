@@ -81,6 +81,12 @@ end
 close all;
 lt_neural_Coher_Extract(SummaryStruct);
 
+
+%% ############ GET LFP FOR ALL SONGS
+
+lt_neural_tools_LFPextract(SummaryStruct);
+
+
 %% ==== EXTRACTION - WITHIN SONG TIMING OF EACH IND
 numbirds = length(SummaryStruct.birds);
 for i=1:numbirds

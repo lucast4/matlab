@@ -14,6 +14,8 @@ ExptList(ind).SwitchTimes = {...
     '04Oct2018-2400', 'up-dn', ...
     '09Oct2018-2400', 'dn-up'...
     };
+ExptList(ind).TrainDirForStimContext = {...
+    };
 
 % ================== 
 ind=ind+1;
@@ -25,7 +27,35 @@ ExptList(ind).SwitchTimes = {...
     '06Oct2018-2400', 'dn-up', ...
     '11Oct2018-2400', 'up-dn', ...
     };
+ExptList(ind).TrainDirForStimContext = {...
+    };
 
+
+%% ============== LIST OF EXPERIMENTS [ASSOCIATION]
+
+ind =0;
+clear ExptList;
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Association1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    '12Oct2018-1833', 'of-dn' ...
+    };
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Association2';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
 
 
 %% ############################# PLOT INDIVIDUAL EXPERIEMNTS
@@ -33,6 +63,8 @@ close all;
 expttoplot = 2;
 OUTSTRUCT = lt_opto_ExtrBirdDat(ExptList(expttoplot).dirtoplot, ...
     ExptList(expttoplot).twind, ExptList(expttoplot).SwitchTimes);
+
+
 
 %% ############################# SUMMARIZE ACROSS MULTIPLE EXPERIMENTS
 % =================== PARAMS

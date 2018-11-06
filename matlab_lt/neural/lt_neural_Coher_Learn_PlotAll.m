@@ -1,4 +1,7 @@
-for i=2:numbirds
+numbirds = length(SwitchCohStruct.bird);
+
+%%
+for i=1:numbirds
     bthis = SwitchStruct.bird(i).birdname;
     numexpts = length(SwitchCohStruct.bird(i).exptnum);
     for ii=1:numexpts

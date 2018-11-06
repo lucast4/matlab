@@ -1,5 +1,5 @@
 function lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, ...
-    sumplottype, plotAllSwitchRaw, clim)
+    sumplottype, plotAllSwitchRaw, clim, fieldtoplot)
 
 % sumplottype = 'switches'; % i.e. what is datapoint?
 % switches
@@ -9,6 +9,14 @@ tbins = PARAMS.tbins;
 ffbins = PARAMS.ffbins;
 
 % clim = [-0.15 0.15];
+
+%% ======= field type to plot
+
+if strcmp(fieldtoplot, 'Spec1Mean_WNminusBase')
+    fieldtoplot_base = 'Spec1Mean_Base';
+    fieldtoplot_WN = 'Spec1Mean_WN';
+end
+
 
 %% EXTRACT (DATAPOINT = CHANNEL PAIR) - IE.. AVERAGES OVER SIMILAR TYPE SYLLABLES
 % ======= for each channel pair, get mean for targ, nontarg
@@ -20,6 +28,10 @@ allbnum = [];
 allenum = [];
 allswnum = [];
 allCohDiffMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_unique)); % [t, ff, targ-same-diff, cases]
+
+allCohBaseMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_unique)); % [t, ff, targ-same-diff, cases]
+allCohWNMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_unique)); % [t, ff, targ-same-diff, cases]
+
 allCohDiffScalar = nan(length(indsgrp_unique), 3);
 for i=1:length(indsgrp_unique)
     j=indsgrp_unique(i);
@@ -32,32 +44,61 @@ for i=1:length(indsgrp_unique)
     
     % ---------- target
     indsthis = indsgrp==j & OUTSTRUCT.istarg==1;
-    cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.CohMean_WNminusBase(indsthis)), 3);
+    % difference matrix
+    cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot)(indsthis)), 3);
     allCohDiffMat(:,:, 1, i) = cohmat;
-        
-    cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+    % scalar of difference
+    if isfield(OUTSTRUCT, 'CohMean_WNminusBase_scalar')
+        cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+    else
+        cohscal = nan;
+    end
     allCohDiffScalar(i, 1) = nanmean(cohscal);
+    % base and WN means
+    cohmat_base = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_base)(indsthis)), 3);
+    cohmat_WN = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_WN)(indsthis)), 3);
+    allCohBaseMat(:,:, 1, i) = cohmat_base;
+    allCohWNMat(:,:,1, i) = cohmat_WN;
+    
     
     % ---------- same-type
     indsthis = indsgrp==j & OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==1;
     if any(indsthis)
-        cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.CohMean_WNminusBase(indsthis)), 3);
+        cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot)(indsthis)), 3);
         allCohDiffMat(:,:, 2, i) = cohmat;
-
-        cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+        if isfield(OUTSTRUCT, 'CohMean_WNminusBase_scalar')
+            cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+        else
+            cohscal = nan;
+        end
         allCohDiffScalar(i, 2) = nanmean(cohscal);
-end
-    
+    % base and WN means
+    cohmat_base = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_base)(indsthis)), 3);
+    cohmat_WN = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_WN)(indsthis)), 3);
+    allCohBaseMat(:,:, 2, i) = cohmat_base;
+    allCohWNMat(:,:,2, i) = cohmat_WN;
+    end
+
     % -------- diff type
     indsthis = indsgrp==j & OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==0;
     if any(indsthis)
-        cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.CohMean_WNminusBase(indsthis)), 3);
+        cohmat = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot)(indsthis)), 3);
         allCohDiffMat(:,:, 3, i) = cohmat;
         
-        cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+        if isfield(OUTSTRUCT, 'CohMean_WNminusBase_scalar')
+            cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
+        else
+            cohscal = nan;
+        end
         allCohDiffScalar(i, 3) = nanmean(cohscal);
-    end
+        % base and WN means
+    cohmat_base = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_base)(indsthis)), 3);
+    cohmat_WN = nanmean(lt_neural_Coher_Cell2Mat(OUTSTRUCT.(fieldtoplot_WN)(indsthis)), 3);
+    allCohBaseMat(:,:, 3, i) = cohmat_base;
+    allCohWNMat(:,:,3, i) = cohmat_WN;
 end
+end
+
 
 
 
@@ -70,6 +111,8 @@ allswitch_bnum = [];
 allswitch_enum = [];
 allswitch_swnum =[];
 allswitch_CohDiffMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_switch_unique)); % [t, ff, targ-same-diff, cases]
+allswitch_CohBaseMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_switch_unique)); % [t, ff, targ-same-diff, cases]
+allswitch_CohWNMat = nan(length(tbins), length(ffbins), 3, length(indsgrp_switch_unique)); % [t, ff, targ-same-diff, cases]
 allswitch_CohDiffScalar = nan(length(indsgrp_switch_unique), 3);
 
 for i=1:length(indsgrp_switch_unique)
@@ -89,6 +132,11 @@ for i=1:length(indsgrp_switch_unique)
     cohscal = nanmean(allCohDiffScalar(indsthis,sylind));
     allswitch_CohDiffScalar(i,sylind) = cohscal;
     
+    cohmatbase = nanmean(squeeze(allCohBaseMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohBaseMat(:,:,sylind, i) = cohmatbase;
+    cohmatWN = nanmean(squeeze(allCohWNMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohWNMat(:,:,sylind, i) = cohmatWN;
+    
     % ================= SAME
     sylind = 2;
     cohmat = nanmean(squeeze(allCohDiffMat(:,:,sylind,indsthis)), 3);
@@ -97,6 +145,11 @@ for i=1:length(indsgrp_switch_unique)
     cohscal = nanmean(allCohDiffScalar(indsthis,sylind));
     allswitch_CohDiffScalar(i,sylind) = cohscal;
     
+    cohmatbase = nanmean(squeeze(allCohBaseMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohBaseMat(:,:,sylind, i) = cohmatbase;
+    cohmatWN = nanmean(squeeze(allCohWNMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohWNMat(:,:,sylind, i) = cohmatWN;
+    
     % ================= DIFF
     sylind = 3;
     cohmat = nanmean(squeeze(allCohDiffMat(:,:,sylind,indsthis)), 3);
@@ -104,7 +157,13 @@ for i=1:length(indsgrp_switch_unique)
     
     cohscal = nanmean(allCohDiffScalar(indsthis,sylind));
     allswitch_CohDiffScalar(i,sylind) = cohscal;
+    
+    cohmatbase = nanmean(squeeze(allCohBaseMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohBaseMat(:,:,sylind, i) = cohmatbase;
+    cohmatWN = nanmean(squeeze(allCohWNMat(:,:,sylind,indsthis)), 3);
+    allswitch_CohWNMat(:,:,sylind, i) = cohmatWN;
 end
+
 
 %% ========================= PLOT ALL DAT ONE FOR EACH SWITCH
 if plotAllSwitchRaw ==1
@@ -214,13 +273,30 @@ end
 
 if strcmp(sumplottype, 'switches')
     CohMatDat = allswitch_CohDiffMat;
+    CohMatDat_base = allswitch_CohBaseMat;
+    CohMatDat_WN = allswitch_CohWNMat;
     CohScalDat = allswitch_CohDiffScalar;
     birddat = allswitch_bnum;
 elseif strcmp(sumplottype, 'chanpairs')
     CohMatDat = allCohDiffMat;
+    CohMatDat_base = allCohBaseMat;
+    CohMatDat_WN = allCohWNMat;
     CohScalDat = allCohDiffScalar;
     birddat = allbnum;
 end
+
+%% === check (diff and [wn - base] are the same?)
+if (0)
+tmp1 = CohMatDat_WN(:) - CohMatDat_base(:);
+tmp2 = CohMatDat(:);
+
+figure; hold on;
+plot(tmp1(~isnan(tmp1)), tmp2(~isnan(tmp2)), 'ob')
+figure; hold on;
+lt_plot_histogram(tmp2(~isnan(tmp2))-tmp1(~isnan(tmp1)));
+end
+
+%% ============= DIFFERENCE MATRICES
 figcount=1;
 subplotrows=3;
 subplotcols=6;
@@ -235,6 +311,7 @@ plottit = 'TARG';
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 1, '', clim);
 title(plottit);
+colorbar
 % 2. ffband differences
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
@@ -248,6 +325,7 @@ plottit = 'SAME';
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 1, '', clim);
 title(plottit);
+colorbar
 % 2. ffband differences
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
@@ -261,6 +339,7 @@ plottit = 'DIFF';
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 1, '', clim);
 title(plottit);
+colorbar
 % 2. ffband differences
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
@@ -314,6 +393,7 @@ lt_plot_zeroline;
 lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
 
 % ########################### SCALAR PLOTS
+if any(~isnan(CohScalDat(:)))
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 xlabel('TARG - SAME - DIFF');
 ylabel('change in coh');
@@ -375,15 +455,65 @@ pcols = lt_make_plot_colors(length(unique(birddat)), 0, 0);
 for j=unique(birddat)'
     indstmp = birddat==j;
     y = CohScalDat(indstmp, [1 3]);
-plot(x,y', '-', 'Color', pcols{j});
-lt_plot(x+0.2, nanmean(y), {'Errors', lt_sem(y), 'Color', pcols{j}});
-% --- test vs. nontarg
-[~, p] = ttest(y(:,1), y(:,2));
-lt_plot_text(2.5, 0+0.01*j, ['b#' num2str(j) 'p=' num2str(p)], pcols{j});
+    plot(x,y', '-', 'Color', pcols{j});
+    lt_plot(x+0.2, nanmean(y), {'Errors', lt_sem(y), 'Color', pcols{j}});
+    % --- test vs. nontarg
+    [~, p] = ttest(y(:,1), y(:,2));
+    lt_plot_text(2.5, 0+0.01*j, ['b#' num2str(j) 'p=' num2str(p)], pcols{j});
 end
 xlim([0 4]);
 lt_plot_zeroline;
+end
 
 
+%% ========== PLOTTING LFP
+figcount=1;
+subplotrows=3;
+subplotcols=6;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
 
+if strcmp(sumplottype, 'switches')
+    LFPmat_base = allswitch_;
+    CohMatDat_base = allswitch_CohBaseMat;
+    CohMatDat_WN = allswitch_CohWNMat;
+    CohScalDat = allswitch_CohDiffScalar;
+    birddat = allswitch_bnum;
+elseif strcmp(sumplottype, 'chanpairs')
+    CohMatDat = allCohDiffMat;
+    CohMatDat_base = allCohBaseMat;
+    CohMatDat_WN = allCohWNMat;
+    CohScalDat = allCohDiffScalar;
+    birddat = allbnum;
+end
+
+% ============ TARG
+ind3 = 1;
+% -- BASE
+lfpmat = nanmean(squeeze(CohMatDat_base(:,:, ind3,:)), 3);
+plottit = 'TARG';
+
+
+% 1. cohgram 
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title([plottit '[BASE]']);
+imagesc(tbins, ffbins, cohmat')
+colorbar
+% --- WN
+cohmat = nanmean(squeeze(CohMatDat_WN(:,:, ind3,:)), 3);
+plottit = 'TARG';
+% 1. cohgram 
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title([plottit '[WN]']);
+imagesc(tbins, ffbins, 10*log10(cohmat'))
+colorbar
+
+
+% % 2. ffband differences
+% [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+% lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
+% lt_plot_zeroline;
+% lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
+% 
 

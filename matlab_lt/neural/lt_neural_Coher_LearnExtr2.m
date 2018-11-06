@@ -52,7 +52,8 @@ for i=1:numbirds
                         continue
                     end
                     
-                    disp([num2str(i) '-' num2str(ii) '-' numstr(mm)]);
+                    disp([num2str(i) '-' num2str(ii) '-' num2str(mm)]);
+                    
                     %% =============== SAVE DATA FOR THIS MOTIF
                     cohdat = COHSTRUCT.bird(i).experiment(ii).setnum(k).motif(mm);
                     motifname = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif(mm).regexpstr;
@@ -65,36 +66,29 @@ for i=1:numbirds
                         continue
                     end
                     
-                    % ---- collect all coherence across all pairs
-                    numchanpairs = length(indtmp_num);
-                    if isfield(cohdat, 'Coh_ChpairByTrial')
-                        Coh_ChpairByTrial = cohdat.Coh_ChpairByTrial;
-                    else
-                        % -- have to load
-                        Coh_ChpairByTrial = load([savedir '/' PARAMS.savemarker '/Coh_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat']);
-                        Coh_ChpairByTrial = Coh_ChpairByTrial.CohAllTrials;
-                    end
-                    tmp = size(Coh_ChpairByTrial{1});
-                    cohmatall = nan(tmp(1), tmp(2), length(Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
-                    for j=1:numchanpairs
-                        intmpthis = indtmp_num(j);
-                        cohmat = lt_neural_Coher_Cell2Mat(Coh_ChpairByTrial(intmpthis,:));
-                        cohmatall(:,:,:,j) = cohmat;
-                    end
+%                     % ---- collect all coherence across all pairs
+%                     numchanpairs = length(indtmp_num);
+%                     if isfield(cohdat, 'Coh_ChpairByTrial')
+%                         Coh_ChpairByTrial = cohdat.Coh_ChpairByTrial;
+%                     else
+%                         % -- have to load
+%                         Coh_ChpairByTrial = load([savedir '/' PARAMS.savemarker '/Coh_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat']);
+%                         Coh_ChpairByTrial = Coh_ChpairByTrial.CohAllTrials;
+%                     end
+%                     tmp = size(Coh_ChpairByTrial{1});
+%                     cohmatall = nan(tmp(1), tmp(2), length(Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
+%                     for j=1:numchanpairs
+%                         intmpthis = indtmp_num(j);
+%                         cohmat = lt_neural_Coher_Cell2Mat(Coh_ChpairByTrial(intmpthis,:));
+%                         cohmatall(:,:,:,j) = cohmat;
+%                     end
+%                     
                     
                     %                     cohmat = lt_neural_Coher_Cell2Mat(cohdat.Coh_ChpairByTrial(indtmp,:));
                     bregionpair = cohdat.bregionpairs_sorted(indtmp);
                     chanpair = cohdat.Chanpairs(indtmp,:);
                     tvals = [segextract.song_datenum];
                     ffvals = [segextract.FF_val];
-                    assert(length(tvals)==size(cohmat,3));
-                    
-                    if removeifnan==1
-                        if any(isnan(cohmatall(:)))
-                            disp('NOTE: currenrtly skipping those with nans in coherence (becasue size of array is rong... should fix')
-                            continue
-                        end
-                    end
                     
                     % ======================= WHAT WIL CALL BASELINE AND WN
                     % INDS?
@@ -128,7 +122,12 @@ for i=1:numbirds
                     
                     %% ====================== SAVE OUTPUT
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).motifname = motifname;
-                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).fileprefix = ...
+                        [savedir '/' PARAMS.savemarker];
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpairstokeep = indtmp_num;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).filesuffix = ...
+                        ['_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat'];
+%                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals = tvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals = ffvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair = bregionpair;

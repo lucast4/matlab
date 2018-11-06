@@ -1,16 +1,9 @@
-function segextract = lt_neural_LinTimeWarpSegmented(segextract, regionstowarp, expectedsegs)
-%% 
-% expectedsegs = 11; if motif is abcdef; for sanity check (leave blacnk if ignore)
-
-if ~exist('expectedsegs','var')
-    expectedsegs = [];
-end
+function segextract = lt_neural_LinTimeWarpSegmented(segextract, regionstowarp, expectedsegs, ...
+    plotResult)
+%% lt 11/30/17 - imrpoved, now works even if there exist spikes outside of syl boundaries.
 
 %% defualt behavior is to overwrite originanl spktimes and syl ons/off, 
 % -- will save old (not warped) into another field.
-
-
-%% lt 11/30/17 - imrpoved, now works even if there exist spikes outside of syl boundaries.
 
 %% NOTE!!
 % this assumes data aligned to syl onset - not sure if will work if aligned
@@ -27,6 +20,19 @@ end
 % segextract = CLASSES.birds(1).neurons(1).branchnum(1).SEGEXTRACT.classnum(1).SegmentsExtract;
 % params = CLASSES.birds(1).neurons(1).branchnum(1).SEGEXTRACT.classnum(1).Params;
 % SummaryStruct;
+% expectedsegs = 11; if motif is abcdef; for sanity check (leave blacnk if ignore)
+
+%%
+if ~exist('expectedsegs','var')
+    expectedsegs = [];
+    % sanity check 
+end
+
+if ~exist('plotResult', 'var')
+    plotResult=0; % plots rasterse pre and post warping for comparison.
+end
+
+
 %% ======= extract onset and offset of all syllables in motif
 
 if(0)
@@ -203,12 +209,11 @@ for i=1:length(segextract)
     segextract(i).spk_Times = spktimes_reltokenminuspredur;
     segextract(i).motifsylOnsets = sylonsets_new;
     segextract(i).motifsylOffsets = syloffsets_new;
-            
 end
 
 %% ============== plot, compare pre warp to post warp
 
-if(0)
+if plotResult==1
     lt_figure; hold on;
     hsplots =[];
     
