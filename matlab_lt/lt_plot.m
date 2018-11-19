@@ -12,9 +12,9 @@ end
 %% Default params
 plot_errors=0;
 
-if nargin==2;
+if nargin==2
     % is last arg cell? then am missing X
-    if iscell(Y);
+    if iscell(Y)
         % reasign names
         Modifiers=Y;
         Y=X;
@@ -24,7 +24,7 @@ if nargin==2;
         Modifiers={'LineStyle','none','Marker','o','Color','k','MarkerFaceColor','k','MarkerSize',5};
         
     end
-elseif nargin==1;
+elseif nargin==1
     % then we just have a Y
     Y=X;
     X=1:length(Y);
@@ -62,6 +62,12 @@ if any(strcmp(Modifiers,'Errors'));
     plot_errors=1;
 end
 
+if any(strcmp(Modifiers, 'Xerrors'))
+    Xerr=Modifiers{find(strcmp(Modifiers,'Xerrors'))+1};
+    plot_Xerrors=1;
+else
+    plot_Xerrors=0;
+end
 
 
 
@@ -82,9 +88,18 @@ else
     end
 end
 
+if plot_Xerrors==1
+    for j=1:length(Xerr)
+        line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'Color', 'k');
+    end
+end
+
 % apply modifiers
 for i=1:length(Modifiers)/2;
-    if any(strcmp(Modifiers{2*i-1}, 'Errors'));
+    if any(strcmp(Modifiers{2*i-1}, 'Errors'))
+        continue;
+    end
+    if any(strcmp(Modifiers{2*i-1}, 'Xerrors'))
         continue;
     end
     set(hfig,Modifiers{2*i-1},Modifiers{2*i});

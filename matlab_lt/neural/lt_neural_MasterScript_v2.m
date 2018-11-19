@@ -8,7 +8,7 @@ BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 1;
+LearningOnly = 0;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
@@ -77,6 +77,9 @@ end
 %% ==================== 1) Get list of all song files and correspond chans.
 [Allbird_Fnames, Allbird_chanlist, Allbird_birdnum] = lt_neural_tools_allsongs(SummaryStruct);
 
+
+%% *******************************************************************
+%% ***************************************** EXTRACTION CODE
 %%  ==== GET COHERENCE AND SPECTROGRAMS OF LFP FOR ALL SONGS
 close all;
 lt_neural_Coher_Extract(SummaryStruct);
@@ -108,6 +111,8 @@ lt_neural_v2_EXTRACT_WNhit(SummaryStruct, FFparamsAll, overWrite, ...
     plotSpec, plotOnSong, plotSyl);
 
 
+%% *******************************************************************
+%% ***************************************** METADATA CODE
 %% ======== SAVE META INFO FOR LEARNING EXPT HERE
 % edit this by hand
 
@@ -633,3 +638,10 @@ lt_neural_PseudoPop_Master;
 
 lt_neural_v2_FullMotifActivity;
 
+
+%% ################################### SONG BOUT ANALYSES
+% ============= EXTRACT DATA
+
+
+
+% ============= ANALYSES

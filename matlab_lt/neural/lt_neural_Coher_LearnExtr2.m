@@ -86,6 +86,7 @@ for i=1:numbirds
                     
                     %                     cohmat = lt_neural_Coher_Cell2Mat(cohdat.Coh_ChpairByTrial(indtmp,:));
                     bregionpair = cohdat.bregionpairs_sorted(indtmp);
+                    bregionpair_originalorder = cohdat.bregionpairs_unsorted(indtmp);
                     chanpair = cohdat.Chanpairs(indtmp,:);
                     tvals = [segextract.song_datenum];
                     ffvals = [segextract.FF_val];
@@ -121,6 +122,7 @@ for i=1:numbirds
                     end
                     
                     %% ====================== SAVE OUTPUT
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).neursetused = k;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).motifname = motifname;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).fileprefix = ...
                         [savedir '/' PARAMS.savemarker];
@@ -131,6 +133,8 @@ for i=1:numbirds
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals = tvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals = ffvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair = bregionpair;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair_originalorder = ...
+                        bregionpair_originalorder;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpair = chanpair;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch = indsbase;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch = indsWN;

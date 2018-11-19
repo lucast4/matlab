@@ -19,7 +19,7 @@ end
 %% 
 
 % === find all nonsongs
-if rerun_cleandir==0;
+if rerun_cleandir==0
     tmp=dir('batch.dcrd');
     
     if isempty(tmp)
@@ -28,7 +28,7 @@ if rerun_cleandir==0;
     end
 else
     lt_make_batch(3);
-    cleandirAuto('batch',1000, 4,4);
+    lt_cleandirAuto('batch',1000, 3,3);
     
 end
 
@@ -42,7 +42,6 @@ else
     
     % ask user
     do_delete=input('delete all files from batch.dcrd? (1 or 0) (2 to show more dcrd songs) ');
-    
 end
 
 if do_delete==2;

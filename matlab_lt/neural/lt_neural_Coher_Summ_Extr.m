@@ -1,9 +1,10 @@
 function [All_CohgramMean, All_birdnum, All_enum, All_setnum, All_motifname, ...
     All_chanpair, All_bregionpair, All_bregionpair_alphaorder, ...
     All_tbins, All_ffbins] = lt_neural_Coher_Summ_Extr(COHSTRUCT, MOTIFSTATS_pop, ...
-    SummaryStruct, tlengthdesired, fflengthdesired)
+    SummaryStruct, tlengthdesired, fflengthdesired, PARAMS)
 %% === lt 10/12/18 - Series of summary analyses - here just does extraction
 
+savebase = ['/bluejay5/lucas/analyses/neural/LFP/PROCESSED/' PARAMS.savemarker];
 %%
 All_CohgramMean = {};
 All_birdnum = [];
@@ -42,7 +43,21 @@ for i=1:numbirds
             for mm=1:nummotifs
                 motifname = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(ss).motif(mm).regexpstr;
                 
-                CohCell = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).Coh_ChpairByTrial;
+                if isempty(COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).Chanpairs)
+                    continue
+                end
+                   
+                
+                if isfield(COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm), 'Coh_ChpairByTrial')
+                    CohCell = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).Coh_ChpairByTrial;
+                else
+                    % then load it
+                    filename = ...
+                        [savebase '/Coh_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(ss) '_mot' num2str(mm) '.mat'];
+                    pairstoget = [];
+                    CohCell = lt_neural_LFP_loadProcessDat(filename, pairstoget, 1);
+                end
+                    
                 Chanpairs = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).Chanpairs;
                 tbins = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).t_relons;
                 ffbins = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).ffbins;

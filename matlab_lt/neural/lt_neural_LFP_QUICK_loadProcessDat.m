@@ -1,4 +1,5 @@
-function dat = lt_neural_LFP_loadProcessDat(filename, chanpairtoget, celloutput)
+function dat = lt_neural_LFP_QUICK_loadProcessDat(filename, chanpairtoget, celloutput)
+%% note: this replaces lt_neural_LFP_loadProcessDat [just easier to remember name]
 %% lt 11/1/18 - extracts coh, phi, s1, s2, or s12.
 % filename =
 %

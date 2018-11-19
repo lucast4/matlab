@@ -207,10 +207,6 @@ for i=1:numbirds
                     elseif zscoreLFP ==3
                         % each ff window z-scored
                         [S_base, S_WN] = fn_zscorespec_withinFF(S_base, S_WN);
-                    elseif zscoreLFP==4
-                        [S_base, S_WN] = fn_zscorespec_withinFF(S_base, S_WN);
-                        S_base = lt_neural_LFP_NormSpec(S_base);
-                        S_WN = lt_neural_LFP_NormSpec(S_WN);
                     end
                     
                     % get means
@@ -246,10 +242,6 @@ for i=1:numbirds
                     elseif zscoreLFP ==3
                         % each ff window z-scored
                         [S_base, S_WN] = fn_zscorespec_withinFF(S_base, S_WN);
-                    elseif zscoreLFP==4
-                        [S_base, S_WN] = fn_zscorespec_withinFF(S_base, S_WN);
-                        S_base = lt_neural_LFP_NormSpec(S_base);
-                        S_WN = lt_neural_LFP_NormSpec(S_WN);
                     end
                     
                     % get means

@@ -106,8 +106,18 @@ next_line = fgetl(fid);
 % cbin_line = next_line(1:end-8);
 
 count=0;
+skippedfiles = 0;
+totfiles = 0;
 while ischar(next_line)
     load(next_line)
+    totfiles = totfiles+1;
+    % -- confirm that this song exists
+    if ~exist(next_line(1:end-8), 'file')
+        skippedfiles = skippedfiles+1;
+            next_line = fgetl(fid);
+continue
+    end
+    
     if sum(labels ~= '-') >= 1
         count=count+1;
         % This is real song - now, what batch to save it in?
@@ -166,6 +176,7 @@ fclose(fid_5);
 fclose(fid_6);
 fclose(fid_7);
 
+disp(['SKIPPED ' num2str(skippedfiles) '/' num2str(totfiles) '[MISSING .cbin]']);
 
 %The song list for the current folder (cbin.not.mat)
 if copy_or_move == 0 || copy_or_move == 1

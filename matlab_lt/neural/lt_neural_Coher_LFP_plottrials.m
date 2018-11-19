@@ -1,5 +1,6 @@
 function lt_neural_Coher_LFP_plottrials(SwitchCohStruct, OUTSTRUCT, SwitchStruct, ...
-    PARAMS, birdtoplot, expttoplot, swnum, motiftoplot, chanpairtoplot, fs)
+    PARAMS, birdtoplot, expttoplot, swnum, motiftoplot, chanpairtoplot, fs, ...
+    Nplot, bregiontoget, plotonlyLFP)
 
 %% lt 10/31/18 - plots individual trials LFP,coherence, sp[ectrogram.
 % --- takes N example trials, pre and post learning, for a given motif
@@ -10,7 +11,7 @@ function lt_neural_Coher_LFP_plottrials(SwitchCohStruct, OUTSTRUCT, SwitchStruct
 % motiftoplot = ''; % ------ WILL plot target syl, unless say otherwise.
 % chanpairtoplot = []; % if empty, will pick first pari in list.
 
-Nplot = 5; % how any trials each for base and WN?
+% Nplot = 5; % how any trials each for base and WN?
 
 
 %%
@@ -21,8 +22,13 @@ numbirds = length(SwitchCohStruct.bird);
 
 
 figcount=1;
-subplotrows=3;
-subplotcols=6;
+if plotonlyLFP==1
+    subplotcols = 2;
+    subplotrows=4;
+else
+    subplotcols=6;
+    subplotrows=3;
+end
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
@@ -39,7 +45,7 @@ tw = movingwin(1)*w;
 params.tapers = [tw 2*tw-1];
 params.Fs = 1500; % hard coded fs for LFP;
 
-lfpband_lo = 15;
+lfpband_lo = 25;
 lfpband_hi = 35;
 
 ffhilim = 90; % for plots;
@@ -97,13 +103,20 @@ for i=1:numbirds
             % =============================== DATA (SWITCH COH STRUCT)
             if isempty(chanpairtoplot)
                 chanpairtoplot = datthis.motifnum(mm).chanpair(1,:);
+                tmp = find(strcmp(datthis.motifnum(mm).bregionpair, bregiontoget));
+                chanpairtoplot = datthis.motifnum(mm).chanpair(randperm(length(tmp),1),:);
             end
             
             % ============== COHERENCE DATA
             tmp2 = chanpairtoplot == datthis.motifnum(mm).chanpair;
             indchanpair = find(all(tmp2'));
             
-            cohmat = squeeze(datthis.motifnum(mm).cohmat(:,:, :, indchanpair));
+            if isfield(datthis.motifnum(mm), 'cohmat')
+                cohmat = squeeze(datthis.motifnum(mm).cohmat(:,:, :, indchanpair));
+            else
+                cohmat = lt_neural_LFP_QUICK_loadProcessDat(...
+                    [datthis.motifnum(mm).fileprefix '/Coh' datthis.motifnum(mm).filesuffix], indchanpair);
+            end
             %             tvals = datthis.motifnum(mm).tvals;
             bregionpair = datthis.motifnum(mm).bregionpair{indchanpair};
             t_coh = PARAMS.tbins;
@@ -120,12 +133,29 @@ for i=1:numbirds
             
             t_lfp = datthis.motifnum(mm).t_lfp;
             
+            % ================= high pass fuilter the lfp?
+            %                 [filt_b,filt_a]=butter(2,[2*2/fs], 'high');
+            
+            
+            %     % === filter
+            %     datfilt=filtfilt(filt_b,filt_a,double(lfpmat1));
+            %
+            %             lfpmat11 = lt_neural_filter(double(lfpmat1), fs, 0, 2, 400);
+            
             %% ============== METADATA
             % ---------- FROM OUTSTRUCT
-            indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss ...
-                & OUTSTRUCT.motifnum==mm);
-            indsbase = OUTSTRUCT.indsbase_epoch{indsthis(1)};
-            indsWN = OUTSTRUCT.indsWN_epoch{indsthis(1)};
+            if isempty(OUTSTRUCT)
+                disp('NOTE: will not separate by WN and base, since did not enter OUTSTRUCT..')
+                pause;
+                indsbase = 1:size(cohmat,3);
+                indsWN = 1:size(cohmat,3);
+            else
+                
+                indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss ...
+                    & OUTSTRUCT.motifnum==mm);
+                indsbase = OUTSTRUCT.indsbase_epoch{indsthis(1)};
+                indsWN = OUTSTRUCT.indsWN_epoch{indsthis(1)};
+            end
             
             
             % ----------- COLLECT MEAN COHERENCE PRE AND POST SWITCH
@@ -168,213 +198,16 @@ for i=1:numbirds
                 indtrial = indsbase_shuff(j);
                 plotname = 'BASE';
                 
-                % --- 1) LFP (overlay the channels)
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title(['[' plotname ']' motiftoplot], 'Color', titlecol);
-                ylabel(['LFP, b-r' bregionpair]);
-                
-                plot(t_lfp, lfpmat1(indtrial,:), '-b');
-                
-                plot(t_lfp, lfpmat2(indtrial,:), '-r');
-                
-                axis tight;
-                line([0 0], ylim);
-                
-                % --- 2) LFP (filtered)
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title(['LFP(' num2str(lfpband_lo) '-' num2str(lfpband_hi) '), b-r' bregionpair]);
-                
-                plot(t_lfp, lt_neural_filter(double(lfpmat1(indtrial,:)), fs, 0, lfpband_lo, lfpband_hi), '-b');
-                plot(t_lfp, lt_neural_filter(double(lfpmat2(indtrial,:)), fs, 0, lfpband_lo, lfpband_hi), '-r');
-                axis tight;
-                ylim([-90 90]);
-                line([0 0], ylim);
-                
-                % --- 2) COHERENCE
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('coherence');
-                %                 clim = [-0.5 0.5];
-                %                 ylabel(['LFP(10-40hz), b-r' bregionpair]);
-                imagesc(t_coh, ff_coh, cohmat(:,:, indtrial));
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                
-                % --- 3/4) SPECTROGRAM (2 CHANS)
-                SpectrumAll = cell(1,2);
-                % --- chan1
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('chan1')
-                [S,t,f] = mtspecgramc(lfpmat1(indtrial,:), movingwin, params);
-                t = t-predur_lfp;
-                imagesc(t, f, 10*log10(S)');
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                % GET SPECTRUM
-                spectrum = mean(S(t>twind_spectrum(1) & t<twind_spectrum(2), :),1);
-                SpectrumAll{1} = spectrum;
-                
-                % --- chan2
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('chan2');
-                [S,t,f] = mtspecgramc(lfpmat2(indtrial,:), movingwin, params);
-                t = t-predur_lfp;
-                imagesc(t, f, 10*log10(S)');
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                % GET SPECTRUM
-                spectrum = mean(S(t>twind_spectrum(1) & t<twind_spectrum(2), :),1);
-                SpectrumAll{2} = spectrum;
-                
-                
-                % ----- get power spectrums at specific time window
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('spectra');
-                plot(f, 10*log10(SpectrumAll{1}), '-b');
-                plot(f, 10*log10(SpectrumAll{2}), '-r');
-                axis tight;
-                
-                
+                lt_neural_Coher_LFP_plottrials_sub1;
                 
                 
                 % ========================================== WN
                 indtrial = indsWN_shuff(j);
                 plotname = 'WN';
                 
-                % --- 1) LFP (overlay the channels)
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title(['[' plotname ']' motiftoplot], 'Color', titlecol);
-                ylabel(['LFP, b-r' bregionpair]);
+                lt_neural_Coher_LFP_plottrials_sub1;
                 
-                plot(t_lfp, lfpmat1(indtrial,:), '-b');
-                
-                plot(t_lfp, lfpmat2(indtrial,:), '-r');
-                
-                axis tight;
-                line([0 0], ylim);
-                
-                % --- 2) LFP (filtered)
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title(['LFP(' num2str(lfpband_lo) '-' num2str(lfpband_hi) '), b-r' bregionpair]);
-                
-                plot(t_lfp, lt_neural_filter(double(lfpmat1(indtrial,:)), fs, 0, lfpband_lo, lfpband_hi), '-b');
-                plot(t_lfp, lt_neural_filter(double(lfpmat2(indtrial,:)), fs, 0, lfpband_lo, lfpband_hi), '-r');
-                axis tight;
-                ylim([-90 90]);
-                line([0 0], ylim);
-                
-                % --- 2) COHERENCE
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('coherence');
-                %                 clim = [-0.5 0.5];
-                %                 ylabel(['LFP(10-40hz), b-r' bregionpair]);
-                imagesc(t_coh, ff_coh, cohmat(:,:, indtrial));
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                
-                % --- 3/4) SPECTROGRAM (2 CHANS)
-                SpectrumAll = cell(1,2);
-                % --- chan1
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('chan1')
-                [S,t,f] = mtspecgramc(lfpmat1(indtrial,:), movingwin, params);
-                t = t-predur_lfp;
-                imagesc(t, f, 10*log10(S)');
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                % GET SPECTRUM
-                spectrum = mean(S(t>twind_spectrum(1) & t<twind_spectrum(2), :),1);
-                SpectrumAll{1} = spectrum;
-                
-                % --- chan2
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('chan2');
-                [S,t,f] = mtspecgramc(lfpmat2(indtrial,:), movingwin, params);
-                t = t-predur_lfp;
-                imagesc(t, f, 10*log10(S)');
-                colorbar
-                axis tight;
-                ylim([0 ffhilim]);
-                % GET SPECTRUM
-                spectrum = mean(S(t>twind_spectrum(1) & t<twind_spectrum(2), :),1);
-                SpectrumAll{2} = spectrum;
-                
-                
-                % ----- get power spectrums at specific time window
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title('spectra');
-                plot(f, 10*log10(SpectrumAll{1}), '-b');
-                plot(f, 10*log10(SpectrumAll{2}), '-r');
-                axis tight;
             end
-            
-            
-            
-            
-            %             % =========== one figure for each switch
-            %             figcount=1;
-            %             subplotrows=3;
-            %             subplotcols=6;
-            %             fignums_alreadyused=[];
-            %             hfigs=[];
-            %             hsplots = [];
-            %             if isempty(targsyls)
-            %                 keyboard
-            %             end
-            
-            
-            
-            
-            
-            %                 % ========= PLOT COHEROGRAMS
-            %                 % ---------------- 1 plot for each chan
-            %                 numchans = size(cohmat,4);
-            %                 for cc = 1:numchans
-            %                     if averagechanpairs==0
-            %                     chanpair = chanpairs(cc,:);
-            %                     else
-            %                         chanpair = 'average';
-            %                     end
-            %                     % -- baseline
-            %                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            %                     title(['[BASE]' motifthis], 'Color', titlecol);
-            %                     ylabel({[bthis '-' ename '-sw' num2str(ss)], ['chpair:' num2str(chanpair)]});
-            %                     cohthis = cohmat(:,:,indsbase, cc);
-            %                     lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1);
-            %                     % -- WN
-            %                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            %                     title(['[WN]'], 'Color', titlecol);
-            %                     cohthis = cohmat(:,:,indsWN, cc);
-            %                     lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1);
-            %                     % =========== OVERLAY BASELINE AND WN FREQUENCY BANDS
-            %                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            %                     title(['[base(dash), WN(solid)]'], 'Color',titlecol);
-            %
-            %                     cohthis = cohmat(:,:,indsbase, cc);
-            %                     lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, ':');
-            %
-            %                     cohthis = cohmat(:,:,indsWN, cc);
-            %                     lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, '-');
-            %
-            %                     % ========= NOTE DOWN SYLTYPE
-            %                 end
-            
             
             %% ===================== SUMMARY PLOT (BASE AND WN)
             lt_figure; hold on;
@@ -414,126 +247,128 @@ for i=1:numbirds
             shadedErrorBar(t_lfp, lfpmean, lfpsem, {'Color', 'm'},1);
             
             % ===================================== MEAN SPECTROGRAM
-            paramstmp = params;
-            paramstmp.trialave = 1;
-            
-            % -------- BASE (CHAN1)
-            lt_subplot(4,2,3); hold on;
-            title('BASE (chan1)');
-            [S, t, f] = mtspecgramc(lfpmat1(indsbase,:)', movingwin, paramstmp);
-            t = t-predur_lfp;
-            imagesc(t, f, 10*log10(S)');
-            colorbar
-            axis tight;
-            ylim([0 ffhilim]);
-
-            % -------- BASE (CHAN2)
-            lt_subplot(4,2,4); hold on;
-            title('BASE (chan2)');
-            [S, t, f] = mtspecgramc(lfpmat2(indsbase,:)', movingwin, paramstmp);
-            t = t-predur_lfp;
-            imagesc(t, f, 10*log10(S)');
-            colorbar
-            axis tight;
-            ylim([0 ffhilim]);
-
-            % -------- WN (CHAN1)
-            lt_subplot(4,2,5); hold on;
-            title('WN (chan1)');
-            [S, t, f] = mtspecgramc(lfpmat1(indsWN,:)', movingwin, paramstmp);
-            t = t-predur_lfp;
-            imagesc(t, f, 10*log10(S)');
-            colorbar
-            axis tight;
-            ylim([0 ffhilim]);
-            
-            
-            % -------- WN (CHAN2)
-            lt_subplot(4,2,6); hold on;
-            title('WN (chan2)');
-            [S, t, f] = mtspecgramc(lfpmat2(indsWN,:)', movingwin, paramstmp);
-            t = t-predur_lfp;
-            imagesc(t, f, 10*log10(S)');
-            colorbar
-            axis tight;
-            ylim([0 ffhilim]);
-            
-            
-            % NOTE: This first normalizes each trial so that power peak is
-            % at 1, and then averages.
-%             % ========================= SPECTRA
-%             paramstmp = params;
-%             paramstmp.err = [2 0.05];
-%             paramstmp.trialave = 0;
-%             
-%             % ------- CHAN1 (base and WN)
-%             lt_subplot(4,2,7); hold on;
-%             title('chan1 (base=k, wn=r)');
-%             lfpmatthis = lfpmat1;
-%             
-%             % base
-%             [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
-%             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
-%             %             plot(f, Snorm, '-k');
-%             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'k'},1);
-%             
-%             % WN
-%             [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
-%             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
-%             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'r'},1);
-%             
-%             % ------- CHAN2 (base and WN)
-%             lt_subplot(4,2,8); hold on;
-%             title('chan2 (base=k, wn=r)');
-%             lfpmatthis = lfpmat2;
-%             
-%             % base
-%             [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
-%             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
-%             %             plot(f, Snorm, '-k');
-%             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'k'},1);
-%             
-%             % WN
-%             [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
-%             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
-%             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'r'},1);
-%             
-%             if (0)
-%                figure; hold on;
-%                plot(f, S, '-k');
-%                figure; hold on;
-%                lt_plot_histogram(10*log10(S(5,:)))
-%             end
-            
-            % ========================= SPECTRA
-            paramstmp = params;
-            paramstmp.err = [2 0.05];
-            paramstmp.trialave = 1;
-            
-            % ------- CHAN1 (base and WN)
-            lt_subplot(4,2,7); hold on;
-            title('chan1 (base=k, wn=r)');
-            lfpmatthis = lfpmat1;
-            
-            % base
-            [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
-            plot_vector(S, f, 'l', Serr, 'k');            
-            % WN
-            [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
-            plot_vector(S, f, 'l', Serr, 'r');            
-
-            % ------- CHAN2 (base and WN)
-            lt_subplot(4,2,8); hold on;
-            title('chan2 (base=k, wn=r)');
-            lfpmatthis = lfpmat2;
-            
-            % base
-            [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
-            plot_vector(S, f, 'l', Serr, 'k');            
-            % WN
-            [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
-            plot_vector(S, f, 'l', Serr, 'r');            
-end
+            if plotonlyLFP==0
+                paramstmp = params;
+                paramstmp.trialave = 1;
+                
+                % -------- BASE (CHAN1)
+                lt_subplot(4,2,3); hold on;
+                title('BASE (chan1)');
+                [S, t, f] = mtspecgramc(lfpmat1(indsbase,:)', movingwin, paramstmp);
+                t = t-predur_lfp;
+                imagesc(t, f, 10*log10(S)');
+                colorbar
+                axis tight;
+                ylim([0 ffhilim]);
+                
+                % -------- BASE (CHAN2)
+                lt_subplot(4,2,4); hold on;
+                title('BASE (chan2)');
+                [S, t, f] = mtspecgramc(lfpmat2(indsbase,:)', movingwin, paramstmp);
+                t = t-predur_lfp;
+                imagesc(t, f, 10*log10(S)');
+                colorbar
+                axis tight;
+                ylim([0 ffhilim]);
+                
+                % -------- WN (CHAN1)
+                lt_subplot(4,2,5); hold on;
+                title('WN (chan1)');
+                [S, t, f] = mtspecgramc(lfpmat1(indsWN,:)', movingwin, paramstmp);
+                t = t-predur_lfp;
+                imagesc(t, f, 10*log10(S)');
+                colorbar
+                axis tight;
+                ylim([0 ffhilim]);
+                
+                
+                % -------- WN (CHAN2)
+                lt_subplot(4,2,6); hold on;
+                title('WN (chan2)');
+                [S, t, f] = mtspecgramc(lfpmat2(indsWN,:)', movingwin, paramstmp);
+                t = t-predur_lfp;
+                imagesc(t, f, 10*log10(S)');
+                colorbar
+                axis tight;
+                ylim([0 ffhilim]);
+                
+                
+                % NOTE: This first normalizes each trial so that power peak is
+                % at 1, and then averages.
+                %             % ========================= SPECTRA
+                %             paramstmp = params;
+                %             paramstmp.err = [2 0.05];
+                %             paramstmp.trialave = 0;
+                %
+                %             % ------- CHAN1 (base and WN)
+                %             lt_subplot(4,2,7); hold on;
+                %             title('chan1 (base=k, wn=r)');
+                %             lfpmatthis = lfpmat1;
+                %
+                %             % base
+                %             [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
+                %             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
+                %             %             plot(f, Snorm, '-k');
+                %             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'k'},1);
+                %
+                %             % WN
+                %             [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
+                %             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
+                %             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'r'},1);
+                %
+                %             % ------- CHAN2 (base and WN)
+                %             lt_subplot(4,2,8); hold on;
+                %             title('chan2 (base=k, wn=r)');
+                %             lfpmatthis = lfpmat2;
+                %
+                %             % base
+                %             [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
+                %             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
+                %             %             plot(f, Snorm, '-k');
+                %             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'k'},1);
+                %
+                %             % WN
+                %             [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
+                %             Snorm = S./repmat(max(S, [], 1), size(S,1), 1);
+                %             shadedErrorBar(f, mean(Snorm,2), lt_sem(Snorm'), {'Color', 'r'},1);
+                %
+                %             if (0)
+                %                figure; hold on;
+                %                plot(f, S, '-k');
+                %                figure; hold on;
+                %                lt_plot_histogram(10*log10(S(5,:)))
+                %             end
+                
+                % ========================= SPECTRA
+                paramstmp = params;
+                paramstmp.err = [2 0.05];
+                paramstmp.trialave = 1;
+                
+                % ------- CHAN1 (base and WN)
+                lt_subplot(4,2,7); hold on;
+                title('chan1 (base=k, wn=r)');
+                lfpmatthis = lfpmat1;
+                
+                % base
+                [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
+                plot_vector(S, f, 'l', Serr, 'k');
+                % WN
+                [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
+                plot_vector(S, f, 'l', Serr, 'r');
+                
+                % ------- CHAN2 (base and WN)
+                lt_subplot(4,2,8); hold on;
+                title('chan2 (base=k, wn=r)');
+                lfpmatthis = lfpmat2;
+                
+                % base
+                [S, f, Serr] = mtspectrumc(lfpmatthis(indsbase,:)', paramstmp);
+                plot_vector(S, f, 'l', Serr, 'k');
+                % WN
+                [S, f, Serr] = mtspectrumc(lfpmatthis(indsWN,:)', paramstmp);
+                plot_vector(S, f, 'l', Serr, 'r');
+            end
+        end
     end
 end
 

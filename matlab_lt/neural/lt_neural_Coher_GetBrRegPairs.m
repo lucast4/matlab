@@ -19,19 +19,31 @@ for i=1:numbirds
             for mm=1:nummotifs
                 Chanpairs = COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).Chanpairs;
                 numchanpairs = size(Chanpairs, 1);
-                
+
                 bregionpairs_sorted = {};
+                bregionpairs_unsorted = {};
                 for cc=1:numchanpairs
                     chansthis = Chanpairs(cc,:);
                     bregionsthis = {Bregionlist{Chanlist==chansthis(1)}, ...
                         Bregionlist{Chanlist==chansthis(2)}}; assert(length(bregionsthis)==2);
-                    bregionsthis = sort(bregionsthis);
                     
+                    bregionpairs_unsorted = [bregionpairs_unsorted; ...
+                        [bregionsthis{1} '-' bregionsthis{2}]];
+                    
+                    % ==== get sorted vbersion
+                    bregionsthis = sort(bregionsthis);
                     bregionpairs_sorted = [bregionpairs_sorted; ...
                         [bregionsthis{1} '-' bregionsthis{2}]];
+                    
                 end
                 
+                if ~all(strcmp(bregionpairs_sorted, bregionpairs_unsorted)==1)
+                    keyboard
+                end
+                
+                
                 COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).bregionpairs_sorted = bregionpairs_sorted;
+                COHSTRUCT.bird(i).experiment(ii).setnum(ss).motif(mm).bregionpairs_unsorted = bregionpairs_sorted;
             end
         end
     end

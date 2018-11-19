@@ -1,7 +1,10 @@
 function lt_neural_Coher_Summ_Plot1(pairthis, All_CohgramMean, All_birdnum, All_enum, All_setnum, All_motifname, ...
-    All_chanpair, All_bregionpair, All_bregionpair_alphaorder,ffbinsedges)
+    All_chanpair, All_bregionpair, All_bregionpair_alphaorder,ffbinsedges, PARAMS, SummaryStruct)
 % pairthis = 'LMAN-RA';
 % ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
+
+tbins = PARAMS.tbins;
+ffbins = PARAMS.ffbins;
 
 %% lt 10/12/18 - plots summary over all data
 % ============ 1) Lock to syllable onset, one plot for each brain region

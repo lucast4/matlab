@@ -89,7 +89,7 @@ end
 if ~exist('LearnKeepOnlyBase', 'var')
     LearnKeepOnlyBase=0;
 end
-
+SwitchCohStruct
 if ~exist('preAndPostDurRelSameTimept', 'var')
     preAndPostDurRelSameTimept=0; % if 1, then will get pre and postdur aligned to either onset or
     % offset of token (depending on "alignByOnset"). if 0, then predur is

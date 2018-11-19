@@ -44,7 +44,12 @@ catch err
 end
     
 
-
+try 
+open 1_DELETE_NOTES.txt
+catch err
+    disp('starting new 1_DELETE_NOTES.txt');
+    edit 1_DELETE_NOTES.txt
+end
 
 
 if(0)

@@ -69,6 +69,7 @@ if (0)
     % need to throw this out (redundant with below) or put into a
     % function
     % ================ MOTIF STATISTICS (E.G. FIRING RATE, BURSTS, ...)
+    NumNeurons = length(NeuronDatabase.neurons);
     for i=1:NumNeurons
         cd(NeuronDatabase.global.basedir);
         
@@ -698,11 +699,6 @@ LinScaleGlobal=0; % 0:NONE; 1: global (across neurosn and motifs); 2: local (spe
 
 lt_neural_MultNeur_MotifRasters_WNacute(NeuronDatabase, motif_regexpr_str, ...
     motif_predur,motif_postdur, FFparams, NumTrialsBin, LinScaleGlobal)
-
-
-
-
-
 
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

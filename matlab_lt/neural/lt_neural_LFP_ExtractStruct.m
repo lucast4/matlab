@@ -84,9 +84,10 @@ for i=1:numbirds
 
                 
                 % ================ COLLECT LFP FOR ALL CHANNELS
-                [LFPall, Tall] = lt_neural_QUICK_Segextr_GetLFP(segextract, dirname_main, Chanlist, ...
+                [LFPall, Tall, chanlist2] = lt_neural_QUICK_Segextr_GetLFP(segextract, dirname_main, Chanlist, ...
                     motif_predur, extrapad);
-
+                assert(all(chanlist2==Chanlist));
+                
                 % ============== COLLECT
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).LFP_chanbytrial = LFPall;
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanlist = Chanlist;

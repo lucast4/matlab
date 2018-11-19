@@ -47,6 +47,10 @@ for i=1:length(indsgrp_unique)
     
 end
 
+if nanmean(allDat(:))>1
+    keyboard
+end
+
 %% ============ further group by switch? (i.e. average over all chanel pairs)
 % ==================== PLOT, ONE FOR EACH BIRD (overlay all switches)0
 indsgrp_switch = lt_tools_grp2idx({allbnum, allenum, allswnum});

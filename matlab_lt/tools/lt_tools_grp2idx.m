@@ -2,7 +2,7 @@
 % one uiqnue index for each combination across dimensions (matlabs only
 % takes 1 dim...)
 
-function inds_out = lt_tools_grp2idx(X)
+function [inds_out, inds_unique, X_cell] = lt_tools_grp2idx(X)
 %%
 % X is cell array (1xn, where n is dim). each entyr should be column opf
 % str or numbers
@@ -29,3 +29,6 @@ for j=1:length(X)
 end
 
 inds_out = grp2idx(X_str);
+inds_unique = unique(inds_out);
+
+X_cell = mat2cell(X_str, ones(size(X_str,1),1), size(X_str,2)); % for outpe, Nx1 cell.

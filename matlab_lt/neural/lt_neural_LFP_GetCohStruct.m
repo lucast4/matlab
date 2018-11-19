@@ -1,5 +1,6 @@
 function [COHSTRUCT] = lt_neural_LFP_GetCohStruct(LFPSTRUCT, PARAMS, SummaryStruct)
-%%
+%% 
+
 motif_predur = PARAMS.motif_predur;
 motif_postdur = PARAMS.motif_postdur;
 PrePostRelSameTime = PARAMS.alignbyonset;
@@ -164,3 +165,4 @@ end
 save([savedir '/COHSTRUCT.mat'], 'COHSTRUCT');
 save([savedir '/movingwin.mat'], 'movingwin');
 save([savedir '/params.mat'], 'params');
+lt_switch_chronux(0);

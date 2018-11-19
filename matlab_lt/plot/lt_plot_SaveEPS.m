@@ -7,8 +7,10 @@ SavePath=[SaveDir '/' timestamp '_rand' num2str(randnum) '.eps'];
 
 
 % print('-depsc2', '-noui', '-adobecset', '-painters', SavePath)
-print('-depsc2', '-noui', '-painters', SavePath)
-
+% good:
+% print('-depsc2', '-noui', '-painters', SavePath)
+% export_fig(SavePath, '-pdf', '-transparent', '-depsc');  doesn't work ends up as bmp
+print('-dpdf', '-painters', SavePath);
 %% Using export_fig, poptentialyl better?
 
 % -transparent

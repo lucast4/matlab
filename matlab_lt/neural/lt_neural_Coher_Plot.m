@@ -1,5 +1,5 @@
 function lt_neural_Coher_Plot(cohmat, tbins, ffbins, plottype, linestyle, clim, ...
-    plotsig, plotindivtraces)
+    plotsig, plotindivtraces, ffbinsedges)
 %% lt 10/9/18 - various plots for coherence
 
 % cohmat can be multiple trials (dim 3 is trials).
@@ -28,8 +28,13 @@ if ~exist('clim', 'var')
 end
 
 % plottype 2:
-ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
-
+if ~exist('ffbinsedges', 'var')
+    ffbinsedges = [];
+end
+if isempty(ffbinsedges)
+ffbinsedges = [15 30 67 103 150]; % edges, to plot timecourse in frequency bands
+% ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
+end
 %%
 if plottype==1
     cohmean = nanmean(cohmat,3);
@@ -48,6 +53,9 @@ elseif plottype==2
         
         indsff = ffbins>ffbinsedges(k) & ffbins<=ffbinsedges(k+1);
         ffmean = mean(ffbins(indsff));
+        ffmin = ffbinsedges(k);
+        ffmax = ffbinsedges(k+1);
+        
         % ff bins
         
         cohthis = squeeze(nanmean(cohmat(:, indsff, :), 2)); % first take mean over the ff bins
@@ -75,9 +83,9 @@ elseif plottype==2
         end
         % --
         try
-        lt_plot_text(tbins(end), cohmean(end), [num2str(ffmean)], pcols{k}, 10);
+        lt_plot_text(tbins(end), cohmean(end), [num2str(ffmin) '-' num2str(ffmax)], pcols{k}, 10);
         catch err
-            lt_plot_text(tbins(end), cohthis(end, 1), [num2str(ffmean)], pcols{k}, 10);
+            lt_plot_text(tbins(end), cohthis(end, 1), [num2str(ffmin) '-' num2str(ffmax)], pcols{k}, 10);
         end
     end
     axis tight;

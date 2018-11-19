@@ -1,12 +1,15 @@
 function lt_neural_tools_LFPextract(SummaryStruct)
 %% lt 10/19/18 - extracts and saves LFP for all chanesl
+% NOTE: saves next to the raw file itself.
 % DEFAULTS:
 % 400hz lowpass, 4th order butterworth, downsampled to 1500. Based on
 % plotting pre vs post, and comparing diff frequencies and Ns, determined
 % this to be appropriate. downsampling is fine.
 
+%% ==== get list of all files across dataset
 [Allbird_Fnames, Allbird_chanlist, Allbird_birdnum] = lt_neural_tools_allsongs(SummaryStruct);
 
+%% go thru all files and extract LFP
 for j=1:length(Allbird_Fnames)
     
     fnamethis = Allbird_Fnames{j};

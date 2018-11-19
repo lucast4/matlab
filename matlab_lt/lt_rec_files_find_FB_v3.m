@@ -35,21 +35,34 @@ rec_files.DateNum_songs_without_FB=[];
 
 %% get rec files from batch, including time info.
 
-fid=fopen(batch,'r');
-clock=1;
+% fid=fopen(batch,'r');
+% clock=1;
+% 
+% while 1
+%     fn=fgetl(fid);
+%     if ~ischar(fn),
+%         break;
+%     end
+%     suffix_start_index=findstr(fn,'.cbin');
+%     rec_name_from_cbin=[fn(1:suffix_start_index-1) '.rec'];
+%     rec_files_list(clock)=dir(rec_name_from_cbin);
+%     clock=clock+1;
+% end
 
-while 1
-    fn=fgetl(fid);
-    if ~ischar(fn),
-        break;
-    end
+
+
+fid=fopen(batch,'r');
+fn = fgetl(fid);
+rec_files_list = [];
+while ischar(fn)
     suffix_start_index=findstr(fn,'.cbin');
     rec_name_from_cbin=[fn(1:suffix_start_index-1) '.rec'];
-    rec_files_list(clock)=dir(rec_name_from_cbin);
-    clock=clock+1;
+    
+    rec_files_list = [rec_files_list dir(rec_name_from_cbin)];
+%     
+%     rec_files_list(clock)=dir(rec_name_from_cbin);
+    fn = fgetl(fid);
 end
-
-
 
 
 %%

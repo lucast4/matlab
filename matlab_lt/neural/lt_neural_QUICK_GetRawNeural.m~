@@ -54,8 +54,10 @@ for i=1:length(SegExtract)
         assert(nsamp-nsampmax<10);
         off_samp = off_samp-(nsamp - nsampmax);
     elseif nsamp <nsampmax
-        assert(nsampmax-nsamp<10)
-        off_samp = off_samp + nsampmax-nsamp;
+        assert(nsamp
+        off_samp = off_samp + nsampmax-nsamp
+        
+        assert(nsamp == nsampmax);
     end
         
     datseg = single(Datthis.data(ons_samp:off_samp));
