@@ -325,6 +325,7 @@ if (data_present)
 %         supply_voltage_data = zeros(num_supply_voltage_channels, num_supply_voltage_samples);
 %         temp_sensor_data = zeros(num_temp_sensor_channels, num_supply_voltage_samples);
     board_adc_data = zeros(num_board_adc_channels, num_board_adc_samples);
+%     board_adc_data = zeros(num_board_adc_channels, ceil(num_board_adc_samples));
 %         board_dig_in_data = zeros(num_board_dig_in_channels, num_board_dig_in_samples);
 %         board_dig_in_raw = zeros(1, num_board_dig_in_samples);
 %         board_dig_out_data = zeros(num_board_dig_out_channels, num_board_dig_out_samples);

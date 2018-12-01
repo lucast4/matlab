@@ -6,10 +6,18 @@ close all; clear MOTIFSTATS_Compiled;
 lt_neural_ExtractMotifs_Regular;
 
 
+%% ====
+SummaryStruct = MOTIFSTATS_Compiled.SummaryStruct;
+
+%% ====== WHICH EXPTS AHVE DIR SONG?
+
+lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
+
+
 %% ====== PLOT ALL MOTIFS, OVERLAYING DIR AND UNDIR
 close all;
 i =1;
-ii=3;
+ii = 1;
 figcount=1;
 subplotrows=4;
 subplotcols=9;
@@ -52,7 +60,7 @@ for j=1:nummotifs
     hsplots = [hsplots hsplot];
     title('DIR');
     inds = [segextract.DirSong]==1;
-    
+    if any(inds)
     frmat = [segextract(inds).FRsmooth_rate_CommonTrialDur];
     x = segextract(1).FRsmooth_xbin_CommonTrialDur;
     plot(x, frmat, '-', 'Color', [0.6 0.6 0.6]);
@@ -73,7 +81,7 @@ for j=1:nummotifs
     shadedErrorBar(x1, y1, y1sem, {'Color', 'k'}, 1);
     shadedErrorBar(x2, y2, y2sem, {'Color', 'b'}, 1);
     line([motifpredur motifpredur], ylim, 'Color','r');
-    
+    end
     
     % ---------------
     linkaxes(hsplots, 'xy');

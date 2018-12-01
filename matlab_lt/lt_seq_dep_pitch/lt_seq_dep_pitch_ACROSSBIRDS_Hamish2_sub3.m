@@ -1,4 +1,4 @@
-function lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub3(DATSTRUCT)
+function lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub3(DATSTRUCT, SeqDepPitch_AcrossBirds)
 %% lt 7/27/18 - ALL PLOTS LOOKING AT TARGET SYL ONLY
 % Relationship between bias and learning
 % Learning and CV change
@@ -405,6 +405,65 @@ y = All_CV_WN_PBS - All_CV_BASE_PBS;
 lt_regress(y, x, 1);
 lt_plot_zeroline;
 
+%% ======== AFP BIAS.
+
+
+%% ======== CV (base and WN, with and against) [PLOT TEXT]
+lt_figure; hold on ;
+
+
+% ======= 1) CV
+xlabel('AGAINST[base - WN] -- TOWARDS[base-WN]');
+ylabel('CV');
+title('PBS');
+x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+x = x>0; % 1 if bias is in dir of learning.
+y = [All_CV_BASE_PBS All_CV_WN_PBS];
+
+for j=1:size(x,1)
+   plot([x(j)-0.2 x(j)+0.2], y(j,:), '-k');
+   
+   bnum = All_Birdnum(j);
+   enum = All_Extpnum(j);
+   bname = SeqDepPitch_AcrossBirds.birds{bnum}.birdname;
+   ename = SeqDepPitch_AcrossBirds.birds{bnum}.experiment{enum}.ExptID;
+   lt_plot_text(x(j)+0.25, y(j,2), [bname '-' ename], 'm');
+end
+
+[ymean, ysem] = grpstats(y(:,1), x, {'mean', 'sem'});
+lt_plot(unique(x)-0.1, ymean, {'Errors', ysem});
+
+[ymean, ysem] = grpstats(y(:,2), x, {'mean', 'sem'});
+lt_plot(unique(x)+0.3, ymean, {'Errors', ysem});
+
+lt_plot_zeroline;
+xlim([-1 3]);
+
+
+%% === LEARNING (PLOT TEXT)
+
+NumBirds = max(All_Birdnum);
+lt_figure; hold on;
+
+% --------
+xlabel('baseline AFP bias (pos = dir of learning)');
+ylabel('FF minus base dur learn (dir of learn)');
+
+bias = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+learn_PBS = All_learndir.*(All_FF_WN_PBS - All_FF_BASE_PBS);
+learn_MUSC = All_learndir.*(All_FF_WN_MUSC - All_FF_BASE_PBS);
+for j=1:length(bias)
+    line([bias(j) bias(j)], [learn_PBS(j) learn_MUSC(j)], 'Color', [0.7 0.7 0.7]);
+    
+   bnum = All_Birdnum(j);
+   enum = All_Extpnum(j);
+   bname = SeqDepPitch_AcrossBirds.birds{bnum}.birdname;
+   ename = SeqDepPitch_AcrossBirds.birds{bnum}.experiment{enum}.ExptID;
+   lt_plot_text(bias(j)+2, learn_PBS(j), [bname '-' ename], 'm');
+end
+plot(bias, learn_PBS, 'ko');
+plot(bias, learn_MUSC, 'ro');
+
 %%  ############# baseline: magntiude of AFP bias correlate with magnitude of CV change?
 
 lt_figure; hold on;
@@ -477,6 +536,28 @@ y = Yall(:,2) - Yall(:,1);
 
 plot(x,y, 'ok');
 lt_plot_makesquare_plot45line(gca, 'r');
+
+% ================ 2) PLOT CHANGES IN CV
+lt_subplot(3,2,2); hold on
+title('Using new time windows (Pitch cv)');
+xlabel('AGAINST(base - WN) -- TOWARDS(base - WN)');
+
+x = All_learndir.*(All_FF_BASE_PBS - All_FF_BASE_MUSC);
+x = x>0;
+
+for j=1:length(x)
+   
+    plot([x(j)-0.2 x(j)+0.2], Yall(j,:), '-k');
+        
+end
+xlim([-1 2]);
+lt_plot_zeroline;
+
+[ymean, ysem] = grpstats(Yall(:,1), x, {'mean', 'sem'});
+lt_plot(unique(x)-0.1, ymean, {'Errors', ysem});
+
+[ymean, ysem] = grpstats(Yall(:,2), x, {'mean', 'sem'});
+lt_plot(unique(x)+0.3, ymean, {'Errors', ysem});
 
 %% ############# CHANGE IN WIGGLE AS FUNCTION OF DIRECTION OF LEARNING
 % ============================= EXTRACT SUMMARY OF WIGGLES

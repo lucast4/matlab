@@ -1,5 +1,17 @@
 function SegmentsExtract = lt_neural_SmoothFR(SegmentsExtract, clustnum, ...
-    kernelSD, binsize_spks, extractSingleTrials, segextract_for_trialdur)
+    kernelSD, binsize_spks, extractSingleTrials, segextract_for_trialdur, addtotime)
+%% lt 11/21/18 - fixed minor issue, 0previously x output was about 0.5ms too early
+% i.e. smooth fr will be about 0.5ms before actual spike times.
+% this is because used bin edges. changed to use bin centers. 
+
+if ~exist('addtotime', 'var')
+    addtotime = 0; % will add to the time values.
+else
+    assert(length(addtotime)==1, 'should be scalr');
+end
+
+%% NOTE: must convert spike times to start from 0.
+
 %% clustnum is optional - will make sure only one clsuter if don't enter
 
 if ~exist('clustnum', 'var')
@@ -10,7 +22,7 @@ end
 % another one that does ...
 if ~exist('segextract_for_trialdur', 'var')
     segextract_for_trialdur = [];
-else
+elseif ~isempty(segextract_for_trialdur)
     assert(length(segextract_for_trialdur) == length(SegmentsExtract), 'sdaf');
 end
 
@@ -53,8 +65,12 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
         commonTrialDur = min([segextract_for_trialdur.global_offtime_motifInclFlank] - ...
             [segextract_for_trialdur.global_ontime_motifInclFlank]); % shortest trial
     else
-        commonTrialDur = min([SegmentsExtract.global_offtime_motifInclFlank] - ...
-            [SegmentsExtract.global_ontime_motifInclFlank]); % shortest trial
+        if isfield(SegmentsExtract, 'datdur')
+            commonTrialDur = min([SegmentsExtract.datdur]);
+        else
+            commonTrialDur = min([SegmentsExtract.global_offtime_motifInclFlank] - ...
+                [SegmentsExtract.global_ontime_motifInclFlank]); % shortest trial
+        end
     end
     maxInd = floor(commonTrialDur/binsize_spks);
     
@@ -93,11 +109,16 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
                     segextract_for_trialdur(i).global_ontime_motifInclFlank;
                 
             else
-                trialdur = SegmentsExtract(i).global_offtime_motifInclFlank - ...
-                    SegmentsExtract(i).global_ontime_motifInclFlank;
+                if isfield(SegmentsExtract, 'datdur')
+                    trialdur = SegmentsExtract(i).datdur;
+                else
+                    trialdur = SegmentsExtract(i).global_offtime_motifInclFlank - ...
+                        SegmentsExtract(i).global_ontime_motifInclFlank;
+                end
             end
             
             binedges = 0:binsize_spks:trialdur;
+            bincenters = binedges(1:end) + (binedges(2)-binedges(1))/2;
             [bincounts] = histc(spktimes, binedges); % binned spikes
             
             if isempty(spktimes)
@@ -146,13 +167,16 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
                 
             end
             
+%             if size(smoothFR,1)>1
+%                 smoothFR = smoothFR';
+%             end
             % --- save
             if extractSingleTrials==1
                 SegmentsExtract(i).FRsmooth_rate = single(smoothFR');
-                SegmentsExtract(i).FRsmooth_xbin = single(binedges(1:end-1)');
+                SegmentsExtract(i).FRsmooth_xbin = single(bincenters(1:end-1)') +addtotime;
             end
             SegmentsExtract(i).FRsmooth_rate_CommonTrialDur = single(smoothFR(1:maxInd)');
-            SegmentsExtract(i).FRsmooth_xbin_CommonTrialDur = single(binedges(1:maxInd)');
+            SegmentsExtract(i).FRsmooth_xbin_CommonTrialDur = single(bincenters(1:maxInd)') +addtotime;
             
             
         end

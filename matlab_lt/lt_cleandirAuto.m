@@ -73,6 +73,11 @@ if PeakToUse~=2
     % 2 is default, if not 2, then tell user
     disp(['NOTE: Using peak loc of ' num2str(PeakToUse) ' isntead of 2 as in original code (LT) - prob due to many noise files']);
 end
+if isempty(PeakToUse)
+    disp('SKIP - not enough songs ...');
+    return
+    
+end
 threshold = 10^(batchbins(pksloc(PeakToUse)));
 
 disp(['threshold = ' num2str(threshold)]);

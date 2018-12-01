@@ -13,6 +13,7 @@ tbins = PARAMS.tbins;
 ffbins = PARAMS.ffbins;
 
 % clim = [-0.15 0.15];
+plotEachTrial = 0; % for the timecourses, if 0 then only plots means, sem.
 
 %% onluy plot certain birds?
 
@@ -484,7 +485,7 @@ if strcmp(fieldtoplot, 'spec')
         clim = [-0.5 0.5];
         addval = 0.2;
     else
-    clim = [-1 1]; % zscore    
+    clim = [-8 8]; % zscore    
     addval = 1;
     end
             
@@ -522,13 +523,13 @@ if strcmp(fieldtoplot, 'spec')
     
     lt_neural_Coher_Learn_PlotSum2_sub
 
-    
+
     
     %% ============== DIFFERENCES (TARGET MINUS NONTARG)
     % ================ TARGET MINUS SAME
     indsyl1 = 1;
     indsyl2 = 2;
-    ylabthis = 'TARG - SAME';
+    ylabthis = 'TARG - SAME[WNmeans]';
     
     % -
     dat1=  squeeze(DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.wn(:,:,indsyl2,:));
@@ -544,17 +545,13 @@ if strcmp(fieldtoplot, 'spec')
     imagesc(tbins, ffbins, nanmean(dat2,3)', clim);
     title('chan2');
     axis tight;
-    colorbar
+    colorbar('East');
     
     
     % ------------ PLOT TIMECOURSE IN A FEW FREQUENCY BINS
+    if plotEachTrial==1
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan1');
-    axis tight;
-    
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan1');
     axis tight;
     
@@ -562,16 +559,33 @@ if strcmp(fieldtoplot, 'spec')
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('chan2');
     axis tight;
+    end
+    
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim, 1, 0);
+    title('chan1');
+    ylabel(ylabthis);
+    axis tight;
+    
     
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan2');
-    axis tight;
+     ylabel(ylabthis);
+   axis tight;
+    
+
     
     % ===============
     dat3 = squeeze((DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan1.wn(:,:,indsyl2,:) - DATSTRUCT.chan1.base(:,:,indsyl2,:)));
     
+   [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
+    title('chan1');
+    ylabel('(wn-base) - (wn-base)]');
+    axis tight;
+
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -585,6 +599,12 @@ if strcmp(fieldtoplot, 'spec')
     dat3 = squeeze((DATSTRUCT.chan2.wn(:,:,indsyl1,:) - DATSTRUCT.chan2.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan2.wn(:,:,indsyl2,:) - DATSTRUCT.chan2.base(:,:,indsyl2,:)));
     
+       [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
+    title('chan2');
+    ylabel('(wn-base) - (wn-base)]');
+    axis tight;
+
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -594,13 +614,14 @@ if strcmp(fieldtoplot, 'spec')
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim, 1, 0);
     title('(wn-base) - (wn-base)]');
     
-    
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+
     
     % ================ TARGET MINUS DIFF
+
+        % ================ TARGET MINUS SAME
     indsyl1 = 1;
     indsyl2 = 3;
-    ylabthis = 'TARG - DIFF';
+    ylabthis = 'TARG - DIFF[WNmeans]';
     
     % -
     dat1=  squeeze(DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.wn(:,:,indsyl2,:));
@@ -616,17 +637,13 @@ if strcmp(fieldtoplot, 'spec')
     imagesc(tbins, ffbins, nanmean(dat2,3)', clim);
     title('chan2');
     axis tight;
-    colorbar
+    colorbar('East');
     
     
     % ------------ PLOT TIMECOURSE IN A FEW FREQUENCY BINS
+    if plotEachTrial==1
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan1');
-    axis tight;
-    
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan1');
     axis tight;
     
@@ -634,16 +651,33 @@ if strcmp(fieldtoplot, 'spec')
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('chan2');
     axis tight;
+    end
+    
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim, 1, 0);
+    title('chan1');
+    ylabel(ylabthis);
+    axis tight;
+    
     
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan2');
-    axis tight;
+     ylabel(ylabthis);
+   axis tight;
+    
+
     
     % ===============
     dat3 = squeeze((DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan1.wn(:,:,indsyl2,:) - DATSTRUCT.chan1.base(:,:,indsyl2,:)));
     
+   [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
+    title('chan1');
+    ylabel('(wn-base) - (wn-base)]');
+    axis tight;
+
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -657,6 +691,12 @@ if strcmp(fieldtoplot, 'spec')
     dat3 = squeeze((DATSTRUCT.chan2.wn(:,:,indsyl1,:) - DATSTRUCT.chan2.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan2.wn(:,:,indsyl2,:) - DATSTRUCT.chan2.base(:,:,indsyl2,:)));
     
+       [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
+    title('chan2');
+    ylabel('(wn-base) - (wn-base)]');
+    axis tight;
+
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');

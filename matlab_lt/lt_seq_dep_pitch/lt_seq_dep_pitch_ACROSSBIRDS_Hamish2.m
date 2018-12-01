@@ -158,6 +158,7 @@ All_FF_WN_PBS = [];
 All_FF_BASE_MUSC = [];
 All_FF_WN_MUSC = [];
 All_Birdnum = [];
+All_Extpnum = [];
 
 All_WNdayrange = [];
 
@@ -313,8 +314,11 @@ for i=1:NumBirds
                     i, ii, sylthis, 'PBS', basedayinds, PCtimewindows, PCtimeWindowUsingWN);
                 All_PitchCont_BASE_PBS = [All_PitchCont_BASE_PBS; OUTSTRUCT];
                 
-                
-                
+%                 if istarg==1
+%                     keyboard
+%                 end
+%                 
+%                 
                 % =========== DURING WN
                 % ----------- 1) MEAN PITCH
                 doMUSC = 0;
@@ -330,6 +334,7 @@ for i=1:NumBirds
                 
                 
                 %% ====================== PLOT EXTRACTED VALUES ON LEARNING
+                if istarg==1
                 % --- PBS
                 line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_PBS ffmean_BASE_PBS], 'Color', 'b', 'LineWidth', 3);
                 line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_PBS ffmean_WN_PBS], 'Color', 'b', 'LineWidth', 3);
@@ -337,7 +342,7 @@ for i=1:NumBirds
                 % --- MUSC
                 line([basedayinds(1)-0.5 basedayinds(end)+0.5], [ffmean_BASE_MUSC ffmean_BASE_MUSC], 'Color', 'm', 'LineWidth', 3);
                 line([WNdays(1)-0.5 WNdays(end)+0.5], [ffmean_WN_MUSC ffmean_WN_MUSC], 'Color', 'm', 'LineWidth', 3);
-                
+                end
                 
                 %% ======================== PLOT PC?
                 if plotPC ==1
@@ -567,6 +572,7 @@ for i=1:NumBirds
                 
                 
                 All_Birdnum = [All_Birdnum; i];
+                All_Extpnum = [All_Extpnum; ii];
                 All_exptcounter = [All_exptcounter; exptcount];
                 
                 WNday1 = SeqDepPitch_AcrossBirds.birds{i}.experiment{ii}.Data_PlotLearning.Params.PlotLearning.WNTimeOnInd + ...
@@ -592,6 +598,7 @@ disp(['Num expts plotted: ' num2str(count)]);
 %% ################### PUT ALL DATA INTO STRUCTURE
 
 DATSTRUCT.All_Birdnum = All_Birdnum;
+DATSTRUCT.All_Extpnum = All_Extpnum;
 DATSTRUCT.All_CV_BASE_MUSC = All_CV_BASE_MUSC;
 DATSTRUCT.All_CV_BASE_PBS = All_CV_BASE_PBS;
 DATSTRUCT.All_CV_WN_MUSC = All_CV_WN_MUSC;
@@ -610,6 +617,7 @@ DATSTRUCT.All_WNdayrange = All_WNdayrange;
 DATSTRUCT.All_basebiaspval = All_basebiaspval;
 DATSTRUCT.All_exptcounter = All_exptcounter;
 DATSTRUCT.All_learndir = All_learndir;
+
 
 
 %% ########## COLLECT WIGGLE AND BASELINE BIAS [recalculated using new time window]
@@ -802,21 +810,44 @@ lt_regress(skewall, biasall, 1);
 
 %% ############################ TARGET SYL ONLY
 
-lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub3(DATSTRUCT)
+lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub3(DATSTRUCT, SeqDepPitch_AcrossBirds)
 
 
 
 
 %% ########################### TARG + SAMETYPE
 
-lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub4(DATSTRUCT)
+[OUT_Generalization_Nontarg, OUT_CVchange_TargNontarg] = ...
+    lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub4(DATSTRUCT);
 
 
+%% ===================== SAVE DATA TO GIVE TO HAMISH
+
+inds = DATSTRUCT.All_Istarg==1;
+
+% ---- CV CHANGE
+ExptDat.FF_WN_PBS = DATSTRUCT.All_FF_WN_PBS(inds);
+ExptDat.FF_WN_MUSC = DATSTRUCT.All_FF_WN_MUSC(inds);
+ExptDat.FF_BASE_PBS = DATSTRUCT.All_FF_BASE_PBS(inds);
+
+ExptDat.cvChange_WNminusBase_Target = DATSTRUCT.All_CV_WN_PBS(inds) - DATSTRUCT.All_CV_BASE_PBS(inds);
+ExptDat.cvChange_WNminusBase_SameTypeSyl = OUT_CVchange_TargNontarg(:,2);
+ExptDat.afpBias_Base = DATSTRUCT.All_FF_BASE_PBS(inds) - DATSTRUCT.All_FF_BASE_MUSC(inds);
+ExptDat.trainingDirection = DATSTRUCT.All_learndir(inds);
+
+ExptDat.Generalization_SameTypeSyl = cellfun(@mean, OUT_Generalization_Nontarg);
 
 
+if (0)
+figure; plot(OUT_CVchange_TargNontarg(:,1), cvChange_WNminusBase, 'ok');
+figure; plot(afpBias_Base.*trainingDirection, cellfun(@mean, OUT_Generalization_Nontarg), 'ok');
 
-
-
+figure; plot(sign(afpBias_Base.*trainingDirection), cellfun(@mean, OUT_Generalization_Nontarg), 'ok');
+xlim([-3 3]);
+end
+% ========= save
+savedir = '/bluejay5/lucas/analyses/seqdeppitch/HAMISH';
+save([savedir '/ExptDat.mat'], 'ExptDat');
 
 
 

@@ -1,4 +1,4 @@
-function OUTSTRUCT = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
+function [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
     collectAllProcess, zscoreLFP, collectDiffMats)
 %% lt 11/1/18 - added option to collect also phi and psds
@@ -9,6 +9,8 @@ if collectAllProcess==1
 else
     collectonlyMeans=0;
 end
+% NOTE: regardless, will put all cohmat into a structure OUTSTRUCT_CohMatOnly
+
 
 %% lt 10/9/18 - % THIS 1) plots and 2) collects to do stats
 
@@ -58,6 +60,8 @@ OUTSTRUCT.indsWN_epoch = {};
 
 OUTSTRUCT.cohscal = {};
 OUTSTRUCT.ffvals = {};
+
+scalarcounter = 1;
 
 % =============== RUN
 for i=1:numbirds
@@ -262,8 +266,15 @@ for i=1:numbirds
                 end
                 
                 %% ============== GET SCALAR VALUES OF COHERENCE
-                cohscalar = datthis.motifnum(mm).cohscalar';
-                
+                if isfield(datthis.motifnum(mm), 'cohscalar')
+                   cohscalar = datthis.motifnum(mm).cohscalar';
+                else
+                    if scalarcounter==1
+                        scalarcounter=2;
+                        disp('NOTE: skipping coh scalar as not extracted previously!!');
+                        pause
+                    end
+                end
                 
                 %% ============= get ff
                 ffvals = datthis.motifnum(mm).ffvals;
@@ -381,7 +392,9 @@ for i=1:numbirds
                         OUTSTRUCT.indsbase_epoch = [OUTSTRUCT.indsbase_epoch; single(indsbase_epoch)];
                         OUTSTRUCT.indsWN_epoch = [OUTSTRUCT.indsWN_epoch; single(indsWN_epoch)];
                         
+                        if scalarcounter==1
                         OUTSTRUCT.cohscal = [OUTSTRUCT.cohscal; cohscalar(k,:)];
+                        end
                         
                         if collectDiffMats ==1
                             OUTSTRUCT.CohMean_WNminusBase = [OUTSTRUCT.CohMean_WNminusBase; cohmean_diff(:,:,k)];
@@ -445,7 +458,9 @@ if (0)
     OUTSTRUCT.indsWN_epoch = indsWN_epoch;
 end
 %% ======== remove individual trials of cohernece>?
-if collectonlyMeans==1
+    OUTSTRUCT_CohMatOnly = OUTSTRUCT.CohMat;
+    if collectonlyMeans==1
+
     OUTSTRUCT = rmfield(OUTSTRUCT, 'CohMat');
 end
 

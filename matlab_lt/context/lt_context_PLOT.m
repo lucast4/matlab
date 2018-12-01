@@ -1,4 +1,5 @@
-function lt_context_PLOT(AllSongsDataMatrix, Params_input, one_switch_a_day, plotIndTrials)
+function [SORTED_DATA, PARAMS_GLOB] = lt_context_PLOT(AllSongsDataMatrix, Params_input, one_switch_a_day, plotIndTrials, ...
+    justDoExtraction)
 %% LT 11/15/15 - this is all the plot code in lt_context_CompileAndPlot.
 % Params_alldays.NoteToPlot=1;
 % Params_alldays.RunBin=10;
@@ -747,6 +748,13 @@ for i=1:length(NoteGroupList);
     end
 end
 
+%% ======================== DECIDE IF JUST TO OUTPUT SORTED DATA
+if justDoExtraction==1
+PARAMS_GLOB = Params_alldays;
+return
+end
+
+%% 
 pause;
 close all;
 
@@ -834,6 +842,9 @@ end
 pause;
 close all;
 
+
+%% =================== [PLOT] - OPTO ASSOCIATION 
+% - i.e. gets values for [normative] up and down trials across all phases
 
 
 %% GET STATS OF TRANSITIONS BETWEEN EPOCHS

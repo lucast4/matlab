@@ -645,3 +645,10 @@ lt_neural_v2_FullMotifActivity;
 
 
 % ============= ANALYSES
+
+
+
+%% ################################## [TOOLS FOR MOTIFSTATS_Compiled]
+
+%% ==== REMOVE DIR SONG
+MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);

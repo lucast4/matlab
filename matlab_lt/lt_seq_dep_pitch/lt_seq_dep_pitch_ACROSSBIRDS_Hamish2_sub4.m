@@ -1,4 +1,4 @@
-function lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub4(DATSTRUCT)
+function [OUT_Generalization_Nontarg, OUT_CVchange_TargNontarg] = lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub4(DATSTRUCT)
 %% lt 7/27/18 - ALL PLOTS LOOKING AT TARGET SYL + same type ONLY
 
 %%
@@ -87,6 +87,7 @@ for i=1:numexpts
     end
 end
 
+OUT_Generalization_Nontarg = y_nontarg_all;
 
 % =============
 lt_subplot(3,2,3); hold on;
@@ -121,6 +122,8 @@ lt_plot_MultDist(Y, [1 2], 0, 'k', 1);
 lt_plot_zeroline;
 [~, p] = ttest2(Y{1}, Y{2});
 lt_plot_pvalue(p, 'ttest', 1);
+
+OUT_Generalization_AgainstTowards = Y;
 
 % ===============
 lt_subplot(3,2,5); hold on;
@@ -270,6 +273,7 @@ if p<0.1
 end
 
 lt_plot_zeroline;
+OUT_CVchange_TargNontarg = Y;
 
 % ============ 3) BAR PLOTS
 lt_subplot(3,2,5); hold on;

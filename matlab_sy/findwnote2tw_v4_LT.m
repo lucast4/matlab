@@ -125,6 +125,10 @@ while (1)
         % GETS data, including raw sound data.
         ton=onsets(p(ii));toff=offsets(p(ii)); % only get to this point if pre and note both match.
         
+        if ton<-TIMESHIFT*1000 % then not enough pre data. this can't be good. skip[.
+            continue
+        end
+        
         % Note whether trigger occured at this note.
         NoteNum=[];
         CatchTrial=[];
@@ -163,7 +167,7 @@ while (1)
         pttmpvec=zeros([1,size(FVALBND,1)]);
         
         ti1=ceil((TIMESHIFT + ton*1e-3)*fs);
-        dattmp=dat([ti1:(ti1+NFFT-1)]);
+        dattmp=dat(ti1:(ti1+NFFT-1));
         
         % ----------------------------------------------
         % FREQUENCY CALCULATION - spectrum taken at one time bin (sepcified

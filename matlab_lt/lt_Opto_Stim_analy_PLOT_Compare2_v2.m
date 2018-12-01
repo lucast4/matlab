@@ -32,6 +32,9 @@ pc_harms=Params.pc_harms;
 Fs=Params.Fs;
 PreDur=1000*Params.PreDur; % time of alignment (i.e. duration of data taken before target syl), ms.
 StimDur=Params.StimDur;
+if isempty(StimDur)
+    StimDur=10;
+end
 
 %% Extract Stats for each field
 

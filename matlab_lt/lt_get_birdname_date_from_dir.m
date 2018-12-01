@@ -13,6 +13,11 @@ dirpath=pwd;
 slashes=findstr(dirpath,'/');
 bluejay=findstr(dirpath,'bluejay');
 
+if length(bluejay)>1
+    % then take the last one (e.g. is likely /bluejay0/bluejay2/ ...);
+    bluejay = bluejay(end);
+end
+
 if input==0;
     bird_name=dirpath(slashes(end)+1:end);
     

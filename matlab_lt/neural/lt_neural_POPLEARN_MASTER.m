@@ -405,7 +405,7 @@ end
 
 %% ################# ANALYSES START FROM HERE: LOAD DATA
 % ==== load 
-
+clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_14Oct2018_2147.mat');
@@ -450,6 +450,8 @@ SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
 end
 
 PARAMS.bregionpair_toget = pairtoget;
+
+
 %% ########################## COH CORRELATE WITH PITCH?
 %% ======== EXTRACT SCALARS
 
@@ -588,9 +590,8 @@ for i=1:numbirds
 end
 
 
-%% =========== EXTRACT COH SCALAR DATA
 
-
+%% ############################################
 
 %% ################################################# LEARNING CHANGES
 %% ====== EXTRACT LFP ACROSS LEARNING
@@ -600,7 +601,7 @@ collectAllProcess =1; % then colelcts not just Cohmat, but all phi and spectra.
 % meory). (mean pre and post and also diff)
 plotON = 0;
 averagechanpairs= 0; % for each motif, average over all chan pairs [NOTE: this is not up to date]
-onlyfirstswitch = 0;
+onlyfirstswitch = 1;
 removeBadSyls = 1; % LEAVE AT 1.
 zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 2, then doesn't zscore, instead normalizes as power proprotion
@@ -609,7 +610,7 @@ zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 4, then first 1) zscores within f, and 2) normalizes to all f (i.e.
 % proportion
 collectDiffMats = 0; % if 1, then collects differences (WN minus base). redundant, so leave at 0.
-OUTSTRUCT = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
+[OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
     collectAllProcess, zscoreLFP, collectDiffMats);
 clear SwitchCohStruct;
@@ -627,7 +628,7 @@ sumplottype = 'switches'; % i.e. what is datapoint?
 % switches
 % chanpairs
 plotAllSwitchRaw = 0;
-clim = [-0.05 0.05];
+clim = [-0.04 0.04];
 fieldtoplot = 'Spec1Mean_WNminusBase';
 % Spec1Mean_WNminusBase
 % Spec2Mean_WNminusBase
@@ -639,10 +640,10 @@ lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
 
 % ============== THIS IS BETTER - subsumes the above, more compacta ndf
 % flexible.
-fieldtoplot = 'spec';
+fieldtoplot = 'coher';
 % 'coher'
 % 'spec'
-birdstoplot = [1 2];
+birdstoplot = [2];
 % NOTE: to get raw cohgram (before subtract) currently need to do
 % breakpoint using spec and evaluate cohgram version instead. Should
 % modify to plot cohgram.
@@ -651,11 +652,14 @@ lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
     plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, timewindowtoplot, ...
     zscoreLFP);
 
+
+
 %% ###################################################################
 %% ################ COHERENCE SCALAR PLOTS
 % - Can predict change in coh based on ffvs coh correlation?
 % - Is there signifincat correlation between coh and FF?
 % - Shuffle stats for change in coherence across experiments.
+% NOTE: USES SINGLE SCALAR VALUE EXTRACTED USING lt_neural_LFP_PitchCorr
 
 %% ====== EXTRACT BASELINE CORRELATIONS.
 useonlybaseepoch = 0; % if 1, then just limited epoch. if 0, then entie baseline data
@@ -667,6 +671,277 @@ nboot = 10; % to get bootstrap SE
 OUTSTRUCT = lt_neural_Coher_CohScalExtract(OUTSTRUCT, useonlybaseepoch, ...
     corrtype, cohdiff_usedprime, nboot);
 
+
+%% ===== [SUMMARY PLOT] LEARNING CHANGE IN COHSCALAR AS FUNCTION OF BASE CORR? 
+% i.e. can I predict the change in coherence in a given expt (switch) based
+% on relationship between baseline coh/ff and direction of training
+% NOTE: can test variation within and between experiments (centerdata)
+% NOTE: can test both normative learn dir and actual ff change (useFF ...);
+close all;
+cohdiff_norm_to_global = 1; % if 1, then finds (for a given channel)
+rho_norm_to_global = 0;
+centerdata = 0; % then for each switch, centers data (i.e. across channels)
+% NOTE: this is useful if want to ask about, within a tgiven expt, is there
+% correlation. 
+onlyfirstswitch = 0; % if 0, then all siwtches.
+useFFchangeInsteadOfLearnDir=0; % then sign(ff(WN)-ff(base)); if 0, then learndir
+
+lt_neural_Coher_CohScalPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_global, ...
+    rho_norm_to_global, centerdata, onlyfirstswitch, useFFchangeInsteadOfLearnDir);
+
+
+%% ###################################################################
+%% ################ COHERENCE SCALAR PLOTS [SYSTEMATIC]
+corrtype = 'spearman'; % spearman. or pearson or Kendall
+Nshuff = 200;
+
+% GOES THRU ALL T, FF BINS
+% REQUIRES OUTSTRUCT_CohMatOnly
+tbins = PARAMS.tbins;
+fbins = PARAMS.ffbins;
+
+FFcorrCoh = nan(length(tbins), length(fbins), length(OUTSTRUCT.bnum));
+FFcorrCoh_pctileVsShuff = nan(length(tbins), length(fbins), length(OUTSTRUCT.bnum));
+FFcorrCoh_zscoreVsShuff = nan(length(tbins), length(fbins), length(OUTSTRUCT.bnum));
+FFcorrCoh_shuffCI = nan(length(tbins), length(fbins), 2, length(OUTSTRUCT.bnum));
+
+savedir = '/bluejay5/lucas/analyses/neural/COHERENCE/SCALAR';
+savedir = [savedir '/' PARAMS.savemarker];
+if ~exist(savedir)
+mkdir(savedir);
+end
+
+
+for i=1:length(OUTSTRUCT.bnum)
+    
+    inds_base = OUTSTRUCT.indsbase{i};
+    
+    cohmatall = OUTSTRUCT_CohMatOnly{i};
+    ff = OUTSTRUCT.ffvals{i};
+    
+    % ================ GO THRU EACH T, FF BIN
+    for j=1:length(tbins)
+        for jj=1:length(fbins)
+            
+            cohthis = squeeze(cohmatall(j, jj, inds_base));
+            ffthis = ff(inds_base);
+            
+            % ---------------- GET CORR
+            rho_dat = corr(ffthis', cohthis, 'type', corrtype);
+            
+            % ---------------- GET SHUFFLE DISTRIBUTION OF CORR
+            rho_shuff_all = [];
+            for nn=1:Nshuff
+                disp(['case ' num2str(i) ', bin1=' num2str(j) ', bin2=' num2str(jj) ', shuff' num2str(nn)]);
+                
+                % --- shuffle trials
+                ffthis_shuff = ffthis(randperm(length(ffthis)));
+                rho_shuff = corr(ffthis_shuff', cohthis, 'type', corrtype);
+                rho_shuff_all = [rho_shuff_all; rho_shuff];
+                
+            end
+            
+            % ================= OUTPUT STATS
+            FFcorrCoh(j, jj, i) = rho_dat;
+            
+            p = (sum(abs(rho_shuff_all)>=abs(rho_dat))+1)./(length(rho_shuff_all)+1);
+            FFcorrCoh_pctileVsShuff(j, jj, i) = p;
+            
+            shuffmean = mean(rho_shuff_all);
+            shuffstd = std(rho_shuff_all);
+            rho_z = (rho_dat - shuffmean)/shuffstd;
+            FFcorrCoh_zscoreVsShuff(j, jj, i) = rho_z;
+            FFcorrCoh_shuffCI(j, jj, :, i) = prctile(rho_shuff_all, [2.75 97.5]);
+            
+        end
+    end
+save([savedir '/FFcorrCoh'], 'FFcorrCoh');
+save([savedir '/FFcorrCoh_pctileVsShuff'], 'FFcorrCoh_pctileVsShuff');
+save([savedir '/FFcorrCoh_zscoreVsShuff'], 'FFcorrCoh_zscoreVsShuff');
+save([savedir '/FFcorrCoh_shuffCI'], 'FFcorrCoh_shuffCI');
+
+end
+
+
+% clear OUTSTRUCT_CohMatOnly;
+
+%% ===================== 
+
+tmp = FFcorrCoh_pctileVsShuff<0.05;
+
+%% ====================== PLOT SHUFFLE SUMMARY [COH SCALAR]
+indsgood = ~isnan(squeeze(FFcorrCoh(1,1,:))) & OUTSTRUCT.switch==1;
+
+figcount=1;
+subplotrows=3;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+% ============ 1) heat map of mean correlation
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('mean cor coeff, (not abs)');
+cormean = nanmean(FFcorrCoh(:,:,indsgood), 3);
+imagesc(tbins, fbins, cormean');
+colorbar('East');
+axis tight;
+
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('mean cor coeff, (z,score not abs)');
+cormean = nanmean(FFcorrCoh_zscoreVsShuff(:,:,indsgood), 3);
+imagesc(tbins, fbins, cormean');
+colorbar('East');
+axis tight;
+
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('mean cor coeff, (mean of abs val)');
+cormean = nanmean(abs(FFcorrCoh(:,:,indsgood)), 3);
+imagesc(tbins, fbins, cormean');
+colorbar('East');
+axis tight;
+
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('mean cor coeff, (mean of abs val of zscore)');
+cormean = nanmean(abs(FFcorrCoh_zscoreVsShuff(:,:,indsgood)), 3);
+imagesc(tbins, fbins, cormean');
+colorbar('East');
+axis tight;
+
+
+%% ###################################### PHI
+%% ==== MEAN PHI ACROSS ALL SYLS
+
+PhiMeanAll = nan(length(PARAMS.tbins), length(PARAMS.ffbins), length(OUTSTRUCT.bnum));
+
+for i=1:length(OUTSTRUCT.bnum)
+   disp(i);
+    % ======= collect mean baseline phi
+    inds_base = OUTSTRUCT.indsbase_epoch{i};
+    phiall = OUTSTRUCT.PhiMat{i};
+    
+    phimat = phiall(:,:, inds_base);
+    
+    phimean = nan(size(phimat,1), size(phimat,2));
+    for j=1:size(phimat,1)
+        for jj=1:size(phimat,2)
+       
+            phimean(j, jj) = circ_mean(squeeze(phimat(j, jj, :)));
+        end
+    end
+    
+    PhiMeanAll(:,:, i) = phimean;
+    
+    if (0)
+       figure; hold on;
+       imagesc(phimean');
+    end
+    
+end
+
+
+%% ========== PLOT MEAN PHI
+figcount=1;
+subplotrows=3;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+t=PARAMS.tbins;
+f = PARAMS.ffbins;
+clim = [-pi pi];
+
+% =========== GLOBAL MEAN
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('global mean');
+
+phimean = nan(size(PhiMeanAll,1), size(PhiMeanAll,2));
+for j=1:size(PhiMeanAll,1)
+    for jj=1:size(PhiMeanAll,2)
+        phimean(j, jj) = circ_mean(squeeze(PhiMeanAll(j, jj, :)));
+    end
+end
+
+imagesc(t, f, phimean', clim);
+colorbar;
+axis tight;
+
+
+% =========== GLOBAL MEAN
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('global mean [smaller clim range]');
+
+phimean = nan(size(PhiMeanAll,1), size(PhiMeanAll,2));
+for j=1:size(PhiMeanAll,1)
+    for jj=1:size(PhiMeanAll,2)
+        phimean(j, jj) = circ_mean(squeeze(PhiMeanAll(j, jj, :)));
+    end
+end
+
+imagesc(t, f, phimean', [-1.5 1.5]);
+colorbar;
+axis tight;
+
+
+% =========== GLOBAL MEAN
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('global mean [smaller clim range]');
+
+phimean = nan(size(PhiMeanAll,1), size(PhiMeanAll,2));
+for j=1:size(PhiMeanAll,1)
+    for jj=1:size(PhiMeanAll,2)
+        phimean(j, jj) = circ_mean(squeeze(PhiMeanAll(j, jj, :)));
+    end
+end
+
+imagesc(t, f, phimean', [-0.5 0.5]);
+colorbar;
+axis tight;
+
+
+% ============ PLOT ANGLE SPECTRUM AT DIFFERENT TIMEPOINTS
+timebins = PARAMS.tbins(1):0.02:PARAMS.tbins(end);
+tbininds = discretize(t, timebins);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('angle spectra at diff time bins');
+plotcols = lt_make_plot_colors(length(timebins)-1, 1, [1 0 0]);
+
+for i=1:length(timebins)-1
+    indsthis = tbininds==i;
+    
+    phivec = circ_mean(phimean(indsthis, :));
+    
+    plot(f, phivec, '-', 'Color', plotcols{i});
+    
+    lt_plot_text(f(end), phivec(end), ['t=' num2str(timebins(i)) ' to ' num2str(timebins(i+1))], plotcols{i});
+    
+end
+lt_plot_zeroline;
+    ylim([-pi pi]);
+    
+if (0) % OBSOLETE - above plots all on one plot. here plots them on separate plots.
+% ============ PLOT ANGLE SPECTRUM AT DIFFERENT TIMEPOINTS
+timebins = PARAMS.tbins(1):0.02:PARAMS.tbins(end);
+tbininds = discretize(t, timebins);
+for i=1:length(timebins)-1
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    indsthis = tbininds==i;
+    title(['t=' num2str(timebins(i)) ' to ' num2str(timebins(i+1))]);
+    
+    phivec = circ_mean(phimean(indsthis, :));
+    
+    plot(f, phivec, '-k');
+    lt_plot_zeroline;
+    ylim([-pi pi]);
+    
+end
+end
 
 %% ===== [PHI] CALCULATE THINGS
 
@@ -741,23 +1016,6 @@ imagesc(PARAMS.tbins, PARAMS.ffbins, phimat', [-pi pi]);
 colorbar
 axis tight;
 end
-
-%% ===== [SUMMARY PLOT] LEARNING CHANGE IN COHSCALAR AS FUNCTION OF BASE CORR? 
-% i.e. can I predict the change in coherence in a given expt (switch) based
-% on relationship between baseline coh/ff and direction of training
-% NOTE: can test variation within and between experiments (centerdata)
-% NOTE: can test both normative learn dir and actual ff change (useFF ...);
-close all;
-cohdiff_norm_to_global = 1; % if 1, then finds (for a given channel)
-rho_norm_to_global = 0;
-centerdata = 0; % then for each switch, centers data (i.e. across channels)
-% NOTE: this is useful if want to ask about, within a tgiven expt, is there
-% correlation. 
-onlyfirstswitch = 0; % if 0, then all siwtches.
-useFFchangeInsteadOfLearnDir=0; % then sign(ff(WN)-ff(base)); if 0, then learndir
-
-lt_neural_Coher_CohScalPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_global, ...
-    rho_norm_to_global, centerdata, onlyfirstswitch, useFFchangeInsteadOfLearnDir);
 
 
 %% ====== [SUMMARY PLOT] PHI DURING LEARNING

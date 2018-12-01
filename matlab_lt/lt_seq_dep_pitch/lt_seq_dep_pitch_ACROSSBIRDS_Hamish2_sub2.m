@@ -74,7 +74,7 @@ for nn=1:numdays
         
     end
     
-    % ========= USE HAND LABELED WINDOWS?
+    %% ========= USE HAND LABELED WINDOWS?
     if exist('PCtimewindows', 'var')
         indtmp = [];
         
@@ -89,8 +89,8 @@ for nn=1:numdays
             
             if PCtimeWindowUsingWN==1
                 if isempty(indtmp)
-                % then if indtmp is empty, it is because I did not enter
-                % value for this syllablel. set time winodw to empty
+                    % then if indtmp is empty, it is because I did not enter
+                    % value for this syllablel. set time winodw to empty
                     twind = [];
                 end
             else
@@ -105,9 +105,10 @@ for nn=1:numdays
                     
                     indtmp = intersect(intersect(indtmp_bird+2, indtmp_syl), intersect(indtmp_expt+1, indtmp_syl));
                 end
-                
-                %             indtmp = intersect(find(strcmp(PCtimewindows, birdname))+1, find(strcmp(PCtimewindows, exptname)));
-                
+            end
+            %             indtmp = intersect(find(strcmp(PCtimewindows, birdname))+1, find(strcmp(PCtimewindows, exptname)));
+            
+            if length(indtmp)>0
                 assert(length(indtmp)==1, 'this bird, expt, syl combination doesnt exist');
                 twindsec = PCtimewindows{indtmp+1};
                 
@@ -124,8 +125,58 @@ for nn=1:numdays
         end
     end
     
+    %% ========= USE HAND LABELED WINDOWS?
+%     if exist('PCtimewindows', 'var')
+%         indtmp = [];
+%         
+%         if ~isempty(PCtimewindows)
+%             
+%             % ------------ FIRST, try using this syl in full (e.g. abB)
+%             indtmp_bird = find(strcmp(PCtimewindows, birdname));
+%             indtmp_expt = find(strcmp(PCtimewindows, exptname));
+%             indtmp_syl = find(strcmp(PCtimewindows, sylthis));
+%             
+%             indtmp = intersect(intersect(indtmp_bird+2, indtmp_syl), intersect(indtmp_expt+1, indtmp_syl));
+%             
+%             if PCtimeWindowUsingWN==1
+%                 if isempty(indtmp)
+%                 % then if indtmp is empty, it is because I did not enter
+%                 % value for this syllablel. set time winodw to empty
+%                     twind = [];
+%                 end
+%             else
+%                 % -- then is empty must be becuase is coded as single syl
+%                 % ...
+%                 if isempty(indtmp)
+%                     % ---------- SECOND, if can't find, then use the lower syl
+%                     % (e.g. abB --> b)
+%                     assert(length(sylthis)>1, 'why? expect this to not be single syl, since failed to find match just now');
+%                     syllower = lower(sylthis(regexp(sylthis, '[A-Z]')));
+%                     indtmp_syl = find(strcmp(PCtimewindows, syllower));
+%                     
+%                     indtmp = intersect(intersect(indtmp_bird+2, indtmp_syl), intersect(indtmp_expt+1, indtmp_syl));
+%                 end
+%                 
+%                 %             indtmp = intersect(find(strcmp(PCtimewindows, birdname))+1, find(strcmp(PCtimewindows, exptname)));
+%                 
+%                 assert(length(indtmp)==1, 'this bird, expt, syl combination doesnt exist');
+%                 twindsec = PCtimewindows{indtmp+1};
+%                 
+%                 %         disp(['--- ' num2str(twindsec)]);
+%                 % - convert from sec to samp
+%                 if isempty(twindsec)
+%                     twind = [];
+%                 else
+%                     tmp = find(tbins>=twindsec(1) & tbins<=twindsec(2));
+%                     twind = [tmp(1) tmp(end)];
+%                 end
+%                 disp('USING HAND CODED TWIND!!!');
+%             end
+%         end
+%     end
+%     
     
-    % ################################# SAVE OUTPUT
+    %% ################################# SAVE OUTPUT
     if strcmp(PBSorMUSC, 'MUSC')
         %             All_PCmat{nn} = PCmat.PCmat_tosave_MUSC(:, twind(1):twind(end));
         All_PCmat{nn} = PCmat.PCmat_tosave_MUSC;

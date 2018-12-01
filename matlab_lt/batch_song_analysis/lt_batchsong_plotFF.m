@@ -99,9 +99,7 @@ for i = 1:length(MotifsToExtract)
     
     % ####################################### DIR
     inds = [DATSTRUCT.motif(i).rendnum.isDIR]==1;
-    if ~any(inds)
-        continue
-    end
+    if any(inds)
     plotcol = 'b';
     
     % ----------------- RUN
@@ -111,6 +109,9 @@ for i = 1:length(MotifsToExtract)
     % ------- subtract baseline FF
     if subtractMean==1
         baseinds = tvals < TrainON_dnum;
+        if ~any(baseinds)
+            disp('TO PLOT DIR, DO NOT NORM TO BASE!!! [lackign base data]');
+        end
         ffvals = ffvals - mean(ffvals(baseinds));
     end
     if dozscore ==1
@@ -141,7 +142,7 @@ for i = 1:length(MotifsToExtract)
         
         lt_plot(max(tt)+0.15, mean(ff), {'Errors', lt_sem(ff), 'Color', plotcol});
     end
-    
+    end
     
 end
 linkaxes(hsplots, 'xy');

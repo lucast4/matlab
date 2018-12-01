@@ -1,8 +1,12 @@
 function lt_Opto_Stim_analy_SUMMARY_PlotOverTime(BirdDir,ListOfDirs,TimeFieldsOfInterest, ...
-    statfield,BaselineDays,plotStimEpochs, MetaParams)
+    statfield,BaselineDays,plotStimEpochs, MetaParams, savephrase)
 % plotStimEpochs=0 (skips plotting).
 % MetaParams = data structure containing experiemnt info (e.g. what days
 % paired stim + WN up).
+
+if size(TimeFieldsOfInterest,1)>1
+    TimeFieldsOfInterest = TimeFieldsOfInterest';
+end
 
 %% TO DO:
 % 1) get stim epochs, and do analyses on those individually
@@ -87,7 +91,7 @@ PARAMS.global.ListOfDirs=ListOfDirs;
 NumStructs=length(ListOfDirs);
 
 %% First figure out range of dates
-for i=1:NumStructs;
+for i=1:NumStructs
     
     dir=[BirdDir ListOfDirs{i}];
     
@@ -122,6 +126,10 @@ c=1;
 for i=1:NumStructs
     
     dir=[BirdDir ListOfDirs{i}];
+    
+    if ~exist([dir '/StatsStruct.mat'])
+        continue
+    end
     
     sts=load([dir '/StatsStruct']);
     prm=load([dir '/Params']);
@@ -232,10 +240,10 @@ for i=1:NumStructs
     
     
     % Save Data - slot into global struct
-    for ii=1:length(prm.Params.TimeField); % for each timewindow
+    for ii=1:length(prm.Params.TimeField) % for each timewindow
         twindfield=prm.Params.TimeField{ii};
         
-        for iii=1:numtrialfields;
+        for iii=1:numtrialfields
             
             tfield=trialfields{iii};
             
@@ -290,16 +298,19 @@ NumDays=PARAMS.global.LastDate_num-PARAMS.global.FirstDate_num+1;
 % assuming all time windows have same trial inds
 
 for ii=1:NumDays
+    if length(DATSTRUCT.data)<NumDays
+        continue
+    end
     if ~isempty(DATSTRUCT.data{ii})
         % how many trial types today? e.g. StimCatch
         trialtypes=fieldnames(DATSTRUCT.data{ii}.timewindow{1});
         numtrialtypes=length(trialtypes);
         
-        for iii=1:numtrialtypes;
+        for iii=1:numtrialtypes
             trialfield=trialtypes{iii};
             
             Inds=[]; % collect inds across time fields
-            for i=1:length(TimeFieldsOfInterest);
+            for i=TimeFieldsOfInterest;
                 
                 Yvals=DATSTRUCT.data{ii}.timewindow{i}.(trialfield).(statfield);
                 
@@ -320,7 +331,7 @@ for ii=1:NumDays
             Inds=unique(Inds);
             
             % remove
-            for i=1:length(TimeFieldsOfInterest);
+            for i=TimeFieldsOfInterest;
                 DATSTRUCT.data{ii}.timewindow{i}.(trialfield).(statfield)(Inds)=[];
                 DATSTRUCT.data{ii}.timewindow{i}.(trialfield).timevals(Inds)=[];
             end
@@ -371,9 +382,9 @@ end
 
 %% MAKE SURE ALL DATA are in temporal order (within each day)
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
+for i=TimeFieldsOfInterest; % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
-    for ii=1:NumDays;
+    for ii=1:NumDays
         
         if ~isempty(DATSTRUCT.data{ii})
             % how many trial types today? e.g. StimCatch
@@ -404,7 +415,7 @@ end
 
 %% COMBINE ALL NON-STIM DATA (i.e. stim catch and not-stim) AND SMOOTH that data
 
-for i=1:length(TimeFieldsOfInterest) % for each window of interest
+for i=TimeFieldsOfInterest % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
     for ii=1:NumDays
         if ~isempty(DATSTRUCT.data{ii})
@@ -712,7 +723,7 @@ HrBinEdges=PARAMS.global.HrBinEdges;
 DST_mods=PARAMS.global.DST_mods;
 
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
+for i=TimeFieldsOfInterest; % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
     
     % collect all data for each day
@@ -772,8 +783,8 @@ end
 plotcols=lt_make_plot_colors(length(PARAMS.global.BaselineDays),0);
 xplotmod=(HrBinEdges(2)-HrBinEdges(1))/2; % how much to add to x to get in between bin edges
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     figure; hold on;
     subplot(2,1,1);
@@ -817,7 +828,7 @@ end
 
 %% FOR ALL DATA (i.e. stim, stimcatch, all) subtract baseline from each val
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
+for i=TimeFieldsOfInterest; % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
     
     for ii=1:NumDays;
@@ -931,7 +942,7 @@ end
 %% COMPUTE RUNNING avg (each computed over individual epochs)
 
 % for each day, get running average for each category (intracatergory)
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
+for i=TimeFieldsOfInterest; % for each window of interest
     %     timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
     for ii=1:NumDays;
         
@@ -1375,8 +1386,8 @@ end
 
 % == PLOT without combining stimcatch + baseline.
 % baseline) (at median time points).
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     lt_figure; hold on; grid on;
     title([timefield ' - ' statfield ' - (baseline subtracted, all renditions)']);
@@ -1540,8 +1551,8 @@ end
 
 
 % ==  PLOT ONLY MEANS
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     lt_figure; hold on; grid on;
     title([timefield ' - Mean ' statfield ' (Baseline subtracted)']);
@@ -1611,14 +1622,16 @@ end
 
 % == PLOT without combining stimcatch + baseline.
 % baseline) (at median time points).
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for xyz=1:length(TimeFieldsOfInterest) % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(xyz)};
+    i = TimeFieldsOfInterest(xyz);
+
     
     lt_figure; hold on; grid on;
     title([timefield ' - ' statfield ' - (not baseline subtr)']);
     
     % plot each day
-    for ii=1:NumDays;
+    for ii=1:NumDays
         if ~isempty(DATSTRUCT.data{ii})
             
             
@@ -1790,8 +1803,9 @@ end
 
 
 % ==  PLOT ONLY MEANS
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for xyz=1:length(TimeFieldsOfInterest) % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(xyz)};
+    i = TimeFieldsOfInterest(xyz);
     
     lt_figure; hold on; grid on;
     title([timefield ' - Mean ' statfield ' (not baseline subtr)']);
@@ -1860,7 +1874,7 @@ end
 
 
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
+for i=TimeFieldsOfInterest; % for each window of interest
 
 baseline_vals.All=[];
 baseline_vals.StimCatch=[];
@@ -1932,8 +1946,8 @@ end
 
 % == PLOT without combining stimcatch + baseline.
 % baseline) (at median time points).
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     
     lt_figure; hold on; grid on;
@@ -2075,8 +2089,8 @@ end
 
 
 % ==  PLOT ONLY MEANS
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     lt_figure; hold on; grid on;
     title([timefield ' - Mean ' statfield ' (each trial type subtr its own baseline)']);
@@ -2149,8 +2163,8 @@ if exist('MetaParams','var');
         
         ExperimentTypes=fieldnames(MetaParams.AssocExpt.Timeline); % e.g. Stim + WNup
         
-        for i=1:length(TimeFieldsOfInterest); % for each window of interest
-            timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+        for i=TimeFieldsOfInterest; % for each window of interest
+            timefield=PARAMS.global.TimeFields.char{i};
             
             figure; hold on;
             
@@ -2256,8 +2270,8 @@ end
 
 %% PLOT RUNNING VARIABILITY MEAN (PER DAY)
 
-for i=1:length(TimeFieldsOfInterest); % for each window of interest
-    timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+for i=TimeFieldsOfInterest; % for each window of interest
+    timefield=PARAMS.global.TimeFields.char{i};
     
     lt_figure; hold on; grid on;
     title(['mean of STD (over time bins); ' timefield ' - ' statfield ' - (baseline subtracted, all renditions)']);
@@ -2347,6 +2361,10 @@ end
 %% FOR ALL STIM EPOCHS, plot reversion versus various things
 
 if plotStimEpochs==1;
+    
+    disp('NOTE: if using Timefield that is not 1, nor all, then will have problem with stim epoch analylses!!!')
+    disp('CLOSE AND CHANGE CODE...');
+    pause
     
     % == PLOT STIM EPOCHS, ETC.
     RunBin=4;
@@ -2679,8 +2697,8 @@ end
 if (0)
     % overlay all days, smoothed plots (stim off vs. stim on).
     NumDays=PARAMS.global.LastDate_num-PARAMS.global.FirstDate_num+1;
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         figure; hold on
         title([timefield ' - ' statfield ' - All days overlayed']);
@@ -2716,8 +2734,8 @@ end
 %% below was for baseline subtraacted IGNORE
 if (0)
     % FOR ALL DAYS, PLOT RAW VALS
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         figure; hold on;
         title([timefield ' - ' statfield ' - all renditions (baseline subtracted)']);
@@ -2804,8 +2822,8 @@ if (0)
     
     
     % PLOT ONLY MEANS
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         figure; hold on;
         title([timefield ' - Mean ' statfield ' - all renditions over days']);
@@ -2873,8 +2891,8 @@ if (0)
     ReversionTot=[];
     ReversionForLearningDiff=[];
     WithinDaySlopeTot=[];
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         hfig1=figure; hold on;
         title([timefield ' - learning (mean FF of nostim trials minus baseline (hr bins)) vs. reversion (stim - catch)']);
@@ -3032,8 +3050,8 @@ end
 %% TRANSFORM ALL hour binned data, by subtracting from baseline mean (for that time bin, mean of individual values).
 
 if (0)
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         Ybase=HrBinnedData.baseline.(timefield).(statfield).mean;
         
@@ -3071,8 +3089,8 @@ if (0)
     plotcols=lt_make_plot_colors(NumDays,0);
     xplotmod=(HrBinEdges(2)-HrBinEdges(1))/2; % how much to add to x to get inbetween bin edges
     
-    for i=1:length(TimeFieldsOfInterest); % for each window of interest
-        timefield=PARAMS.global.TimeFields.char{TimeFieldsOfInterest(i)};
+    for i=TimeFieldsOfInterest; % for each window of interest
+        timefield=PARAMS.global.TimeFields.char{i};
         
         figure; hold on;
         title([timefield ', ' statfield ' - WN days, hr binned, with STD (not DST fudged)']);
@@ -3137,8 +3155,13 @@ catch err
 end
 
 % save in subdir based on experiment.
+if exist('savephrase', 'var') 
+    PARAMS.global.phrase = savephrase;
+else
 uscores=strfind(PARAMS.global.ListOfDirs{1}, '_');
 PARAMS.global.phrase=PARAMS.global.ListOfDirs{1}(uscores(1)+1:uscores(2)-1); % phrase, based on dir name of first dir
+end
+
 try cd(PARAMS.global.phrase);
 catch err
     mkdir(PARAMS.global.phrase);

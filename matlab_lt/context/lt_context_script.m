@@ -167,4 +167,155 @@ plotIndTrials = 1;
 lt_context_PLOT(AllSongsDataMatrix, Params_alldays, one_switch_a_day);
 
 
+%% ########################## FOR OPTO ASSOCIATION 
+% ====== SEE or60_analysis_Association1 for details.
+% ==== assumes is interleaved laser paired with WN, and switching over
+% phases.
+
+%% === 1) EXTRACT SONG DATA
+justDoExtraction = 1;
+[SORTED_DATA, PARAMS_GLOB] = lt_context_PLOT(AllSongsDataMatrix, Params_alldays, one_switch_a_day, plotIndTrials, ...
+    justDoExtraction);
+
+
+%% === 2) GET SUMMAR ACROSS PHASES, LASER EFFECT.
+% datatype = 'phase'; % one value per phase
+datatype = 'day'; % one value per day
+
+% ======================================
+% === for each phase and each notegroup get one mean FF across trials
+numNG = length(SORTED_DATA.ByNoteGroup);
+numPhase = length(PARAMS_GLOB.Phases_DayBounds);
+
+% AllFFmeans_NGxPhase = nan(numNG, numPhase);
+AllFFmeans_NGxPhase = cell(numNG, numPhase);
+for ng = 1:numNG
+    for pp=1:numPhase
+        
+        % --- get "epochs" within this phase
+        indsepoch = SORTED_DATA.ByNoteGroup(ng).Stats_OneDataPtPerEpoch.PhaseNum_array == pp;
+        
+        % --- get all trials within this pohase
+        ffvals = cell2mat(cellfun(@transpose, SORTED_DATA.ByNoteGroup(ng).Stats_OneDataPtPerEpoch.RAW.FFvals(indsepoch), 'UniformOutput', 0));
+        tvals = cell2mat(cellfun(@transpose, SORTED_DATA.ByNoteGroup(ng).Stats_OneDataPtPerEpoch.RAW.Tvals(indsepoch), 'UniformOutput', 0));
+        %         ffvals = SORTED_DATA.ByNoteGroup(ng).Stats_OneDataPtPerEpoch.meanFF(indsepoch);
+        
+        %         AllFFmeans_NGxPhase(ng, pp) = mean(ffvals);
+        if strcmp(datatype, 'phase')
+            AllFFmeans_NGxPhase{ng, pp} = mean(ffvals);
+        elseif strcmp(datatype, 'day')
+            ffmeans = grpstats(ffvals, floor(tvals), {'mean'}); % get day means
+            AllFFmeans_NGxPhase{ng, pp} = ffmeans;
+        end
+    end
+end
+    
+% ====== for each phase, specify direction of learning
+% disp('this is learning in notegroup 0. notegroup 0 must always be laser');
+% disp('i.e. assumes that laser is in notegroup 0 and that is paired with some dir of laerning that depends on phase of expt');
+disp(' THIS ASSUMES THAT THE NG ASSOCAITED WITH LASER DOES NOT CHANGE DURING THE EXPT...');
+pause;
+
+PARAMS_GLOB.Assoc_PhaseLearndirMapping = nan(numPhase,1);
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(3) = 1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(4) = -1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(6) = -1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(7) = -1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(8) = 1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(9) = 1;
+PARAMS_GLOB.Assoc_PhaseLearndirMapping(11) = 1;
+PARAMS_GLOB.Assoc_LaserNGnum = 0;
+PARAMS_GLOB.Assoc_LaserOffNGnum = 1;
+
+% ============= go thru all phases, collect data
+ng_las = PARAMS_GLOB.Assoc_LaserNGnum+1;
+ng_nolas = PARAMS_GLOB.Assoc_LaserOffNGnum+1;
+
+phasestoget = find(~isnan(PARAMS_GLOB.Assoc_PhaseLearndirMapping));
+
+FFmeans_Las_NoLas = [];
+LaserLearnDir = [];
+Phasenum = [];
+for pp=phasestoget'
+   
+    ffthis = AllFFmeans_NGxPhase([ng_las ng_nolas], pp);
+    trdir = PARAMS_GLOB.Assoc_PhaseLearndirMapping(pp);
+    
+    % ======= save output
+    FFmeans_Las_NoLas = [FFmeans_Las_NoLas; ffthis'];
+    LaserLearnDir = [LaserLearnDir; trdir];
+    Phasenum = [Phasenum; pp];
+
+end
+
+% =============== BREAK OUT INDIVIDUAL DAYS (IF MULTIPE IN PHASES)
+FFmeans_Las_NoLas_TMP = [];
+LaserLearnDir_TMP = [];
+Phasenum_TMP = [];
+nrows = size(FFmeans_Las_NoLas,1);
+for i=1:nrows
+
+    ffmeans = [FFmeans_Las_NoLas{i,1} FFmeans_Las_NoLas{i,2}];
+    ldir = LaserLearnDir(i);
+    ph = Phasenum(i);
+    
+    % ===== stick into new output
+FFmeans_Las_NoLas_TMP = [FFmeans_Las_NoLas_TMP; ffmeans];
+LaserLearnDir_TMP = [LaserLearnDir_TMP; ones(size(ffmeans,1),1)*ldir];
+Phasenum_TMP = [Phasenum_TMP; ones(size(ffmeans,1),1)*ph];
+end
+FFmeans_Las_NoLas = FFmeans_Las_NoLas_TMP;
+LaserLearnDir = LaserLearnDir_TMP;
+Phasenum = Phasenum_TMP;
+
+
+% ############### [PLOT]
+figcount=1;
+subplotrows=4;
+subplotcols=3;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+% ====== [LASER + WN UP]
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('laser -- nolaser');
+ylabel('mean ff (each phase)');
+title('laser + WN up');
+
+ff = FFmeans_Las_NoLas(LaserLearnDir==1, :);
+x = [1 2];
+plot(x, ff', '-ok');
+xlim([0 3]);
+
+% ====== [LASER + WN DN]
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('laser -- nolaser');
+ylabel('mean ff (each phase)');
+title('laser + WN dn');
+
+ff = FFmeans_Las_NoLas(LaserLearnDir==-1, :);
+x = [1 2];
+plot(x, ff', '-ok');
+xlim([0 3]);
+
+
+% ======== [COMBINED - PLOT DIFFERENCE (LASER MINUS NO LASER)]
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('laser+DN ------ Laser+UP');
+ylabel('diff in mean ff (laser - nolaser)');
+title('phase = dtpt');
+
+ffdiff = FFmeans_Las_NoLas(:,1) - FFmeans_Las_NoLas(:,2);
+x = LaserLearnDir;
+plot(x, ffdiff, 'ok');
+% -- means
+[ymean, ysem] = grpstats(ffdiff, x, {'mean', 'sem'});
+lt_plot(unique(x)+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
+[h, p] = ttest2(ffdiff(x==1), ffdiff(x==-1));
+lt_plot_pvalue(p, 'ttest2', 1);
+xlim([-2 2]);
+lt_plot_zeroline;
+axis tight
+
 

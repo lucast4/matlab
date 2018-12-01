@@ -551,6 +551,23 @@ close all
 [SeqDepPitch_AcrossBirds, PARAMS]=lt_seq_dep_pitch_ACROSSBIRDS_AdHocChanges(SeqDepPitch_AcrossBirds, PARAMS);
 
 
+%% ====================================== SAVE EXTRACTED DATA
+% ====== SAVING
+if (0)
+    savedir = '/bluejay5/lucas/analyses/seqdeppitch/Extracted';
+    save([savedir '/SeqDepPitch_AcrossBirds.mat'], 'SeqDepPitch_AcrossBirds');
+    save([savedir '/PARAMS.mat'], 'PARAMS');
+end
+
+% ========= LOAD
+if (0)
+    savedir = '/bluejay5/lucas/analyses/seqdeppitch/Extracted';
+    load([savedir '/SeqDepPitch_AcrossBirds.mat']);
+    save([savedir '/PARAMS.mat']);
+end
+
+
+
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -1390,7 +1407,11 @@ if (0)
     collectAllSyls = 1; % if 0, then only targ and same...
     PCtimeWindowUsingWN = 0; % defgault 0; if 1, then only gets target syllables, 
     % using timw windows that were defined looking at boht base and WN
-    % trials.
+    % trials. NOTE: if using 1, I think code is fine, but take a closer
+    % look at line 28 in lt_seq_dep_pitch_ACROSSBIRDS_Hamish2_sub2
+    % (extraction by rewindowing data), I changed becuase I think  my
+    % original code is wrong but not 100% changed correctly... [see the
+    % commented old code in there]
      
     lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds_LMAN, PARAMS, ...
         plotsametype, useHandLab, plotPC, collectAllSyls, PCtimeWindowUsingWN);

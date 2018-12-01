@@ -1,5 +1,9 @@
-function DATSTRUCT = lt_batchsong_extractFF(ListOfDirs_UNDIR, ListOfDirs_DIR, ListOfBatch, MotifsToExtract)
+function DATSTRUCT = lt_batchsong_extractFF(ListOfDirs_UNDIR, ListOfDirs_DIR, ...
+    ListOfBatch, MotifsToExtract, gethitsyls)
 
+if ~exist('gethitsyls', 'var')
+    gethitsyls=1;
+end
 
 %% lt 11/14/17 - extracts results from lt_batchsong_calcFF
 
@@ -69,7 +73,9 @@ if (0) % old version, too slow since loads each song file once for each syl.
                 calcff = load([fname '.calcff.mat']);
                 assert(length(notmat.labels) == length(calcff.FFstruct.FFall));
                 
-                % ============== GET DATA ON HITS/ESCAPES
+                
+                
+                %% ============== GET DATA ON HITS/ESCAPES
                 [~, fn, fe] = fileparts(fname);
                 if strcmp(fe, '.cbin')
                     % then feedback info is in rec file
@@ -109,7 +115,7 @@ if (0) % old version, too slow since loads each song file once for each syl.
                     %                     notmat.labels(hitsyl-2:hitsyl+2)
                 end
                 
-                
+                %%
                 % ---------------- extract time of song
                 [~, ~, fext] = fileparts(fname);
                 if strcmp(fext, '.rhd')
@@ -118,6 +124,7 @@ if (0) % old version, too slow since loads each song file once for each syl.
                     dtnum = fn2datenum_eftafv4_lt(fname);
                     datestring = datestr(dtnum, 'yymmdd_HHMMSS');
                 end
+                
                 
                 % =============== find all instances of this motif in this
                 % songfile
@@ -205,7 +212,8 @@ else
             
             
             
-            % ============== GET DATA ON HITS/ESCAPES
+            %% ============== GET DATA ON HITS/ESCAPES
+            if gethitsyls==1
             [~, ~, fe] = fileparts(fname);
             if strcmp(fe, '.cbin')
                 % then feedback info is in rec file
@@ -241,8 +249,9 @@ else
                     & trigtimes(j)<notmat.offsets);
                 hitInds = [hitInds; hs];
             end
+            end
             
-            
+            %%
             % ===================== extract time of song
             [~, ~, fext] = fileparts(fname);
             if strcmp(fext, '.rhd')
@@ -289,8 +298,10 @@ else
                     DATSTRUCT.motif(mm).rendnum(count).isDIR = isDIR;
                     
                     % ----------- is this a hit?
+                    if gethitsyls==1
                     DATSTRUCT.motif(mm).rendnum(count).isWNhit = ismember(j, hitInds);
                     DATSTRUCT.motif(mm).rendnum(count).isCatchsong = iscatch;
+                    end
                 end
             end
             fname = fgetl(fid);

@@ -1,11 +1,11 @@
 function OUTSTRUCT = lt_neural_Coher_CohScalExtract(OUTSTRUCT, useonlybaseepoch, ...
-    corrtype, cohdiff_usedprime, nboot);
+    corrtype, cohdiff_usedprime, nboot)
 
-useonlybaseepoch = 0; % if 1, then just limited epoch. if 0, then entie baseline data
-% default: 0;
-corrtype = 'spearman'; % spearman. or pearson or Kendall
-cohdiff_usedprime = 0; % if 0, then just mean diff. if 1, then dprime
-nboot = 10; % to get bootstrap SE
+% useonlybaseepoch = 0; % if 1, then just limited epoch. if 0, then entie baseline data
+% % default: 0;
+% corrtype = 'spearman'; % spearman. or pearson or Kendall
+% cohdiff_usedprime = 0; % if 0, then just mean diff. if 1, then dprime
+% nboot = 10; % to get bootstrap SE
 
 %%
 OUTSTRUCT.cohscal_ff_rho_rhoSE_base = [];
@@ -31,7 +31,7 @@ for i=1:length(OUTSTRUCT.bnum)
     X = [ff', cohscal'];
     rho_base = Qfunc(X);
     if ~isnan(rho_base)
-    assert(corr(ff', cohscal', 'type', corrtype)==rho_base);
+        assert(corr(ff', cohscal', 'type', corrtype)==rho_base);
     end
     % --- get bootstrap 
     if isnan(rho_base)

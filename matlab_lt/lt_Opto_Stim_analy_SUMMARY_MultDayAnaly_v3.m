@@ -14,6 +14,10 @@ if SepBySyl==1
     % can't be 1, since it if SepBySyl=1 then this will look for and delete
     % delete higher level folder containing all the individual syls. 
 end
+
+if isempty(Params_glob.StimDur)
+    Params_glob.StimDur=10;
+end
 %% LT version 3 - 7/9/15 - MODIFIED TO AUTOMATICALLY FIND DIR NAMES (uses lt_metadata analysis)
 % IMPORTANT: dirs must be structured as (for e.g.)
 % /bluejay4/lucas/birds/pk32/070115_Reversion1_preWN_STIMoff
@@ -114,6 +118,10 @@ for i=1:NumDirs
     if strcmp(MetadataStruct_filtered(i).notes, 'STIMoff')
         Params.ExptID='All';
     elseif strcmp(MetadataStruct_filtered(i).notes, 'STIMon')
+        Params.ExptID='Stim';
+    elseif strcmp(MetadataStruct_filtered(i).condition, 'STIMoff')
+        Params.ExptID='All';
+    elseif strcmp(MetadataStruct_filtered(i).condition, 'STIMon')
         Params.ExptID='Stim';
     else
         disp('PROBLEM - for one dir not sure if is stim or not (i.e. STIMoff or STIMon not in name)');

@@ -4,8 +4,11 @@ function lt_save_all_figs
 
 
 h = get(0,'children');
+if isempty(h)
+    disp('NOTHING TO SAVE!!! --');
+else
 savefig(h, 'figsall', 'compact');
-
+end
 % for i=1:length(h)
 %     
 %     if (0)

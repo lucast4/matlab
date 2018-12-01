@@ -28,6 +28,7 @@ function [indmotif_all, motiflist_out] = lt_neural_QUICK_MotifID(birdname, motif
 if ~exist('motifregexp', 'var')
     motifregexp = '';
 end
+
 %% TOOL TO CHECK WHAT MOTIFS EXIST FOR A GIVEN DATA STRUCTURE
 if (0)
     % ==== 1) quickly list all motifs
@@ -102,6 +103,7 @@ for i=1:length(MotifDatabase.bird)
     
     MotifDatabase.bird(i).motiflist_short = motiflist_short;
 end
+
 %%
 
 indbird = strcmp({MotifDatabase.bird.birdname}, birdname);

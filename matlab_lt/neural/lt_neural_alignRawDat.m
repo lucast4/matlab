@@ -370,6 +370,138 @@ if PlotWhat.filt==1;
 end
 
 
+%% =========== PLOT ALL CHANNELS (filtering neural)
+
+if PlotWhat.lfp==1
+    
+    % --- plot initiate
+    figcount=1;
+    subplotrows=numsubplots+2;
+    subplotcols=1;
+    fignums_alreadyused=[];
+    hfigs=[];
+    
+    hsplots=[];
+    
+    
+    
+    % ==== DIG CHANNELS
+    
+    
+    
+    % ==== ANALOG (board aux) inputs
+    if isempty(AnalogChans_zero)
+        
+    else
+        for i=1:length(AnalogChans_zero)
+            
+            % == PLOT
+            % 1) raw amplitude
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title(['analog chan: ' num2str(i)]);
+            plot(tt./1000, board_adc_data(i, :), 'b');
+            hsplots=[hsplots hsplot];
+            
+            % === overlay digital over amplitude;
+            if PlotWhat.digital==1
+                for j=1:length(DigChans_zero)
+                    
+                    plot(tt./1000, board_dig_in_data(j, :), 'k', 'LineWidth', 2);
+                    lt_plot_annotation(1, 'Dig signal', 'k')
+                end
+            end
+            
+            % 2) spectrogram
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title(['analog chan: ' num2str(i)]);
+            
+            lt_plot_spectrogram(board_adc_data(i, :), frequency_parameters.amplifier_sample_rate, 1, 0)
+            
+%             [t, f, spec]=fn_extract_sound_spec(frequency_parameters, board_adc_data(i, :));
+%             t=t./1000;
+%             imagesc(t, f, spec);
+%             axis([t(1) t(end) f(1) f(end)]);
+            hsplots=[hsplots hsplot];
+        end
+        
+        
+        
+    end
+    
+    
+    
+    % ==== AMPLIFIER CHANNELS (neural)
+    if isempty(AmpChans_zero)
+        
+    else
+        for i=1:length(AmpChans_zero)
+            
+            % === filter
+            N=4;
+            fpassLO = 400;
+            [filt_bLO,filt_aLO]=butter(N, [fpassLO*2/fs]);
+            dat = filtfilt(filt_bLO, filt_aLO, amplifier_data(i, :)); % do multiple channels at once
+            
+%             lt_neural_filter(dat, fs, 0, 0, 400);
+%             dat=filtfilt(filt_b,filt_a,amplifier_data(i, :));
+            
+            % ==============
+            
+            % == PLOT
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title(['neural chan (filt): ' num2str(AmpChans_zero(i))]);
+            plot(tt./1000, dat, 'k');
+            hsplots=[hsplots hsplot];
+            
+            % ================ IF WANT TO PLOT SPIKES, THEN OVERLAY THEM
+            % HERE
+            if PlotWhat.raster==1
+                % === get RMS
+                MedianNoise=median(abs(dat)./0.6745); % median noise (not std), from http://www.scholarpedia.org/article/Spike_sorting
+                SpikeThreshold=Raster.ThrXNoise*MedianNoise;
+                
+                [SpikePks, SpikeInds]=findpeaks(Raster.PosOrNeg*dat,'minpeakheight',...
+                    SpikeThreshold,'minpeakdistance',floor(0.0003*fs)); % 0.3ms min separation btw peaks.
+                
+                line(xlim, Raster.PosOrNeg*[SpikeThreshold SpikeThreshold], 'Color','r');
+                
+                % == PLOT
+                for j=1:length(SpikeInds) % plot all spikes as a line
+                    x=tt(SpikeInds(j))/1000; % convert to ms
+                    line([x x], [-10 10], 'Color','r');
+                end
+            end
+            
+            ylim([-300 300]);
+        end
+        
+        
+    end
+    
+    
+    % ==================== SUBTRACTED NEURAL CHANNELS
+    % -- chan2 minus chan1
+    % chan1=19; chan2=23;
+    % ind1=AmpChans_zero==chan1;
+    % ind2=AmpChans_zero==chan2;
+    %
+    % dat=amplifier_data(ind2, :) - amplifier_data(ind1, :);
+    %         dat=filtfilt(filt_b,filt_a,amplifier_data(i, :)); % filter
+    %
+    %         % == PLOT
+    %         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    %         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    %         title(['neural chan: ' num2str(chan2) ' minus ' num2str(chan1)]);
+    %         plot(tt, dat, 'm');
+    %         hsplots=[hsplots hsplot];
+    %
+    %
+    %
+    % -- link all
+    linkaxes(hsplots, 'x');
+    
+end
+
 %% ================ PLOT RECTIFIED, SMOOTHED, TRACE
 
 if PlotWhat.rect_sm==1;

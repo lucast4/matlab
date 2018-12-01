@@ -1,0 +1,1 @@
+function lt_neural_QUICK_SmoothFR

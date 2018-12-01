@@ -47,8 +47,6 @@ lt_plot_zeroline;
 
 % ================= SEPARATE BY DIRECTION OF BASELINE AFP BIAS
 lt_subplot(3,2,4); hold on;
-xlabel('BaseAFPbias (DN -- UP)');
-ylabel('wiggle(HIrends) - wiggle(LO)');
 
 Y = {};
 
@@ -65,6 +63,8 @@ Y{2} = wigglediff;
 % -- plot
 lt_plot_MultDist(Y, [1 2], 1, 'k', 1);
 xlim([0 3]);
+xlabel('BaseAFPbias (DN -- UP)');
+ylabel('wiggle(HIrends) - wiggle(LO)');
 
 
 

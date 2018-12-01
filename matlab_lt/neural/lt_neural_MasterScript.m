@@ -23,8 +23,8 @@ end
 
 
 %% ====== plot single file dat [align neural and song]
-% close all;
-filename='pu69wh78_DIR_171118_165959.rhd';
+close all;
+filename='pu69wh78_171112_023540.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
@@ -33,11 +33,12 @@ ChansToPlot.AmpChans_zero=[9 11 12 14 1 18];
 ChansToPlot.AmpChans_zero=[9 14 17 18 21];
 ChansToPlot.AmpChans_zero=[9 14 21];
 ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
-ChansToPlot.AmpChans_zero=[9 14 21];
+ChansToPlot.AmpChans_zero=0:31;
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
 
+PlotWhat.lfp = 0;
 PlotWhat.raw=0;
 PlotWhat.filt=1;
 PlotWhat.rect_sm=0;
@@ -48,7 +49,7 @@ Rect_sm.windowsize=0.03; % in sec, size of window, equals -2 to +2 sd.
 Raster.ThrXNoise=4; % threshold for units, used for all channels, uses absolute data for peak detection
 Raster.PosOrNeg=-1; % -1 or +1, for crossings.
 
-        numsubplots = 6;
+        numsubplots = 4;
 
 lt_neural_alignRawDat(filename, ChansToPlot, neuralFiltLow, PlotWhat, Rect_sm, Raster, ...
             numsubplots)
@@ -109,7 +110,8 @@ clear all; close all; fclose all;
 % channel_board = [14];
 channel_board = [9 14 17 18 21];
 channel_board = 0:31;
-channel_board = [0:15];
+channel_board = [8 9 14 21];
+channel_board = 17;
 batchf = 'batchtmp';
 
 %% ==== exploratory - concat all audio and neural and plot for each neural channel
