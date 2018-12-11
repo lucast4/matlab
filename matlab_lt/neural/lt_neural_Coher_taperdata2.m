@@ -1,4 +1,7 @@
-function J=mtfftc(data,tapers,nfft,Fs)
+function [data, tapers, data_proj] =lt_neural_Coher_taperdata2(data,tapers,nfft,Fs)
+%% lt 12/10/18 - used to extract tapered data for troubleshooting.
+
+%%
 % Multi-taper fourier transform - continuous data
 %
 % Usage:

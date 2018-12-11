@@ -43,10 +43,10 @@ for i=1:numbirds
             
             % ================== FOR THIS SET, COLLECT ALL LFP DATA
             Neurlist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_neurons{ss};
-%             Fnamelist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_songfiles{ss};
-%             %     dirname = SummaryStruct.birds(i).neurons(Neurlist(1)).dirname;
+            %             Fnamelist = MOTIFSTATS_pop.birds(i).exptnum(ee).Sets_songfiles{ss};
+            %             %     dirname = SummaryStruct.birds(i).neurons(Neurlist(1)).dirname;
             Chanlist = [SummaryStruct.birds(i).neurons(Neurlist).channel];
-%             Chanlist_sort = sort(Chanlist);
+            %             Chanlist_sort = sort(Chanlist);
             Bregionlist = {SummaryStruct.birds(i).neurons(Neurlist).NOTE_Location};
             [~, indsort] = sort(Chanlist);
             Chanlist = Chanlist(indsort);
@@ -56,9 +56,9 @@ for i=1:numbirds
             
             % ----- only one chan, then skip
             if skipifOnlyOneChan==1
-            if length(unique(Chanlist))==1
-                continue
-            end
+                if length(unique(Chanlist))==1
+                    continue
+                end
             end
             
             % --- get dirname
@@ -80,23 +80,27 @@ for i=1:numbirds
                 
                 % --- segextract is shared across channels
                 segextract = dat.motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
-%                 neurthis = dat.motif(mm).SegExtr_neurfakeID(1).neurID_orig;
-
+                %                 neurthis = dat.motif(mm).SegExtr_neurfakeID(1).neurID_orig;
+                
                 
                 % ================ COLLECT LFP FOR ALL CHANNELS
                 [LFPall, Tall, chanlist2] = lt_neural_QUICK_Segextr_GetLFP(segextract, dirname_main, Chanlist, ...
                     motif_predur, extrapad);
-                assert(all(chanlist2==Chanlist));
+                if size(Chanlist,2)>1
+                    assert(all(chanlist2==Chanlist'));
+                else
+                    assert(all(chanlist2==Chanlist));
+                end
                 
                 % ============== COLLECT
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).LFP_chanbytrial = LFPall;
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanlist = Chanlist;
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Bregionlist = Bregionlist;
                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = Tall{1};
-%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Coh_ChpairByTrial = CohAllTrials;
-%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanpairs = Chanpairs;
-%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = t_relons;
-%                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).ffbins = ffbins;
+                %                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Coh_ChpairByTrial = CohAllTrials;
+                %                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).Chanpairs = Chanpairs;
+                %                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).t_relons = t_relons;
+                %                 LFPSTRUCT.bird(i).experiment(ee).setnum(ss).motif(mm).ffbins = ffbins;
             end
         end
     end

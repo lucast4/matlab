@@ -1,6 +1,6 @@
 function lt_neural_v2_EXTRACT_WithinSongTimings(SummaryStruct, birdnum, neurnum)
 %% lt 10/1/18 - to go from Segextract to song file data, need to map rends to within song timing
-
+% NOTE: this will reflect the current status 
 % output:
 % saves to batch/channel dir, the mapping. (see readme below)
 

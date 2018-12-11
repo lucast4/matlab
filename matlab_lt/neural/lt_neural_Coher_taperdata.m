@@ -1,4 +1,8 @@
-function [C,phi,S12,S1,S2,f,confC,phistd,Cerr]=coherencyc(data1,data2,params)
+function [data1OUT, data2OUT, data_proj1, data_proj2, tapersOUT, J12, f] = ...
+    lt_neural_Coher_taperdata(data1,data2,params)
+%% lt modified 12/10/18 to extract tapered data that would be used for coherence.
+
+%%
 % Multi-taper coherency,cross-spectrum and individual spectra - continuous process
 %
 % Usage:
@@ -61,38 +65,44 @@ if nargin < 3; params=[]; end;
 if nargout > 8 && err(1)~=2;
     error('Cerr computed only for Jackknife. Correct inputs and run again');
 end;
-if nargout > 6 && err(1)==0;
-    %   Errors computed only if err(1) is nonzero. Need to change params and run again.
-    error('When errors are desired, err(1) has to be non-zero.');
-end;
+% if nargout > 6 && err(1)==0;
+%     %   Errors computed only if err(1) is nonzero. Need to change params and run again.
+%     error('When errors are desired, err(1) has to be non-zero.');
+% end;
 N=check_consistency(data1,data2);
 nfft=max(2^(nextpow2(N)+pad),N);
 [f,findx]=getfgrid(Fs,nfft,fpass);
 tapers=dpsschk(tapers,N,Fs); % check tapers
-J1=mtfftc(data1,tapers,nfft,Fs);
-J2=mtfftc(data2,tapers,nfft,Fs);
-J1=J1(findx,:,:); J2=J2(findx,:,:);
-J12 = conj(J1).*J2;
-S12=squeeze(mean(J12, 2));
-S1=squeeze(mean(conj(J1).*J1,2));
-S2=squeeze(mean(conj(J2).*J2,2));
-if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
-C12=S12./sqrt(S1.*S2);
-C=abs(C12);
-phi=angle(C12);
-if nargout>=9;
-    [confC,phistd,Cerr]=coherr(C,J1,J2,err,trialave);
-elseif nargout==8;
-    [confC,phistd]=coherr(C,J1,J2,err,trialave);
-% else
-%     confC = [];
-%     phistd = [];
-%     Cerr = [];
-end;
+
+[data1OUT, tapersOUT, data_proj1] =lt_neural_Coher_taperdata2(data1,tapers,nfft,Fs);
+[data2OUT, tapersOUT, data_proj2] =lt_neural_Coher_taperdata2(data2,tapers,nfft,Fs);
+
+    J1=mtfftc(data1,tapers,nfft,Fs);
+    J2=mtfftc(data2,tapers,nfft,Fs);
+    J1=J1(findx,:,:); J2=J2(findx,:,:);
+    J12 = conj(J1).*J2;
+if (0)
+    S12=squeeze(mean(J12, 2));
+    S1=squeeze(mean(conj(J1).*J1,2));
+    S2=squeeze(mean(conj(J2).*J2,2));
+    if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
+    C12=S12./sqrt(S1.*S2);
+    C=abs(C12);
+    phi=angle(C12);
+    if nargout>=9;
+        [confC,phistd,Cerr]=coherr(C,J1,J2,err,trialave);
+    elseif nargout==8;
+        [confC,phistd]=coherr(C,J1,J2,err,trialave);
+        % else
+        %     confC = [];
+        %     phistd = [];
+        %     Cerr = [];
+    end
+end
 
 % ====== plot amplitude and phase of all fft output for each taper
 if (0) % LT, plots fft (amplitude) and pjhaes
-    figure; 
+    figure;
     hsplots = [];
     
     hsplot = subplot(4,2,1); hold on;
@@ -115,8 +125,8 @@ if (0) % LT, plots fft (amplitude) and pjhaes
         theta = atan2(imag(jthis), real(jthis));
         angleAll = [angleAll theta];
     end
-        plot(f, angleAll, '-');
-   
+    plot(f, angleAll, '-');
+    
     hsplot = subplot(4,2,4); hold on;
     hsplots = [hsplots hsplot];
     title('angle of fft (2)');
@@ -127,67 +137,67 @@ if (0) % LT, plots fft (amplitude) and pjhaes
         theta = atan2(imag(jthis), real(jthis));
         angleAll = [angleAll theta];
     end
-        plot(f, angleAll, '-');
+    plot(f, angleAll, '-');
     
-        hsplot = subplot(4,2,6); hold on;
-        hsplots = [hsplots hsplot];
-        title('S12(k), S1(b), S2(r)');
-        plot(f, abs(S12), 'k');
-        plot(f, abs(S1), 'b');
-        plot(f, abs(S2), 'r')'
-        linkaxes(hsplots, 'x');
-
+    hsplot = subplot(4,2,6); hold on;
+    hsplots = [hsplots hsplot];
+    title('S12(k), S1(b), S2(r)');
+    plot(f, abs(S12), 'k');
+    plot(f, abs(S1), 'b');
+    plot(f, abs(S2), 'r')'
+    linkaxes(hsplots, 'x');
+    
+    
+    hsplot = subplot(4,2,5);
+    hsplots = [hsplots hsplot];
+    title('coherence');
+    plot(f, C);
+    
+    linkaxes(hsplots, 'x');
+    
+    
+    % ==== plot rose plot for a given time bin across tapers
+    figure; hold on;
+    indf = 4;
+    j1this = J1(indf,:);
+    j2this = J2(indf,:);
+    
+    for k=1:length(j1this)
+        subplot(4,2,k); hold on;
+        title('one time slice, J at multiple tapers');
+        plot(real(j1this(k)), imag(j1this(k)), 'o');
+        plot(real(j2this(k)), imag(j2this(k)), 'o');
         
-        hsplot = subplot(4,2,5); 
-        hsplots = [hsplots hsplot];
-        title('coherence');
-        plot(f, C);
+        xlim([-10 10]);
+        ylim([-10 10]);
+        lt_plot_zeroline;
+        lt_plot_zeroline_vert;
+    end
+    
+    % ==== plot magnitude and angle correlations across tapers
+    figure;
+    flist = [1 4 5 6 7];
+    for kkk=1:length(flist)
+        fff = flist(kkk);
+        j1this = J1(fff,:);
+        j2this = J2(fff,:);
         
-        linkaxes(hsplots, 'x');
+        % -- magnitude
+        subplot(5,2,kkk*2-1); hold on;
+        title(['ampl [f=' num2str(f(fff))]);
+        plot(abs(j1this), 'ok');
+        plot(abs(j2this), 'ok');
+        lt_plot_zeroline;
+        ylim([0 10])
         
-
-        % ==== plot rose plot for a given time bin across tapers
-        figure; hold on;
-        indf = 4;
-        j1this = J1(indf,:);
-        j2this = J2(indf,:);
-        
-        for k=1:length(j1this)
-            subplot(4,2,k); hold on;
-            title('one time slice, J at multiple tapers');
-            plot(real(j1this(k)), imag(j1this(k)), 'o');
-            plot(real(j2this(k)), imag(j2this(k)), 'o');
-            
-            xlim([-10 10]);
-            ylim([-10 10]);
-            lt_plot_zeroline;
-            lt_plot_zeroline_vert;
-        end
-        
-        % ==== plot magnitude and angle correlations across tapers
-        figure;
-        flist = [1 4 5 6 7];
-        for kkk=1:length(flist)
-            fff = flist(kkk);
-            j1this = J1(fff,:);
-            j2this = J2(fff,:);
-            
-            % -- magnitude
-            subplot(5,2,kkk*2-1); hold on;
-            title(['ampl [f=' num2str(f(fff))]);
-            plot(abs(j1this), 'ok');
-            plot(abs(j2this), 'ok');
-            lt_plot_zeroline;
-            ylim([0 10])
-            
-            % -- angle
-            subplot(5,2,kkk*2); hold on;
-            title('angle');
-            plot(angle(j1this), 'ok');
-            plot(angle(j2this), 'ok');
-            line(xlim, [0 0]);
-        end
-        
-        
+        % -- angle
+        subplot(5,2,kkk*2); hold on;
+        title('angle');
+        plot(angle(j1this), 'ok');
+        plot(angle(j2this), 'ok');
+        line(xlim, [0 0]);
+    end
+    
+    
 end
 

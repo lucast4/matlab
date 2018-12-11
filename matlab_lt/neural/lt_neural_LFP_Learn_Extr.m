@@ -367,7 +367,7 @@ for i=1:numbirds
                         OUTSTRUCT.motifname = [OUTSTRUCT.motifname; motifthis];
                         OUTSTRUCT.issame = [OUTSTRUCT.issame; issame];
                         OUTSTRUCT.istarg = [OUTSTRUCT.istarg; istarg];
-                        OUTSTRUCT.tvals = [OUTSTRUCT.tvals; single(tvals)];
+                        OUTSTRUCT.tvals = [OUTSTRUCT.tvals; tvals];
                         OUTSTRUCT.ffvals = [OUTSTRUCT.ffvals; single(ffvals)];
                         
                         OUTSTRUCT.indsbase = [OUTSTRUCT.indsbase; indsbase];

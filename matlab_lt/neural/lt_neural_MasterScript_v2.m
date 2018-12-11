@@ -3,7 +3,7 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'pu69wh78', 'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
 % ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
 ExptToKeep = {};
@@ -91,14 +91,16 @@ lt_neural_tools_LFPextract(SummaryStruct);
 
 
 %% ==== EXTRACTION - WITHIN SONG TIMING OF EACH IND
+% NOTE: THIS IS OLD VERSION, new version directly extracts when does RegExp
+% analysis.
 numbirds = length(SummaryStruct.birds);
 for i=1:numbirds
     numneurons = length(SummaryStruct.birds(i).neurons);
     for ii=1:numneurons
-
         lt_neural_v2_EXTRACT_WithinSongTimings(SummaryStruct, i, ii);
     end
 end
+
 %% EXTRACT FF AND SAVE
 close all;
 lt_neural_v2_PRE_ExtrFF;
@@ -106,9 +108,18 @@ lt_neural_v2_PRE_ExtrFF;
 
 %% ===== EXTRACT WN HITS
 
+if (0)
 % IN PROGRESS ! see inside
 lt_neural_v2_EXTRACT_WNhit(SummaryStruct, FFparamsAll, overWrite, ...
     plotSpec, plotOnSong, plotSyl);
+end
+
+% === new version, matches up with original song files
+% see lt_generalization...
+[Allbird_Fnames, Allbird_chanlist, Allbird_birdnum] = lt_neural_tools_allsongs(SummaryStruct);
+lt_batchsong_extractWNhit([], [], Allbird_Fnames);
+
+
 
 
 %% *******************************************************************
@@ -137,6 +148,10 @@ cd('/bluejay5/lucas/analyses/neural/');
 save('LearningMetaDat', 'LearningMetaDat');
 cd(currdir)
 
+currdir = pwd;
+cd('/bluejay5/lucas/analyses/neural/');
+save('LearningMetaDat_BACKUP120518', 'LearningMetaDat'); % this is right before combined pu69 - RALMANlearn2 switches into one (i.e. WN off periods combined into the entire learning period)
+cd(currdir)
 
 %% ==== LIST OF MOTIFS FOR EACH BIRD/EXPERIMENT
 if (0) % RUNS AUTOMATICALLY WHEN EXTRACT

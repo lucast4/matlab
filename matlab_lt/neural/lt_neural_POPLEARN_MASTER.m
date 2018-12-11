@@ -8,17 +8,45 @@ assert(strcmp(SummaryStruct.birds(i).birdname, 'pu69wh78'));
 assert(strcmp(SummaryStruct.birds(i).exptnum_pop(ii).exptname, 'RALMANOvernightLearn1'));
 assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{4} == [18 20]));
 assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{5} == [18 19 20]));
+
 % --- get new
 newfiles = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles{4:5}];
 newneurons = [18 20];
+
 % -- remove old
 SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons(4:5) = [];
 SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles(4:5) = [];
+
 % --- add
 SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons ...
     newneurons];
 SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles ...
     {newfiles}];
+end
+
+
+if (0)
+   % ==== wh44wh39, RALMANlearn3, combining sets
+    i=1; 
+    ii=1;
+    assert(strcmp(SummaryStruct.birds(i).birdname, 'wh44wh39'));
+    assert(strcmp(SummaryStruct.birds(i).exptnum_pop(ii).exptname, 'RALMANlearn3'));
+    assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{2} == [13 14 15 16 19]));
+    assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{3} == [13 14 15 16 17 19]));
+    
+    % --- get new [i.e. the new combination of neruons]
+    newfiles = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles{2:3}];
+    newneurons = [13 14 15 16 19];
+    
+    % -- remove old
+    SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons(2:3) = [];
+    SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles(2:3) = [];
+
+    % --- add
+    SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons ...
+        newneurons];
+    SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles ...
+        {newfiles}];
 end
 
 %% ======================== EXTRACT SEGMENTS FOR POPULATIONS
@@ -43,6 +71,7 @@ MOTIFSTATS_Compiled = lt_neural_v2_ANALY_MultExtractMotif(SummaryStruct, ...
 
 %% ==== MAKE SURE SUMMARY STRCUT IS THE CORRECT ONE
 SummaryStruct = MOTIFSTATS_Compiled.SummaryStruct;
+
 
 
 %% ==== ALIGN ALL MOTIFS TO COMMON MOTIFS FOR PLOTTING ACROSS EXPERIMENTS
@@ -80,6 +109,75 @@ PARAMS.savemarker = input('what is save marker? (e.g. 14Oct2018_2147)? ', 's');
 
 %% ==== REMOVE DIR SONG
 MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
+
+%% ==== get times of WN hits
+
+timewindhit = [-0.15 0.1]; % window, rel syl onset, during which any WN onset or offset will be considered a hit.
+% leave expty [] to use pre and postdur from data extraction.
+
+numbirds = length(MOTIFSTATS_Compiled.birds);
+
+for i=1:numbirds
+   
+    numneurons = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons);
+    birdname = MOTIFSTATS_Compiled.birds(i).birdname;
+    
+    for ii=1:numneurons
+       
+        nummotifs = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif);
+        exptid = MOTIFSTATS_Compiled.SummaryStruct.birds(i).neurons(ii).exptID;
+        
+        hasdir = 0;
+        for mm=1:nummotifs
+           
+            
+            segextract = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif(mm).SegmentsExtract;
+            
+            if isempty(segextract)
+                continue
+            end
+            
+            % ========== get time of WN for all trials
+            ntrials = length(segextract);
+            for tt = 1:ntrials
+               fname = segextract(tt).song_filename;
+               disp(fname);
+               ons = segextract(tt).WithinSong_TokenOns;
+               
+               datdur = segextract(tt).actualmotifdur;
+               
+               if isempty(timewindhit)
+               windon = ons-PARAMS.motif_predur;
+               windoff = ons + datdur + PARAMS.motif_postdur;
+               else
+                   windon = ons + timewindhit(1);
+                   windoff = ons + timewindhit(2);
+               end
+               [a] = fileparts(SummaryStruct.birds(i).neurons(ii).dirname);
+               tmp = load([a '/' fname '.wntime.mat']);
+               tmp.wnstruct;
+               
+               % ---- FIND WN ONSETS/OFFSETS WITHIN WINDOW (collect if on
+               % OR off is within data window)
+               indsthis1 = tmp.wnstruct.WNonsets>windon & tmp.wnstruct.WNonsets<windoff;
+               onsthis = tmp.wnstruct.WNonsets(indsthis1) - windon;
+               
+               indsthis2 = tmp.wnstruct.WNoffsets>windon & tmp.wnstruct.WNoffsets<windoff;
+               offthis = tmp.wnstruct.WNoffsets(indsthis2) - windon;
+               
+               wasTrialHit = any([indsthis1 indsthis2]);
+               
+               segextract(tt).hit_WN = wasTrialHit;
+               segextract(tt).WNonset_sec = onsthis;
+               segextract(tt).WNoffset_sec = offthis;
+            end
+            MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif(mm).SegmentsExtract = segextract;
+        end
+    end
+end
+
+
+
 
 %% ================ extraction continued
 close all;
@@ -225,17 +323,20 @@ BirdsToPlot = {'pu69wh78', 'wh44wh39'};
 SetsToSkip = {};
 
 LFPSTRUCT = lt_neural_LFP_ExtractStruct(MOTIFSTATS_pop, SummaryStruct, ...
-    MOTIFSTATS_Compiled, skipifOnlyOneChan);
+    MOTIFSTATS_Compiled, skipifOnlyOneChan, BirdsToPlot, SetsToSkip);
 
 % ================ save
 if (0)
-    marker = '14Oct2018_2147';
+%     marker = '14Oct2018_2147';
+    marker = PARAMS.savemarker;
     fname = ['/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_' marker '.mat'];
     save(fname, 'LFPSTRUCT');
     
     save(['/bluejay5/lucas/analyses/neural/LFP/PARAMS_' PARAMS.savemarker '.mat'], 'PARAMS');
 end
 
+
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ 
 
 %% +++++++++++++++++++++++++++++++++ PLOT RAW NEURAL, LFP, LFP(filtred)
 if (0)
@@ -250,7 +351,7 @@ if (0)
     close all;
     
     birdplot = 'pu69wh78';
-    exptplot = 'RALMANOvernightLearn1';
+    exptplot = 'RALMANlearn1';
     swplot = 1;
     motifplot = []; % [string] leave blank for target
     extrapad = 0.05; % seconds, pre and post...
@@ -260,19 +361,35 @@ if (0)
         extrapad);
     
     
+    % =========== GET LIST OF HIGH AND LOW COHERENCE TRIALS
+    tscalar = -0.045;
+    fscalar = 30;
+    
+    a = SwitchCohStruct.bird(i).exptnum(ii).switchlist(swplot).motifnum(mm).fileprefix;
+    b = SwitchCohStruct.bird(i).exptnum(ii).switchlist(swplot).motifnum(mm).filesuffix;
+    cohdat = load([a '/Coh' b]);
+    cohdat = lt_neural_Coher_Cell2Mat(cohdat.CohAllTrials);
+    [~, ind_f] = min(abs(PARAMS.ffbins-fscalar));
+    [~, ind_t] = min(abs(PARAMS.tbins-tscalar));
+    cohscaltmp = squeeze(cohdat(ind_t, ind_f, :));
+    
+    
     % ============ 2) FOR BASE AND WN, PLOT N TRIALS OF LFP, NEURAL
     close all;
-    ntoplot = 1; % trials pre and post
+    ntoplot = 10; % trials pre and post
     filt_low = 25;
     filt_hi = 35;
     % filt_fs = fs;
     
     savedir = ['/bluejay5/lucas/analyses/neural/LFP/FIGS_PlotEgRaw/' PARAMS.savemarker];
-    saveON = 1;
+    saveON = 0;
+    
+    plotCohScalExtremes =1; % if 1, then plots example higha and low coherence tirals.
     
     lt_neural_LFP_PlotEgRaw(DatAll, t_onoff, fs, bregionlist, chanlist_toget, ...
         i, ii, swplot, mm, ntoplot, filt_low, filt_hi, SwitchCohStruct, ...
-        SwitchStruct, savedir, saveON);
+        SwitchStruct, savedir, saveON, plotCohScalExtremes, cohscaltmp);
+    
     
     %% ############################ VERSION 2 - GO thru all swithches
     close all;
@@ -377,13 +494,28 @@ if (0)
 end
 
 
+%% =============== [GOOD, CHECK EACH EXPT IN DETAIL]
+% 1) timecourse of scalar coherence
+% 2) raw neural data for select trials (e.g. high, low coh)
+% 3) comparison of multitaper method to across trials.
+lt_neural_LFP_SingleExptCheck;
+
+
 %% #######################################################################
 %% ====== CALCULATE COHERENCE USING LFP
 % GOAL TO GET COHSTRUCT
 % NOTE: will save cohstruct also.
 close all;
-savemarker = '14Oct2018_2147';
-COHSTRUCT = lt_neural_LFP_GetCohStruct(LFPSTRUCT, PARAMS, SummaryStruct);
+% savemarker = '14Oct2018_2147';
+% savemarker = PARAMS.savemarker;
+% savemarker = ['14Oct2018_2147_150msWind'];
+if (0)
+PARAMS.savemarker = '14Oct2018_2147_150msWind';
+PARAMS.savemarker = '14Oct2018_2147_75msWind';
+end
+movingwin = [0.075 0.01];
+
+COHSTRUCT = lt_neural_LFP_GetCohStruct(LFPSTRUCT, PARAMS, SummaryStruct, movingwin);
 
 %% ################ NOTE DOWN BRAIN REGION PAIRS
 
@@ -404,12 +536,37 @@ else
 end
 
 %% ################# ANALYSES START FROM HERE: LOAD DATA
-% ==== load 
+% ==== SAVE
+save('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat', ...
+    'MOTIFSTATS_Compiled', '-v7.3');
+
+% ==== LOAD 
+% 1) all data (100ms window)
 clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/14Oct2018_2147/COHSTRUCT.mat');
+
+% 2) all data (150ms window)
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_14Oct2018_2147.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_14Oct2018_2147.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/14Oct2018_2147_150msWind/COHSTRUCT.mat');
+
+% 3) just wh44
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_05Dec2018_1758.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_05Dec2018_1758.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_05Dec2018_1758.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/05Dec2018_1758/COHSTRUCT.mat');
+
+% ====== update params to match COHSTRUCT
+assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(2).motif));
+PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(2).motif(1).t_relons;
+PARAMS.ffbins = COHSTRUCT.bird(1).experiment(1).setnum(2).motif(1).ffbins;
+PARAMS.ffbinsedges = [10 25 32 80]; % edges, to plot timecourse in frequency bands
 
     %% ======== FOR LEARNING, GET SWITCHES
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
@@ -418,12 +575,12 @@ SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 %% ======= PLOT RAW LFP, PHI, SPECTROGRAM, COHEROGRAM
 
 close all;
-% birdtoplot = 'pu69wh78';
-% expttoplot = 'RALMANOvernightLearn1';
-% swnum = 1;
-birdtoplot = 'wh44wh39';
-expttoplot = 'RALMANlearn2';
+birdtoplot = 'pu69wh78';
+expttoplot = 'RALMANOvernightLearn1';
 swnum = 1;
+% birdtoplot = 'wh44wh39';
+% expttoplot = 'RALMANlearn2';
+% swnum = 1;
 motiftoplot = 'jjb(h)'; % ------ WILL plot target syl, unless say otherwise.
 chanpairtoplot = [];
 bregiontoget = 'LMAN-RA'; % WILL take random channel (for bregion pair) if no chanpairtoplot specified.
@@ -452,11 +609,21 @@ end
 PARAMS.bregionpair_toget = pairtoget;
 
 
+%% ######################## [WN HITS] CHECK 1) fraction and 2)timing 
+
+close all;
+lt_neural_LFP_WNCheck(SwitchCohStruct, MOTIFSTATS_pop, SwitchStruct, ...
+    PARAMS);
+
 %% ########################## COH CORRELATE WITH PITCH?
 %% ======== EXTRACT SCALARS
 
 twind = [-0.08 -0.03];
-fwind = [22 32];
+fwind = [25 35];
+% twind = [-0.05 -0.0];
+% fwind = [25 40];
+% twind = [-0.09 -0.02];
+% fwind = [15 40];
 
 [SwitchCohStruct, PARAMS] = lt_neural_LFP_PitchCorr(COHSTRUCT, SwitchCohStruct,...
     PARAMS, twind, fwind);
@@ -601,7 +768,7 @@ collectAllProcess =1; % then colelcts not just Cohmat, but all phi and spectra.
 % meory). (mean pre and post and also diff)
 plotON = 0;
 averagechanpairs= 0; % for each motif, average over all chan pairs [NOTE: this is not up to date]
-onlyfirstswitch = 1;
+onlyfirstswitch = 0;
 removeBadSyls = 1; % LEAVE AT 1.
 zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 2, then doesn't zscore, instead normalizes as power proprotion
@@ -613,9 +780,163 @@ collectDiffMats = 0; % if 1, then collects differences (WN minus base). redundan
 [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
     collectAllProcess, zscoreLFP, collectDiffMats);
-clear SwitchCohStruct;
 
-    
+%% ====== don't want raw data?
+clear SwitchCohStruct;
+clear OUTSTRUCT_CohMatOnly
+
+%% ====== [RECALCULATE COHERENCE USING LFP DATA]
+% -- for each experiement, recalculate using currently extracted windows.
+
+% ==== 1) USE ACROSS TRIALS X TAPERS,
+% equalizeN = 1; % trial number. bootstraps muyltipel subsamples.
+cohversion = 'mtaper_all'; % trials x tapers number of datapoints..
+% cohversion = 'mtaper_trials'; % one coh for each trial, then takes average
+% trialstouse = 'default'; % then inds_epoch as in origianl analysis
+trialstouse = 'default(matched)'; % then inds_epoch as in origianl analysis, but downsamples whichever one is longer.
+ntapers = []; % leave [] to set as default.
+movingwin = [0.2 0.01]; % leave exmpty for default.
+tw = 3;
+
+CohMean_Base = cell(size(OUTSTRUCT.bnum,1),1);
+CohMean_WN = cell(size(OUTSTRUCT.bnum,1),1);
+Tall = [];
+Fall = [];
+for i=1:length(SwitchCohStruct.bird)
+    for ii=1:length(SwitchCohStruct.bird(i).exptnum)
+        
+        for ss=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist)
+            
+            for mm=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum)
+                
+                datthis = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm);
+                if isempty(datthis.bregionpair)
+                    continue
+                end
+                pairstoget = datthis.chanpair;
+                tvals = datthis.tvals;
+                setthis = datthis.neursetused;
+                
+                t_LFP = LFPSTRUCT.bird(i).experiment(ii).setnum(setthis).motif(mm).t_relons;
+                
+                swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
+                swpre = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_previous;
+                swpost = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_next;
+                
+                
+                if strcmp(trialstouse, 'default')
+                    inds_base = datthis.indsbase_epoch;
+                    inds_WN = datthis.indsWN_epoch;
+                elseif strcmp(trialstouse, 'default(matched)')
+                    inds_base = datthis.indsbase_epoch;
+                    inds_WN = datthis.indsWN_epoch;
+                    ntokeep = min([length(inds_base) length(inds_WN)]);
+                    inds_base = inds_base(end-ntokeep+1:end);
+                    inds_WN = inds_WN(end-ntokeep+1:end);
+                else
+                    assert(1==2, 'need to code..');
+                end
+                
+                % ============ FOR EACH PAIR, GET BASELINE AND WN COHERENCE
+                npairs = size(pairstoget,1);
+                for cc=1:npairs
+                    disp(cc);
+                    chan1 = pairstoget(cc,1);
+                    chan2 = pairstoget(cc,2);
+                    
+                    lfp1 = datthis.lfpall(:, datthis.lfpall_chans==chan1);
+                    lfp2 = datthis.lfpall(:, datthis.lfpall_chans==chan2);
+                    
+                    
+                    % --- find location of this in OUTSTRUCT
+                    indthis_out = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+                        OUTSTRUCT.motifnum==mm & OUTSTRUCT.chanpair(:,1)==chan1 ...
+                        & OUTSTRUCT.chanpair(:,2)==chan2);
+                    if isempty(indthis_out)
+                        disp('missing this motif, skip');
+                        continue
+                    end
+                    assert(length(indthis_out)==1, 'not in outstruct..');
+
+                    
+                    % ---------------- BASELINE
+                    indstoget = inds_base;
+                    
+                    lfp1_tmp = cell2mat(cellfun(@transpose, lfp1(indstoget), 'UniformOutput', 0))';
+                    lfp2_tmp = cell2mat(cellfun(@transpose, lfp2(indstoget), 'UniformOutput', 0))';
+                    
+                    [C, t, f, phi,S12,S1,S2] = lt_neural_Coher_BatchCoher(lfp1_tmp, lfp2_tmp, cohversion, ...
+                        t_LFP, ntapers, movingwin, tw);
+                    
+                    assert(isempty(CohMean_Base{indthis_out}));
+                    CohMean_Base{indthis_out} = C;
+                    
+                    % ---------------- WN
+                    indstoget = inds_WN;
+                    
+                    lfp1_tmp = cell2mat(cellfun(@transpose, lfp1(indstoget), 'UniformOutput', 0))';
+                    lfp2_tmp = cell2mat(cellfun(@transpose, lfp2(indstoget), 'UniformOutput', 0))';
+                    
+                    [C, t, f, phi, S12, S1, S2] = lt_neural_Coher_BatchCoher(lfp1_tmp, lfp2_tmp, cohversion, ...
+                        t_LFP, ntapers, movingwin, tw);
+                    
+                    assert(isempty(CohMean_WN{indthis_out}));
+                    CohMean_WN{indthis_out} = C;
+                    
+                    % -=-- sanity check, compare previuosly extracted to
+                    % current.
+                    if (0)
+                        lt_figure; hold on;
+                        lt_subplot(4,2,1); hold on;
+                        title('old [base]')
+                        lt_neural_Coher_Plot(OUTSTRUCT.CohMean_Base{indthis_out}, ...
+                            PARAMS.tbins, PARAMS.ffbins, 1, '', [0.2 0.8], 0);
+                        
+                        lt_subplot(4,2,2); hold on;
+                        title('new [base]')
+                        lt_neural_Coher_Plot(CohMean_Base{indthis_out}, ...
+                            PARAMS.tbins, PARAMS.ffbins, 1, '', [0.2 0.8], 0);
+                        
+                        lt_subplot(4,2,3); hold on;
+                        title('old [wn]')
+                        lt_neural_Coher_Plot(OUTSTRUCT.CohMean_WN{indthis_out}, ...
+                            PARAMS.tbins, PARAMS.ffbins, 1, '', [0.2 0.8], 0);
+                        
+                        lt_subplot(4,2,4); hold on;
+                        title('new [wn]')
+                        lt_neural_Coher_Plot(CohMean_WN{indthis_out}, ...
+                            PARAMS.tbins, PARAMS.ffbins, 1, '', [0.2 0.8], 0);
+                        
+                        lt_subplot(4,2,5); hold on;
+                        title('base');
+                        plot(OUTSTRUCT.CohMean_Base{indthis_out}(:), ...
+                            CohMean_Base{indthis_out}(:), 'ok');
+                        
+                        lt_subplot(4,2,6); hold on;
+                        title('wn');
+                        plot(OUTSTRUCT.CohMean_WN{indthis_out}(:), ...
+                            CohMean_WN{indthis_out}(:), 'ok');
+                    end
+                    % --- collect t, f
+                    Tall = [Tall; t];
+                    Fall = [Fall; f];
+
+                end
+                
+            end
+        end
+    end
+end
+assert(all(~cellfun(@isempty, CohMean_Base)));
+assert(all(~cellfun(@isempty, CohMean_WN)));
+
+OUTSTRUCT.CohMean_Base = CohMean_Base;
+OUTSTRUCT.CohMean_WN = CohMean_WN;
+
+% UPDATE PARAMS
+PARAMS.tbins = Tall(1,:);
+PARAMS.ffbins = Fall(1,:);
+
 %% ====== COLLECT LEARN DIR AT TARGET
 
 OUTSTRUCT = lt_neural_LFP_GetLearnDir(OUTSTRUCT, SwitchStruct);
@@ -628,7 +949,7 @@ sumplottype = 'switches'; % i.e. what is datapoint?
 % switches
 % chanpairs
 plotAllSwitchRaw = 0;
-clim = [-0.04 0.04];
+clim = [-0.15 0.15];
 fieldtoplot = 'Spec1Mean_WNminusBase';
 % Spec1Mean_WNminusBase
 % Spec2Mean_WNminusBase
@@ -638,20 +959,56 @@ fieldtoplot = 'Spec1Mean_WNminusBase';
 lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
     plotAllSwitchRaw, clim, fieldtoplot);
 
+
 % ============== THIS IS BETTER - subsumes the above, more compacta ndf
 % flexible.
 fieldtoplot = 'coher';
 % 'coher'
 % 'spec'
-birdstoplot = [2];
+birdstoplot = [];
+expttoplot = [];
+swtoplot = [1];
 % NOTE: to get raw cohgram (before subtract) currently need to do
 % breakpoint using spec and evaluate cohgram version instead. Should
 % modify to plot cohgram.
 timewindowtoplot = [-0.08 0]; % for spectra.
 lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
     plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, timewindowtoplot, ...
-    zscoreLFP);
+    zscoreLFP, expttoplot, swtoplot);
 
+
+% ================ ONE PLOT FOR EACH SWITCH
+close all;
+clim = [-0.1 0.1];
+fieldtoplot = 'coher';
+% 'coher'
+% 'spec'
+% NOTE: to get raw cohgram (before subtract) currently need to do
+% breakpoint using spec and evaluate cohgram version instead. Should
+% modify to plot cohgram.
+timewindowtoplot = [-0.08 0]; % for spectra.
+for i=1:max(OUTSTRUCT.bnum)
+    for ii=1:max(OUTSTRUCT.enum)
+        for ss=1:max(OUTSTRUCT.switch)
+            if ~any(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss)
+                continue
+            end
+            
+            % === plot for this case
+            birdstoplot = [i];
+            expttoplot = [ii];
+            swtoplot = [ss];
+            lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
+                plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, timewindowtoplot, ...
+                zscoreLFP, expttoplot, swtoplot);
+            
+            birdname = SwitchStruct.bird(i).birdname;
+            exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
+            lt_subtitle([birdname '-' exptname '-s' num2str(ss)]);
+            
+        end
+    end
+end
 
 
 %% ###################################################################

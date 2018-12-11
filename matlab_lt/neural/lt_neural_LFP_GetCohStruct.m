@@ -1,8 +1,9 @@
-function [COHSTRUCT] = lt_neural_LFP_GetCohStruct(LFPSTRUCT, PARAMS, SummaryStruct)
-%% 
+function [COHSTRUCT] = lt_neural_LFP_GetCohStruct(LFPSTRUCT, PARAMS, SummaryStruct, ...
+    movingwin)
+%% extracts and saves coherence for all trials.
 
-motif_predur = PARAMS.motif_predur;
-motif_postdur = PARAMS.motif_postdur;
+% motif_predur = PARAMS.motif_predur;
+% motif_postdur = PARAMS.motif_postdur;
 PrePostRelSameTime = PARAMS.alignbyonset;
 assert(~isempty(PrePostRelSameTime), 'then I have to check what empty means by default...');
 
@@ -13,11 +14,12 @@ assert(~isempty(PrePostRelSameTime), 'then I have to check what empty means by d
 %% COHERNECE PARAMS
 lt_switch_chronux(1);
 
-movingwin = [0.1 0.01];
+% movingwin = [0.1 0.01];
 
 params = struct;
-params.fpass = [1/movingwin(1) 150];
-w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+params.fpass = [1/movingwin(1) 200];
+% w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+w = 20; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
 tw = movingwin(1)*w;
 params.tapers = [tw 2*tw-1];
 params.Fs = 1500; % hard coded fs for LFP;

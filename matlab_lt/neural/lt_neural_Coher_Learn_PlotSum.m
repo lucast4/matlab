@@ -475,7 +475,7 @@ hfigs=[];
 hsplots = [];
 
 if strcmp(sumplottype, 'switches')
-    LFPmat_base = allswitch_;
+%     LFPmat_base = allswitch_CohDiffMat;
     CohMatDat_base = allswitch_CohBaseMat;
     CohMatDat_WN = allswitch_CohWNMat;
     CohScalDat = allswitch_CohDiffScalar;

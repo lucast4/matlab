@@ -409,6 +409,7 @@ for mm=motifnum_unique'
 end
 
 %% ======= SUMMARIZE SCALAR RESULT, OVER ALL SWITCHES, MOTIFS, AND CHANNELS
+% i.e. for all motifs plot change in coh scalar.
 close all;
 clim = [-0.2 0.2];
 
@@ -489,9 +490,6 @@ end
 
 
 
-%% ========= TRIAL BY TRIAL CORRELATION BETWEEN COHERENCE AND PITCH?
-
-% ===== 1) for all data, calculate cross correlation
 
 
 

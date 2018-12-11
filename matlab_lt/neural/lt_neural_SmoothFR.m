@@ -118,6 +118,7 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
             end
             
             binedges = 0:binsize_spks:trialdur;
+%             bincenters = binedges(1:end) + (binedges(2)-binedges(1))/2;
             bincenters = binedges(1:end) + (binedges(2)-binedges(1))/2;
             [bincounts] = histc(spktimes, binedges); % binned spikes
             

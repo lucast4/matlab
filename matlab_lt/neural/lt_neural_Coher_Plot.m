@@ -33,6 +33,7 @@ if ~exist('ffbinsedges', 'var')
 end
 if isempty(ffbinsedges)
 ffbinsedges = [15 30 80 120]; % edges, to plot timecourse in frequency bands
+% ffbinsedges = [15 30 65 100 120]; % edges, to plot timecourse in frequency bands
 % ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
 end
 %%

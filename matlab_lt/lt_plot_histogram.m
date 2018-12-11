@@ -10,6 +10,11 @@ function [Ybinned, Xcenters, hbar]=lt_plot_histogram(Y, Xcenters, plotON, pdfON,
 % Ybinned = binned data
 % hbar = handle of barplot
 
+if length(Y)<2
+    lt_plot_text(0, 0.5, 'dat empty');
+return
+end
+
 
 Nbins=ceil((numel(Y)^0.85)/5);
 if ~exist('Xcenters', 'var');

@@ -22,7 +22,7 @@ metadatstruct(ind).targlearndir = 1;
 
 %% only good learning expts
 if (0)
-   load  MOTIFSTATS_Compiled_31Mar2018_1639;
+    load  MOTIFSTATS_Compiled_31Mar2018_1639;
 end
 clear metadatcell;
 clear metadatstruct;
@@ -128,10 +128,10 @@ metadatstruct(ind).targlearndir = 1;
 % metadatstruct(ind).targlearndir = 1;
 
 %% ========== wh44/pu69 all, including all epochs.
-% regardless of whether good learning. except cb(b) in first epoch for 
+% regardless of whether good learning. except cb(b) in first epoch for
 % RALMANlearn1, since no learning at all.
 if (0)
-   load  MOTIFSTATS_Compiled_31Mar2018_1639;
+    load  MOTIFSTATS_Compiled_31Mar2018_1639;
 end
 clear metadatcell;
 clear metadatstruct;
@@ -237,7 +237,7 @@ metadatstruct(ind).train_sylsignore = {{}};
 metadatstruct(ind).targlearndir = 1;
 
 %% ========== 3/31/18 - wh44 all, including all epochs.
-% regardless of whether good learning. except cb(b) in first epoch for 
+% regardless of whether good learning. except cb(b) in first epoch for
 % RALMANlearn1, since no learning at all.
 if (0)
     load MOTIFSTATS_Compiled_30Mar2018_1422

@@ -21,6 +21,7 @@ SwitchCohStruct = struct;
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
+%     birdname = SwitchStruct.bird(i)
     for ii=1:numexpts
         numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
         for ss=1:numswitch
@@ -33,6 +34,8 @@ for i=1:numbirds
             % =========== Find channel pairs that have data both pre and post.
             numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons);
             setskept = [];
+            
+            
             for k=1:numsets
                 %    COHSTRUCT.bird(i).experiment(ii).setnum(k).motif(1);
                 nummotifs = length(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif);
@@ -139,6 +142,7 @@ for i=1:numbirds
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch = indsbase;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch = indsWN;
                     setskept = [setskept k];
+                    
                 end
             end
             %             try

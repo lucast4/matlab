@@ -1,4 +1,4 @@
-function lt_neural_QUICK_PlotSylPatches(ons, offs, y, linemode)
+function lt_neural_QUICK_PlotSylPatches(ons, offs, y, linemode, color)
 %% lt 11/21/18 - like raster, but patches for syls
 
 
@@ -34,6 +34,8 @@ function lt_neural_QUICK_PlotSylPatches(ons, offs, y, linemode)
 %                     1.4266                    1.5873                    1.7214                    1.8084
 
 % y = 1 % line to plot.
+% can also be [1 10], which will make patch range from 1 to 10.
+% if (linemode, then pltes 2 lines..)
 
 % linemode=1; then instead of patches plots lines.
 
@@ -44,11 +46,26 @@ end
 for kk=1:length(ons)
     
     if linemode==1
-        plot([ons(kk), offs(kk)], [y y], '-k', 'LineWidth', 2);
+        if length(y)==2
+        plot([ons(kk), offs(kk)], [y(1) y(1)], '-k', 'LineWidth', 2, 'Color',color);
+        plot([ons(kk), offs(kk)], [y(2) y(2)], '-k', 'LineWidth', 2, 'Color',color);
+        elseif length(y)==1
+        plot([ons(kk), offs(kk)], [y y], '-k', 'LineWidth', 2, 'Color',color);
+        end
     else
     X = [ons(kk) offs(kk) offs(kk) ons(kk)];
+    
+    if length(y)==2
+    Y = [y(1)-0.4 y(1)-0.4 y(2)+0.4 y(2)+0.4];    
+    elseif length(y)==1
     Y = [y-0.4 y-0.4 y+0.4 y+0.4];
-    h=patch(X, Y, 'w', 'FaceColor', [0 0 0], 'EdgeColor', [0.8 0.8 0.8], ...
+    end
+    
+%     h=patch(X, Y, 'w', 'FaceColor', [0 0 0], 'EdgeColor', [0.8 0.8 0.8], ...
+%         'FaceAlpha', 0.1);
+%     h=patch(X, Y, 'w', 'FaceColor', color, 'EdgeColor', [0.8 0.8 0.8], ...
+%         'FaceAlpha', 0.1);
+    h=patch(X, Y, 'w', 'FaceColor', color, 'EdgeColor', [0.9 0.9 0.9], ...
         'FaceAlpha', 0.1);
     set(h, 'FaceAlpha', 0.1);
     end

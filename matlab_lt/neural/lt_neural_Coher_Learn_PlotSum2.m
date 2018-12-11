@@ -1,6 +1,6 @@
 function lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, ...
     sumplottype, plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, ...
-    timewindowtoplot, zscoreLFP)
+    timewindowtoplot, zscoreLFP, expttoplot, swtoplot)
 %% lt 11/5/18 - simpler version that is more general
 % CAn do any of the matrix data (e.g. S, coh...)
 
@@ -19,10 +19,20 @@ plotEachTrial = 0; % for the timecourses, if 0 then only plots means, sem.
 
 OUTSTRUCT = lt_structure_RmvEmptyField(OUTSTRUCT); % so followniog code works...
 
+if ~isempty(birdstoplot)
 indstokeep = ismember(OUTSTRUCT.bnum, birdstoplot);
 OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+end
 
+if ~isempty(expttoplot)
+    indstokeep = ismember(OUTSTRUCT.enum, expttoplot);
+    OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+end
 
+if ~isempty(swtoplot)
+    indstokeep = ismember(OUTSTRUCT.switch, swtoplot);
+    OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+end
 
 %% ======= field type to plot
 DATSTRUCT = struct;
@@ -337,7 +347,7 @@ if strcmp(fieldtoplot, 'coher')
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(cohmat, tbins, ffbins, 1, '', clim);
     title(plottit);
-    colorbar
+    colorbar('East');
     % 2. ffband differences
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
