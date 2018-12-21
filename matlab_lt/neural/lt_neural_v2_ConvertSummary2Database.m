@@ -33,8 +33,11 @@ if isempty(BirdsToKeep)
     BirdsToKeep = unique({SummaryStruct.birds.birdname}); % keep all birds
 end
 
-if ~exist('BrainArea', 'var');
-    BrainArea = {};
+if isempty(BrainArea);
+%     BrainArea = {};
+            %  DEFAULT IS TO ONLY KEEP IF IS SONG SYSTEMS
+            BrainArea = {'HVC', 'RA', 'LMAN', 'X'};
+
 end
 
 if ~exist('BatchesDesired', 'var')
@@ -92,6 +95,8 @@ for i=1:numbirds
                 continue
             end
         end
+        
+        
         
         if ~isempty(ExptToKeep)
             if ~any(strcmp(SummaryStruct.birds(i).neurons(ii).exptID, ExptToKeep))

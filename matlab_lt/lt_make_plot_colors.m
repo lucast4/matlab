@@ -14,6 +14,9 @@ if graded==1
     for i=1:num_col
         plot_color{i}=StartCol+ColIncrements.*(i-1);
     end
+    if num_col==1
+        plot_color{1} = [0 0 0];
+    end
 else
     if num_col==4 % ad hoc, these colors work decent.
         plot_color{1}=[0.1 0.1 0.1];

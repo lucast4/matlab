@@ -1,9 +1,17 @@
 %% ++++++++++++++ 1) COHSCALAR, OVER TRIALS
-close all;
+% close all;
+BirdToPlot =3;
+plotSameTypesOnly = 0;
 
 for i=1:length(SummaryStruct.birds)
     %     birdplot = 'pu69wh78';
     birdplot = SummaryStruct.birds(i).birdname;
+    
+    if ~isempty(BirdToPlot)
+        if ~(any(BirdToPlot==i))
+            continue
+        end
+    end
     for ii=1:length(SwitchStruct.bird(i).exptnum)
         exptplot = SummaryStruct.birds(i).exptnum_pop(ii).exptname;
         % exptplot = 'RALMANlearn1';
@@ -22,62 +30,53 @@ for i=1:length(SummaryStruct.birds)
             % --- inds for this experiment [target syl]
             indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
                 OUTSTRUCT.istarg==1);
+            if plotSameTypesOnly==1
+            indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+                OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==1);
+            end    
             if ~any(indsthis)
                 continue
             end
             
             % --- target syl motif number?
-            mm = unique(OUTSTRUCT.motifnum(indsthis));
-            assert(length(mm)==1, 'multipel targets?');
+            motifnumsthis = unique(OUTSTRUCT.motifnum(indsthis));
+            %             assert(length(motifnumsthis)==1, 'multipel targets?');
             
             
-            % ######################3 EXTRACT DATA AND PLOT
-            chanpairs = OUTSTRUCT.chanpair(indsthis, :);
+            for mm=motifnumsthis'
+                
+                indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+                OUTSTRUCT.motifnum==mm);
             
-            tvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals;
-            ffvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals;
-            cohscal_allpairs = OUTSTRUCT.cohscal(indsthis);
-            indsbase = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch;
-            indsWN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch;
-            indsbase_all = OUTSTRUCT.indsbase{indsthis(1)};
-            indsWN_all = OUTSTRUCT.indsWN{indsthis(1)};
+            motifname = OUTSTRUCT.motifname{indsthis(1)};
             
-            
-            % ================ PLOT FF
-            figcount=1;
-            subplotrows=4;
-            subplotcols=2;
-            fignums_alreadyused=[];
-            hfigs=[];
-            hsplots = [];
-            
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots; hsplot];
-            title([birdplot '-' exptplot '-sw' num2str(swplot)]);
-            ylabel('ff');
-            plot(tvals, ffvals, 'ok');
-            axis tight;
-            
-            % ------ mark baseline
-            line([min(tvals(indsbase_all)) min(tvals(indsbase_all))], ylim, 'Color', 'b');
-            line([max(tvals(indsbase_all)) max(tvals(indsbase_all))], ylim, 'Color', 'b');
-            YLIM = ylim;
-            lt_neural_QUICK_PlotSylPatches(tvals(indsbase(1)), tvals(indsbase(end)), YLIM, 0, 'b');
-            % ------ mark WN end
-            line([min(tvals(indsWN_all)) min(tvals(indsWN_all))], ylim, 'Color', 'r');
-            line([max(tvals(indsWN_all)) max(tvals(indsWN_all))], ylim, 'Color', 'r');
-            YLIM = ylim;
-            lt_neural_QUICK_PlotSylPatches(tvals(indsWN(1)), tvals(indsWN(end)), YLIM, 0, 'r');
-            
-            
-            % ================= PLOT coherence
-            for cc=1:size(chanpairs,1)
+                % ######################3 EXTRACT DATA AND PLOT
+                chanpairs = OUTSTRUCT.chanpair(indsthis, :);
+                
+                tvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals;
+                ffvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals;
+                assert(~isempty(OUTSTRUCT.cohscal), 'need to extract coherence scalar!');
+                cohscal_allpairs = OUTSTRUCT.cohscal(indsthis);
+                indsbase = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch;
+                indsWN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch;
+                indsbase_all = OUTSTRUCT.indsbase{indsthis(1)};
+                indsWN_all = OUTSTRUCT.indsWN{indsthis(1)};
+                
+                
+                % ================ PLOT FF
+                figcount=1;
+                subplotrows=4;
+                subplotcols=2;
+                fignums_alreadyused=[];
+                hfigs=[];
+                hsplots = [];
+                
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 hsplots = [hsplots; hsplot];
-                title(['chan ' num2str(chanpairs(cc,:))]);
-                plot(tvals, cohscal_allpairs{cc}, 'ok');
+                title([birdplot '-' exptplot '-sw' num2str(swplot) '[' motifname ']']);
+                ylabel('ff');
+                plot(tvals, ffvals, 'ok');
                 axis tight;
-                ylim([0 1]);
                 
                 % ------ mark baseline
                 line([min(tvals(indsbase_all)) min(tvals(indsbase_all))], ylim, 'Color', 'b');
@@ -89,41 +88,63 @@ for i=1:length(SummaryStruct.birds)
                 line([max(tvals(indsWN_all)) max(tvals(indsWN_all))], ylim, 'Color', 'r');
                 YLIM = ylim;
                 lt_neural_QUICK_PlotSylPatches(tvals(indsWN(1)), tvals(indsWN(end)), YLIM, 0, 'r');
+                
+                
+                % ================= PLOT coherence
+                for cc=1:size(chanpairs,1)
+                    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                    hsplots = [hsplots; hsplot];
+                    title(['chan ' num2str(chanpairs(cc,:))]);
+                    plot(tvals, cohscal_allpairs{cc}, 'ok');
+                    axis tight;
+                    ylim([0 1]);
+                    
+                    % ------ mark baseline
+                    line([min(tvals(indsbase_all)) min(tvals(indsbase_all))], ylim, 'Color', 'b');
+                    line([max(tvals(indsbase_all)) max(tvals(indsbase_all))], ylim, 'Color', 'b');
+                    YLIM = ylim;
+                    lt_neural_QUICK_PlotSylPatches(tvals(indsbase(1)), tvals(indsbase(end)), YLIM, 0, 'b');
+                    % ------ mark WN end
+                    line([min(tvals(indsWN_all)) min(tvals(indsWN_all))], ylim, 'Color', 'r');
+                    line([max(tvals(indsWN_all)) max(tvals(indsWN_all))], ylim, 'Color', 'r');
+                    YLIM = ylim;
+                    lt_neural_QUICK_PlotSylPatches(tvals(indsWN(1)), tvals(indsWN(end)), YLIM, 0, 'r');
+                end
+                
+                
+                % ================= PLOT CHANGE IN COHERENCE ACROSS ALL CHANNELS
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                title('means within shaded periods');
+                ylabel('coherence');
+                xlabel('pre -- post');
+                for cc=1:size(chanpairs,1)
+                    cohmean = [mean(cohscal_allpairs{cc}(indsbase)) mean(cohscal_allpairs{cc}(indsWN))];
+                    plot([1 2], cohmean, '-ok');
+                    lt_plot_text(2.2, cohmean(2), num2str(chanpairs(cc,:)));
+                end
+                xlim([0 3]);
+                
+                
+                % ================== get xcorr between ff and coherence
+                % scalars.
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                %             title('means within shaded periods');
+                %             ylabel('coherence');
+                %             xlabel('pre -- post');
+                xlabel('coh leads -- ff leads [trials]');
+                ylabel('xcov');
+                for cc=1:size(chanpairs,1)
+                    cohthis = cohscal_allpairs{cc}(indsbase(1):indsWN(end));
+                    ffthis = ffvals(indsbase(1):indsWN(end));
+                    [ccov, lags] = xcov(cohthis', ffvals');
+                    plot(lags, ccov, 'k');
+                end
+                xlim([-20 20]);
+                lt_plot_zeroline;
+                
+                % ------------------
+                linkaxes(hsplots, 'x');
             end
-            
-            
-            % ================= PLOT CHANGE IN COHERENCE ACROSS ALL CHANNELS
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            title('means within shaded periods');
-            ylabel('coherence');
-            xlabel('pre -- post');
-            for cc=1:size(chanpairs,1)
-                cohmean = [mean(cohscal_allpairs{cc}(indsbase)) mean(cohscal_allpairs{cc}(indsWN))];
-                plot([1 2], cohmean, '-ok');
-                lt_plot_text(2.2, cohmean(2), num2str(chanpairs(cc,:)));
-            end
-            xlim([0 3]);
-            
-            
-            % ================== get xcorr between ff and coherence
-            % scalars.
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            %             title('means within shaded periods');
-            %             ylabel('coherence');
-            %             xlabel('pre -- post');
-            xlabel('coh leads -- ff leads [trials]');
-            ylabel('xcov');
-            for cc=1:size(chanpairs,1)
-                cohthis = cohscal_allpairs{cc}(indsbase(1):indsWN(end));
-                ffthis = ffvals(indsbase(1):indsWN(end));
-                [ccov, lags] = xcov(cohthis', ffvals');
-                plot(lags, ccov, 'k');
-            end
-            xlim([-20 20]);
-            lt_plot_zeroline;
-            
-            % ------------------
-            linkaxes(hsplots, 'x');
         end
     end
 end
@@ -132,9 +153,9 @@ end
 %% ++++++++++++++ 2) RAW NEURAL DATA
 %         birdplot = 'pu69wh78';
 %         exptplot = 'RALMANlearn1';
-birdplot = 'wh44wh39';
-exptplot = 'RALMANlearn3';
-swplot = 1;
+birdplot = 'wh72pk12';
+exptplot = 'RALMANLearn3';
+swplot = 11;
 motifplot = []; % [string] leave blank for target
 
 i = find(strcmp({SummaryStruct.birds.birdname}, birdplot));
@@ -146,7 +167,15 @@ indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & 
 
 % --- target syl motif number?
 mm = unique(OUTSTRUCT.motifnum(indsthis));
-assert(length(mm)==1, 'multipel targets?');
+motifplot = OUTSTRUCT.motifname{indsthis(1)};
+if length(mm)>1
+    disp('MULTIPLE TARGS, taking first one');
+    mm = mm(1);
+    indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+        OUTSTRUCT.istarg==1 & OUTSTRUCT.motifnum==mm);
+    motifplot = OUTSTRUCT.motifname{indsthis(1)};
+end
+% assert(length(mm)==1, 'multipel targets?');
 
 
 % ######################3 EXTRACT DATA AND PLOT
@@ -191,14 +220,14 @@ extrapad = 0.05; % seconds, pre and post...
 % ============ 2) FOR BASE AND WN, PLOT N TRIALS OF LFP, NEURAL
 %     close all;
 ntoplot = 10; % trials pre and post
-filt_low = 25;
+filt_low = 20;
 filt_hi = 35;
 % filt_fs = fs;
 
 savedir = ['/bluejay5/lucas/analyses/neural/LFP/FIGS_PlotEgRaw/' PARAMS.savemarker];
 saveON = 0;
 
-plotCohScalExtremes =1; % if 1, then plots example higha and low coherence tirals.
+plotCohScalExtremes =0; % if 1, then plots example higha and low coherence tirals.
 if ~exist('cohscaltmp', 'var')
     cohscaltmp = [];
 end
@@ -210,15 +239,20 @@ lt_neural_LFP_PlotEgRaw(DatAll, t_onoff, fs, bregionlist, chanlist_toget, ...
 
 %% ======= 4) FOR A GIVEN TRIAL, WALK THROUGH STEPS OF CALCULATING COHERENCE
 % NOTE: USES DATA FROM ABOVE.
+close all;
 
 % ++++++++++++++++++++++++ PARAMS
 trialnum = 1;
-chanpair = [14 17];
+chanpair = [15 21];
+doWhiteNoise = 1; % then for each chan/trial, replaces with white noise. still see coherence?
+
 % --- FOR SCALAR EXTRACTION  - just sanity check, comapre to prvious
 % extraction.
 twind = [-0.09 -0.02];
 fwind = [15 40];
 
+% --- trials to average over.
+triallist = 1:100;
 
 
 % === extract LFP
@@ -269,11 +303,23 @@ lt_neural_Coher_Plot(C, t, ffbins, 1, '', [0 1]);
 axis tight;
 
 
+% =========================== TRYING DIFFERENT WINDOW SIZES
+if doWhiteNoise==1
+    % --- rpelace each datapoint with WN
+    for j=1:size(lfpdat.LFP_chanbytrial,1)
+        for jj=1:size(lfpdat.LFP_chanbytrial,2)
+            
+            lfptmp = lfpdat.LFP_chanbytrial{j, jj};
+            lfpdat.LFP_chanbytrial{j, jj} = ...
+                mean(lfptmp) + std(lfptmp)*randn(size(lfptmp)); % replace, with mean and std gaussian matched.
+            
+        end
+    end
+end
 
 % #####################  EXTRACT JUST COHERENCE SPECTRUM - do this with different
 % length data
 datlengthlist = [0.3 0.2 0.1 0.05]; % in sec
-triallist = 1:50;
 C_all = cell(length(triallist), length(datlengthlist));
 S12_all = cell(length(triallist), length(datlengthlist));
 S1_all = cell(length(triallist), length(datlengthlist));
@@ -302,7 +348,6 @@ for tr = 1:length(triallist)
         params.tapers = [tw 2*tw-1];
         params.Fs = 1500; % hard coded fs for LFP;
         
-        
         [C,phi,S12,S1,S2,f] = coherencyc(lfp1_tmp, lfp2_tmp, params);
         lt_switch_chronux(0);
         
@@ -320,8 +365,8 @@ end
 % ========== RECALCULATE COHERENCE BY HAND
 Cohere_matlab = cell(1, length(datlengthlist));
 for kkk=1:length(datlengthlist)
-        datlength = datlengthlist(kkk);
-        
+    datlength = datlengthlist(kkk);
+    
     lfp1 = lfpdat.LFP_chanbytrial(ind1, triallist);
     % -- prune to correct length
     lfp1 = cellfun(@(x)x(1:datlength*1500), lfp1, 'UniformOutput', 0);
@@ -345,31 +390,31 @@ end
 % mean(trials x tapers) - even for complex numbers.
 Cohere_multitaper = cell(1, length(datlengthlist));
 for kkk=1:length(datlengthlist)
-        datlength = datlengthlist(kkk);
-        
-        lfp1 = lfpdat.LFP_chanbytrial(ind1, triallist);
-        % -- prune to correct length
-        lfp1 = cellfun(@(x)x(1:datlength*1500), lfp1, 'UniformOutput', 0);
-        lfp1 = cell2mat(lfp1);
-        
-        lfp2 = lfpdat.LFP_chanbytrial(ind2, triallist);
-        % -- prune to correct length
-        lfp2 = cellfun(@(x)x(1:datlength*1500), lfp2, 'UniformOutput', 0);
-        lfp2 = cell2mat(lfp2);
-        
-        params = struct;
-        params.fpass = [1/movingwin(1) 150];
-        w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
-        tw = movingwin(1)*w;
-        params.tapers = [tw 2*tw-1];
-        params.Fs = 1500; % hard coded fs for LFP;
-        params.trialave = 1;
-
-        lt_switch_chronux(1);
-        [C,phi,S12,S1,S2,f] = coherencyc(lfp1, lfp2, params);
-        lt_switch_chronux(0);
-
-                
+    datlength = datlengthlist(kkk);
+    
+    lfp1 = lfpdat.LFP_chanbytrial(ind1, triallist);
+    % -- prune to correct length
+    lfp1 = cellfun(@(x)x(1:datlength*1500), lfp1, 'UniformOutput', 0);
+    lfp1 = cell2mat(lfp1);
+    
+    lfp2 = lfpdat.LFP_chanbytrial(ind2, triallist);
+    % -- prune to correct length
+    lfp2 = cellfun(@(x)x(1:datlength*1500), lfp2, 'UniformOutput', 0);
+    lfp2 = cell2mat(lfp2);
+    
+    params = struct;
+    params.fpass = [1/movingwin(1) 150];
+    w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+    tw = movingwin(1)*w;
+    params.tapers = [tw 2*tw-1];
+    params.Fs = 1500; % hard coded fs for LFP;
+    params.trialave = 1;
+    
+    lt_switch_chronux(1);
+    [C,phi,S12,S1,S2,f] = coherencyc(lfp1, lfp2, params);
+    lt_switch_chronux(0);
+    
+    
     Cohere_multitaper{kkk} = C;
 end
 
@@ -433,14 +478,14 @@ cohscal_allpairs{pairthis}(trialnum)
 
 
 
-%% ======= FOR A GIVEN TRIAL, SHOW ALL SEPARATE TAPERS 
+%% ======= FOR A GIVEN TRIAL, SHOW ALL SEPARATE TAPERS
 % 1) Each taper show raw data, show filtered data (30hz)
 % 2) Show untapered data, filtered
 % 3) Show coherence scalar.
 
 % NOTE: first runt he script avbove, plotting individual trials...
-trialthis = 869;
-pairtoplot = [15 17];
+trialthis = 1;
+pairtoplot = [8 21];
 twindtoget = [-0.1 0]; % relative syl onset
 ftoplot = 30;
 assert(ftoplot==30, 'need to adjust neural filter...');
@@ -544,8 +589,8 @@ for nt=1:ntapers
     ylim([-30 30]);
     lt_plot_zeroline;
     lt_plot_zeroline_vert;
-
-
+    
+    
 end
 
 

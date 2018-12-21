@@ -1,27 +1,35 @@
 function lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, ...
     sumplottype, plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, ...
-    timewindowtoplot, zscoreLFP, expttoplot, swtoplot)
+    timewindowtoplot, zscoreLFP, expttoplot, swtoplot, ffbinsedges, ...
+    indtoget_b_e_s)
 %% lt 11/5/18 - simpler version that is more general
 % CAn do any of the matrix data (e.g. S, coh...)
 
 % sumplottype = 'switches'; % i.e. what is datapoint?
 % switches
 % chanpairs
-
+if (0)
 assert(all(strcmp(OUTSTRUCT.bregionpair, 'LMAN-RA')), 'assumes chan1 is LAMN, chang 2 is RA...');
+end
+
 tbins = PARAMS.tbins;
 ffbins = PARAMS.ffbins;
 
 % clim = [-0.15 0.15];
 plotEachTrial = 0; % for the timecourses, if 0 then only plots means, sem.
 
+if ~exist('indtoget_b_e_s', 'var')
+    indtoget_b_e_s = [];
+end
+
 %% onluy plot certain birds?
 
 OUTSTRUCT = lt_structure_RmvEmptyField(OUTSTRUCT); % so followniog code works...
 
+% === filter each dimension independenyl
 if ~isempty(birdstoplot)
-indstokeep = ismember(OUTSTRUCT.bnum, birdstoplot);
-OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+    indstokeep = ismember(OUTSTRUCT.bnum, birdstoplot);
+    OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
 end
 
 if ~isempty(expttoplot)
@@ -34,13 +42,20 @@ if ~isempty(swtoplot)
     OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
 end
 
+% == filter by specific types of switches.
+if ~isempty(indtoget_b_e_s)
+indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget_b_e_s, 'rows');
+OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+end
 %% ======= field type to plot
 DATSTRUCT = struct;
 
 if strcmp(fieldtoplot, 'coher')
     %% for coherence [diff]
     
-    % ============
+  
+        if strcmp(sumplottype, 'switches')
+      % ============
     %     fieldtoget = 'CohMean_WNminusBase';
     %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
     %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
@@ -64,6 +79,35 @@ if strcmp(fieldtoplot, 'coher')
     
     % save dat
     DATSTRUCT.cohdiff = cohdiff;
+      
+    elseif strcmp(sumplottype, 'chanpairs')
+      % ============
+    %     fieldtoget = 'CohMean_WNminusBase';
+    %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
+    %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+    
+    fieldtoget = 'CohMean_WN';
+    [allbnum, allenum, allswnum, allDat2] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+    
+    fieldtoget = 'CohMean_Base';
+    [allbnum, allenum, allswnum, allDat1] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+    
+    % ---- subtract WN from base
+    cohdiff = nan(size(allDat1));
+    for i=1:size(cohdiff,3)
+        for ii=1:size(cohdiff,4)
+            
+            cohdiff(:,:,i,ii) = allDat2(:,:,i, ii) - allDat1(:,:,i, ii);
+        end
+    end
+    
+    % save dat
+    DATSTRUCT.cohdiff = cohdiff;
+
+        end
+        
     
     
 elseif strcmp(fieldtoplot, 'spec')
@@ -77,7 +121,7 @@ elseif strcmp(fieldtoplot, 'spec')
             lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
         % save dat
         DATSTRUCT.chan1.base = allDat;
-%         prctile(allDat(:), [2.75 97.5])
+        %         prctile(allDat(:), [2.75 97.5])
         
         % ============ 1) chan1, wn
         fieldtoget = 'Spec1Mean_WN';
@@ -85,7 +129,7 @@ elseif strcmp(fieldtoplot, 'spec')
             lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
         % save dat
         DATSTRUCT.chan1.wn= allDat;
-%         prctile(allDat(:), [2.75 97.5])
+        %         prctile(allDat(:), [2.75 97.5])
         
         % ============ 1) chan2, base
         fieldtoget = 'Spec2Mean_Base';
@@ -93,7 +137,7 @@ elseif strcmp(fieldtoplot, 'spec')
             lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
         % save dat
         DATSTRUCT.chan2.base = allDat;
-%         prctile(allDat(:), [2.75 97.5])
+        %         prctile(allDat(:), [2.75 97.5])
         
         % ============ 1) chan2, WN
         fieldtoget = 'Spec2Mean_WN';
@@ -101,7 +145,7 @@ elseif strcmp(fieldtoplot, 'spec')
             lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
         % save dat
         DATSTRUCT.chan2.wn = allDat;
-%         prctile(allDat(:), [2.75 97.5])
+        %         prctile(allDat(:), [2.75 97.5])
         
         % --- sanity check
         assert(all(all(diff([allswnum allswnum2 allswnum3 allswnum4], 1, 2)==0)), 'extractions nt identical..');
@@ -293,6 +337,10 @@ if strcmp(fieldtoplot, 'coher')
     CohScalDat = nan;
     birddat = allbnum;
     
+    indstmp = ffbins>5 & ffbins<150;
+    CohMatDat = CohMatDat(:,indstmp, :, :);
+    ffbins = ffbins(indstmp);
+    
     %% === check (diff and [wn - base] are the same?)
     if (0)
         tmp1 = CohMatDat_WN(:) - CohMatDat_base(:);
@@ -322,7 +370,7 @@ if strcmp(fieldtoplot, 'coher')
     
     % 2. ffband differences
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, 0, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     
@@ -336,7 +384,7 @@ if strcmp(fieldtoplot, 'coher')
     
     % 2. ffband differences
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, 0, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     
@@ -350,7 +398,7 @@ if strcmp(fieldtoplot, 'coher')
     colorbar('East');
     % 2. ffband differences
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, 0, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     
@@ -367,13 +415,13 @@ if strcmp(fieldtoplot, 'coher')
     % 2. ffband differences
     plotindivtraces =1;
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     % 2. ffband differences
     plotindivtraces =0;
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     
@@ -390,13 +438,13 @@ if strcmp(fieldtoplot, 'coher')
     % 2. ffband differences
     plotindivtraces =1;
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     % 2. ffband differences
     plotindivtraces =0;
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
     
@@ -484,7 +532,7 @@ if strcmp(fieldtoplot, 'spec')
     hfigs=[];
     hsplots = [];
     
-    if min(DATSTRUCT.chan1.base(:))>0 & max(DATSTRUCT.chan1.base(:))>0.5 
+    if min(DATSTRUCT.chan1.base(:))>0 & max(DATSTRUCT.chan1.base(:))>0.5
         % then is coherograms (breakpoint evaluated)
         clim = [0.3 0.7];
         addval = 0;
@@ -495,10 +543,10 @@ if strcmp(fieldtoplot, 'spec')
         clim = [-0.5 0.5];
         addval = 0.2;
     else
-    clim = [-8 8]; % zscore    
-    addval = 1;
+        clim = [-8 8]; % zscore
+        addval = 1;
     end
-            
+    
     % ============ TARG
     indsyl = 1;
     ylabthis = 'TARG';
@@ -520,7 +568,7 @@ if strcmp(fieldtoplot, 'spec')
     dat2_wn = squeeze(DATSTRUCT.chan2.wn(:,:,indsyl,:));
     
     lt_neural_Coher_Learn_PlotSum2_sub
-
+    
     
     % ============ DIFF
     indsyl = 3;
@@ -532,8 +580,8 @@ if strcmp(fieldtoplot, 'spec')
     dat2_wn = squeeze(DATSTRUCT.chan2.wn(:,:,indsyl,:));
     
     lt_neural_Coher_Learn_PlotSum2_sub
-
-
+    
+    
     
     %% ============== DIFFERENCES (TARGET MINUS NONTARG)
     % ================ TARGET MINUS SAME
@@ -560,15 +608,15 @@ if strcmp(fieldtoplot, 'spec')
     
     % ------------ PLOT TIMECOURSE IN A FEW FREQUENCY BINS
     if plotEachTrial==1
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan1');
-    axis tight;
-    
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan2');
-    axis tight;
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
+        title('chan1');
+        axis tight;
+        
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
+        title('chan2');
+        axis tight;
     end
     
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -581,21 +629,21 @@ if strcmp(fieldtoplot, 'spec')
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan2');
-     ylabel(ylabthis);
-   axis tight;
+    ylabel(ylabthis);
+    axis tight;
     
-
+    
     
     % ===============
     dat3 = squeeze((DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan1.wn(:,:,indsyl2,:) - DATSTRUCT.chan1.base(:,:,indsyl2,:)));
     
-   [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
     title('chan1');
     ylabel('(wn-base) - (wn-base)]');
     axis tight;
-
+    
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -609,12 +657,12 @@ if strcmp(fieldtoplot, 'spec')
     dat3 = squeeze((DATSTRUCT.chan2.wn(:,:,indsyl1,:) - DATSTRUCT.chan2.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan2.wn(:,:,indsyl2,:) - DATSTRUCT.chan2.base(:,:,indsyl2,:)));
     
-       [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
     title('chan2');
     ylabel('(wn-base) - (wn-base)]');
     axis tight;
-
+    
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -624,11 +672,11 @@ if strcmp(fieldtoplot, 'spec')
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim, 1, 0);
     title('(wn-base) - (wn-base)]');
     
-
+    
     
     % ================ TARGET MINUS DIFF
-
-        % ================ TARGET MINUS SAME
+    
+    % ================ TARGET MINUS SAME
     indsyl1 = 1;
     indsyl2 = 3;
     ylabthis = 'TARG - DIFF[WNmeans]';
@@ -652,15 +700,15 @@ if strcmp(fieldtoplot, 'spec')
     
     % ------------ PLOT TIMECOURSE IN A FEW FREQUENCY BINS
     if plotEachTrial==1
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan1');
-    axis tight;
-    
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
-    title('chan2');
-    axis tight;
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        lt_neural_Coher_Plot(dat1, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
+        title('chan1');
+        axis tight;
+        
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
+        title('chan2');
+        axis tight;
     end
     
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -673,21 +721,21 @@ if strcmp(fieldtoplot, 'spec')
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat2, tbins, ffbins, 2, '-', clim, 1, 0);
     title('chan2');
-     ylabel(ylabthis);
-   axis tight;
+    ylabel(ylabthis);
+    axis tight;
     
-
+    
     
     % ===============
     dat3 = squeeze((DATSTRUCT.chan1.wn(:,:,indsyl1,:) - DATSTRUCT.chan1.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan1.wn(:,:,indsyl2,:) - DATSTRUCT.chan1.base(:,:,indsyl2,:)));
     
-   [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
     title('chan1');
     ylabel('(wn-base) - (wn-base)]');
     axis tight;
-
+    
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');
@@ -701,12 +749,12 @@ if strcmp(fieldtoplot, 'spec')
     dat3 = squeeze((DATSTRUCT.chan2.wn(:,:,indsyl1,:) - DATSTRUCT.chan2.base(:,:,indsyl1,:)) - ...
         (DATSTRUCT.chan2.wn(:,:,indsyl2,:) - DATSTRUCT.chan2.base(:,:,indsyl2,:)));
     
-       [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     imagesc(tbins, ffbins, nanmean(dat3,3)', clim);
     title('chan2');
     ylabel('(wn-base) - (wn-base)]');
     axis tight;
-
+    
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     title('(wn-base) - (wn-base)]');

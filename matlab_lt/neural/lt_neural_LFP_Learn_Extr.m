@@ -161,12 +161,18 @@ for i=1:numbirds
                 indsbase = tvals>tstart & tvals<tswitch;
                 indsWN = tvals>tswitch & tvals<tend;
                 
-                % ---------------- EPOCHS
-                indsbase_epoch = find(indsbase);
-                indsbase_epoch = indsbase_epoch(round(length(indsbase_epoch)/2):end);
                 
-                indsWN_epoch = find(indsWN);
-                indsWN_epoch = indsWN_epoch(round(length(indsWN_epoch)/2):end);
+                
+                % ---------------- EPOCHS
+                indsbase_epoch = datthis.motifnum(mm).indsbase_epoch;
+                indsWN_epoch = datthis.motifnum(mm).indsWN_epoch;
+                
+                
+%                 indsbase_epoch = find(indsbase);
+%                 indsbase_epoch = indsbase_epoch(round(length(indsbase_epoch)/2):end);
+                
+%                 indsWN_epoch = find(indsWN);
+%                 indsWN_epoch = indsWN_epoch(round(length(indsWN_epoch)/2):end);
                 npairs = size(cohmat,4);
                 
                 % ------- COHERENCE

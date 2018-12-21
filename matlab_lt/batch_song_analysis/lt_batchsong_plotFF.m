@@ -26,7 +26,7 @@ TrainON_dnum = datenum(TrainON, 'ddmmmyyyy-HHMM');
 
 tval_min = [];
 for i=1:length(DATSTRUCT.motif)
-   tval_min = min([tval_min min([DATSTRUCT.motif(i).rendnum.datenum_song_SecRes])]);
+    tval_min = min([tval_min min([DATSTRUCT.motif(i).rendnum.datenum_song_SecRes])]);
 end
 
 firstday = datestr(tval_min, 'ddmmmyyyy');
@@ -53,7 +53,7 @@ for i = 1:length(MotifsToExtract)
     tvals = [DATSTRUCT.motif(i).rendnum(inds).datenum_song_SecRes];
     
     % ------- subtract baseline FF
-        baseinds = tvals < TrainON_dnum;
+    baseinds = tvals < TrainON_dnum;
     if subtractMean==1
         ffvals = ffvals - nanmean(ffvals(baseinds));
     end
@@ -61,14 +61,25 @@ for i = 1:length(MotifsToExtract)
         basemean = nanmean(ffvals(baseinds));
         basestd = nanstd(ffvals(baseinds));
         ffvals = (ffvals - basemean)./basestd;
-    end        
+    end
     
     % -- convert tvals to days from start
     tvals = lt_convert_EventTimes_to_RelTimes(firstday, tvals);
     tvals = tvals.FinalValue;
     
+    % --- HITS/MISSES
+    if isfield(DATSTRUCT.motif(i).rendnum(inds), 'isWNhit')
+        ishit = [DATSTRUCT.motif(i).rendnum(inds).isWNhit];
+    else
+        ishit = [];
+    end
+    
     % ----- plot
     plot(tvals, ffvals, 'o', 'Color', plotcol);
+    if ~isempty(ishit)
+        plot(tvals(ishit), ffvals(ishit), 'or');
+    end
+    
     
     % ----- plot day means
     numdays = floor(max(tvals));
@@ -100,48 +111,52 @@ for i = 1:length(MotifsToExtract)
     % ####################################### DIR
     inds = [DATSTRUCT.motif(i).rendnum.isDIR]==1;
     if any(inds)
-    plotcol = 'b';
-    
-    % ----------------- RUN
-    ffvals = [DATSTRUCT.motif(i).rendnum(inds).ff];
-    tvals = [DATSTRUCT.motif(i).rendnum(inds).datenum_song_SecRes];
-    
-    % ------- subtract baseline FF
-    if subtractMean==1
-        baseinds = tvals < TrainON_dnum;
-        if ~any(baseinds)
-            disp('TO PLOT DIR, DO NOT NORM TO BASE!!! [lackign base data]');
+        plotcol = 'b';
+        
+        % ----------------- RUN
+        ffvals = [DATSTRUCT.motif(i).rendnum(inds).ff];
+        tvals = [DATSTRUCT.motif(i).rendnum(inds).datenum_song_SecRes];
+        
+        % ------- subtract baseline FF
+        if subtractMean==1
+            baseinds = tvals < TrainON_dnum;
+            if ~any(baseinds)
+                disp('TO PLOT DIR, DO NOT NORM TO BASE!!! [lackign base data]');
+            end
+            ffvals = ffvals - mean(ffvals(baseinds));
         end
-        ffvals = ffvals - mean(ffvals(baseinds));
-    end
-    if dozscore ==1
-        % ------- use base mean and std for UNDIR (to maintain ability to
-        % compare)
-        ffvals = (ffvals - basemean)./basestd;
-    end        
-
-    % -- convert tvals to days from start
-    tvals = lt_convert_EventTimes_to_RelTimes(firstday, tvals);
-    tvals = tvals.FinalValue;
-    
-    % ----- plot
-    lt_plot(tvals, ffvals, {'Color', plotcol});
-    %      plot(tvals, ffvals, 'o', 'Color', plotcol);
-    
-    % ----- plot day means
-    numdays = floor(max(tvals));
-    for j=1:numdays
-        
-        indstmp = floor(tvals)==j;
-        tt = tvals(indstmp);
-        ff = ffvals(indstmp);
-        
-        if isempty(ff)
-            continue
+        if dozscore ==1
+            % ------- use base mean and std for UNDIR (to maintain ability to
+            % compare)
+            ffvals = (ffvals - basemean)./basestd;
         end
         
-        lt_plot(max(tt)+0.15, mean(ff), {'Errors', lt_sem(ff), 'Color', plotcol});
-    end
+        % -- convert tvals to days from start
+        tvals = lt_convert_EventTimes_to_RelTimes(firstday, tvals);
+        tvals = tvals.FinalValue;
+        
+        
+        % ====== HITS/MISSES
+        
+        
+        % ----- plot
+        lt_plot(tvals, ffvals, {'Color', plotcol});
+        %      plot(tvals, ffvals, 'o', 'Color', plotcol);
+        
+        % ----- plot day means
+        numdays = floor(max(tvals));
+        for j=1:numdays
+            
+            indstmp = floor(tvals)==j;
+            tt = tvals(indstmp);
+            ff = ffvals(indstmp);
+            
+            if isempty(ff)
+                continue
+            end
+            
+            lt_plot(max(tt)+0.15, mean(ff), {'Errors', lt_sem(ff), 'Color', plotcol});
+        end
     end
     
 end

@@ -24,7 +24,7 @@ end
 
 %% ====== plot single file dat [align neural and song]
 close all;
-filename='wh72pk12_181207_225619.rhd';
+filename='wh72pk12_181219_145446.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
@@ -33,14 +33,14 @@ ChansToPlot.AmpChans_zero=[9 11 12 14 1 18];
 ChansToPlot.AmpChans_zero=[9 14 17 18 21];
 ChansToPlot.AmpChans_zero=[9 14 21];
 ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
-ChansToPlot.AmpChans_zero=[8 15 21];
+ChansToPlot.AmpChans_zero=[0:31];
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
 
-PlotWhat.lfp = 1;
-PlotWhat.raw=0;
-PlotWhat.filt=1;
+PlotWhat.lfp = 0;
+PlotWhat.raw=1;
+PlotWhat.filt=0;
 PlotWhat.rect_sm=0;
 PlotWhat.raster=0;
 PlotWhat.digital=0;
@@ -111,8 +111,8 @@ clear all; close all; fclose all;
 channel_board = [9 14 17 18 21];
 channel_board = 0:31;
 channel_board = [8 9 14 21];
-channel_board = [8];
-batchf = 'Batch1153to2256';
+channel_board = [13];
+batchf = 'Batch1008to2303';
 
 %% ==== exploratory - concat all audio and neural and plot for each neural channel
 close all;
@@ -127,9 +127,10 @@ end
 PlotRectDat=0; % 1, plots, 0 skips.
 PlotFiltDat=1; % usually 1, filt neural.
 PosAndNeg =0; % then gets both. if 0, then just downwards
+PlotLFP = 1; % takes precedence...
 
-
-lt_neural_concatExplore_v2(batchf, channel_board, PlotRectDat, PlotFiltDat, PosAndNeg); % WAVEFORMS ONLY PLOTTED FOR ONE CHANNEL!!
+lt_neural_concatExplore_v2(batchf, channel_board, PlotRectDat, PlotFiltDat, ...
+    PlotLFP, PosAndNeg); % WAVEFORMS ONLY PLOTTED FOR ONE CHANNEL!!
 
 % ------- v3 -plots song by song
 if (0)

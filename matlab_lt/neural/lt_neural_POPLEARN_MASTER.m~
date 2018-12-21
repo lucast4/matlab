@@ -659,6 +659,7 @@ else
     baseuseallinds =1 ;
 pairtoget = 'LMAN-RA';
 % pairtoget = 'LMAN-RAoutside';
+pairtoget = 'LMANoutside-RAoutside';
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
     SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);    
 end
@@ -1097,16 +1098,7 @@ lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARA
 %% ######################### [MOTIFPLOT] SAME, DIFF MOTIFS
 
 close all;
-
-swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
-% swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
-firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
-% for a given switch did not have a previous switch on the same day
-indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday);
-
-lt_neural_Coher_PlotSameMotif(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, ...
-    PARAMS, indtoget_b_e_s);
+lt_neural_Coher_PlotSameMotif(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARAMS);
 
 %% ############### [MOTIFPLOT] FOR EACH MOTIF, PLOT COH CHANGE DEPEDNING ON STATUS
 close all;

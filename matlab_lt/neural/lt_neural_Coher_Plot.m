@@ -25,6 +25,8 @@ end
 % plottype 1:
 if ~exist('clim', 'var')
     clim = [0.1 0.8]; % limits for coherence
+% elseif imsempty(clim)
+%     clim = [0.1 0.8];
 end
 
 % plottype 2:
@@ -33,7 +35,7 @@ if ~exist('ffbinsedges', 'var')
 end
 if isempty(ffbinsedges)
 ffbinsedges = [15 30 80 120]; % edges, to plot timecourse in frequency bands
-% ffbinsedges = [15 30 65 100 120]; % edges, to plot timecourse in frequency bands
+ffbinsedges = [20 30 80 120]; % edges, to plot timecourse in frequency bands
 % ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
 end
 %%
@@ -46,7 +48,7 @@ if plottype==1
     end
     axis tight;
     line([0 0], ylim, 'Color', 'k');
-    
+    colormap('spring');
 elseif plottype==2
     pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
     
@@ -90,7 +92,9 @@ elseif plottype==2
         end
     end
     axis tight;
+    if ~isempty(clim)
     ylim(clim);
+    end
     line([0 0], ylim, 'Color', 'k');
     
 end

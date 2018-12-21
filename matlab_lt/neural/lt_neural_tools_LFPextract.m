@@ -31,6 +31,12 @@ for j=1:length(Allbird_Fnames)
     dat = amplifier_data(indschan, :);
     %     dat = amplifier_data([amplifier_channels.chip_channel] == chanamp, :);
     
+    tmp = [amplifier_channels(indschan).chip_channel];
+    if size(tmp ,2)>1
+        tmp = tmp';;
+    end
+
+    assert(all(tmp == channellist), 'must be, or else the output order is wrong..');
     
     
     % ##################### GET LFP

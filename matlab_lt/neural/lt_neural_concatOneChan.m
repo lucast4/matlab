@@ -28,6 +28,8 @@ for i=1:length(filenames)
     
     % --- collect all amp dat
     ind=[amplifier_channels.chip_channel]==channel_board;
+    assert(any(ind));
+    
     dattmp=amplifier_data(ind, :); % dat for this chan
     
     ampDat_all=[ampDat_all dattmp]; % concat

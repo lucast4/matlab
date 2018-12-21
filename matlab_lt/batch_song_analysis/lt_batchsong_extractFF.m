@@ -214,41 +214,41 @@ else
             
             %% ============== GET DATA ON HITS/ESCAPES
             if gethitsyls==1
-            [~, ~, fe] = fileparts(fname);
-            if strcmp(fe, '.cbin')
-                % then feedback info is in rec file
+                [~, ~, fe] = fileparts(fname);
+                if strcmp(fe, '.cbin')
+                    % then feedback info is in rec file
+                    
+                    rd=readrecf(fname);
+                    trigtimes = rd.ttimes; % in msec
+                    iscatch = rd.iscatch;
+                    
+                elseif strcmp(fe, '.rhd')
+                    
+                    % then feecbak must be extracted
+                    wntime = load([fname '.wntime.mat']);
+                    
+                    trigtimes = wntime.wnstruct.WNonsets*1000; % convert to ms.
+                    iscatch = 0; % for rhd assume there is no catch. this is true for all
+                    % experiments up to now (8/2018).
+                    
+                    % ===================== filter to determine waht is a true
+                    % hit
+                    durtmp = ([wntime.wnstruct.WNoffsets] - [wntime.wnstruct.WNonsets]);
+                    indstmp = durtmp>durmin & durtmp<durmax & ...
+                        wntime.wnstruct.Nmaxes_withindur>npeaksmin & ...
+                        wntime.wnstruct.Nmaxes_withindur<npeaksmax;
+                    trigtimes = trigtimes(indstmp);
+                end
                 
-                rd=readrecf(fname);
-                trigtimes = rd.ttimes; % in msec
-                iscatch = rd.iscatch;
                 
-            elseif strcmp(fe, '.rhd')
                 
-                % then feecbak must be extracted
-                wntime = load([fname '.wntime.mat']);
-                
-                trigtimes = wntime.wnstruct.WNonsets*1000; % convert to ms.
-                iscatch = 0; % for rhd assume there is no catch. this is true for all
-                % experiments up to now (8/2018).
-                
-                % ===================== filter to determine waht is a true
-                % hit
-                durtmp = ([wntime.wnstruct.WNoffsets] - [wntime.wnstruct.WNonsets]);
-                indstmp = durtmp>durmin & durtmp<durmax & ...
-                    wntime.wnstruct.Nmaxes_withindur>npeaksmin & ...
-                    wntime.wnstruct.Nmaxes_withindur<npeaksmax;
-                trigtimes = trigtimes(indstmp);
-            end
-            
-            
-            
-            % ================== GET POSITIONS OF HIT SYLS
-            hitInds = [];
-            for j=1:length(trigtimes)
-                hs = find(trigtimes(j)>notmat.onsets ...
-                    & trigtimes(j)<notmat.offsets);
-                hitInds = [hitInds; hs];
-            end
+                % ================== GET POSITIONS OF HIT SYLS
+                hitInds = [];
+                for j=1:length(trigtimes)
+                    hs = find(trigtimes(j)>notmat.onsets ...
+                        & trigtimes(j)<notmat.offsets);
+                    hitInds = [hitInds; hs];
+                end
             end
             
             %%
@@ -299,8 +299,8 @@ else
                     
                     % ----------- is this a hit?
                     if gethitsyls==1
-                    DATSTRUCT.motif(mm).rendnum(count).isWNhit = ismember(j, hitInds);
-                    DATSTRUCT.motif(mm).rendnum(count).isCatchsong = iscatch;
+                        DATSTRUCT.motif(mm).rendnum(count).isWNhit = ismember(j, hitInds);
+                        DATSTRUCT.motif(mm).rendnum(count).isCatchsong = iscatch;
                     end
                 end
             end

@@ -18,8 +18,8 @@ lt_switch_chronux(1);
 
 params = struct;
 params.fpass = [1/movingwin(1) 200];
-% w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
-w = 20; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+% w = 20; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
 tw = movingwin(1)*w;
 params.tapers = [tw 2*tw-1];
 params.Fs = 1500; % hard coded fs for LFP;

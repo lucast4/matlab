@@ -1,5 +1,5 @@
 function lt_neural_Coher_PlotChanMotif(SwitchStruct, SwitchCohStruct, OUTSTRUCT, ...
-    bird, expt, sw, averagechanpairs, PARAMS, removeBadSyls, ffbinsedges)
+    bird, expt, sw, averagechanpairs, PARAMS, removeBadSyls)
 %% lt 10/9/18 - % THIS 1) plots
 
 %%
@@ -42,7 +42,7 @@ for i=1:numbirds
             % =========== one figure for each switch
             figcount=1;
             subplotrows=3;
-            subplotcols=8;
+            subplotcols=6;
             fignums_alreadyused=[];
             hfigs=[];
             hsplots = [];
@@ -128,30 +128,27 @@ for i=1:numbirds
                     title(['[BASE]' motifthis], 'Color', titlecol);
                     ylabel({[bthis '-' ename '-sw' num2str(ss)], ['chpair:' num2str(chanpair)]});
                     cohthis = cohmat(:,:,indsbase, cc);
-                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1, '', [], 0, 0, ffbinsedges);
-                    colorbar('East')
+                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1);
                     % -- WN
                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                     title(['[WN]'], 'Color', titlecol);
                     cohthis = cohmat(:,:,indsWN, cc);
-                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1, '', [], 0, 0, ffbinsedges);
-                    colorbar('East')
+                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1);
                     % == WN minus base
                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                     title(['[WN-base]'], 'Color', titlecol);
-                    cohthis = nanmean(cohmat(:,:,indsWN, cc),3) - nanmean(cohmat(:,:,indsbase, cc),3);
-                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1, '', [-0.15 0.15], 0, 0, ffbinsedges);
-                    colorbar('East')
+                    cohthis = nanmean(cohmat(:,:,indsWN, cc), - cohmat(:,:,indsbase, cc);
+                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 1);
+                    
                     % =========== OVERLAY BASELINE AND WN FREQUENCY BANDS
                     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                     title(['[base(dash), WN(solid)]'], 'Color',titlecol);
                     
                     cohthis = cohmat(:,:,indsbase, cc);
-                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, ':', [], 0, 0, ffbinsedges);
+                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, ':');
                     
                     cohthis = cohmat(:,:,indsWN, cc);
-                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, '-', [], 0, 0, ffbinsedges);
-%                     lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, '-');
+                    lt_neural_Coher_Plot(cohthis, tbins, ffbins, 2, '-');
                     
                     % ========= NOTE DOWN SYLTYPE
                 end

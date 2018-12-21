@@ -563,7 +563,7 @@ end
 if (0)
     savedir = '/bluejay5/lucas/analyses/seqdeppitch/Extracted';
     load([savedir '/SeqDepPitch_AcrossBirds.mat']);
-    save([savedir '/PARAMS.mat']);
+    PARAMS = load([savedir '/PARAMS.mat']);
 end
 
 
@@ -1535,6 +1535,20 @@ close all;
 
 
 
+% [GOOD] ############################## BAR PLOTS UMMAR OF LEARNING
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_LMANmotif(SeqDepPitch_AcrossBirds_LMAN, PARAMS);
+
+% [GOOD] ############################## AFP BIAS DEPENDING ON RELATIVE
+% POSITION
+close all;
+norm_by_targsyl=0; % normalize within each experiment
+% epochfield_input='days_consolid_early';
+epochfield_input='final_extracted_window';
+UseBaselineForCV=0; % then uses baseline data for CV reduction analysis
+DispEachSylCVpval=0; % if 1, lists p vals
+lt_seq_dep_pitch_ACROSSBIRDS_LMANAdjacent(SeqDepPitch_AcrossBirds_LMAN, PARAMS, ...
+    norm_by_targsyl, epochfield_input, UseBaselineForCV, DispEachSylCVpval);
 
 
 % ++++++++++++++++++++++++++++++++++++ SINGLE DIR

@@ -71,7 +71,9 @@ slashes = findstr(currdir, '/');
 dashes = findstr(currdir, '-');
 uscores = findstr(currdir, '_');
 
-
+if strcmp(currdir(slashes(1)+1:slashes(2)-1), 'bluejay0')
+    slashes = slashes(2:end);
+end
 birdname = currdir(slashes(4)+1:slashes(5)-1);
 date_mmddyy = currdir(slashes(6)+1:slashes(6)+6);
 

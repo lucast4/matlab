@@ -13,7 +13,7 @@ end
 %% make filters
 for f = fall
     disp(['making filter for ' num2str(f) ' hz']);
-    d =designeegfilt(srate,f-1,f+2);
+    d =designeegfilt(srate,f-2,f+2); % jai had f-1 to f+2, I changed...
     cfcampfilt = d;
     
     %     figure

@@ -1,5 +1,5 @@
 function SwitchCohStruct = lt_neural_Coher_LearnExtr(COHSTRUCT, MOTIFSTATS_pop, SwitchStruct, pairtoget, ...
-    LFPSTRUCT, PARAMS)
+    LFPSTRUCT, PARAMS, baseuseallinds)
 %% lt 10/12/18 - extract lerning related coherence dataset
 
 % pairtoget = 'LMAN-RA';
@@ -21,7 +21,7 @@ SwitchCohStruct = struct;
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
-%     birdname = SwitchStruct.bird(i)
+    %     birdname = SwitchStruct.bird(i)
     for ii=1:numexpts
         numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
         for ss=1:numswitch
@@ -69,23 +69,23 @@ for i=1:numbirds
                         continue
                     end
                     
-%                     % ---- collect all coherence across all pairs
-%                     numchanpairs = length(indtmp_num);
-%                     if isfield(cohdat, 'Coh_ChpairByTrial')
-%                         Coh_ChpairByTrial = cohdat.Coh_ChpairByTrial;
-%                     else
-%                         % -- have to load
-%                         Coh_ChpairByTrial = load([savedir '/' PARAMS.savemarker '/Coh_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat']);
-%                         Coh_ChpairByTrial = Coh_ChpairByTrial.CohAllTrials;
-%                     end
-%                     tmp = size(Coh_ChpairByTrial{1});
-%                     cohmatall = nan(tmp(1), tmp(2), length(Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
-%                     for j=1:numchanpairs
-%                         intmpthis = indtmp_num(j);
-%                         cohmat = lt_neural_Coher_Cell2Mat(Coh_ChpairByTrial(intmpthis,:));
-%                         cohmatall(:,:,:,j) = cohmat;
-%                     end
-%                     
+                    %                     % ---- collect all coherence across all pairs
+                    %                     numchanpairs = length(indtmp_num);
+                    %                     if isfield(cohdat, 'Coh_ChpairByTrial')
+                    %                         Coh_ChpairByTrial = cohdat.Coh_ChpairByTrial;
+                    %                     else
+                    %                         % -- have to load
+                    %                         Coh_ChpairByTrial = load([savedir '/' PARAMS.savemarker '/Coh_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat']);
+                    %                         Coh_ChpairByTrial = Coh_ChpairByTrial.CohAllTrials;
+                    %                     end
+                    %                     tmp = size(Coh_ChpairByTrial{1});
+                    %                     cohmatall = nan(tmp(1), tmp(2), length(Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
+                    %                     for j=1:numchanpairs
+                    %                         intmpthis = indtmp_num(j);
+                    %                         cohmat = lt_neural_Coher_Cell2Mat(Coh_ChpairByTrial(intmpthis,:));
+                    %                         cohmatall(:,:,:,j) = cohmat;
+                    %                     end
+                    %
                     
                     %                     cohmat = lt_neural_Coher_Cell2Mat(cohdat.Coh_ChpairByTrial(indtmp,:));
                     bregionpair = cohdat.bregionpairs_sorted(indtmp);
@@ -94,14 +94,42 @@ for i=1:numbirds
                     tvals = [segextract.song_datenum];
                     ffvals = [segextract.FF_val];
                     
+                    
+                    
                     % ======================= WHAT WIL CALL BASELINE AND WN
                     % INDS?
                     indsbase = find(tvals>tstart & tvals<tswitch);
                     indsWN = find(tvals>tswitch & tvals<tend);
                     
                     % -------------- take second half of WN inds
-                    indsbase = indsbase(round(length(indsbase)/2):end);
+                    if baseuseallinds==0
+                        indsbase = indsbase(round(length(indsbase)/2):end);
+                    end
                     indsWN = indsWN(round(length(indsWN)/2):end);
+                    
+                    % ====================== GET HIT/MISS INDICATOR FOR
+                    % EACH TRIAL
+                    if isfield(segextract, 'hit_WN')
+                        hit = [segextract.hit_WN];
+                        
+                        % -- figuure out minimum hit time for each trial\
+                        hittimes_min = nan(size(hit));
+                        for jj=1:length(segextract)
+                            if ~isempty(segextract(jj).WNonset_sec)
+                                hittimes_min(jj) = min(segextract(jj).WNonset_sec);
+                            elseif hit(jj)==1
+                                % then is hit, but no onset, means there must
+                                % be an offset onlly
+                                assert(length(segextract(jj).WNoffset_sec)==1);
+                                hittimes_min(jj) = segextract(jj).WNoffset_sec - 0.06; % assume ~60ms window.
+                            end
+                        end
+                        assert(all(~isnan(hittimes_min(hit))), 'some trials hit but no onset?');
+                    else
+                        hit = nan;
+                        hittimes_min = nan;
+                    end
+                    
                     
                     
                     %% ==================== EXTRACT LFP
@@ -132,7 +160,7 @@ for i=1:numbirds
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpairstokeep = indtmp_num;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).filesuffix = ...
                         ['_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat'];
-%                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
+                    %                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals = tvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals = ffvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair = bregionpair;
@@ -141,6 +169,8 @@ for i=1:numbirds
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpair = chanpair;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch = indsbase;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch = indsWN;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhittimes_min = hittimes_min;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhit = hit;
                     setskept = [setskept k];
                     
                 end

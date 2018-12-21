@@ -86,6 +86,17 @@ FFparamsAll.bird(7).FFparams.cell_of_FFtimebins={'n', [0.044 0.054], 'h', [0.042
 FFparamsAll.bird(7).FFparams.cell_of_FFtimebins_DurLearn=FFparamsAll.bird(7).FFparams.cell_of_FFtimebins;
 
 
+% -------------------
+FFparamsAll.bird(8).birdname = 'wh72pk12';
+FFparamsAll.bird(8).FFparams.cell_of_freqwinds={'b', [3050 3950], 'h', [3050 3950], 'g', ...
+    [900 1600], 'a', [1400 1900], 'k', [3200 4400], 'l', [3600 5000], 'd', ...
+    [4000 5500]};
+FFparamsAll.bird(8).FFparams.cell_of_FFtimebins={'b', [0.028 0.033], 'h', [0.035 0.045], 'g', ...
+    [0.049 0.068], 'a', [0.053 0.079], 'k', [0.03 0.042], 'l', [0.024 0.028], 'd', ...
+    [0.023 0.028]};
+FFparamsAll.bird(8).FFparams.cell_of_FFtimebins_DurLearn=FFparamsAll.bird(8).FFparams.cell_of_FFtimebins;
+
+
 overWrite = 0; % note, will overwrite rgardless if detects chagnes (NOTE: always overwrites if detects changes)
 plotSpec =0; % to plot raw spec overlayed with PC and windows.
 plotOnSong = 1; % will only start plotting spec once hit this song num.

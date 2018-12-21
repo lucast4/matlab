@@ -1,4 +1,6 @@
 function cohmat = lt_neural_Coher_Cell2Mat(CohCell)
+% NOTE: tkaes min dimensions across all cells... (doens't matter if they
+% are all same size)
 
 assert(any(size(CohCell)==1), 'problem, can only have one channel ...');
 % each cell is time x ff. multiple cells, one for each trial
@@ -21,15 +23,19 @@ if isempty(CohCell)
     return
 end
 
+mint = min(cellfun(@(x)size(x,1), CohCell, 'UniformOutput', 1));
+minf = min(cellfun(@(x)size(x,2), CohCell, 'UniformOutput', 1));
 ntrials = length(CohCell);
-cohexampl = CohCell{1};
-cohmat = nan(size(cohexampl,1), size(cohexampl,2), ntrials);
+cohmat = nan(mint, minf, ntrials);
+
 for tt=1:ntrials
-    if all(size(cohmat(:,:,tt))==size(CohCell{tt}))
-        cohmat(:,:,tt) = CohCell{tt};
-    else
-        disp('skipped! wrong size');
-    end
+    cohmat(:,:,tt) = CohCell{tt}(1:mint, 1:minf);
+    
+%     if all(size(cohmat(:,:,tt))==size(CohCell{tt}))
+%         cohmat(:,:,tt) = CohCell{tt};
+%     else
+%         disp('skipped! wrong size');
+%     end
 end
 
 

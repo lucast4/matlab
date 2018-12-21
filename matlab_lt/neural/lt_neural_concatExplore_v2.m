@@ -1,4 +1,5 @@
-function lt_neural_concatExplore_v2(batchf, ChansToPlot, PlotRectDat, PlotFiltDat, PosAndNeg)
+function lt_neural_concatExplore_v2(batchf, ChansToPlot, PlotRectDat, PlotFiltDat, ...
+    PlotLFP, PosAndNeg)
 
 %% note: collects spikes individually for each song (i.e. within song threshold)
 
@@ -18,7 +19,7 @@ end
 %
 % ChansToPlot=neural chans (chip chan)
 
-    windowsize=0.03; % from -2sd to +2sd [for smoothed rectified]
+windowsize=0.03; % from -2sd to +2sd [for smoothed rectified]
 
 %% put names of all files in batch into a cell array
 
@@ -62,13 +63,13 @@ for i=1:length(filenames)
     end
     
     
-
+    
     % ================= ADDED - COLLECT SPIKES FOR THIS SONG
     % ------ what is num inds tha make up spike duration? (for extracting
-% spike)
+    % spike)
     SpkPreSamps=ceil((durPreSpike/1000)*frequency_parameters.amplifier_sample_rate);
     SpkPostSamps=ceil((durPostSpike/1000)*frequency_parameters.amplifier_sample_rate);
-
+    
     % -- filter
     datfilt=lt_neural_filter(dattmp, frequency_parameters);
     
@@ -79,11 +80,11 @@ for i=1:length(filenames)
     
     
     if PosAndNeg==0 % then gets negative
-     [SpikePks, SpikeInds]=findpeaks(Spk_PosOrNeg*datfilt,'minpeakheight',...
-        SpikeThreshold,'minpeakdistance',floor(0.00025*frequency_parameters.board_adc_sample_rate)); % 0.3ms min separation btw peaks.
+        [SpikePks, SpikeInds]=findpeaks(Spk_PosOrNeg*datfilt,'minpeakheight',...
+            SpikeThreshold,'minpeakdistance',floor(0.00025*frequency_parameters.board_adc_sample_rate)); % 0.3ms min separation btw peaks.
     else
-     [SpikePks, SpikeInds]=findpeaks(abs(datfilt),'minpeakheight',...
-        SpikeThreshold,'minpeakdistance',floor(0.00025*frequency_parameters.board_adc_sample_rate)); % 0.3ms min separation btw peaks.        
+        [SpikePks, SpikeInds]=findpeaks(abs(datfilt),'minpeakheight',...
+            SpikeThreshold,'minpeakdistance',floor(0.00025*frequency_parameters.board_adc_sample_rate)); % 0.3ms min separation btw peaks.
     end
     
     numsampstmp=length(datfilt);
@@ -92,9 +93,9 @@ for i=1:length(filenames)
     for j=1:length(SpikeInds)
         
         if SpikeInds(j)>SpkPreSamps & SpikeInds(j)+SpkPostSamps-1<=numsampstmp
-        spkdat=datfilt(SpikeInds(j)-SpkPreSamps:SpikeInds(j)+SpkPostSamps-1);
-        SpkWaveforms{i}(count, :) = spkdat; % {songnum}(spknum, waveform)
-        count=count+1;
+            spkdat=datfilt(SpikeInds(j)-SpkPreSamps:SpikeInds(j)+SpkPostSamps-1);
+            SpkWaveforms{i}(count, :) = spkdat; % {songnum}(spknum, waveform)
+            count=count+1;
         end
     end
 end
@@ -106,8 +107,8 @@ if length(fs_all)>1
 end
 
 for i=1:length(filenames)
-       disp(['Median noise for song num ' num2str(i) ' = ' num2str(MedianNoiseCollect(i))]);
- 
+    disp(['Median noise for song num ' num2str(i) ' = ' num2str(MedianNoiseCollect(i))]);
+    
 end
 
 disp(['== Sample rate = ' num2str(fs_all(1))]);
@@ -120,6 +121,8 @@ subplotcols=1;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots=[];
+
+fs = frequency_parameters.amplifier_sample_rate;
 
 % - song, raw
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -140,32 +143,42 @@ for i=1:length(ChansToPlot)
     
     % === 1) neural, filtered
     if PlotFiltDat==1
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots=[hsplots hsplot];
-    title(['chan ' num2str(chan)]);
-    
-    datfilt=lt_neural_filter(ampDat_all{i}, frequency_parameters);
-    plot(tt, datfilt, 'k');
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        hsplots=[hsplots hsplot];
+        title(['chan ' num2str(chan)]);
+        
+        if PlotLFP==1
+            N=4;
+%             flow = 2;
+            fpass = 400;
+            [filt_b,filt_a]=butter(N, [fpass*2/fs]);
+%             [filt_b,filt_a]=butter(N/2, [flow*2/fs fpass*2/fs]);
+            datfilt = filtfilt(filt_b, filt_a, ampDat_all{i}'); % do multiple channels at once
+            datfilt = datfilt';
+        else
+        datfilt=lt_neural_filter(ampDat_all{i}, frequency_parameters);
+        end
+        plot(tt, datfilt, 'k');
     end
     
     % === 2) neural, smoothed
     if PlotRectDat==1
-    % === rectify
-    datfilt=abs(datfilt);
-    
-    % == smoooth
-    % Construct a gaussian window
-    sigma=(windowsize/4)*fs_all(1); %
-    numsamps=4*sigma; % (get 2 std on each side)
-    alpha= numsamps/(2*sigma); % N/2sigma
-    gaussFilter = gausswin(numsamps, alpha);
-    gaussFilter = gaussFilter / sum(gaussFilter); % Normalize.
-    dat_smrect = conv(datfilt, gaussFilter);
-    
-    % == PLOT
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    plot(tt, dat_smrect(numsamps/2:end-numsamps/2), 'k');
-    hsplots=[hsplots hsplot];
+        % === rectify
+        datfilt=abs(datfilt);
+        
+        % == smoooth
+        % Construct a gaussian window
+        sigma=(windowsize/4)*fs_all(1); %
+        numsamps=4*sigma; % (get 2 std on each side)
+        alpha= numsamps/(2*sigma); % N/2sigma
+        gaussFilter = gausswin(numsamps, alpha);
+        gaussFilter = gaussFilter / sum(gaussFilter); % Normalize.
+        dat_smrect = conv(datfilt, gaussFilter);
+        
+        % == PLOT
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        plot(tt, dat_smrect(numsamps/2:end-numsamps/2), 'k');
+        hsplots=[hsplots hsplot];
     end
 end
 
@@ -177,7 +190,7 @@ linkaxes(hsplots, 'x');
 %% --- PLOT SPIKE WAVEFORMS
 
 
-% ==== V1, lines 
+% ==== V1, lines
 figcount=1;
 subplotrows=3;
 subplotcols=8;
@@ -195,9 +208,9 @@ for i=1:length(SpkWaveforms)
     % ==== overlay subset of spikes
     inds=randperm(size(SpkWaveforms{i},1), numrandspikes);
     
-    dattmp=SpkWaveforms{i}(inds, :);   
+    dattmp=SpkWaveforms{i}(inds, :);
     plot(dattmp', 'b-');
-%     plot(dattmp', 'Color', [0 0 0 0.5]);
+    %     plot(dattmp', 'Color', [0 0 0 0.5]);
     
     wave_mean=mean(dattmp);
     plot(1:length(wave_mean), wave_mean, 'k','LineWidth', 3);
@@ -227,9 +240,9 @@ for i=1:length(SpkWaveforms)
     % ==== overlay subset of spikes
     inds=randperm(size(SpkWaveforms{i},1), numrandspikes);
     
-    dattmp=SpkWaveforms{i}(inds, :);   
+    dattmp=SpkWaveforms{i}(inds, :);
     plot(dattmp', 'b:');
-%     plot(dattmp', 'Color', [0 0 0 0.5]);
+    %     plot(dattmp', 'Color', [0 0 0 0.5]);
     
     wave_mean=mean(dattmp);
     plot(1:length(wave_mean), wave_mean, 'k','LineWidth', 3);

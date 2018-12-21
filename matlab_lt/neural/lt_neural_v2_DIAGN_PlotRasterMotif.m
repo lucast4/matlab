@@ -1,6 +1,6 @@
 function lt_neural_v2_DIAGN_PlotRasterMotif(SummaryStruct, BirdToPlot, NeurToPlot, ...
     motiflist, plotbytime, motifpredur, motifpostdur, plotIndivRaster, ...
-    plotCombRast, plotSmFR, PlotDirSong)
+    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase)
 
 % plotIndivRaster; % one raster for each neuron/motif
 % plotCombRast; % one figure, all rasters
@@ -71,7 +71,7 @@ for i=1:numbirds
             clustnum = SummaryStruct.birds(i).neurons(ii).clustnum;
             [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
                 motiftoplot, motifpredur, motifpostdur, 1, '', FFparams, ...
-                0, 1, collectWNhit, 0, 0, preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, ...
+                0, 1, collectWNhit, 0, LearnKeepOnlyBase, preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, ...
                 clustnum, PlotDirSong);
             
             if isempty(SegmentsExtract)
@@ -106,11 +106,12 @@ for i=1:numbirds
                         %             spktimes = spktimes(spktimes > WindowToPlot2(1) & ...
                         %                 spktimes < WindowToPlot2(2));
                         rendtime = SegmentsExtract(tt).global_tokenind_DatAlignedToOnsetOfThis;
-                        for ttt =1:length(spktimes)
-                            
-                            line([spktimes(ttt) spktimes(ttt)], -[rendtime-10 rendtime+10], ...
-                                'Color', 'k', 'LineWidth', 3);
-                        end
+                        lt_neural_PLOT_rasterline(spktimes, rendtime, 'k');
+                        %                         for ttt =1:length(spktimes)
+                        %
+                        %                             line([spktimes(ttt) spktimes(ttt)], -[rendtime-10 rendtime+10], ...
+                        %                                 'Color', 'k', 'LineWidth', 3);
+                        %                         end
                     end
                     axis tight
                 else
@@ -119,9 +120,10 @@ for i=1:numbirds
                         
                         %             spktimes = spktimes(spktimes > WindowToPlot2(1) & ...
                         %                 spktimes < WindowToPlot2(2));
+                        lt_neural_PLOT_rasterline(spktimes, tt, 'k');
+                        
                         for ttt =1:length(spktimes)
-                            
-                            line([spktimes(ttt) spktimes(ttt)], -[tt-0.4 tt+0.4], ...
+                                line([spktimes(ttt) spktimes(ttt)], -[tt-0.4 tt+0.4], ...
                                 'Color', 'k', 'LineWidth', 1);
                         end
                     end

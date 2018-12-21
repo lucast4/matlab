@@ -38,7 +38,11 @@ function [SameTypeSyls, DiffTypeSyls, motif_regexpr_str, SingleSyls, SameSylVec]
 %
 %     end
 % end
-%
+
+%% ===============
+% only keep target syls which are part of the motif list
+TargSyls = TargSyls(ismember(TargSyls, motif_regexpr_str));
+
 %% do
 
 % get lower case for targ
