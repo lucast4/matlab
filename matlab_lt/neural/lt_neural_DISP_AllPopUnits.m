@@ -18,10 +18,12 @@ for i=1:numbirds
                 % -- for each neuron plot dots for times of songs
                 for neurnum = NeurInThisExpt
                     x = SummaryStruct.birds(i).neurons(neurnum).Filedatenum_unsorted;
+                    chan = SummaryStruct.birds(i).neurons(neurnum).channel;
+                    loc = SummaryStruct.birds(i).neurons(neurnum).NOTE_Location;
                     y = neurnum;
         
                     plot(x, y, 'ok');
-                    lt_plot_text(x(end), max(y), ['neur' num2str(y)]);
+                    lt_plot_text(x(end), max(y), ['neur' num2str(y) '-ch' num2str(chan) '-' loc]);
                 end
         
         % ================== figure out sets

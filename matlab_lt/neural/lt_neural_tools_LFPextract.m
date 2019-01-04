@@ -21,6 +21,21 @@ for j=1:length(Allbird_Fnames)
         continue
     end
     
+    % ================== SKIP IF THIS ALREADY DONE and ALL CHANNELS DONE
+    fnamesave = [fnamethis '.lfp'];
+    
+    if exist(fnamesave, 'file')
+        tmp = load(fnamesave, '-mat');
+        if all(ismember(channellist, tmp.lfpstruct.chanlist))
+            % then skip, since this previously down adn includes at least
+            % the channels I currenrly am asking for.
+            disp(['SKIPOPING (already done): ' fnamesave]);
+            continue
+        end
+    end
+    
+    
+    
     % =================== SAVE LFP FOR ALL RELEVANT CHANNELS
     [amplifier_data,~,frequency_parameters, ~, ...
         ~, amplifier_channels, ~, ~] =...
@@ -33,9 +48,8 @@ for j=1:length(Allbird_Fnames)
     
     tmp = [amplifier_channels(indschan).chip_channel];
     if size(tmp ,2)>1
-        tmp = tmp';;
+        tmp = tmp';
     end
-
     assert(all(tmp == channellist), 'must be, or else the output order is wrong..');
     
     

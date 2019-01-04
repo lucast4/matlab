@@ -63,8 +63,19 @@ for i=1:numbirds
                     if isempty(motifname)
                         keyboard
                     end
-                    indtmp = strcmp(cohdat.bregionpairs_sorted, pairtoget);
-                    indtmp_num = find(indtmp);
+%                     if size(cohdat.Chanpairs,1)>3
+%                         keyboard
+%                     end
+                    if iscell(pairtoget)
+                        % then can match any of the pairs
+                        functmp = @(x)strcmp(cohdat.bregionpairs_sorted, x);
+                        tmp = cellfun(functmp, pairtoget, 'UniformOutput', 0);
+                        indtmp = any(cell2mat(tmp)');
+                    else
+                        % then match the single pair
+                        indtmp = strcmp(cohdat.bregionpairs_sorted, pairtoget);
+                    end
+                        indtmp_num = find(indtmp);
                     if ~any(indtmp)
                         continue
                     end

@@ -3,7 +3,6 @@ function lt_neural_Coher_Plot(cohmat, tbins, ffbins, plottype, linestyle, clim, 
 %% lt 10/9/18 - various plots for coherence
 
 % cohmat can be multiple trials (dim 3 is trials).
-
 %%
 
 if ~exist('plotindivtraces', 'var')
@@ -25,8 +24,8 @@ end
 % plottype 1:
 if ~exist('clim', 'var')
     clim = [0.1 0.8]; % limits for coherence
-% elseif imsempty(clim)
-%     clim = [0.1 0.8];
+    % elseif imsempty(clim)
+    %     clim = [0.1 0.8];
 end
 
 % plottype 2:
@@ -34,21 +33,22 @@ if ~exist('ffbinsedges', 'var')
     ffbinsedges = [];
 end
 if isempty(ffbinsedges)
-ffbinsedges = [15 30 80 120]; % edges, to plot timecourse in frequency bands
-ffbinsedges = [20 30 80 120]; % edges, to plot timecourse in frequency bands
-% ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
+    ffbinsedges = [15 30 80 120]; % edges, to plot timecourse in frequency bands
+    ffbinsedges = [20 30 80 120]; % edges, to plot timecourse in frequency bands
+    % ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
 end
 %%
 if plottype==1
     cohmean = nanmean(cohmat,3);
     if isempty(clim)
-    imagesc(tbins, ffbins, cohmean');    
+        imagesc(tbins, ffbins, cohmean');
     else
-    imagesc(tbins, ffbins, cohmean', clim);
+        imagesc(tbins, ffbins, cohmean', clim);
     end
     axis tight;
     line([0 0], ylim, 'Color', 'k');
-    colormap('spring');
+%     colormap('spring');
+    lt_plot_colormap('centered')
 elseif plottype==2
     pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
     
@@ -79,21 +79,21 @@ elseif plottype==2
         if plotsig==1
             [h, p] = ttest(cohthis');
             try
-            plot(tbins(h==1), cohmean(h==1)+0.02, '*', 'Color', pcols{k});    
+                plot(tbins(h==1), cohmean(h==1)+0.02, '*', 'Color', pcols{k});
             catch err
-            plot(tbins(h==1), cohthis(h==1, 1)+0.02, '*', 'Color', pcols{k});
+                plot(tbins(h==1), cohthis(h==1, 1)+0.02, '*', 'Color', pcols{k});
             end
         end
         % --
         try
-        lt_plot_text(tbins(end), cohmean(end), [num2str(ffmin) '-' num2str(ffmax)], pcols{k}, 10);
+            lt_plot_text(tbins(end), cohmean(end), [num2str(ffmin) '-' num2str(ffmax)], pcols{k}, 10);
         catch err
             lt_plot_text(tbins(end), cohthis(end, 1), [num2str(ffmin) '-' num2str(ffmax)], pcols{k}, 10);
         end
     end
     axis tight;
     if ~isempty(clim)
-    ylim(clim);
+        ylim(clim);
     end
     line([0 0], ylim, 'Color', 'k');
     

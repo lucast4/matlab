@@ -230,11 +230,10 @@ ythis = Yall(indsthis,colsthis);
 xthis = colsthis;
 bnumthis = All_bnum(indsthis);
 
-[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});\
 for i=1:size(ymean,1)
-    lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
-end
-xlim([0 5]);
+lt_plot(xthis, ymean', {'Errors', ysem});
+
 
 
 %% ========= OUTPUT, FORMATED FOR SAVING

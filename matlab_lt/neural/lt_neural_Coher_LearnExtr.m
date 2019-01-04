@@ -52,7 +52,7 @@ for i=1:numbirds
                         continue
                     end
                     
-                    disp([num2str(i) '-' num2str(ii) '-' numstr(mm)]);
+                    disp([num2str(i) '-' num2str(ii) '-' num2str(mm)]);
                     %% =============== SAVE DATA FOR THIS MOTIF
                     cohdat = COHSTRUCT.bird(i).experiment(ii).setnum(k).motif(mm);
                     motifname = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(k).motif(mm).regexpstr;

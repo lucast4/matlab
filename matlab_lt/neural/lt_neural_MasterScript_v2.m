@@ -3,10 +3,10 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {'LMANoutside', 'RAoutside'}; % if want Sam/Mel data, must include "RAmel"
-% ExptToKeep = {'RAlearn1', 'RALMANlearn1', 'LMANsearch'};
-ExptToKeep = {'RALMANLearn4', 'RALMANLearn5'};
+BirdsToKeep = {'pu69wh78', 'wh44wh39', 'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
+% BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
+ExptToKeep = {};
 RecordingDepth = [];
 LearningOnly = 1;
 BatchesDesired = {};
@@ -20,6 +20,11 @@ extractpreDatenums = 1;
 if (0)
     [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database;
 end
+
+%% ========= [NEGATIVE CONTROLS] CHANNELS OUTSIDE OF SONG SYSTEM
+% RUN THIS AFTER EXTRACTING.
+
+SummaryStruct = lt_neural_CONTROL_Extract(SummaryStruct);
 
 %% ############################################### DISP (stuff)
 %% ############################################################
@@ -36,7 +41,7 @@ neurid = find(strcmp({SummaryStruct.birds(birdnum).neurons.dirname}, dirname))
 
 
 %% ========== plot all units info
-
+close all;
 lt_neural_DISP_AllUnits(SummaryStruct);
 
 lt_neural_DISP_AllPopUnits(SummaryStruct);

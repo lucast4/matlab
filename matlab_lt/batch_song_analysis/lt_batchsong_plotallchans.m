@@ -1,5 +1,5 @@
 function lt_batchsong_plotallchans(batchf, lasernote, annotate_note_group)
-%% lt 9/27/18 - modified from previuos code used specificalyl for opto experiemnts 
+%% lt 9/27/18 - modified from previuos code used specificalyl for opto experiemnts
 % plots song, other chans (e.g laser) and times of hits.
 
 % batchf, songfile or batch
@@ -62,6 +62,7 @@ else
                 if rd.trignote(i)==lasernote
                     if rd.catch(i) ==1
                         plot(rd.ttimes(i)/1000, 0, '^g');
+                        lt_plot_text(rd.ttimes(i)/1000 +0.05, 0, 'catch', 'g');
                     else
                         plot(rd.ttimes(i)/1000, 0, '^r');
                         lt_plot_text(rd.ttimes(i)/1000 +0.05, 0, 'hit', 'r');

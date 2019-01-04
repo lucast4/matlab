@@ -6,12 +6,12 @@ i=1;
 ii=1;
 assert(strcmp(SummaryStruct.birds(i).birdname, 'pu69wh78'));
 assert(strcmp(SummaryStruct.birds(i).exptnum_pop(ii).exptname, 'RALMANOvernightLearn1'));
-assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{4} == [18 20]));
-assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{5} == [18 19 20]));
+assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{4} == [17 19]));
+assert(all(SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons{5} == [17 18 19]));
 
 % --- get new
 newfiles = [SummaryStruct.birds(i).exptnum_pop(ii).Sets_songfiles{4:5}];
-newneurons = [18 20];
+newneurons = [17 19];
 
 % -- remove old
 SummaryStruct.birds(i).exptnum_pop(ii).Sets_neurons(4:5) = [];
@@ -188,105 +188,10 @@ MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStru
 % clear MOTIFSTATS_Compiled;
 
 
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ XCOV (SPIKING)
 
-%% #######################################################################
-%% ############################# OLD STUFF
-%% ================ PLOT [CORRELATION WITH FF]
-close all;
-xcov_dattotake = [-0.01 0.05];
-xcov_dattotake = [-0.08 0.04];
-xcov_dattotake = [-0.075 0.025];
-xcovwindmax = 0.04;
-binsize_spk = 0.0025;
-
-MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
-    xcov_dattotake, xcovwindmax, binsize_spk);
-
-
-%% #######################################################################
-%% ############################# LEARNING STUFF;
-%% ==== 2) EXTRACT LEARNING SWITCH STRUCT
-
-SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
-
-
-%% =========== SUMMARIZE LEARNING TRAJECTORY (PLUS NEURON SETS)
-close all;
-
-% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
-% motiftoplot = 'c(b)';
-% BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'};
-% motiftoplot = 'aa(b)';
-BirdExptPairsToPlot = {'wh72pk12', 'RALMANLearn3'};
-motiftoplot = 'jr(b)';
-
-lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
-    SummaryStruct, BirdExptPairsToPlot, motiftoplot);
-
-
-%% #######################################################################
-%% ############################# CROSS CORR CHANGE DURING LAERNING
-%% ================ PLOT CROSS CORR WRT TO LEARNING
-close all;
-BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
-% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
-SwitchToPlot = [2];
-BregionWantedList = {{'LMAN', 'RA'}};
-onlyPlotIfBothPrePostTrials = 0;
-lt_neural_POPLEARN_Plot(MOTIFSTATS_pop, SwitchStruct, BirdExptPairsToPlot, ...
-    SwitchToPlot, BregionWantedList, onlyPlotIfBothPrePostTrials);
-
-
-%% ================ SUMMARIZE CROSS CORRELATION OVER COURSE OF EXPERIMENT
-% over multiple switches
-close all;
-exptnum = [1];
-birdnum = [2];
-BregionWantedList = {{'LMAN', 'RA'}};
-[OUTSTRUCT, birdnum] = lt_neural_POPLEARN_Summary(MOTIFSTATS_pop, SwitchStruct, ...
-    birdnum, exptnum, BregionWantedList);
-
-
-%% ======= PLOT SUMMARY OF XCOV traces
-close all;
-lt_neural_POPLEARN_SummaryPlot1(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
-    birdnum, exptnum)
-
-%% ======= PLOT MEAN XCOV
-close all;
-windowmean = [-0.05 0.02]; % window, in ms, relative to lag = 0;
-lt_neural_POPLEARN_SummaryPlot2(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
-    birdnum, windowmean)
-
-
-
-%% ======== SUMMARIZE OVER ALL EXPERIMENTS
-windowmean = [-0.05 0.02]; % window, in s, relative to lag = 0;
-SkipIfTargsDiffSyls = 1; % skips switches where targets are different syl types.
-
-lt_neural_POPLEARN_SummaryPlot3(OUTSTRUCT, MOTIFSTATS_pop, SwitchStruct, ...
-    birdnum, windowmean, SkipIfTargsDiffSyls)
-
-
-
-
-%% [GOOD] ################ FOR EACH BIRD, SUMMARIZE ACROSS ALL EXPTS
-% DONE: removed dir inds
-% TO DO: 1) baseline, 2) use early or late period in epoch
-
-% INDICATE BY HAND WHICH NEURON SETS ARE APPROPRIATE
-lt_neural_POPLEARN_SumTraj_Input; % go in here and select which dataset
-
-% --- RUN
-close all;
-bregionwanted = {'LMAN', 'RA'};
-lt_neural_POPLEARN_SumTraj(MOTIFSTATS_pop, SwitchStruct, ...
-    metadatstruct, bregionwanted);
-
-%% ================ PLOT PAIRED RASTERS WRT TO LEARNING
-% [IN PROGRESS!!!]
-lt_neural_POPLEARN_PairRast
-
+lt_neural_POPLEARN_Xcov_Master;
 
 
 
@@ -551,12 +456,20 @@ load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_14Oct2018_2147.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/14Oct2018_2147/COHSTRUCT.mat');
 
-% 1) all data  [LATEST, 3 birds]
+% 1) all data  [LATEST, 3 birds, up to wh72, RALMANLearn3]
 clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_15Dec2018_1321.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_15Dec2018_1321.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_15Dec2018_1321.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/15Dec2018_1321/COHSTRUCT.mat');
+
+% 1) all data  [LATEST, 3 birds, up to wh72, RALMANLearn5]
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_03Jan2019_2009.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_03Jan2019_2009.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_03Jan2019_2009.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/03Jan2019_2009/COHSTRUCT.mat');
+
 
 % 2) all data (150ms window)
 clear all; close all;
@@ -611,13 +524,28 @@ load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_21Dec2018_0028.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/21Dec2018_0028/COHSTRUCT.mat');
 
 
+% 4) all fake data (3 birds, curated)
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_03Jan2019_0153.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_03Jan2019_0153.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_03Jan2019_0153.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/03Jan2019_0153/COHSTRUCT.mat');
+
 % ====== update params to match COHSTRUCT
-assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(1).motif));
-PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(1).motif(1).t_relons;
-PARAMS.ffbins = COHSTRUCT.bird(1).experiment(1).setnum(1).motif(1).ffbins;
+settmp = 1;
+if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
+    settmp=2;
+    assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif));
+end
+PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
+PARAMS.ffbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).ffbins;
 PARAMS.ffbinsedges = [10 25 32 80]; % edges, to plot timecourse in frequency bands
 
+%% #################### [SHORTCUT - PREPROCESING]
+% combines all things would do in this script into its own script. 
+% Just run this after loading new data.
 
+lt_neural_Coher_PreProcess;
 
 %% ################ NOTE DOWN BRAIN REGION PAIRS
 
@@ -656,9 +584,10 @@ SwitchCohStruct = lt_neural_Coher_LearnExtr(COHSTRUCT, MOTIFSTATS_pop, ...
     SwitchStruct, pairtoget, LFPSTRUCT, PARAMS);
 else
     % --- doesn't extract cohmat, just saves path to cohmat.
-    baseuseallinds =1 ;
+    baseuseallinds =0 ;
 pairtoget = 'LMAN-RA';
-% pairtoget = 'LMAN-RAoutside';
+% pairtoget = 'LMANoutside-RA';
+% pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
     SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);    
 end
@@ -684,7 +613,7 @@ fwind = [22 32];
 % twind = [-0.09 -0.02];
 % fwind = [15 40];
 twind = [-0.07 -0.03]; % all combined
-fwind = [25 35];
+fwind = [22 32];
 
 [SwitchCohStruct, PARAMS] = lt_neural_LFP_PitchCorr(COHSTRUCT, SwitchCohStruct,...
     PARAMS, twind, fwind);
@@ -1007,7 +936,7 @@ lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
 fieldtoplot = 'coher';
 % 'coher'
 % 'spec'
-birdstoplot = [];
+birdstoplot = [3];
 expttoplot = [];
 % swtoplot = [1 7 9 11];
 swtoplot = [];
@@ -1016,11 +945,14 @@ swtoplot = [];
 % fitlers]
 % swtoget = {}; % passes if matches ANY of these
 swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
-% swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
 firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
 % for a given switch did not have a previous switch on the same day
+% swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
+% firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
+% for a given switch did not have a previous switch on the same day
+firstswitchofday=1;
 indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday);
+    firstswitchfortarget_withinday, firstswitchofday);
 
 % NOTE: to get raw cohgram (before subtract) cd /blucurrently need to do
 % breakpoint using spec and evaluate cohgram version instead. Should
@@ -1041,8 +973,8 @@ fieldtoplot = 'coher';
 % breakpoint using spec and evaluate cohgram version instead. Should
 % modify to plot cohgram.
 timewindowtoplot = [-0.08 0]; % for spectra.
-birdstoplotTMP = [3];
-expttoplotTMP = [1];
+birdstoplotTMP = [];
+expttoplotTMP = [];
 swtoplotTMP = [];
 for i=1:max(OUTSTRUCT.bnum)
     if ~isempty(birdstoplotTMP)
@@ -1091,9 +1023,43 @@ end
 % ======= SUMMARIZE SCALAR RESULT, OVER ALL SWITCHES, MOTIFS, AND CHANNELS
 
 close all;
-lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARAMS);
+
+swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
+% swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
+firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
+% for a given switch did not have a previous switch on the same day
+firstswitchofday =1;
+indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
+    firstswitchfortarget_withinday, firstswitchofday);
+
+lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARAMS, ...
+    indtoget_b_e_s);
 
 
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% +++++++++++++++++++++ [COMBINIGN MULTIPLE MOTIFPLOT STRUCTURES];
+
+%% ==================== 1) [SAVE SUMMARY, FOR COMPARISON ACROSS EXTRACTED DATASETS]
+% === Saves once for each bird/expt/switch - 
+% === Therefore b/e/s must be matched across strtuctures that are comparing
+% === saves: 1) mean coherogram (pre and post) and 2) scalar (pre
+% and post), for each syllable (once for each channel pair). 3) is target?
+% 4) same type? 5) motif name
+
+% NOTE: overwrites any old data extracted using this dataset
+% NOTE: currently only coded to take mean across channels
+save_xchan_means = 1; % first collapses across channel pairs.
+
+lt_neural_Coher_SaveMotifDat(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARAMS, ...
+    save_xchan_means);
+
+%% #################### [PLOTS AND ANALYSES]
+close all;
+lt_neural_Coher_XDAT_Master;
+
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+%% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 %% ######################### [MOTIFPLOT] SAME, DIFF MOTIFS
 
 close all;
@@ -1102,8 +1068,9 @@ swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
 % swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
 firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
 % for a given switch did not have a previous switch on the same day
+firstswitch=1;
 indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday);
+    firstswitchfortarget_withinday, firstswitch);
 
 lt_neural_Coher_PlotSameMotif(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, ...
     PARAMS, indtoget_b_e_s);
@@ -1114,11 +1081,12 @@ close all;
 % ########## FOR A GIVEN SYL, PLOT ITS CHANGE IN COHERNECE DEPENDING ON WHETHER IT IS TARG, SAME OR DIFF ACROSS EXPERIMENTS
 averageOverChanPairs = 1; % default, since chan pairs are so similar.
 statmethod = 'diff';
-meanOverExpt = 0; % then for each motif gets one value for each status type (targ, same ..);
+meanOverExpt = 1; % then for each motif gets one value for each status type (targ, same ..);
 
 birdstoplot = [];
 expttoplot = [];
 swtoplot = [1 7 9 11];
+swtoplot = [];
 
 
 % === to get specific switch types. ... [is done in addition to above
@@ -1128,8 +1096,9 @@ swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
 % swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
 firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
 % for a given switch did not have a previous switch on the same day
+firstswitch=1;
 indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday);
+    firstswitchfortarget_withinday, firstswitch);
 
 lt_neural_Coher_SumPlotMotifs2(OUTSTRUCT, SwitchStruct, averageOverChanPairs, ...
     statmethod, indtoget_b_e_s, meanOverExpt, birdstoplot, expttoplot, swtoplot);

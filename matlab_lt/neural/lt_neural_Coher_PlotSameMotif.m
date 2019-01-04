@@ -1,6 +1,5 @@
 function lt_neural_Coher_PlotSameMotif(OUTSTRUCT, SwitchStruct,MOTIFSTATS_Compiled,...
     PARAMS, indtoget_b_e_s)
-
 %% lt 12/20/18 - plots cioherence scalar change during laerning, whether is same or diff motif.
 
 % i.e. for all motifs plot change in coh scalar.
@@ -48,6 +47,9 @@ indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget
 OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
 end
 
+%% NOTE
+% if multipel targets on different motifs, then will skip that case. if on same motif
+% then will take  the earliest one.
 %% ############
 
 [indsgrp_switch, indsgrp_switch_unique] = lt_tools_grp2idx({OUTSTRUCT.bnum, OUTSTRUCT.enum, OUTSTRUCT.switch});
@@ -143,7 +145,14 @@ for i=1:length(indsgrp_switch_unique)
     % (asserts that they are on same motif)
     if length(unique(lt_tools_grp2idx({targmotif targposition})))>1
         % then multpe targets, check that they are on same motif
-        assert(length(unique(targmotif))==1, 'problem, targets are on diff motifs...');
+%         assert(length(unique(targmotif))==1, 'problem, targets are on diff motifs...');
+        
+        if length(unique(targmotif))==1
+            % then good, there is only one motif, take earliset
+        elseif length(unique(targmotif))>1
+            % bad, multipel motifs - skip this case
+            continue
+        end
     end
     
     % --- earliest target
@@ -164,6 +173,82 @@ for i=1:length(indsgrp_switch_unique)
     All_bnum = [All_bnum; bnum*ones(size(cohscal))];
     All_swunique = [All_swunique; i*ones(size(cohscal))];
 end
+
+
+%% =============== [PLOT] -- TARG, ADJACENT, NOT ADJACENT
+lt_figure; hold on;
+
+
+% ================ ALL
+lt_subplot(2,2,1); hold on;
+title('all syl');
+xlabel('TARG -- ADJACENT (preceding) -- REST');
+ylabel('coh change');
+
+pcolall = lt_make_plot_colors(length(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i;
+    
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+   
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    
+    X = 1:3;
+    Y = nan(1,3);
+    
+    % -- targ
+    Y(1) = mean(cohscal(pos==0));
+    % -- adjacnet (-preceding)
+    Y(2) = mean(cohscal(pos==-1));
+    % -- rest
+    Y(3) = mean(cohscal(pos<-1));
+    
+    assert(all(pos<1), 'assumed that all are precedeing...');
+    
+    plot(X+0.4*rand-0.2, Y, '-o', 'Color', pcol);
+   
+    Yall =[Yall; Y];
+end
+
+
+lt_plot([1:3]+0.3, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'k'});
+xlim([0 4]);
+lt_plot_zeroline;
+
+
+% =========== REPLOT, BUT USING DIFFERENCE (i.e paired structure included)
+lt_subplot(2,2,2); hold on;
+title('all syl');
+xlabel('TARG -- ADJACENT (preceding) -- REST');
+ylabel('coh change (minus "REST")');
+
+Yall = Yall - repmat(Yall(:,3),1,3);
+plot(1:3, Yall', '-k');
+xlim([0 4]);
+lt_plot([1:3]+0.2, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'r'});
+lt_plot_zeroline;
 
 
 %% ================ [PLOT]

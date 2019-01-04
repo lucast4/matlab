@@ -9,7 +9,7 @@ function lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, ...
 % switches
 % chanpairs
 if (0)
-assert(all(strcmp(OUTSTRUCT.bregionpair, 'LMAN-RA')), 'assumes chan1 is LAMN, chang 2 is RA...');
+    assert(all(strcmp(OUTSTRUCT.bregionpair, 'LMAN-RA')), 'assumes chan1 is LAMN, chang 2 is RA...');
 end
 
 tbins = PARAMS.tbins;
@@ -44,8 +44,8 @@ end
 
 % == filter by specific types of switches.
 if ~isempty(indtoget_b_e_s)
-indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget_b_e_s, 'rows');
-OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+    indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget_b_e_s, 'rows');
+    OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
 end
 %% ======= field type to plot
 DATSTRUCT = struct;
@@ -53,61 +53,61 @@ DATSTRUCT = struct;
 if strcmp(fieldtoplot, 'coher')
     %% for coherence [diff]
     
-  
-        if strcmp(sumplottype, 'switches')
-      % ============
-    %     fieldtoget = 'CohMean_WNminusBase';
-    %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
-    %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
     
-    fieldtoget = 'CohMean_WN';
-    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat2] = ...
-        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
-    
-    fieldtoget = 'CohMean_Base';
-    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat1] = ...
-        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
-    
-    % ---- subtract WN from base
-    cohdiff = nan(size(allDat1));
-    for i=1:size(cohdiff,3)
-        for ii=1:size(cohdiff,4)
-            
-            cohdiff(:,:,i,ii) = allDat2(:,:,i, ii) - allDat1(:,:,i, ii);
-        end
-    end
-    
-    % save dat
-    DATSTRUCT.cohdiff = cohdiff;
-      
-    elseif strcmp(sumplottype, 'chanpairs')
-      % ============
-    %     fieldtoget = 'CohMean_WNminusBase';
-    %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
-    %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
-    
-    fieldtoget = 'CohMean_WN';
-    [allbnum, allenum, allswnum, allDat2] = ...
-        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
-    
-    fieldtoget = 'CohMean_Base';
-    [allbnum, allenum, allswnum, allDat1] = ...
-        lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
-    
-    % ---- subtract WN from base
-    cohdiff = nan(size(allDat1));
-    for i=1:size(cohdiff,3)
-        for ii=1:size(cohdiff,4)
-            
-            cohdiff(:,:,i,ii) = allDat2(:,:,i, ii) - allDat1(:,:,i, ii);
-        end
-    end
-    
-    % save dat
-    DATSTRUCT.cohdiff = cohdiff;
-
+    if strcmp(sumplottype, 'switches')
+        % ============
+        %     fieldtoget = 'CohMean_WNminusBase';
+        %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
+        %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        fieldtoget = 'CohMean_WN';
+        [~, ~, ~, ~, allbnum, allenum, allswnum, allDat2] = ...
+            lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        fieldtoget = 'CohMean_Base';
+        [~, ~, ~, ~, allbnum, allenum, allswnum, allDat1] = ...
+            lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        % ---- subtract WN from base
+        cohdiff = nan(size(allDat1));
+        for i=1:size(cohdiff,3)
+            for ii=1:size(cohdiff,4)
+                
+                cohdiff(:,:,i,ii) = allDat2(:,:,i, ii) - allDat1(:,:,i, ii);
+            end
         end
         
+        % save dat
+        DATSTRUCT.cohdiff = cohdiff;
+        
+    elseif strcmp(sumplottype, 'chanpairs')
+        % ============
+        %     fieldtoget = 'CohMean_WNminusBase';
+        %     [~, ~, ~, ~, allbnum1, allenum, allswnum, allDat] = ...
+        %         lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        fieldtoget = 'CohMean_WN';
+        [allbnum, allenum, allswnum, allDat2] = ...
+            lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        fieldtoget = 'CohMean_Base';
+        [allbnum, allenum, allswnum, allDat1] = ...
+            lt_neural_LFP_GrpStats(OUTSTRUCT, fieldtoget);
+        
+        % ---- subtract WN from base
+        cohdiff = nan(size(allDat1));
+        for i=1:size(cohdiff,3)
+            for ii=1:size(cohdiff,4)
+                
+                cohdiff(:,:,i,ii) = allDat2(:,:,i, ii) - allDat1(:,:,i, ii);
+            end
+        end
+        
+        % save dat
+        DATSTRUCT.cohdiff = cohdiff;
+        
+    end
+    
     
     
 elseif strcmp(fieldtoplot, 'spec')

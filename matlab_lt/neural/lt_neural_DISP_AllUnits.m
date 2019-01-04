@@ -1,10 +1,10 @@
 function lt_neural_DISP_AllUnits(SummaryStruct)
 
-numbirds = length(SummaryStruct);
+numbirds = length(SummaryStruct.birds);
 
 figcount=1;
 subplotrows=4;
-subplotcols=2;
+subplotcols=1;
 fignums_alreadyused=[];
 hfigs=[];
 
@@ -22,8 +22,9 @@ for i=1:numbirds
         for iii=neurlist
             
             loc = SummaryStruct.birds(i).neurons(iii).NOTE_Location;
+            chan = SummaryStruct.birds(i).neurons(iii).channel;
             plot(ii, iii, 'or');
-            lt_plot_text(ii, iii, [num2str(iii) '-' loc], 'k');
+            lt_plot_text(ii, iii, [num2str(iii) '-' loc '(ch' num2str(chan) ')'], 'k');
         end
         
     end
