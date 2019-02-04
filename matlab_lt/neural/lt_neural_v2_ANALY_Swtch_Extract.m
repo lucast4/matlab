@@ -209,51 +209,61 @@ for i=1:Numbirds
                 end
             end
             
-            
-            % ================== FIGURE OUT WHICH NEURONS ARE REDUNDANT
-            channels = [SummaryStruct.birds(1).neurons(goodneurons).channel];
-            clusters = [SummaryStruct.birds(1).neurons(goodneurons).clustnum];
-            
-            numsongs = [];
-            neurID = {};
-            for j=1:length(goodneurons)
-                neurind = goodneurons(j);
+            % ==== first, keep no neurons if no data exists (e.g. no
+            % labeling done)
+            if ~isfield(SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron, 'DATA')
+                goodneurons = [];
+                goodneurons_all = [];
                 
-                tmp = sum(SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(neurind).DATA.motif(targind).baseInds) ...
-                    + sum(SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(neurind).DATA.motif(targind).trainInds);
+            else
                 
-                numsongs = [numsongs tmp]; % collect number songs
+                % ================== FIGURE OUT WHICH NEURONS ARE REDUNDANT
+                channels = [SummaryStruct.birds(1).neurons(goodneurons).channel];
+                clusters = [SummaryStruct.birds(1).neurons(goodneurons).clustnum];
                 
-                % --- get ID
-                neurID = [neurID [num2str(channels(j)) '-' num2str(clusters(j))]];
-            end
-            
-            % --- if redundant, keep the one with most songs
-            uniqueneurons = unique(neurID);
-            neuronstoremove = [];
-            for j=1:length(uniqueneurons)
-                indstmp = find(strcmp(uniqueneurons{j}, neurID));
-                if length(indstmp)>1
-                    % then multiple version of this dataset. keep the one
-                    % with most data
+                numsongs = [];
+                neurID = {};
+                for j=1:length(goodneurons)
+                    neurind = goodneurons(j);
                     
-                    [~, maxind] = max(numsongs(indstmp));
-                    neuronstoremove = [neuronstoremove indstmp([1:maxind-1 maxind+1:end])];
+                    tmp = sum(SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(neurind).DATA.motif(targind).baseInds) ...
+                        + sum(SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(neurind).DATA.motif(targind).trainInds);
+                    
+                    numsongs = [numsongs tmp]; % collect number songs
+                    
+                    % --- get ID
+                    neurID = [neurID [num2str(channels(j)) '-' num2str(clusters(j))]];
                 end
-            end
-            
-            if ~isempty(neuronstoremove)
-                disp('-----');
-                disp(['original chans: ' num2str(channels)]);
-                disp(['original clusts: ' num2str(clusters)]);
                 
-                disp(['removed chans: ' num2str([SummaryStruct.birds(1).neurons(goodneurons(neuronstoremove)).channel])]);
-                disp(['removed clusts: ' num2str([SummaryStruct.birds(1).neurons(goodneurons(neuronstoremove)).clustnum])]);
+                % --- if redundant, keep the one with most songs
+                uniqueneurons = unique(neurID);
+                neuronstoremove = [];
+                for j=1:length(uniqueneurons)
+                    indstmp = find(strcmp(uniqueneurons{j}, neurID));
+                    if length(indstmp)>1
+                        % then multiple version of this dataset. keep the one
+                        % with most data
+                        
+                        [~, maxind] = max(numsongs(indstmp));
+                        neuronstoremove = [neuronstoremove indstmp([1:maxind-1 maxind+1:end])];
+                    end
+                end
+                
+                if ~isempty(neuronstoremove)
+                    disp('-----');
+                    disp(['original chans: ' num2str(channels)]);
+                    disp(['original clusts: ' num2str(clusters)]);
+                    
+                    disp(['removed chans: ' num2str([SummaryStruct.birds(1).neurons(goodneurons(neuronstoremove)).channel])]);
+                    disp(['removed clusts: ' num2str([SummaryStruct.birds(1).neurons(goodneurons(neuronstoremove)).clustnum])]);
+                end
+                
+                goodneurons_all = goodneurons;
+                goodneurons(neuronstoremove) = [];
+                
             end
             
-            goodneurons_all = goodneurons;
-            goodneurons(neuronstoremove) = [];
-            
+            % =============== SAVE
             SwitchStruct.bird(i).exptnum(ii).switchlist(iii).goodneurons = goodneurons;
             SwitchStruct.bird(i).exptnum(ii).switchlist(iii).goodneurons_redundant = goodneurons_all;
             

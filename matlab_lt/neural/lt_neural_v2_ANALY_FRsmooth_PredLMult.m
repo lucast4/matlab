@@ -77,10 +77,13 @@ for j=1:length(PREDSTRUCT)
     lt_plot_zeroline;
     
     indstmp = ~any(isnan(Yall)');
+    try
     p = signrank(Yall(indstmp, 1), Yall(indstmp,2));
     lt_plot_pvalue(p, 'signrank (only those paired)');
     p = ranksum(Yall(:,1), Yall(:,2));
     lt_plot_text(0, 0, ['ranksum:' num2str(p)], 'b');
+    catch err
+    end
     ylim([-1 1]);
     
     % ======= collect measure of effect size (first just take diff of

@@ -427,6 +427,138 @@ end
 
 
 
+%% PRE, POST, ETC
+
+lt_figure; hold on;
+
+% ========== [ALL]
+lt_subplot(2,3,1); hold on;
+xlabel('targ - PRE(1) - PRE(REST) - DIFF MOTIF');
+ylabel('AFP bias');
+title('line = expt [SAME]');
+Yall = [];
+Yall_syls = {};
+for i=unique(Expt_count_all)
+    
+   Y = nan(1,4);
+   Ycell = cell(1,4);
+   
+   % == targ
+   indsthis = Expt_count_all==i & TargStatus_all==1;
+      
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(1) = y;
+   Ycell{1} = y;
+   
+   % === PRE(1)
+   indsthis = Expt_count_all==i & TargStatus_all==0 & Y_PosRelTarg_All==-1;
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(2) = mean(y);
+   Ycell{2} = y;
+   
+   % === PRE(REST)
+   indsthis = Expt_count_all==i & TargStatus_all==0 & (Y_PosRelTarg_All<-1 & ~isnan(Y_PosRelTarg_All));
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(3) = mean(y);
+   Ycell{3} = y;
+   
+   % === DIFF MOTIF
+   indsthis = Expt_count_all==i & TargStatus_all==0 & isnan(Y_PosRelTarg_All);
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(4) = mean(y);
+   Ycell{4} = y;
+
+%    
+%    % === others
+%    indsthis = Expt_count_all==i & TargStatus_all==0;
+%       
+%    x = Y_PosRelTarg_All(indsthis);
+%    y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);
+%       
+%    Y(2) = mean(y(~isnan(x))); % same motif.
+%    Y(3) = mean(y(isnan(x))); % diff mtoif
+   
+   plot(1:4, Y, '-ok');
+   Yall = [Yall; Y];
+   Yall_syls = [Yall_syls; Ycell];
+end
+lt_plot([1:4]+0.2, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'r'});
+xlim([0 5]);
+lt_plot_zeroline;
+% [h, p] = ttest(Yall(:,2), Yall(:,3));
+% lt_plot_pvalue(p, 'same vs diff motif', 1);
+
+
+lt_subplot(3,2,2); hold on
+title('dat = syl; only expt with all cases (ignore diff)');
+tmp = ~cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1);
+% tmp = ~cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1) | cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1)
+Ytmp = Yall_syls(all(tmp'), :);
+
+for i=1:size(Ytmp,2)
+    y = [Ytmp{:,i}];
+    plot(i, y, 'ok');
+end
+
+
+%% PRE, POST, REST
+
+lt_figure; hold on;
+
+% ========== [ALL]
+lt_subplot(2,3,1); hold on;
+xlabel('targ - PRE(1) - REST');
+ylabel('AFP bias');
+title('line = expt [SAME]');
+Yall = [];
+Yall_syls = {};
+for i=unique(Expt_count_all)
+    
+   Y = nan(1,4);
+   Ycell = cell(1,4);
+   
+   % == targ
+   indsthis = Expt_count_all==i & TargStatus_all==1;
+      
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(1) = y;
+   Ycell{1} = y;
+   
+   % === PRE(1)
+   indsthis = Expt_count_all==i & TargStatus_all==0 & Y_PosRelTarg_All==-1;
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(2) = mean(y);
+   Ycell{2} = y;
+   
+   % === PRE(REST)
+   indsthis = Expt_count_all==i & TargStatus_all==0 & ~(Y_PosRelTarg_All==-1);
+   y = AFPbias_all(indsthis).*TargLearnDirAll(indsthis);   
+   Y(3) = mean(y);
+   Ycell{3} = y;
+
+   plot(1:length(Y), Y, '-ok');
+   Yall = [Yall; Y];
+   Yall_syls = [Yall_syls; Ycell];
+end
+lt_plot([1:length(Y)]+0.2, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'r'});
+xlim([0 5]);
+lt_plot_zeroline;
+% [h, p] = ttest(Yall(:,2), Yall(:,3));
+% lt_plot_pvalue(p, 'same vs diff motif', 1);
+% 
+% 
+% lt_subplot(3,2,2); hold on
+% title('dat = syl; only expt with all cases (ignore diff)');
+% tmp = ~cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1);
+% % tmp = ~cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1) | cellfun(@isempty, Yall_syls(:,1:3), 'UniformOutput', 1)
+% Ytmp = Yall_syls(all(tmp'), :);
+% 
+% for i=1:size(Ytmp,2)
+%     y = [Ytmp{:,i}];
+%     plot(i, y, 'ok');
+% end
+
+
 
 %% same, diff, motif
 

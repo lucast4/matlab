@@ -1,8 +1,14 @@
-function OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct)
+function OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct, plotRaw, ...
+    birdstoplot)
 %% lt 1/22/18 - extracts data from structure to arrays/cells to prepare for analysis/plotting
 
-plotRaw =1;
-
+% plotRaw =1;
+if ~exist('plotRaw', 'var')
+    plotRaw = 1;
+end
+if ~exist('birdstoplot', 'var')
+    birdstoplot = [];
+end
 %%
 NumBirds = length(MOTIFSTATS_pop.birds);
 
@@ -28,16 +34,24 @@ OUTSTRUCT.Pairs.xlags = [];
 
 %% =========== RUN
 for i=1:NumBirds
+% for i=1
     
     numexpts = length(MOTIFSTATS_pop.birds(i).exptnum);
-%     params = MOTIFSTATS_pop.birds(i).params;
-            
-% ======= confirm that motiflist is identical across exeriments
-        
-MotifListAll = {};        
-
+    %     params = MOTIFSTATS_pop.birds(i).params;
+    
+    % ======= confirm that motiflist is identical across exeriments
+    
+    MotifListAll = {};
+    if ~isempty(birdstoplot)
+       if ~ismember(i, birdstoplot)
+           continue
+       end
+    end
     for ii=1:numexpts
-        
+%     for ii=1
+        if isempty(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT)
+            continue
+        end
         numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum);
         for iii=1:numsets
             disp(['bird' num2str(i) '-expt' num2str(ii) '-set' num2str(iii)])
@@ -46,14 +60,14 @@ MotifListAll = {};
             nummotifs = length(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif);
             %             DAT = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii);
             nneur = length(neurons_thisset);
-            
+            disp(MotifListAll);
             MotifListAll = [MotifListAll; {MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif.regexpstr}];
             % =========== WHAT BRAIN REGIONS ARE THESE?
-%             BrainregionsList = {SummaryStruct.birds(i).neurons(neurons_thisset).NOTE_Location};
+            %             BrainregionsList = {SummaryStruct.birds(i).neurons(neurons_thisset).NOTE_Location};
             
             
             
-           % ######################### LMAN/RA PAIRS [MODIFY TO BE GENERAL]
+            % ######################### LMAN/RA PAIRS [MODIFY TO BE GENERAL]
             %             indsLMAN = strcmp(BrainregionsList, 'LMAN');
             %             indsRA = strcmp(BrainregionsList, 'RA');
             %             indsX = strcmp(BrainregionsList, 'X');
@@ -66,7 +80,7 @@ MotifListAll = {};
             %
             for mm = 1:nummotifs
                 
-%                 segextract_for_trialdur = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
+                %                 segextract_for_trialdur = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
                 motifstr = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm).regexpstr;
                 motifpredur = MOTIFSTATS_pop.birds(i).params.motif_predur;
                 
@@ -76,7 +90,7 @@ MotifListAll = {};
                 %                 subplotcols=3;
                 %                 fignums_alreadyused=[];
                 %                 hfigs=[];
-                           
+                
                 if ~isfield(MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(iii).motif(mm), 'XCov_neurpair')
                     continue
                 end
@@ -98,7 +112,7 @@ MotifListAll = {};
                         if isempty(ff)
                             ffcv = nan;
                         else
-                        ffcv = std(ff)./mean(ff);
+                            ffcv = std(ff)./mean(ff);
                         end
                         
                         % --- brain regions
@@ -116,7 +130,7 @@ MotifListAll = {};
                         ccAuto1shift = DAT.ccAuto1Shift;
                         ccAuto1_minus = mean(ccAuto1,1) - mean(ccAuto1shift,1);
                         ccAuto1_mean = mean(ccAuto1,1);
-                                                
+                        
                         ccAuto2 = DAT.ccAuto2;
                         ccAuto2shift = DAT.ccAuto2Shift;
                         ccAuto2_minus = mean(ccAuto2,1) - mean(ccAuto2shift,1);
@@ -158,13 +172,13 @@ MotifListAll = {};
                         
                         OUTSTRUCT.Pairs.ccAuto1_mean= [OUTSTRUCT.Pairs.ccAuto1_mean; ccAuto1_mean];
                         OUTSTRUCT.Pairs.ccAuto2_mean= [OUTSTRUCT.Pairs.ccAuto2_mean; ccAuto2_mean];
-
+                        
                         %% == plot raw?
                         if plotRaw ==1
                             
                             
                         end
-                            
+                        
                     end
                 end
             end

@@ -3,23 +3,38 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'pu69wh78', 'wh44wh39', 'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
+BirdsToKeep = {'gr48bu5'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+% BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+% BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
+BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
-ExptToKeep = {};
+ExptToKeep = {'RALMANLearn5'};
 RecordingDepth = [];
-LearningOnly = 1;
+LearningOnly = 0;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
+onlySpikes = 1; % [default]if 1, then ignores if is LFP only.; if 0, then gets anything.
+% if 2, then is for LFP analysis - i.e. for wh72 gets only if not SU or MU
 [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database(BirdsToKeep, ...
     BrainArea, ExptToKeep, RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
-    extractpreDatenums);
+    extractpreDatenums, onlySpikes);
 
 % --- load all neurons
 if (0)
     [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database;
 end
+
+%% ==== LIST OF PREPROCESSING STEPS TO DO WHEN ADD NEW NEURONS
+% 1) remove song dat
+% 2) extract FF (compare to birds own analysis)
+% 3) PostInfo (motifs)
+% 4) learning information
+% 5) get LFP
+% 6) get WN
+% 7) plot example motif to see if stable.
+% 8) syllables to skip if noisy, WN overlap etc
+
 
 %% ========= [NEGATIVE CONTROLS] CHANNELS OUTSIDE OF SONG SYSTEM
 % RUN THIS AFTER EXTRACTING.
@@ -338,17 +353,17 @@ FRmat = FRmat(t1:t2, trials);
 
 %% ================================== PLOT RASTER AND SMOOTHED FR FOR ANY MOTIF
 close all
-BirdToPlot = 'wh72pk12';
+BirdToPlot = 'gr48bu5';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [7]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
-% motiflist = {'a(b)', 'jbh(h)g'};
-motiflist = {'rb(h)', 'lb(h)', 'ob(h)'};
+NeurToPlot = []; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+motiflist = {'(a)b'};
+% motiflist = {'a(r)dabh', 'r(r)dabh'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
 motifpredur = 0.1;
-motifpostdur = 0.1;
+motifpostdur = 0.15;
 
 plotIndivRaster = 0; % one raster for each neuron/motif
 plotCombRast = 1; % one figure, all rasters

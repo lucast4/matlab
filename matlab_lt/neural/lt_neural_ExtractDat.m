@@ -142,7 +142,7 @@ if exist('extractFF.mat', 'file');
     %         assert(all((FFparams.Params.AllOnsets - AllOnsets)<0.002), 'PROBLEM');
     tmp =0;
     if length(FFparams.Params.allLabels) == length(AllLabels)
-        if all(FFparams.Params.allLabels == AllLabels);
+        if all(FFparams.Params.allLabels == AllLabels)
             SongDat.FFvals = FFvals.FFvals;
             tmp = 1;
         end

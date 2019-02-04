@@ -1,5 +1,5 @@
 function MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
-    xcov_dattotake, xcovwindmax, binsize_spk, xcov_dattotake_anchorpoints)
+    xcov_dattotake, xcovwindmax, binsize_spk, xcov_dattotake_anchorpoints, birdstoskip)
 %%
 % xcov_dattotake_anchorpoints = 2; % what anchor points to take to get onset and offset of windows?
 % 1: onset and offset relative to onset of token syl
@@ -9,6 +9,12 @@ function MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruc
 
 if ~exist('xcov_dattotake_anchorpoints', 'var')
     xcov_dattotake_anchorpoints =1; % default, good for single syls.
+elseif isempty(xcov_dattotake_anchorpoints)
+    xcov_dattotake_anchorpoints = 1;
+end
+
+if ~exist('birdstoskip', 'var')
+    birdstoskip = [];
 end
 %% lt 2/24/18 - modified so separate analysis for DIR and undir
 
@@ -54,7 +60,9 @@ NumBirds = length(MOTIFSTATS_pop.birds);
 for i=1:NumBirds
     
     numexpts = length(MOTIFSTATS_pop.birds(i).exptnum);
-    
+    if ismember(i, birdstoskip)
+        continue
+    end
     for ii=1:numexpts
         exptname = MOTIFSTATS_pop.birds(i).exptnum(ii).exptname;
         numsets = length(MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons);

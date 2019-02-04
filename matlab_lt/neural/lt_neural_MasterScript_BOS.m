@@ -1,4 +1,4 @@
-%% ========== DATABASE OF BOS EXPERIMENTS
+ %% ========== DATABASE OF BOS EXPERIMENTS
 % --- ONE expt for each BOS presentation (at a specific depth)
 clear all; close all;
 ind = 0;
@@ -111,8 +111,6 @@ lt_neural_BOS_Extraction(SummaryBOS, expttoget)
 
 % ============= NOTE: following this, cheeck using wave_clus.
 
-%% ##############################################################
-%% ##############################################################
 %% ============ 4) PLOT EACH SONG FILE OVERLAID WITH EXTRACTED SPIKES
 i = 1;
 fs = 30000;
@@ -176,7 +174,7 @@ end
 
 
 
-
+%% ##############################################################
 %% ############################ [ANALYSES]
 %% ========= PLOT OVERVIEW OF DATA
 i = 1;
@@ -186,1903 +184,360 @@ disp('LIST OF ALL BOS SONGS');
 
 
 %% ======================= [EXTRACTION]
-% EXTRACT:
-% 1) onsets/offsets
-% 2) spike times
+% ======== FIRST RUN THIS TO EXTRACT ALL PREVIOUSLY PROCESSED DATA.
+
+lt_neural_BOS_Extraction_Script;
+
+%% ##################### [PLOT] SUMMARY FOR RESPONSE [BOSTYPES] - song level
+% EACH UNIT PLOT MEAN RESPONSE TO EACH BOS TYPE
 close all;
+i=1;
+birdthis = SummaryBOS.expt(i).birdname;
 
-throwOutClippedSyls = 1; % do not collect rise/fall times for any syls that are clipped (edge of data)
-ignoreIfFileEndsDuringSong=1; % if 1, then will make sure that for song extractio, will ignore any song that ends
-% during file (assumes will be duplicated in next file...). Will not
-% extract a song that ends a file UNLESS it ends at least 200ms (maxgapdur)
-% befoer the end of the file.
-ignoreIfFileStartsBeforeTimeZero=1; % if 1, then useful if a file starts and includes
-% a song in pre-zero buffer. this occurs if the last file ends before
-% finishing the song, and the beginning of a song is carried over to buffer
-% on next file (e.g. becuase 1min time max for song file is done).
+lt_neural_BOS_SummaryPlot;
 
-disp('NOTE: extractions assume that you have some buffer time (reasonably a few seconds)')
-disp('NOTE: will extract song bouts that are entirely within a file, with at least maxgapdur time from edges of file');
 
-% ======= PARAMS
-% --- channel for dig pulses and audio
-chantype = 'ana'; % dig or ana
-pulsechan = 1; % 0, 1, ... % for pulse\
-%     threshold = 1; % voltage, or rise and fall detection.
-% --- channel for song.
-audchan = 0;
+%% ###################### [MOTIF-LEVEL PLOTS]
 
-plotON = 0; % then plots each file, raw audio, syl onsets, etc.
+lt_neural_BOS_MotifScript;
 
-% ---- for figure out motifs/bouts.
-gapdurall = [];
-maxgapdur = 0.2;
-minedgetime = 2; % seconds of silence at edges - otherwise aborts.
 
-% ===== RUN
+
+%% ########################## [COHERENCE]
 for i=1:length(SummaryBOS.expt)
     
-    % ==========================
-    batchfile = [SummaryBOS.expt(i).dirname '/' SummaryBOS.expt(i).batchname];
+    % ============================== PARAMS
+    lt_switch_chronux(1);
+    movingwin = [0.1 0.01];
+    params = struct;
+    params.fpass = [1/movingwin(1) 200];
+    w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+    % w = 20; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+    tw = movingwin(1)*w;
+    params.tapers = [tw 2*tw-1];
+    params.Fs = 1500; % hard coded fs for LFP;
     
     
-    % ####################### EXTRACT SPIKETIMES FOR EACH CHANNEL
-    % - Gets spktimes across all songs. later on will use this stuff to
-    % extract song by song spikes.
-    chans_spk = SummaryBOS.expt(i).channels;
-    clust_spk = SummaryBOS.expt(i).clusters;
-    Spkholder = struct; % NOTE: will contain all clusters for a given channel. this is fixed below.
-    fs_all = [];
-    for j=1:length(chans_spk)
-        chanthis = chans_spk(j);
-        
-        tmp1 = load([SummaryBOS.expt(i).dirname '/' SummaryBOS.expt(i).batchname '-Chan' num2str(chanthis) '/times_allsongs.mat']);
-        tmp2 = load([SummaryBOS.expt(i).dirname '/' SummaryBOS.expt(i).batchname '-Chan' num2str(chanthis) '/allsongs_spikes.mat']);
-        Spkholder.unitnum(j).filenuminbatch_all = tmp2.filenuminbatch_all;
-        Spkholder.unitnum(j).cluster_class = tmp1.cluster_class;
-        fs_all = tmp1.par.sr;
-    end
+    % =============================
+    LFPall = SummaryBOS.expt(i).DAT_bysongrend.LFPall;
+    LFPchanlist = SummaryBOS.expt(i).DAT_bysongrend.LFPall_chanlist;
+    LFP_t = SummaryBOS.expt(i).DAT_bysongrend.LFPall_t;
     
+    nsongs = size(LFPall,1);
+    nchans = unique(cellfun(@length, SummaryBOS.expt(i).DAT_bysongrend.LFPall_chanlist));
     
+    CohCell = cell(nchoosek(nchans, 2), nsongs); % pairs x songs
+    Coh_t =  cell(1, nsongs); % pairs x songs
+    Coh_f = cell(1, nsongs); % pairs x songs
+    Coh_chanpair = cell(nchoosek(nchans, 2), nsongs); % pairs x songs
+    Coh_bregionpair = cell(nchoosek(nchans, 2), nsongs); % pairs x songs\
     
-    % ############################# GO THRU ALL FILES
-    % --- 1) extract timestamps of digital signals indicating bos playback
-    fid = fopen(batchfile);
-    fline = fgetl(fid);
-    
-    % --------- for debugging, plotting all pulse data
-    if plotON==1
-        figcount=1;
-        subplotrows=6;
-        subplotcols=1;
-        fignums_alreadyused=[];
-        hfigs=[];
-    end
-    
-    % ==================== COLLECT DATA
-    AllTotalSamps = [];
-    Allt_amplifier = {};
-    AllOnsets_samp = {}; % each index is one song.
-    AllOffsets_samp = {};
-    AllSpktimesByUnits = {};
-    AllSongOnsets_inds = {};
-    AllSongOffsets_inds = {};
-    AllSongOnsets_ActualTime = {};
-    
-    songnum = 1;
-    % ================= RUN
-    while ischar(fline)
-        
-        % ---------- load file
-        [amplifier_data,board_dig_in_data,frequency_parameters, ...
-            board_adc_data, board_adc_channels, amplifier_channels, ...
-            board_dig_in_channels, t_amplifier] = pj_readIntanNoGui([SummaryBOS.expt(i).dirname '/' fline]);
-        fs = frequency_parameters.amplifier_sample_rate;
-        fs_all = [fs_all; fs];
-        
-        flanktime = -t_amplifier(1);
-        
-        % ================== extract syl pulses
-        if strcmp(chantype, 'dig')
-            ind = [board_dig_in_channels.chip_channel]==pulsechan;
-            pulsedat = board_dig_in_data(ind, :);
-        elseif strcmp(chantype, 'ana')
-            ind = [board_adc_channels.chip_channel]==pulsechan;
-            pulsedat = board_adc_data(ind, :);
+    chpair = [];
+    for ss=1:nsongs
+        count = 1; % over chan p[aiors.
+        disp(['song ' num2str(ss)]);
+        for cc=1:nchans
+            for ccc=cc+1:nchans
+                
+                lfp1 = LFPall{ss, cc};
+                lfp2 = LFPall{ss, ccc};
+                
+                tthis = LFP_t{ss};
+                
+                chan1 = LFPchanlist{ss}(cc);
+                chan2 = LFPchanlist{ss}(ccc);
+                
+                % --- bregions
+                bregion1 = unique(SummaryBOS.expt(i).bregions(SummaryBOS.expt(i).channels == chan1));
+                bregion2 = unique(SummaryBOS.expt(i).bregions(SummaryBOS.expt(i).channels == chan2));
+                bregion1 = bregion1{1};
+                bregion2 = bregion2{1};
+                
+                if strcmp(bregion1, 'RA')
+                    assert(~strcmp(bregion2, 'LMAN'), 'if LMAN and RA, then must be LMAN first [assumed later on]');
+                end
+                
+                
+                % ===== get coherogram over entire song
+                [C,~,~,~,~,t,f] = cohgramc(lfp1, lfp2, movingwin, params);
+                %             phi = single(phi);
+                %             S12 = single(S12);
+                %             S1 = single(S1);
+                %             S2 = single(S2);
+                
+                % --- convert t to relative to dat onset
+                t = t+PARAMS.flanktotake(1);
+                
+                % ====== SAVE COHEROGRAM
+                CohCell{count, ss} = single(C);
+                Coh_chanpair{count, ss} = [chan1 chan2];
+                Coh_bregionpair{count, ss} = [bregion1 '-' bregion2];
+                
+                if count==1
+                    Coh_t{ss} = [single(t(1)) single(t(end))];
+                    Coh_f{ss} = single(f);
+                end
+                
+                count = count+1;
+                
+                
+                
+                % =========================================
+                if (0) % to plot
+                    figure; hold on; lt_neural_Coher_Plot(C, t, f, 1, '', [], 0, 0);
+                    lt_plot_colormap('pval');
+                    
+                    %                line(PARAMS.flanktotake
+                    
+                end
+            end
+            
         end
+    end
+    
+    lt_switch_chronux(0);
+    
+    % ==== SAVE OUTPUT
+    SummaryBOS.expt(i).DAT_bysongrend.CohCell = CohCell';
+    SummaryBOS.expt(i).DAT_bysongrend.Coh_chanpair = Coh_chanpair';
+    SummaryBOS.expt(i).DAT_bysongrend.Coh_bregionpair = Coh_bregionpair';
+    SummaryBOS.expt(i).DAT_bysongrend.Coh_t = Coh_t';
+    SummaryBOS.expt(i).DAT_bysongrend.Coh_f = Coh_f';
+end
+
+%% ============ [COPHERENCE] - PLOT ALL
+close all;
+numexpts = length(SummaryBOS.expt);
+bostypelist = {'fwd', 'rev'}; % if is length 2, will also get difference
+bregiontoget = 'LMAN-RA';
+clim = [0.2 0.9];
+windtoplot_base = [-2.5 -1]; % rel onset
+windtoplot_BOS = [1 10]; % rel onset
+fwindtoplot = [20 32];
+onlyplotFirstSong = 1; % i.e. for each expt, only the first trial. (e.g. to avoid habituation)
+
+
+figcount=1;
+subplotrows=6;
+subplotcols=1;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+Y = []; % base, bos
+for i=1:numexpts
+    
+    % -- CHANLLE PAIRS
+    tmp = cellfun(@(x)strcmp(x, bregiontoget), SummaryBOS.expt(i).DAT_bysongrend.Coh_bregionpair);
+    for j=1:size(tmp,2)
+        assert(length(unique(tmp(:,j)))==1, 'why some trials diff brain regions?')
+    end
+    chanpairstoget_all = find(tmp(1,:));
+    
+    for cc=1:length(chanpairstoget_all)
+        chanthis = chanpairstoget_all(cc);
         
-        % ---------------------
-        if plotON==1
-            % --- plot pulse dat
+        for ii=1:length(bostypelist)
+            
+            bostoget = bostypelist{ii};
+            birdnum = strcmp(PARAMS.BOSbirdname, SummaryBOS.expt(i).birdname);
+            bostoget_ind = find(strcmp(PARAMS.BOSnames{birdnum}, bostoget));
+            
+            
+            % ===== what trials and chanpairs to get
+            % -- TRIALS
+            inds_trials = SummaryBOS.expt(i).DAT_bysongrend.BOStype==bostoget_ind;
+%             % -- CHANLLE PAIRS
+%             tmp = cellfun(@(x)strcmp(x, bregiontoget), SummaryBOS.expt(i).DAT_bysongrend.Coh_bregionpair);
+%             for j=1:size(tmp,2)
+%                 assert(length(unique(tmp(:,j)))==1, 'why some trials diff brain regions?')
+%             end
+%             chanpairstoget = find(tmp(1,:));
+            if onlyplotFirstSong==1
+                inds_trials = intersect(find(SummaryBOS.expt(i).DAT_bysongrend.BOStype==bostoget_ind), ...
+                    1);
+            end
+              
+            if isempty(inds_trials)
+                continue
+            end
+               
+            
+            % ========== COLLECT DAT
+            datall = SummaryBOS.expt(i).DAT_bysongrend.CohCell(inds_trials, chanthis);
+            datall = datall(:);
+            datall = lt_neural_Coher_Cell2Mat(datall);
+            
+            t = linspace(SummaryBOS.expt(i).DAT_bysongrend.Coh_t{1}(1), ...
+                SummaryBOS.expt(i).DAT_bysongrend.Coh_t{1}(2), size(datall,1));
+            f = SummaryBOS.expt(i).DAT_bysongrend.Coh_f{1};
+            
+            % ============= PLOT 1 - COHEROGRAM
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            title(fline);
-            xlabel('file time (sec');
-            ylabel('V');
-            plot(t_amplifier, pulsedat);
-            % line(xlim, [threshold threshold], 'Color','r');
-        end
-        
-        
-        % ================================ IS THERE BOS IN THIS FILE? HOW MANY?
-        % GET ONSETS/OFFSETS
-        %         C = midcross(pulsedat, 'Tolerance', 15);
-        [~, LT, UT, LL, UL] = risetime(pulsedat, 'PercentReferenceLevels', [35 65]);
-        rtimes = round(mean([LT; UT],1));
-        
-        [~, LT, UT] = falltime(pulsedat, 'PercentReferenceLevels', [35 65]);
-        ftimes = round(mean([LT; UT],1));
-        
-        if plotON==1
-            line([t_amplifier(1) t_amplifier(end)], [LL LL]);
-            line([t_amplifier(1) t_amplifier(end)], [UL UL]);
-            plot(t_amplifier(rtimes), 1, 'ob');
-            plot(t_amplifier(ftimes), 1, 'sr');
-        end
-        
-        % ============== if syl is on edge of data, then will have only
-        % rise or fall.
-        if throwOutClippedSyls==1
-            if ftimes(1)<rtimes(1)
-                ftimes = ftimes(2:end);
-            end
-            if rtimes(end)>ftimes(end)
-                rtimes=rtimes(1:end-1);
-            end
-        end
-        
-        % ====================== SANITY CHECKS ABOUT RISE AND FALL TIMES
-        assert(length(rtimes) == length(ftimes), 'syllable clipped?');
-        assert(all((ftimes - rtimes)./fs > 0), 'all fall shoudl be after rise');
-        assert(max(ftimes-rtimes)/fs<0.5, 'all syls should be <500ms...');
-        assert(all((ftimes - rtimes)./fs <0.5), 'all syls shorter than 500ms');
-        
-        
-        % ====================== if short syls, then are actually markers
-        % for BOS it
-        if min(ftimes-rtimes)/fs<0.002
-            keyboard
-        end
-        
-        
-        % ===== CURRENTLY ASSUMING THAT NO SONGS WRAP AROUND FILES i.e. for a
-        % given song, will be eintrely within one file
-        if ignoreIfFileStartsBeforeTimeZero==0
-            assert(rtimes(1)./fs>=flanktime, 'this song wraps around multiple files?');
-        end
-        if ignoreIfFileEndsDuringSong==0
-            assert((t_amplifier(end)-t_amplifier(1) - (ftimes(end)./fs))>minedgetime, 'file ends too early?');
-            % note: divide flanktime by 2 becuase sometimes I end file early...
-        end
-        
-        % ===================== SANITY CHECK - MAKE SURE AUDIO POWER IS
-        % HIGHER DURING SYLS (I.E. AUDIO ACTUALYL PLAYED)
-        songdat = board_adc_data([board_adc_channels.chip_channel]==audchan, :);
-        songdat_centered = songdat-mean(songdat);
-        assert(mean(songdat_centered(rtimes(1):ftimes(end)).^2) > 5*mean(songdat_centered([1:rtimes(1) ftimes(end):length(rtimes)]).^2), 'is there no song played?');
-        
-        
-        % ====================== SPIKES
-        % --- go thru all units, for each unit extracrt spikes correspnding
-        % to this song file
-        numunits = length(Spkholder.unitnum);
-        SpksAllUnits = cell(1,numunits);
-        for nn=1:numunits
-            clustthis = SummaryBOS.expt(i).clusters(nn);
-            indstmp = Spkholder.unitnum(nn).filenuminbatch_all'==songnum ...
-                & Spkholder.unitnum(nn).cluster_class(:,1)==clustthis;
-            % make sure is correct song and cluster.
+            title(['expt' num2str(i) '[' bostoget '](' bregiontoget ')' ]);
+            lt_neural_Coher_Plot(datall, t, f, 1, '', clim);
+            lt_plot_colormap('pval');
+            lt_plot_annotation(1, ['n=' num2str(size(datall,3))], 'm')
             
-            spkthis = Spkholder.unitnum(nn).cluster_class(indstmp, 2);
-            assert(all(diff(spkthis))>0, 'then not in order, problem with extraction ...');
-            SpksAllUnits{nn} = single(spkthis);
+            % ============= PLOT 2 -
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title(['expt' num2str(i) '[' bostoget '](' bregiontoget ')' ]);
+            lt_neural_Coher_Plot(datall, t, f, 2, '-', [0 1], 0, 0, fwindtoplot);
+            %         lt_plot_colormap('pval');
+           
+            % ======================== PLOT MEAN COH SPECTRUM
+            ind_base = t>windtoplot_base(1) & t<windtoplot_base(2);
+            ind_BOS = t>windtoplot_BOS(1) & t<windtoplot_BOS(2);
             
-            if plotON==1
-                % -- plot this unit
-                plot(spkthis/1000-flanktime, 1.5+nn*0.5/numunits, 'xk');
-                lt_plot_text(spkthis(end)/1000-flanktime, 1.5+nn*0.5/numunits, ...
-                    ['unit' num2str(nn)]);
+            cohspec_base = mean(mean(datall(ind_base, :, :),1),3);
+            cohspec_base_sem = lt_sem(squeeze(mean(datall(ind_base, :, :),1))');
+            cohspec_BOS = mean(mean(datall(ind_BOS, :, :),1),3);
+            cohspec_BOS_sem = lt_sem(squeeze(mean(datall(ind_BOS, :, :),1))');
+            
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            ylabel('coh');
+            title('k=base; rd=BOS');
+            xlabel('f(hz)');
+            if length(cohspec_base_sem)>1
+            shadedErrorBar(f, cohspec_base, cohspec_base_sem, {'Color', 'k'},1);
+            shadedErrorBar(f, cohspec_BOS, cohspec_BOS_sem, {'Color', 'r'},1);
             end
+        axis tight;
+
         end
         
-        % ====================== extract sound
-        if plotON==1
-            songdat = board_adc_data([board_adc_channels.chip_channel]==audchan, :);
-            %     t= [1:length(songdat)]./fs;
-            %     lt_plot_spectrogram(songdat, fs, 0, 0);
-            %     plot(songdat, 'm');
-            plot(t_amplifier, (songdat-median(songdat)).^2);
-            axis tight
+        % ======== PLOT DIFFERENCE
+        % ----- 1) FWD
+        bostoget = 'fwd';
+        
+        birdnum = strcmp(PARAMS.BOSbirdname, SummaryBOS.expt(i).birdname);
+        bostoget_ind = find(strcmp(PARAMS.BOSnames{birdnum}, bostoget));
+        
+        
+        % ===== what trials and chanpairs to get
+        % -- TRIALS
+        inds_trials = SummaryBOS.expt(i).DAT_bysongrend.BOStype==bostoget_ind;
+        %     % -- CHANLLE PAIRS
+        %     tmp = cellfun(@(x)strcmp(x, bregiontoget), SummaryBOS.expt(i).DAT_bysongrend.Coh_bregionpair);
+        %     for j=1:size(tmp,2)
+        %         assert(length(unique(tmp(:,j)))==1, 'why some trials diff brain regions?')
+        %     end
+        %     chanpairstoget = find(tmp(1,:));
+        
+        % ========== COLLECT DAT
+        datall = SummaryBOS.expt(i).DAT_bysongrend.CohCell(inds_trials, chanthis);
+        datall = datall(:);
+        datall = lt_neural_Coher_Cell2Mat(datall);
+        
+        % --
+        datall_FWD = datall;
+        
+        
+        
+        % ----- 1) REV
+        bostoget = 'rev';
+        
+        birdnum = strcmp(PARAMS.BOSbirdname, SummaryBOS.expt(i).birdname);
+        bostoget_ind = find(strcmp(PARAMS.BOSnames{birdnum}, bostoget));
+        
+        
+        % ===== what trials and chanpairs to get
+        % -- TRIALS
+        inds_trials = SummaryBOS.expt(i).DAT_bysongrend.BOStype==bostoget_ind;
+        %     % -- CHANLLE PAIRS
+        %     tmp = cellfun(@(x)strcmp(x, bregiontoget), SummaryBOS.expt(i).DAT_bysongrend.Coh_bregionpair);
+        %     for j=1:size(tmp,2)
+        %         assert(length(unique(tmp(:,j)))==1, 'why some trials diff brain regions?')
+        %     end
+        %     chanpairstoget = find(tmp(1,:));
+        
+        % ========== COLLECT DAT
+        datall = SummaryBOS.expt(i).DAT_bysongrend.CohCell(inds_trials, chanthis);
+        datall = datall(:);
+        datall = lt_neural_Coher_Cell2Mat(datall);
+        
+        % --
+        datall_REV = datall;
+        
+        
+        % ======================================== DIFFERENCES
+        datall = mean(datall_FWD,3) - mean(datall_REV,3);
+        
+        % ============= PLOT 1 - COHEROGRAM
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        title(['expt' num2str(i) '[fwd-rev](' bregiontoget ')' ]);
+        lt_neural_Coher_Plot(datall, t, f, 1, '', [-0.2 0.2]);
+        lt_plot_colormap('centered');
+        % -- overlay windows
+        line([windtoplot_base(1) windtoplot_base(1)], ylim, 'Color', 'y');
+        line([windtoplot_base(2) windtoplot_base(2)], ylim, 'Color', 'y');
+        line([windtoplot_BOS(1) windtoplot_BOS(1)], ylim, 'Color', 'w');
+        line([windtoplot_BOS(2) windtoplot_BOS(2)], ylim, 'Color', 'w');
+        
+        % ============= PLOT 2 -
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        %     title(['expt' num2str(i) '[' bostoget '](' bregiontoget ')' ]);
+        lt_neural_Coher_Plot(datall, t, f, 2, '-', [-0.4 0.4], 1, 0, fwindtoplot);
+        %         lt_plot_colormap('pval');
+        lt_plot_zeroline;
+        
+
+        %% ============= collapsing across time [and freq sometimes]
+       
+        % ======================== PLOT MEAN COH SPECTRUM
+        ind_base = t>windtoplot_base(1) & t<windtoplot_base(2);
+        ind_BOS = t>windtoplot_BOS(1) & t<windtoplot_BOS(2);
+        ind_f = f>fwindtoplot(1) & f<fwindtoplot(2);
+        
+        cohspec_base = mean(datall(ind_base, :),1);
+        cohspec_base_sem = lt_sem(datall(ind_base, :));
+        cohspec_BOS = mean(datall(ind_BOS, :),1);
+        cohspec_BOS_sem = lt_sem(datall(ind_BOS, :));
+        
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        ylabel('coh (fwd - rev)');
+        title('k=base; rd=BOS');
+        xlabel('f(hz)');
+        shadedErrorBar(f, cohspec_base, cohspec_base_sem, {'Color', 'k'},1);
+        shadedErrorBar(f, cohspec_BOS, cohspec_BOS_sem, {'Color', 'r'},1);
+        
+        % ======================== COLLECT DIFFERENCES, SCALAR
+        if size(datall_REV,3)<5 | size(datall_FWD,3)<5
+            continue
         end
+         y1 = mean(mean(datall(ind_base, :),1),2);
+        y2 = mean(mean(datall(ind_BOS, :),1),2);
         
-        
-        % ======================== what is actual time of this file?
-        [dtnum dtstring] = ...
-            lt_neural_fn2datenum([SummaryBOS.expt(i).dirname '/' fline]); % onset of file
-        
-        
-        
-        %% ############################3 FIGURE OUT START/STOP OF SONG BOUTS
-        onsets = rtimes;
-        offsets = ftimes;
-        totalsamps = length(pulsedat);
-        %         fs = fs;
-        
-        gapdurs = [onsets totalsamps] - [1 offsets]; % append with start and end of song
-        gapdurs = gapdurs./fs;
-        gapdurall = [gapdurall gapdurs];
-        
-        
-        % =================== FIND LONG DURATIONS --> EDGES OF FILES
-        edgeinds = find(gapdurs>maxgapdur); % correspond to onsets.
-        
-        if ignoreIfFileEndsDuringSong==0
-            % then there shoudld be long gap between last syl and the end
-            % of the song. otherwise don't care.
-            assert(edgeinds(end) == length(onsets)+1, 'last extracted gap should always corerpond to end of song...');
-        end
-        songonsets = edgeinds(1:end-1); % throw out end as this is end of song.
-        songoffsets = edgeinds(2:end)-1; % assume the offset right before each onset is an end.
-        
-        
-        if plotON==1
-            lt_plot(t_amplifier(rtimes(songonsets)), 2, {'Color', 'b'});
-            lt_plot(t_amplifier(ftimes(songoffsets)), 2, {'Color', 'r'});
-        end
-        
-        % ---
-        if (0)
-            lt_figure; hold on;
-            title('gap durations');
-            lt_plot_histogram(gapdurs, 0:0.01:1);
-        end
-        
-        
-        % ============= actual time for start of song
-        songonsets_actualtime = dtnum+(t_amplifier(rtimes(songonsets)))./(60*60*24); % convert from seconds to days
-        
-        
-        %% ############################### SAVE OUTPUT FOR THIS FILE
-        AllTotalSamps = [AllTotalSamps; length(pulsedat)];
-        Allt_amplifier = [Allt_amplifier; single(t_amplifier)];
-        AllOnsets_samp = [AllOnsets_samp; single(rtimes)]; % each index is one song.
-        AllOffsets_samp = [AllOffsets_samp; single(ftimes)];
-        AllSpktimesByUnits = [AllSpktimesByUnits; SpksAllUnits];
-        AllSongOnsets_inds = [AllSongOnsets_inds; single(songonsets)];
-        AllSongOffsets_inds = [AllSongOffsets_inds; single(songoffsets)];
-        AllSongOnsets_ActualTime = [AllSongOnsets_ActualTime; songonsets_actualtime];
-        
-        
-        % ========= load next song
-        fline = fgetl(fid);
-        songnum = songnum+1;
-        
+       
+        Y = [Y; [y1 y2]];
     end
-    assert(size(AllSpktimesByUnits,1) == songnum-1);
-    assert(songnum == max(Spkholder.unitnum(1).filenuminbatch_all)+1, 'make sure while looop counted correct number of songfiles');
-    fs = unique(fs_all);
-    assert(length(fs)==1, 'diff fs for diff files?');
-    
-    
-    % ################## SAVE OUTPUT FOR THIS EXPERIMENT
-    SummaryBOS.expt(i).DAT.AllTotalSamps = AllTotalSamps;
-    SummaryBOS.expt(i).DAT.Allt_amplifier = Allt_amplifier;
-    SummaryBOS.expt(i).DAT.AllOnsets_samp = AllOnsets_samp;
-    SummaryBOS.expt(i).DAT.AllOffsets_samp = AllOffsets_samp;
-    SummaryBOS.expt(i).DAT.AllSpktimesByUnits = AllSpktimesByUnits;
-    SummaryBOS.expt(i).DAT.AllSongOnsets_inds = AllSongOnsets_inds;
-    SummaryBOS.expt(i).DAT.AllSongOffsets_inds = AllSongOffsets_inds;
-    SummaryBOS.expt(i).DAT.AllSongOnsets_ActualTime = AllSongOnsets_ActualTime;
-    SummaryBOS.expt(i).fs = fs;
 end
 
 lt_figure; hold on;
-title('gap durations (and line used as threshold for getting bouts)');
-lt_plot_histogram(gapdurall, 0:0.01:1);
-line([maxgapdur maxgapdur], ylim);
-
-
-
-%% ==================== [EXTRACT - SANITY PLOT] all files, with extracted songs
-% [USEFUL!!!] quickly plots data and extracted song files.
-if (0)
-    i=1;
-    
-    figcount=1;
-    subplotrows=8;
-    subplotcols=1;
-    fignums_alreadyused=[];
-    hfigs=[];
-    
-    nfiles = length(SummaryBOS.expt(i).DAT.AllOffsets_samp);
-    for j=1:nfiles
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        t = SummaryBOS.expt(i).DAT.Allt_amplifier{j};
-        ons = SummaryBOS.expt(i).DAT.AllOnsets_samp{j};
-        offs = SummaryBOS.expt(i).DAT.AllOffsets_samp{j};
-        
-        
-        lt_neural_QUICK_PlotSylPatches(t(ons), t(offs), 1, 1);
-        xlim([t(1) t(end)]);
-        
-        % ===== song extractions
-        sons = SummaryBOS.expt(i).DAT.AllSongOnsets_inds{j};
-        soffs = SummaryBOS.expt(i).DAT.AllSongOffsets_inds{j};
-        
-        lt_neural_QUICK_PlotSylPatches(t(ons(sons)), t(offs(soffs)), 2, 1);
-        ylim([0 3]);
-        ylabel('syls - songs extracted');
-        xlabel('range of entire file (sec)');
-    end
-end
-%% ===================== [EXTRACT] time relative data onset
-
-for i=1:length(SummaryBOS.expt)
-    
-    if isfield(SummaryBOS.expt(i).DAT, 'Allt_fromDatOnset')
-        SummaryBOS.expt(i).DAT = rmfield(SummaryBOS.expt(i).DAT, 'Allt_fromDatOnset');
-    end
-    
-    numsongs = length(SummaryBOS.expt(i).DAT.AllOffsets_samp);
-    
-    for ss=1:numsongs
-        
-        % ========== collect all song bouts
-        t = 1:SummaryBOS.expt(i).DAT.AllTotalSamps(ss);
-        fs = SummaryBOS.expt(i).fs;
-        
-        t = t./fs;
-        SummaryBOS.expt(i).DAT.Allt_fromDatOnset{ss} = t;
-        
-    end
-end
-
-
-%% ====================== [EXTRACTION] - SONG BY SONG BOUT
-clear PARAMS
-flanktotake = [-2 2]; % sec from onset and offset.
-minsongdur = 8; % seconds
-
-% ===============
-
-for i=1:length(SummaryBOS.expt)
-    
-    numsongs = length(SummaryBOS.expt(i).DAT.AllOffsets_samp);
-    
-    % ----------- to collect over all songs
-    DAT_songextract = struct;
-    SpkTime_RelSongOnset = {};
-    SongDur = [];
-    SongOnset_ActualDatenum = [];
-    SylOnsets = {};
-    SylOffsets = {};
-    TEdges = [];
-    
-    for ss=1:numsongs
-        
-        % ===== stats for this file
-        onsets_samps = SummaryBOS.expt(i).DAT.AllOnsets_samp{ss};
-        offsets_samps = SummaryBOS.expt(i).DAT.AllOffsets_samp{ss};
-        
-        t = SummaryBOS.expt(i).DAT.Allt_fromDatOnset{ss};
-        SpkTimes = SummaryBOS.expt(i).DAT.AllSpktimesByUnits(ss,:);
-        nunits = length(SpkTimes);
-        
-        % ========== collect all song bouts
-        nbouts = length(SummaryBOS.expt(i).DAT.AllSongOnsets_inds{ss});
-        for nn=1:nbouts
-            
-            on_inds = SummaryBOS.expt(i).DAT.AllSongOnsets_inds{ss}(nn);
-            off_inds = SummaryBOS.expt(i).DAT.AllSongOffsets_inds{ss}(nn);
-            dtnum = SummaryBOS.expt(i).DAT.AllSongOnsets_ActualTime{ss}(nn);
-            
-            % ---------- COLLECT SPIKES ALIGNED TO INDS
-            % - time of onset/offset(sec);
-            tonset_sec = t(onsets_samps(on_inds));
-            toffset_sec = t(offsets_samps(off_inds));
-            
-            
-            % ============== FILTER - IGNORE IF TOO SHORT
-            songdur = toffset_sec - tonset_sec;
-            if songdur < minsongdur
-                disp('SKIPPING SONG RENDITION - TOO SHORT');
-                continue
-            end
-            
-            % - time endpoints
-            tedges = [flanktotake(1) songdur+flanktotake(2)];
-            
-            % -- get spikes flanking this - recenter to be relative to onset of
-            % song
-            % ----- GO THRU ALL UNITS
-            spktimes_tmp = cell(1,nunits);
-            for j=1:nunits
-                
-                spkthis = SpkTimes{j}./1000; % convert to sec.
-                spkthis = spkthis(spkthis>tonset_sec+flanktotake(1) ...
-                    & spkthis<toffset_sec+flanktotake(2)); % get desired window
-                % -- get time relative to onset of song
-                spkthis_relsongonset = spkthis - tonset_sec;
-                spktimes_tmp{j} = spkthis_relsongonset;
-            end
-            
-            
-            % ============= GET ONSETS and offsets
-            allonsets = t(onsets_samps(on_inds:off_inds));
-            alloffsets = t(offsets_samps(on_inds:off_inds));
-            % -- rel to onset of first syl
-            allonsets = allonsets-tonset_sec;
-            alloffsets = alloffsets-tonset_sec;
-            
-            % ============ GET ACTUAL TIMES
-            
-            
-            % #####################3 COLLECT THINGS ABOUT THIS SONG
-            SylOnsets = [SylOnsets; allonsets];
-            SylOffsets = [SylOffsets; alloffsets];
-            SongDur = [SongDur; toffset_sec-tonset_sec];
-            SpkTime_RelSongOnset = [SpkTime_RelSongOnset; spktimes_tmp];
-            TEdges = [TEdges; tedges];
-            SongOnset_ActualDatenum = [SongOnset_ActualDatenum; dtnum];
-        end
-    end
-    
-    SummaryBOS.expt(i).DAT_bysongrend.TEdges = TEdges;
-    SummaryBOS.expt(i).DAT_bysongrend.SylOnsets = SylOnsets;
-    SummaryBOS.expt(i).DAT_bysongrend.SylOffsets = SylOffsets;
-    SummaryBOS.expt(i).DAT_bysongrend.SongDur = SongDur;
-    SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset = SpkTime_RelSongOnset;
-    SummaryBOS.expt(i).DAT_bysongrend.SongOnset_ActualDatenum = SongOnset_ActualDatenum;
-    PARAMS.flanktotake = flanktotake;
-    
-    
-    
-    % ==================== CONVERT TO FORMAT OF SEGEXTRACT TO USE OLD CODE
-    for j=1:nunits
-        % -- go thru all trials
-        spks = SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset(:, j);
-        ntrials = size(SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset,1);
-        for k=1:ntrials
-            % -- spk times
-            SummaryBOS.expt(i).DAT_bysongrend.SegextractFormat.unitnum(j).segextract(k).spk_Times = ...
-                (spks{k} - PARAMS.flanktotake(1))'; % convert to start from 0
-            % -- trial durations
-            datdur = SummaryBOS.expt(i).DAT_bysongrend.SongDur(k) + (PARAMS.flanktotake(2) - PARAMS.flanktotake(1));
-            SummaryBOS.expt(i).DAT_bysongrend.SegextractFormat.unitnum(j).segextract(k).datdur = datdur;
-        end
-    end
-    
-end
-
-
-%% ===================== [OPTIONAL] PLOTS OF BOS FILE RELATED STUFF.
-% ######################## PLOTS TO HELP FIGURE OUT WHAT BOS ARE USED.
-if (0)
-    exptnum =3;
-    i=exptnum;
-    
-    % ============== TO VISUALIZE THE ACTUAL TIMES OF ALL BOS PRESENTATIONS
-    lt_figure; hold on;
-    subplot(2,1,1);
-    title('actual times, BOS onsets');
-    bostimes = SummaryBOS.expt(i).DAT_bysongrend.SongOnset_ActualDatenum;
-    plot(bostimes, '-ok');
-    xlabel('BOS #');
-    datetick('y', 'HH:MM:SS');
-    
-    subplot(2,1,2);
-    bostimes = (bostimes-bostimes(1))*(24*60*60); % convert to sec
-    plot(bostimes, '-ok');
-    ylabel('sec from first BOS');
-    
-    
-    % ============== TO VISUALIZE STRUCTURE OF BOS OVER TRIALS... (SYL, GAPS)
-    if (1)
-        overlayspks = 0;
-        % ------------
-        numrends = length(SummaryBOS.expt(i).DAT_bysongrend.SylOnsets);
-        lt_figure; hold on;
-        ylabel('trial (1, 2, ...)');
-        
-        
-        for j=1:numrends
-            ons = SummaryBOS.expt(i).DAT_bysongrend.SylOnsets{j};
-            offs = SummaryBOS.expt(i).DAT_bysongrend.SylOffsets{j};
-            
-            lt_neural_QUICK_PlotSylPatches(ons, offs, j,1);
-            
-            % --- plot subset of spikes
-            if overlayspks==1
-                spks = SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset{j}(1:100);
-                lt_neural_PLOT_rasterline(spks, j, 'r', 0);
-            end
-            
-            try
-                bostype = SummaryBOS.expt(i).DAT_bysongrend.BOStype(j);
-                lt_plot_text(0, j+0.2, ['bos#' num2str(bostype)], 'm');
-            catch err
-            end
-        end
-    end
-    
-    
-    % ================= VISUALIZE ACTUAL BOS FILES
-    % ---------- PARAMS
-    dirforBOS = '/bluejay5/egret_data/lucas/Test_Songs/BOS/'; % where .wav files are stored
-    dirforBOS = '/run/user/1197/gvfs/smb-share:server=egret.cin.ucsf.edu,share=data/lucas/Test_Songs/BOS/';
-    BOSfiles = {'pu69wh78_031117_102806.9552.cbin_DigOnsOff.wav', ...
-        'pu69wh78_031117_102806.9552.cbin_DigOnsOff_REV.wav'}; % filenames for all BOS files; left = sound, right = ons/offset pulses
-    BOScodes = []; % code used for each BOS file, can be empty
-    % batchfile = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110917_RALMANOvernightLearn1/BOS_111017Night/batchtest';
-    
-    % =============== plot all bos files
-    datall = {};
-    for j=1:length(BOSfiles)
-        dat = audioread([dirforBOS BOSfiles{j}]);
-        datall = [datall; dat];
-        
-    end
-    
-    figcount=1;
-    subplotrows=5;
-    subplotcols=1;
-    fignums_alreadyused=[];
-    hfigs=[];
-    hsplots = [];
-    
-    % === plot
-    for j=1:length(datall)
-        
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        title(BOSfiles{j});
-        plot(datall{j}(:,2));
-        ylim([-1 2]);
-    end
-end
-
-lt_figure; lt_plot_text(0,1, 'not general! fix where looks for BOS files');
-
-%% ===================== [EXTRACTION] Determine type of BOS on each trial.
-% ################ CLASSIFY SONG BASED ON CROSSCORRELATION WITH
-% TEMPLATES FROM ACTUAL FILES
-% exptnum = 1;
-% ---------- PARAMS
-clear BOSfiles
-clear dirforBOS
-clear BOSnames
-clear BOSbirdname
-
-% ---------------- GENERAL DIRECTORY WHERE ALL BIRDS' BOS ARE STORED.
-% dirforBOS = '/bluejay5/egret_data/lucas/Test_Songs/BOS/'; % where .wav files are stored
-PARAMS.dirforBOS = '/bluejay5/lucas/analyses/BOS/Songs/BOS/'; % where .wav files are stored
-% dirforBOS = '/run/user/1197/gvfs/smb-share:server=egret.cin.ucsf.edu,share=data/lucas/Test_Songs/BOS/';
-
-% ----------------- NAME OF BIRD - must correspond to the directory BOS
-% files are saved in.
-PARAMS.BOSbirdname{1} = 'pu69wh78';
-PARAMS.BOSbirdname{2} = 'wh72pk12';
-
-% ---------------- SONG FILES. ORDER MUST CORRESPOND TO ORDER OF BOSnames
-PARAMS.BOSfiles{1} = {'pu69wh78_031117_102806.9552.cbin_DigOnsOff.wav', ...
-    'pu69wh78_031117_102806.9552.cbin_DigOnsOff_REV.wav'}; % filenames for all BOS files; left = sound, right = ons/offset pulses
-PARAMS.BOSfiles{2} = {};
-
-% ------------------ FOR LABELING - order must correspond to BOSfiles
-PARAMS.BOSnames{1} = {'fwd', 'rev'}; % code used for each BOS file, can be empty
-PARAMS.BOSnames{2} = {};
-% batchfile = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110917_RALMANOvernightLearn1/BOS_111017Night/batchtest';
-
-
-
-for i=1:length(SummaryBOS.expt)
-    
-    % ----------- COLLECT ACTUAL BOS FILES
-    % --- GET BOS PARAMS FOR THIS BIRD
-    birdthis = SummaryBOS.expt(i).birdname;
-    
-    indbird = strcmp(PARAMS.BOSbirdname, birdthis);
-    dirforBOS = [PARAMS.dirforBOS birdthis '/'];
-    BOSfiles = PARAMS.BOSfiles{indbird};
-    
-    
-    % =============== plot all bos files
-    datall = {};
-    for j=1:length(BOSfiles)
-        dat = audioread([dirforBOS BOSfiles{j}]);
-        datall = [datall; dat];
-    end
-    
-    % ============== get rise and fall times for each actual songdat
-    datall_risetimes = {};
-    datall_falltimes = {};
-    for j=1:length(datall)
-        
-        [~, b] = risetime(datall{j}(:,2));
-        [~, c] = falltime(datall{j}(:,2));
-        
-        datall_risetimes{j} = b;
-        datall_falltimes{j} = c;
-    end
-    
-    % ============== GO THRU ALL SONG RENDS AND COMPARE TO ALL BOS
-    nrends = length(SummaryBOS.expt(i).DAT_bysongrend.SongDur);
-    nBosSongs = length(datall);
-    BosIndAll = [];
-    for j=1:nrends
-        ons = SummaryBOS.expt(i).DAT_bysongrend.SylOnsets{j};
-        offs = SummaryBOS.expt(i).DAT_bysongrend.SylOffsets{j};
-        
-        % ===  get corr vs each candidate song
-        rhoall = [];
-        for jj=1:nBosSongs
-            rho = corr(offs'-ons', datall_falltimes{jj}-datall_risetimes{jj});
-            rhoall = [rhoall; rho];
-        end
-        bosindthis = find(rhoall>0.99);
-        assert(length(bosindthis)==1, 'should be exactly one bos this corresponds to...');
-        
-        BosIndAll = [BosIndAll; bosindthis];
-    end
-    SummaryBOS.expt(i).DAT_bysongrend.BOStype = BosIndAll;
-end
-
-% PARAMS.dirforBOS = dirforBOS;
-% PARAMS.BOSfiles = BOSfiles;
-% PARAMS.BOSnames = BOSnames;
-
-%% ===================== [LOAD LABEL BOS FILES]
-if (0)
-    dirforBOS = '/bluejay5/egret_data/lucas/Test_Songs/BOS/'; % where .wav files are stored
-    % dirforBOS = '/run/user/1197/gvfs/smb-share:server=egret.cin.ucsf.edu,share=data/lucas/Test_Songs/BOS/';
-    BOSfiles = {'pu69wh78_031117_102806.9552.cbin_DigOnsOff.wav', ...
-        'pu69wh78_031117_102806.9552.cbin_DigOnsOff_REV.wav'}; % filenames for all BOS files; left = sound, right = ons/offset pulses
-    BOSnames = {'fwd', 'rev'}; % code used for each BOS file, can be empty
-end
-try
-    PARAMS = rmfield(PARAMS, 'BOSlabels');
-catch err
-end
-
-for i=1:length(PARAMS.BOSfiles)
-    nbos = length(PARAMS.BOSfiles{i});
-    BOSlabels = {};
-    for j=1:nbos
-        
-        fthis = [PARAMS.dirforBOS PARAMS.BOSbirdname{i} '/' PARAMS.BOSfiles{i}{j} '.labels'];
-        tmp = load(fthis, '-mat');
-        
-        BOSlabels{j} = tmp.label;
-    end
-    PARAMS.BOSlabels{i} = BOSlabels;
-end
-%% ===================== [PLOT] SUMMARY FOR RESPONSE [BOSTYPES]
-% EACH UNIT PLOT MEAN RESPONSE TO EACH BOS TYPE
-close all;
-i=6;
-birdthis = SummaryBOS.expt(i).birdname;
-
-% =============
-nunits = size(SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset,2);
-% nsongs = size(SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset, 1);
-
-figcount=1;
-subplotrows=4;
-subplotcols = 1;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-for nn=1:nunits
-    
-    chan = SummaryBOS.expt(i).channels(nn);
-    bregion = SummaryBOS.expt(i).bregions{nn};
-    spks = SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset(:,nn);
-    onsets = SummaryBOS.expt(i).DAT_bysongrend.SylOnsets;
-    offsets = SummaryBOS.expt(i).DAT_bysongrend.SylOffsets;
-    segextract = SummaryBOS.expt(i).DAT_bysongrend.SegextractFormat.unitnum(nn).segextract;
-    bostype = SummaryBOS.expt(i).DAT_bysongrend.BOStype;
-    BOSnames = PARAMS.BOSnames{strcmp(PARAMS.BOSbirdname, birdthis)};
-    BOSlabels = PARAMS.BOSlabels{strcmp(PARAMS.BOSbirdname, birdthis)};
-    
-    % ======= collect smoothed fr for each trial
-    segextract = lt_neural_SmoothFR(segextract, [], [], [], [], [], PARAMS.flanktotake(1));
-    frmat = [segextract.FRsmooth_rate_CommonTrialDur];
-    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
-    
-    %     % ====== 2) rasters
-    %     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    %     title('rasters [syls shaded]');
-    %     ylabel(['unit' num2str(nn)]);
-    %     for ss=1:nsongs
-    %
-    %        % -- overlay onsets and offsets
-    %         ons = onsets{ss};
-    %         offs = offsets{ss};
-    %         lt_neural_QUICK_PlotSylPatches(ons, offs, ss);
-    %        lt_neural_PLOT_rasterline(spks{ss}, ss, 'r', 0);
-    % %
-    % %                        X=[segextract(j).WNonset_sec  segextract(j).WNoffset_sec ...
-    % %                     segextract(j).WNoffset_sec  segextract(j).WNonset_sec];
-    % %                 Y=[-j-0.4 -j-0.4 -j+0.4 -j+0.4];
-    %
-    %     end
-    
-    % ================= ONE PLOT FOR EACH BOS TYPE
-    nbostypes = max(bostype);
-    pcols_bos = lt_make_plot_colors(nbostypes, 0,0);
-    
-    for bb=1:nbostypes
-        
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        title(['unit' num2str(nn) ' [ch' num2str(chan) '-' bregion '] -' BOSnames{bb}]);
-        hsplots = [hsplots hsplot];
-        
-        indsthis = bostype==bb;
-        
-        frthis = frmat(:, indsthis);
-        
-        frmean = mean(frthis,2);
-        frsem = lt_sem(frthis');
-        if size(frthis,2)==1
-            plot(x, frthis, 'Color', pcols_bos{bb});
-        else
-            shadedErrorBar(x, frmean, frsem, {'Color', pcols_bos{bb}},1);
-        end
-        lt_plot_zeroline;
-        
-        % ======== overlay song
-        ons_mat = cell2mat(onsets(indsthis));
-        if ~all(max(ons_mat)-min(ons_mat)<0.001)
-            tmp = max(max(ons_mat)-min(ons_mat));
-            lt_plot_annotation(1, ['some onsets up to: ' num2str(tmp) ' sec diff (across tirals)...'], 'm');
-        end
-        ons = median(ons_mat,1);
-        
-        offs_mat = cell2mat(offsets(indsthis));
-        if ~all(max(offs_mat)-min(offs_mat)<0.001)
-            tmp = max(max(offs_mat)-min(offs_mat));
-            lt_plot_annotation(1, ['some oiffests up to: ' num2str(tmp) ' sec diff (across tirals)...'], 'm');
-        end
-        offs = median(offs_mat,1);
-        
-        lt_neural_QUICK_PlotSylPatches(ons, offs, median(frmean), 1);
-        
-        % ----------- PLOT LABELS
-        labels = BOSlabels{bb};
-        assert(length(labels)==length(ons), 'wierd');
-        for k=1:length(labels)
-            lt_plot_text(ons(k)+0.01, median(frmean)+5, labels(k), 'b');
-        end
-    end
-    
-    
-    
-    % sanity check
-    if (0)
-        figure; hold on;
-        % ----
-        fr = segextract(1).FRsmooth_rate_CommonTrialDur;
-        t = segextract(1).FRsmooth_xbin_CommonTrialDur;
-        %        t = t+SummaryBOS.expt(1).DAT_bysongrend.TEdges(1);
-        plot(t, fr, '-k');
-        spks = SummaryBOS.expt(1).DAT_bysongrend.SpkTime_RelSongOnset{1,nn};
-        lt_neural_PLOT_rasterline(spks, 100, 'r', 0);
-        
-        % ----
-        fr = segextract(1).FRsmooth_rate_CommonTrialDur;
-        lt_neural_PLOT_rasterline(spks, 100, 'r', 0);
-    end
-    
-end
-
-linkaxes(hsplots, 'xy');
-
-
-
-%% ===================== [PLOT] EXTRACT MOTIFS (FROM LABEL);
-% 
-% PARAMS.MotifsToGet = {...
-%     'pu69wh78', {'(a)abhh', '(j)jbhh'}, ...
-%     'wh72pk12', {}, ...
-%     };
-PARAMS.MotifsToGet = {...
-    'pu69wh78', {'aa(b)hh', 'jj(b)hh'}, ...
-    'wh72pk12', {}, ...
-    };
-
-PARAMS.motif_predur = 0.3;
-PARAMS.motif_postdur = 0.2; %
-PARAMS.usemotifoffset = 1; % if 0, then from onset of token.
-
-DATSTRUCT = struct;
-DATSTRUCT.Spktimes = {};
-DATSTRUCT.Onstimes= {};
-DATSTRUCT.Offtimes= {};
-DATSTRUCT.unitnum = [];
-DATSTRUCT.exptnum = [];
-DATSTRUCT.songrendnum = [];
-DATSTRUCT.motifnum = [];
-DATSTRUCT.motifname = {};
-DATSTRUCT.motifregexp = {};
-DATSTRUCT.birdname = {};
-DATSTRUCT.bostype = [];
-DATSTRUCT.minmax_time = [];
-DATSTRUCT.bostype_str = {};
-DATSTRUCT.brainregion = {};
-
-
-% ============= for each unit, extract all cases of each motif
-for i=1:length(SummaryBOS.expt)
-    birdname = SummaryBOS.expt(i).birdname;
-    motifstoget = PARAMS.MotifsToGet{find(strcmp(PARAMS.MotifsToGet, birdname))+1};
-    BOSlabels = PARAMS.BOSlabels{strcmp(PARAMS.BOSbirdname, birdname)};
-    BOSnames = PARAMS.BOSnames{strcmp(PARAMS.BOSbirdname, birdname)};
-    
-    % ====== go thru all song renditions
-    nrends = length(SummaryBOS.expt(i).DAT_bysongrend.BOStype);
-    
-    for nn=1:nrends
-        spks = SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset(nn,:);
-        bostype = SummaryBOS.expt(i).DAT_bysongrend.BOStype(nn);
-        bostype_str = BOSnames{bostype};
-        labels = BOSlabels{bostype};
-        ons = SummaryBOS.expt(i).DAT_bysongrend.SylOnsets{nn};
-        offs = SummaryBOS.expt(i).DAT_bysongrend.SylOffsets{nn};
-        
-        % ============ go thru all motifs
-        for mm=1:length(motifstoget)
-            motifthis = motifstoget{mm};
-            motiflength = length(motifthis)-2; assert(length(strfind(motifthis, '('))==1, 'need to use parantheses on tokens');
-            [startinds, tokeninds, endinds, matchlabs] = lt_neural_QUICK_regexp(labels, motifthis);
-            
-            % ======= extract data [iterate over all matched labels]
-            for jj=1:length(tokeninds)
-                
-                tt = tokeninds(jj);
-                
-                datonset = ons(tt)-PARAMS.motif_predur;
-                if PARAMS.usemotifoffset ==1
-                    datoffset = offs(endinds(jj))+PARAMS.motif_postdur;
-                else
-                    datoffset = ons(tt)+PARAMS.motif_postdur;
-                end
-                
-                % ==== collect onset and offset times (token onset =0);
-                onsthis = ons(startinds(jj):endinds(jj)) - ons(tt);
-                offthis = offs(startinds(jj):endinds(jj)) - ons(tt);
-                
-                % ==== collect spike times
-                % ---- once for each chan
-                nchans = length(spks);
-                for cc=1:nchans
-                    spkthis = spks{cc};
-                    spkthis = spkthis(spkthis>datonset & spkthis<datoffset);
-                    % subtract onset of first syl;
-                    spkthis = spkthis - ons(tt);
-                    
-                    % ============= COLLECT DATA
-%                     if isempty(spkthis)
-                        DATSTRUCT.Spktimes = [DATSTRUCT.Spktimes; {spkthis}];
-%                     else
-%                         DATSTRUCT.Spktimes = [DATSTRUCT.Spktimes; spkthis];
-%                     end
-                    DATSTRUCT.Onstimes= [DATSTRUCT.Onstimes; onsthis];
-                    DATSTRUCT.Offtimes= [DATSTRUCT.Offtimes; offthis];
-                    DATSTRUCT.unitnum = [DATSTRUCT.unitnum; cc];
-                    DATSTRUCT.exptnum = [DATSTRUCT.exptnum; i];
-                    DATSTRUCT.songrendnum = [DATSTRUCT.songrendnum; nn];
-                    DATSTRUCT.motifnum = [DATSTRUCT.motifnum; mm];
-                    DATSTRUCT.motifname = [DATSTRUCT.motifname; matchlabs{jj}];
-                    DATSTRUCT.motifregexp = [DATSTRUCT.motifregexp; motifthis];
-                    DATSTRUCT.birdname = [DATSTRUCT.birdname; birdname];
-                    DATSTRUCT.bostype = [DATSTRUCT.bostype; bostype];
-                    DATSTRUCT.bostype_str = [DATSTRUCT.bostype_str; bostype_str];
-                    
-                    datoffset-datonset-PARAMS.motif_predur;
-                    DATSTRUCT.minmax_time = [DATSTRUCT.minmax_time; ...
-                        [-PARAMS.motif_predur datoffset-datonset-PARAMS.motif_predur]];
-                    
-                    DATSTRUCT.brainregion = [DATSTRUCT.brainregion; ...
-                        SummaryBOS.expt(i).bregions{cc}];
-                end
-            end
-        end
-    end
-end
-
-% ========= LIST ALL THINGS EXTRACTED
-
-[inds_out, inds_unique, X_cell] = ...
-    lt_tools_grp2idx({DATSTRUCT.birdname DATSTRUCT.exptnum DATSTRUCT.unitnum DATSTRUCT.motifname});
-cellfun(@disp, X_cell);
-
-
-%% ====================== [PLOT]
-bird = 'pu69wh78';
-motif = 'aabhh';
-
-indsthis = strcmp(DATSTRUCT.birdname, bird) & strcmp(DATSTRUCT.motifname, motif);
-
-
-
-%% ========================= [TO DO] LINEAR TIME WARP FUNCTION.
-
-%% ======================== [PLOT] - FOR EACH UNIT, PLOT MEAN MOTIF RESPONSE
-close all;
-
-overlayAllMotifs = 1; % one plot per unit, overlaying motifs (from all BOS files)
-
-% --- iterate over experiments and units.
-[indsgrp, indsgrp_unique] = lt_tools_grp2idx({DATSTRUCT.exptnum DATSTRUCT.unitnum});
-
-motifslist = unique(DATSTRUCT.motifnum);
-bostypelist = unique(DATSTRUCT.bostype);
-
-figcount=1;
-subplotrows=5;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-
-
-for i=1:length(indsgrp_unique)
-    
-    pcol = 0.8-0.8*[rand rand rand];
-    hsplots = [];
-    % =========== go thru all motifs & bostypes
-    if overlayAllMotifs==1
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-%         hsplots = [hsplots hsplot];
-    end
-    for mm = motifslist'
-        for bb=1:length(bostypelist)
-            bosthis = bostypelist(bb);
-            
-            indsthis = indsgrp==indsgrp_unique(i) & DATSTRUCT.motifnum==mm & DATSTRUCT.bostype==bosthis;
-            if isempty(indsthis)
-                continue
-            end
-            
-            pcolmot = 0.8-0.8*[rand rand rand];
-            %           bostype = DATSTRUCT.bostype(indsthis);
-            rendnum = DATSTRUCT.songrendnum(indsthis);
-            spks = DATSTRUCT.Spktimes(indsthis);
-            sylonsets = cell2mat(DATSTRUCT.Onstimes(indsthis));
-            syloffsets = cell2mat(DATSTRUCT.Offtimes(indsthis));
-            
-            minmaxtime = DATSTRUCT.minmax_time(indsthis,:);
-            
-            % ========= currently assuming don't care about type of BOS.
-            %             assert(length(unique(bostype))==1);
-            
-            % === for pplotting.
-            birdname = unique(DATSTRUCT.birdname(indsthis));
-            exptnum = unique(DATSTRUCT.exptnum(indsthis));
-            unitnum = unique(DATSTRUCT.unitnum(indsthis));
-            bregion = SummaryBOS.expt(exptnum).bregions{unitnum};
-            motif = unique(DATSTRUCT.motifregexp(indsthis));
-            bostype = PARAMS.BOSnames{strcmp(PARAMS.BOSbirdname, birdname)}{bosthis};
-            
-            %% ========== PLOT FOR THIS UNIT, RESPONSES OVER ALL RENDITIONS OF
-            % THIS MOTIF
-            assert(length(unique(minmaxtime(:,1)))==1, 'assumes all predur from same alignment');
-            mintime = minmaxtime(1,1);
-            maxtime = min(minmaxtime(:,2));
-            
-            
-            [FRmat, t] = lt_neural_QUICK_Spk2FRmat(spks, mintime, maxtime);
-            
-            frmean = mean(FRmat,2);
-            frsem = lt_sem(FRmat');
-            
-            
-            if overlayAllMotifs==0
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots hsplot];
-                title({[birdname{1} '-enum' num2str(exptnum) '-unit' num2str(unitnum) '[' bregion ']'], ...
-                    [motif{1} '-BOS"' bostype '"']});
-            else
-                lt_plot_text(t(end), frmean(end),  [motif{1} '-BOS"' bostype '"'], pcolmot);
-            end
-
-            
-            % --- SYLS ONSET OFFSET
-            on = median(sylonsets,1);
-            off = median(syloffsets,1);
-            YLIM = [0 max(frmean)+5];
-            
-            if overlayAllMotifs==0
-                lt_neural_QUICK_PlotSylPatches(on, off, YLIM, 0, pcol);
-            else
-                lt_neural_QUICK_PlotSylPatches(on, off, YLIM, 1, pcolmot);
-            end
-            
-            
-            % --- plot fr mean
-             if overlayAllMotifs==0
-           shadedErrorBar(t, frmean, frsem, {'Color', pcol},1);
-            axis tight;
-            lt_plot_zeroline;
-             else
-           shadedErrorBar(t, frmean, frsem, {'Color', pcolmot},1);
-             end
-            
-        end
-    end
-    if overlayAllMotifs==1
-        title([birdname{1} '-enum' num2str(exptnum) '-unit' num2str(unitnum) '[' bregion ']']);
-                axis tight;
-            lt_plot_zeroline;
-else
-    linkaxes(hsplots, 'xy');
-    end
-end
-
-
-
-%% ====================== [ANALYSIS - eXTRACT, EACH UNIT ONE DATAPOINT]
-% === COLLECT MEAN RESPONSE TO A GIVEN MOTIF FROM A GIVEN BOS TYPE ACROSS
-% ALL UNITS
-
-% --- iterate over experiments and units.
-[indsgrp, indsgrp_unique] = lt_tools_grp2idx({DATSTRUCT.exptnum DATSTRUCT.unitnum});
-
-motifslist = unique(DATSTRUCT.motifnum);
-bostypelist = unique(DATSTRUCT.bostype);
-
-AllUnits_FRmat = {};
-AllUnits_FRmat_t = {};
-AllUnits_SylOnsets = {};
-AllUnits_SylOffsets = {};
-AllUnits_bostype = {};
-AllUnits_motifnum = [];
-AllUnits_exptnum = [];
-AllUnits_unitnum = [];
-AllUnits_bregions = {};
-
-for i=1:length(indsgrp_unique)
-    
-    for mm=motifslist'
-        for bb=1:length(bostypelist)
-            bosthis = bostypelist(bb);
-            
-            indsthis = indsgrp==indsgrp_unique(i) & DATSTRUCT.motifnum==mm & DATSTRUCT.bostype==bosthis;
-            if isempty(indsthis)
-                continue
-            end
-            
-            rendnum = DATSTRUCT.songrendnum(indsthis);
-            spks = DATSTRUCT.Spktimes(indsthis);
-            sylonsets = cell2mat(DATSTRUCT.Onstimes(indsthis));
-            syloffsets = cell2mat(DATSTRUCT.Offtimes(indsthis));
-            
-            minmaxtime = DATSTRUCT.minmax_time(indsthis,:);
-            
-            % === for pplotting.
-            birdname = unique(DATSTRUCT.birdname(indsthis));
-            exptnum = unique(DATSTRUCT.exptnum(indsthis));
-            unitnum = unique(DATSTRUCT.unitnum(indsthis));
-            bregion = SummaryBOS.expt(exptnum).bregions{unitnum};
-            motif = unique(DATSTRUCT.motifregexp(indsthis));
-            bostype = PARAMS.BOSnames{strcmp(PARAMS.BOSbirdname, birdname)}{bosthis};
-            
-            %% ========== PLOT FOR THIS UNIT, RESPONSES OVER ALL RENDITIONS OF
-            % THIS MOTIF
-            assert(length(unique(minmaxtime(:,1)))==1, 'assumes all predur from same alignment');
-            mintime = minmaxtime(1,1);
-            maxtime = min(minmaxtime(:,2));
-            
-            
-            [FRmat, t] = lt_neural_QUICK_Spk2FRmat(spks, mintime, maxtime);
-            
-            frmean = mean(FRmat,2);
-            frsem = lt_sem(FRmat');
-            
-            
-            % --- SYLS ONSET OFFSET
-            on = median(sylonsets,1);
-            off = median(syloffsets,1);
-            
-            
-            % =========================== COLLECT
-            AllUnits_FRmat = [AllUnits_FRmat; FRmat];
-            AllUnits_FRmat_t = [AllUnits_FRmat_t; t];
-            AllUnits_SylOnsets = [AllUnits_SylOnsets; sylonsets];
-            AllUnits_SylOffsets = [AllUnits_SylOffsets; syloffsets];
-            
-            AllUnits_motifnum = [AllUnits_motifnum; mm];
-            AllUnits_bostype = [AllUnits_bostype; bostype];
-            AllUnits_exptnum = [AllUnits_exptnum; exptnum];
-            AllUnits_unitnum = [AllUnits_unitnum; unitnum];
-            
-            AllUnits_bregions = [AllUnits_bregions; bregion];
-
-        end
-    end
-end
-
-
-%% ==================== [ANALYSIS - PLOT], MEAN RESPONSE OVER UNITS.
-% ===== will automatically go thru all motifs.
-
-exptlist = 1:3; % takes units from these experiments
-exptlist = 4:7; % takes units from these experiments
-bostype = 'fwd';
-bregionthis = 'RA';
-
-% --- make sure all are from same bird
-birdname = unique({SummaryBOS.expt(exptlist).birdname});
-assert(length(birdname)==1, 'all ext should be from one bird');
-
-
-figcount=1;
-subplotrows=4;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-
-% #########################################
-indsthis = strcmp(AllUnits_bregions, bregionthis) & ismember(AllUnits_exptnum, exptlist) ...
-    & strcmp(AllUnits_bostype, bostype);
-
-% ---- for each unit, get mean response to each mtoif
-frmat = AllUnits_FRmat(indsthis);
-frmat_t = AllUnits_FRmat_t(indsthis);
-motifnum = AllUnits_motifnum(indsthis);
-units = AllUnits_unitnum(indsthis);
-expt = AllUnits_exptnum(indsthis);
-units_unique = lt_tools_grp2idx({expt, units});
-
-% --- GET MEAN RESPONSE FOR EACH UNIT/MOTIF
-frmean = cellfun(@(x)mean(x,2), frmat, 'UniformOutput', 0);
-frsem = cellfun(@(x)lt_sem(x'), frmat,  'UniformOutput', 0);
-tmean = cellfun(@(x)mean(x,2), frmat_t, 'UniformOutput', 0);
-
-% --- TAKE MEAN ACROSS UNITS
-nummotifs = max(motifnum);
-hsplots = [];
-for mm=1:nummotifs
-    frthis = frmean(motifnum==mm);
-    tthis = tmean(motifnum==mm);
-    
-    ymean = mean(cell2mat(cellfun(@transpose, frthis, 'UniformOutput', 0)));
-    ysem = lt_sem(cell2mat(cellfun(@transpose, frthis, 'UniformOutput', 0)));
-    t = mean(cell2mat(cellfun(@transpose, tthis, 'UniformOutput', 0)));
-    
-    % ======== PLOT
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    motifthis = PARAMS.MotifsToGet{find(strcmp(PARAMS.MotifsToGet, birdname{1}))+1}{mm};
-    title([birdname{1} '-expt' num2str(exptlist) '-' motifthis '[' bregionthis ']']);
-   
-    shadedErrorBar(t, ymean, ysem, {'Color', 'k'}, 1);
-    
-    axis tight;
-    lt_plot_zeroline;
-end
-
-linkaxes(hsplot, 'xy');
-
-%% ==================== [ANALYSIS - PLOT], MEAN RESPONSE OVER UNITS.
-% ===== will automatically go thru all motifs.
-
-exptlist = 1:3; % takes units from these experiments
-bostype = 'fwd';
-bregionthis = 'LMAN';
-
-% --- make sure all are from same bird
-assert(length(unique({SummaryBOS.expt(exptlist).birdname}))==1, 'all ext should be from one bird');
-
-% ======== 
-indsthis = ismember(DATSTRUCT.exptnum, exptlist) & strcmp(DATSTRUCT.bostype_str, bostype) ...
-    & strcmp(DATSTRUCT.brainregion, bregionthis);
-
-
-
-%% ========================= [GOOD] - FIlter to get only units of interest.
-% ============= input desired
-
-exptlist_toget = 4:7; % takes units from these experiments
-bostype_toget = 'fwd';
-bregionthis_toget = 'RA';
-% motif_toget = '(a)abhh';
-motif_toget = '(j)jbhh';
-
-
-AllUnits = lt_neural_BOS_Filter(DATSTRUCT, SummaryBOS, PARAMS, ...
-    exptlist_toget, bostype_toget, bregionthis_toget, motif_toget);
-
-
-% ============ EXTRACT STATS ACROSS THESE UNITS 
-[Stats] = lt_neural_BOS_StatsUnits(AllUnits, SummaryBOS, PARAMS);
-
-
-% ======== PLOT
-figcount=1;
-subplotrows=4;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-birdname = unique({SummaryBOS.expt(exptlist_toget).birdname}); birdname = birdname{1};
-motifnum = unique(AllUnits.motifnum);
-pcol = 'k';
-
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-% hsplots = [hsplots; hsplot];
-motifthis = PARAMS.MotifsToGet{find(strcmp(PARAMS.MotifsToGet, birdname))+1}{motifnum};
-title([birdname '-expt' num2str(exptlist_toget) '-' motif_toget '[' bregionthis_toget ']']);
-
-lt_neural_QUICK_PlotSylPatches(Stats.sylon_median, Stats.syloff_median, [0 max(Stats.frate_mean)], 0, pcol);
-shadedErrorBar(Stats.frate_t, Stats.frate_mean, Stats.frate_sem, {'Color', pcol}, 1);
-
-axis tight;
-lt_plot_zeroline;
-linkaxes(hsplot, 'xy');
-
-
-%% ===================== [PLOT - GOOD] - each motif, mean across units
-ExptlistList = {[1:3], [4:7]};
-BosTypeList = {'fwd'};
-BregionList = {'LMAN', 'RA'};
-% MotifList = {'(a)abhh', '(j)jbhh'};
-MotifList = {'aa(b)hh', 'jj(b)hh'};
-
-figcount=1;
-subplotrows=4;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-
-% ============ iterate over: exptlist, bregion, bostype, motif
-hsplots = [];
-for j=1:length(ExptlistList)
-    exptlist = ExptlistList{j};
-    for jj=1:length(BosTypeList)
-        bostype = BosTypeList{jj};
-        for jjj=1:length(BregionList)
-            bregion = BregionList{jjj};
-            for k=1:length(MotifList)
-                motif = MotifList{k};
-                
-                [AllUnits, birdname] = lt_neural_BOS_Filter(DATSTRUCT, SummaryBOS, PARAMS, ...
-                    exptlist, bostype, bregion, motif);
-                
-                % ============ EXTRACT STATS ACROSS THESE UNITS
-                [Stats] = lt_neural_BOS_StatsUnits(AllUnits, SummaryBOS, PARAMS);
-                
-                motifnum = unique(AllUnits.motifnum);
-                pcol = 'k';
-                
-                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-                hsplots = [hsplots; hsplot];
-                title([birdname '-expt' num2str(exptlist) '-' motif '[' bregion ']']);
-                
-                lt_neural_QUICK_PlotSylPatches(Stats.sylon_median, ...
-                    Stats.syloff_median, [0 max(Stats.frate_mean)], 0, pcol);
-                
-                shadedErrorBar(Stats.frate_t, Stats.frate_mean, ...
-                    Stats.frate_sem, {'Color', pcol}, 1);
-                
-                axis tight;
-                lt_plot_zeroline;
-            end
-        end
-    end
-end
-                linkaxes(hsplots, 'xy');
-
-
-
-%% ====================== [ANALYSIS] - MOTIF MINUS MOTIF
-%  MOTIF 1 MINUS MOTIF 2
-motif1 = 'aa(b)hh';
-motif2 = 'jj(b)hh';
-
-ExptlistList = {[1:3], [4:7]};
-BosTypeList = {'fwd'};
-BregionList = {'LMAN', 'RA'};
-% MotifList = {'(a)abhh', '(j)jbhh'};
-MotifList = {'aa(b)hh', 'jj(b)hh'};
-
-figcount=1;
-subplotrows=4;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-
-% ============ iterate over: exptlist, bregion, bostype, motif
-hsplots = [];
-for j=1:length(ExptlistList)
-    exptlist = ExptlistList{j};
-    for jj=1:length(BosTypeList)
-        bostype = BosTypeList{jj};
-        for jjj=1:length(BregionList)
-            bregion = BregionList{jjj};
-            
-            pcol = 'k';
-            [AllUnitsMotifDiff, birdname] = lt_neural_BOS_MotifDiff(DATSTRUCT, SummaryBOS, PARAMS, ...
-                exptlist, bostype, bregion, motif1, motif2);
-            
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots; hsplot];
-            title([birdname '-expt' num2str(exptlist) '-' motif1 '-' motif2 '[' bregion ']']);
-            
-            % ======= plot difference for each unit
-            y = cell2mat(cellfun(@transpose, AllUnitsMotifDiff.frdiff, 'UniformOutput', 0));
-            t = AllUnitsMotifDiff.t;
-            plot(t{1}, y', 'Color', [0.7 0.7 0.7]);
-            
-            % ======= mean difference across units
-            ymean = mean(y,1);
-            ysem = lt_sem(y);
-            shadedErrorBar(t{1}, ymean, ysem, {'Color', pcol},1);
-            
-            % ====== plot syl patches
-            [AllUnits] = lt_neural_BOS_Filter(DATSTRUCT, SummaryBOS, PARAMS, ...
-                exptlist, bostype, bregion, motif1);
-            [Stats] = lt_neural_BOS_StatsUnits(AllUnits, SummaryBOS, PARAMS);
-            lt_neural_QUICK_PlotSylPatches(Stats.sylon_median, ...
-                Stats.syloff_median, [0 max(Stats.frate_mean)], 0, 'r');
-
-            [AllUnits] = lt_neural_BOS_Filter(DATSTRUCT, SummaryBOS, PARAMS, ...
-                exptlist, bostype, bregion, motif2);
-            [Stats] = lt_neural_BOS_StatsUnits(AllUnits, SummaryBOS, PARAMS);
-            lt_neural_QUICK_PlotSylPatches(Stats.sylon_median, ...
-                Stats.syloff_median, [0 max(Stats.frate_mean)], 0, 'b');
-
-            axis tight;
-            lt_plot_zeroline;
-        end
-    end
-end
-linkaxes(hsplots, 'xy');
-
-
-
+plot([1 2], Y', '-ko');
+title('each chan pair');
+xlabel('baseline -- BOS')
+ylabel('fwd minus rev');
+xlim([0 3]);
 
 %% ====================== [PLOT] RASTERS OVER TRIALS, ONE FOR EACH UNIT
+% NOTE: quite slow since plots a lot of rasters.
+
 close all;
 i = 2;
+lt_neural_BOS_Rasters;
 
-% =============
-nunits = size(SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset,2);
-nsongs = size(SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset, 1);
-
-figcount=1;
-subplotrows=4;
-subplotcols = 1;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-for nn=1:nunits
-    
-    
-    spks = SummaryBOS.expt(i).DAT_bysongrend.SpkTime_RelSongOnset(:,nn);
-    onsets = SummaryBOS.expt(i).DAT_bysongrend.SylOnsets;
-    offsets = SummaryBOS.expt(i).DAT_bysongrend.SylOffsets;
-    segextract = SummaryBOS.expt(i).DAT_bysongrend.SegextractFormat.unitnum(nn).segextract;
-    
-    % ====== 2) rasters
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    title('rasters [syls shaded]');
-    ylabel(['unit' num2str(nn)]);
-    for ss=1:nsongs
-        
-        % -- overlay onsets and offsets
-        ons = onsets{ss};
-        offs = offsets{ss};
-        lt_neural_QUICK_PlotSylPatches(ons, offs, ss);
-        lt_neural_PLOT_rasterline(spks{ss}, ss, 'r', 0);
-        %
-        %                        X=[segextract(j).WNonset_sec  segextract(j).WNoffset_sec ...
-        %                     segextract(j).WNoffset_sec  segextract(j).WNonset_sec];
-        %                 Y=[-j-0.4 -j-0.4 -j+0.4 -j+0.4];
-        
-    end
-    
-    % ====== 3) mean fr
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    title('rasters [syls shaded]');
-    %     segextract = segextract';
-    segextract = lt_neural_SmoothFR(segextract, [], [], [], [], [], PARAMS.flanktotake(1));
-    frmat = [segextract.FRsmooth_rate_CommonTrialDur];
-    x = segextract(1).FRsmooth_xbin_CommonTrialDur;
-    plot(x, frmat, 'Color', [0.7 0.7 0.7]);
-    frmean = mean(frmat,2);
-    frsem = lt_sem(frmat');
-    shadedErrorBar(x, frmean, frsem, {'Color', 'k'},1);
-    
-    % sanity check
-    if (0)
-        figure; hold on;
-        % ----
-        fr = segextract(1).FRsmooth_rate_CommonTrialDur;
-        t = segextract(1).FRsmooth_xbin_CommonTrialDur;
-        %        t = t+SummaryBOS.expt(1).DAT_bysongrend.TEdges(1);
-        plot(t, fr, '-k');
-        spks = SummaryBOS.expt(1).DAT_bysongrend.SpkTime_RelSongOnset{1,nn};
-        lt_neural_PLOT_rasterline(spks, 100, 'r', 0);
-        
-        % ----
-        fr = segextract(1).FRsmooth_rate_CommonTrialDur;
-        lt_neural_PLOT_rasterline(spks, 100, 'r', 0);
-    end
-    
-end
-
-%% ====================== [OLD] EXTRACT UNCLUSTERED NEURAL DATA
-% -- neural
-chanstoplot = [9 14 17];
-
-
-% --- 1) extract timestamps of digital signals indicating bos playback
-fid = fopen(batchfile);
-
-fline = fgetl(fid);
-
-% --------- for debugging, plotting all pulse data
-figcount=1;
-subplotrows=6;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-
-while ischar(fline)
-    
-    % ---------- load file
-    [amplifier_data,board_dig_in_data,frequency_parameters, ...
-        board_adc_data, board_adc_channels, amplifier_channels, ...
-        board_dig_in_channels, t_amplifier] = pj_readIntanNoGui(fline);
-    
-    fs = frequency_parameters.amplifier_sample_rate;
-    
-    % ================== extract syl pulses
-    if strcmp(chantype, 'dig')
-        ind = [board_dig_in_channels.chip_channel]==pulsechan;
-        pulsedat = board_dig_in_data(ind, :);
-    elseif strcmp(chantype, 'ana')
-        ind = [board_adc_channels.chip_channel]==pulsechan;
-        pulsedat = board_adc_data(ind, :);
-    end
-    
-    % ---------------------
-    if (1)
-        % --- plot pulse dat
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        
-        plot(pulsedat);
-        line(xlim, [threshold threshold], 'Color','r');
-    end
-    
-    
-    % ================================ IS THERE BOS IN THIS FILE? HOW MANY?
-    % GET ONSETS/OFFSETS
-    risetime
-    
-    
-    
-    % ====================== extract sound
-    songdat = board_adc_data([board_adc_channels.chip_channel]==audchan, :);
-    %     t= [1:length(songdat)]./fs;
-    %     lt_plot_spectrogram(songdat, fs, 0, 0);
-    %     plot(songdat, 'm');
-    plot((songdat-median(songdat)).^2);
-    
-    % ================ extract neural
-    if isempty(chanstoplot)
-        chans = [amplifier_channels.chip_channel];
-    else
-        chans = chanstoplot;
-    end
-    
-    
-    for i=chans
-        neurdat = amplifier_data([amplifier_channels.chip_channel]==i, :);
-        
-        
-        
-    end
-    
-    
-    
-    fline = fgetl(fid);
-end
-
-%% ============================= EXTRACT PRE-CLUSTERED NEURAL DATA
-% ---
-
-% -- defaults
-extractsound = 0;
-
-NeurDat = struct;
-numsampsAll = []; % to confirm that all data are aligned (samme num samps);
-fsAll = [];
-filenamesAll = {};
-
-for i = 1:length(ChansToGet)
-    cd(dirname);
-    chan = ChansToGet(i);
-    clust = ClustToGet(i);
-    
-    [SongDatTMP, NeurDatTMP, ParamsTMP] = lt_neural_ExtractDat(Batchname, chan, ...
-        extractsound, clust);
-    
-    % - convert from ms to sec
-    NeurDatTMP.spikes_cat.cluster_class(:,2) = ...
-        NeurDatTMP.spikes_cat.cluster_class(:,2)./1000;
-    
-    
-    % -
-    NeurDat.metaDat = NeurDatTMP.metaDat;
-    NeurDat.unit(i).spikes_cat = NeurDatTMP.spikes_cat;
-    NeurDat.unit(i).chan = chan;
-    NeurDat.unit(i).clust = clust;
-    NeurDat.dirname = dirname;
-    NeurDat.unit(i).BrainRegion = BrainRegion{i};
-    
-    % ====== sanity checks - all data are from same files
-    numsampsAll = [numsampsAll; [NeurDatTMP.metaDat.numSamps]];
-    fsAll = [fsAll; [NeurDatTMP.metaDat.fs]];
-    filenamesAll = [filenamesAll; [NeurDatTMP.metaDat.filename]];
-end
-
-% === sanity checks
-assert(size(unique(numsampsAll, 'rows'),1) ==1, 'problem');
-assert(size(unique(fsAll, 'rows'),1)==1, 'problem');
-assert(numel(unique(filenamesAll)) ==1, 'problem');
 
 
 %% +++++++++++++++++++++++++++++++++++++++++ OLD STUFF
-%% ========== TO MAKE BOS, ETC.
-%% given batch of BOS, plot responses for all channels
-clear all; close all;
 
-% ---------- PARAMS
-dirforBOS = '/bluejay5/egret_data/lucas/Test_Songs/BOS/'; % where .wav files are stored
-BOSfiles = {'pu69wh78_031117_102806.9552.cbin_DigOnsOff.wav', ...
-    'pu69wh78_031117_102806.9552.cbin_DigOnsOff_REV.wav'}; % filenames for all BOS files; left = sound, right = ons/offset pulses
-BOScodes = []; % code used for each BOS file, can be empty
-batchfile = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110917_RALMANOvernightLearn1/BOS_111017Night/batchtest';
+%% ====================== [OLD] OLD ANALYSES - IGNORE GENRALLY
 
-% --- channel for dig pulses and audio
-chantype = 'ana'; % dig or ana
-pulsechan = 1; % 0, 1, ... % for pulse\
-threshold = 1; % voltage, or rise and fall detection.
-
-% --- channel for song.
-audchan = 0;
-
-% -- neural
-chanstoplot = [9 14 17];
-
-
-% --- 1) extract timestamps of digital signals indicating bos playback
-fid = fopen(batchfile);
-
-fline = fgetl(fid);
-
-% --------- for debugging, plotting all pulse data
-figcount=1;
-subplotrows=6;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-
-while ischar(fline)
-    
-    % ---------- load file
-    [amplifier_data,board_dig_in_data,frequency_parameters, ...
-        board_adc_data, board_adc_channels, amplifier_channels, ...
-        board_dig_in_channels, t_amplifier] = pj_readIntanNoGui(fline);
-    
-    fs = frequency_parameters.amplifier_sample_rate;
-    
-    % ================== extract syl pulses
-    if strcmp(chantype, 'dig')
-        ind = [board_dig_in_channels.chip_channel]==pulsechan;
-        pulsedat = board_dig_in_data(ind, :);
-    elseif strcmp(chantype, 'ana')
-        ind = [board_adc_channels.chip_channel]==pulsechan;
-        pulsedat = board_adc_data(ind, :);
-    end
-    
-    % ---------------------
-    if (1)
-        % --- plot pulse dat
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        
-        plot(pulsedat);
-        line(xlim, [threshold threshold], 'Color','r');
-    end
-    
-    
-    % ================================ IS THERE BOS IN THIS FILE? HOW MANY?
-    % GET ONSETS/OFFSETS
-    risetime
-    
-    
-    
-    % ====================== extract sound
-    songdat = board_adc_data([board_adc_channels.chip_channel]==audchan, :);
-    %     t= [1:length(songdat)]./fs;
-    %     lt_plot_spectrogram(songdat, fs, 0, 0);
-    
-    
-    % ================ extract neural
-    if isempty(chanstoplot)
-        chans = [amplifier_channels.chip_channel];
-    else
-        chans = chanstoplot;
-    end
-    
-    
-    for i=chans
-        neurdat = amplifier_data([amplifier_channels.chip_channel]==i, :);
-        
-        
-        
-    end
-    
-    
-    
-    fline = fgetl(fid);
-end
-
-
+lt_neural_BOS_OLDSTUFF;
 
 %% ######################################################################
 %% ######################################################################
 %%  TO MAKE BOS FILES (with digitual pulse for syl onset/offset
 
-% ================== CAN CHOOSE TO PUT DIGITAL MARKER for each song (will
-% correspond to number put in file name)
-useRandID = 1; % number between 1 and 100, will put thi
-
-
-% ================ pu69
-% songfname = 'pu69wh78_031117_102806.9552.cbin'; % shoudl have notmat also
-% OutDir = '/bluejay5/egret_data/lucas/Test_Songs/BOS';
-
-% ================ wh72
-songfname = '/bluejay0/bluejay2/lucas/birds/wh72pk12/112518_TetheredCMOS/wh72pk12_251118_111424.3033.cbin'; % use this as is better quality (louder)
-% songfname = '/bluejay0/bluejay2/lucas/birds/wh72pk12/112818_RALMANLearn2/wh72pk12_281118_132419.445.cbin'; % this is longer though./..
-OutDir = '/bluejay5/lucas/analyses/BOS/Songs/BOS/wh72pk12';
-
-
-% ######################## convert to wavfile
-% -- chan 1 (song)
-[dat, fs] = ReadCbinFile(songfname);
-
-dat = dat/max(dat);
-
-% --- bandpass filter
-filter_type='hanningfirff';
-F_low  = 500;
-F_high = 8000;
-dat=bandpass(dat,fs,F_low,F_high,filter_type);
-datbeforesmth = dat;
-
-
-% -- chan 2 (onsets and offsets)
-notdat = load([songfname '.not.mat']);
-
-datdig = zeros(length(dat),1);
-
-for i=1:length(notdat.onsets)
-    ons = notdat.onsets(i);
-    off = notdat.offsets(i);
-    
-    % convert from ms to samps
-    
-    ons = round(fs*(ons/1000));
-    off = round(fs*(off/1000));
-    
-    datdig(ons:off) = 1;
-end
-
-
-
-% ######################## exponential falloff from sound onset and offset
-rolltime = 0.7;
-expsize = round(rolltime*fs);
-
-% -- roll on
-smth = exp(-((expsize:-1:1)-1)/(expsize/5));
-dat(1:expsize) = dat(1:expsize).*smth';
-
-% --- roll off
-smth = exp(-((1:expsize)-1)/(expsize/5));
-dat(end-expsize+1:end) = dat(end-expsize+1:end).*smth';
-
-figure; hold on;
-plot(datbeforesmth, 'k');
-plot(dat, 'c');
-plot(datdig, 'r');
-
-
-% ############# combine song and dig signal
-[tmpa, tmpb, tmpc] = fileparts(songfname);
-if useRandID==1
-    [datdig_ID, idthis] = lt_neural_BOS_StimID(datdig, fs);
-    fnameout = [tmpb tmpc '_DigOnsOff_randID' num2str(idthis) '.wav'];
-    fnameout = [OutDir '/' fnameout];
-    audiowrite(fnameout, [dat datdig_ID], fs, 'BitsPerSample', 16)
-else
-    fnameout = [tmpb tmpc '_DigOnsOff.wav'];
-    fnameout = [OutDir '/' fnameout];
-    audiowrite(fnameout, [dat datdig], fs, 'BitsPerSample', 16)
-end
-% wavwrite([dat datdig], fs, 16, fnameout);
-
-% ############# MAKE REVERSE VERSION
-dat_rev = flipud(dat);
-datdig_rev = flipud(datdig);
-
-if useRandID==1
-    [datdig_ID, idthis] = lt_neural_BOS_StimID(datdig_rev, fs);
-    fnameout = [tmpb tmpc '_DigOnsOff_REV_randID' num2str(idthis) '.wav'];
-    fnameout = [OutDir '/' fnameout];
-    %     fnameout = [tmpb tmpc '_DigOnsOff_randID' num2str(idthis) '.wav'];
-    audiowrite(fnameout, [dat_rev datdig_ID], fs, 'BitsPerSample', 16)
-else
-    %     fnameout = [tmpb tmpc '_DigOnsOff.wav'];
-    fnameout = [tmpb tmpc '_DigOnsOff_REV.wav'];
-    % fnameout = [songfname '_DigOnsOff_REV.wav'];
-    fnameout = [OutDir '/' fnameout];
-    audiowrite(fnameout, [dat_rev datdig_rev], fs, 'BitsPerSample', 16)
-    % wavwrite([dat_rev datdig_rev], fs, 16, fnameout);
-end
-
-% ########### plot
-figure; hold on;
-subplot(211); hold on;
-title('forward');
-plot(datbeforesmth, 'k');
-plot(dat, 'c');
-plot(datdig, 'r');
-
-subplot(212); hold on;
-title('rev');
-plot(dat_rev, 'c');
-plot(datdig_rev, 'r');
-
-
-%%   script for getting song names and syl positions, given only part of song name and the motif number
-% songlist = {'9.124', '46.203', '06.290'}; % partially enter strings for song names
-% motifnums = [4 2 4]; % rendition of the motif within the song
-% motifname = 'jbh'; % motif
-% sylnuminmotif = 3; % which syl do you want in the motif?
-songlist = {'46.203'}; % partially enter strings for song names
-motifnums = [4]; % rendition of the motif within the song
-motifname = 'abh'; % motif
-sylnuminmotif = 3; % which syl do you want in the motif?
-
-disp('--')
-
-songsout = {};
-sylposout = [];
-for i=1:length(songlist)
-    tmp = dir(['*' songlist{i} '*.cbin']);
-    disp(tmp(1).name);
-    assert(length(tmp)==1, 'asdfasd');
-    
-    % -- find location of desired syl
-    load([tmp(1).name '.not.mat']);
-    
-    inds = strfind(labels, motifname);
-    
-    sylpos = inds(motifnums(i))+sylnuminmotif-1;
-    
-    disp(['POSITION: ' num2str(sylpos)])
-    disp(labels(sylpos))
-    disp(labels(sylpos-2:sylpos+2))
-    
-    
-    songsout = [songsout tmp(1).name];
-    sylposout = [sylposout sylpos];
-end
-
-songsout
-sylposout
-
-%% ================== splicing syllables into a BOS file
-clear all; close all;
-songfname = '/bluejay5/lucas/birds/pu69wh78/110317_songs/pu69wh78_031117_102806.9552.cbin'; % --- load cbin file, splice syllables, then save as wav file
-inds_abh = [18 34 49]; % inds within the song (not.mat)
-inds_jbh = [28 43 58];
-sylstoremove = [inds_abh inds_jbh];
-
-% --- abh
-replfiles_abh_hi = {'pu69wh78_101117_223206.290.cbin', ...
-    'pu69wh78_101117_222646.203.cbin', 'pu69wh78_101117_203411.123.cbin'};
-notes_abh_hi = [38 48 17];
-
-replfiles_abh_lo = { 'pu69wh78_101117_114745.3.cbin', ...
-    'pu69wh78_101117_114457.188.cbin', 'pu69wh78_101117_114745.3.cbin'};
-notes_abh_lo = [36 83 36];
-
-% --- jbh
-replfiles_jbh_hi = {'pu69wh78_101117_212709.124.cbin', ...
-    'pu69wh78_101117_222646.203.cbin', 'pu69wh78_101117_223206.290.cbin'};
-notes_jbh_hi = [50 27 64];
-
-replfiles_jbh_lo = {'pu69wh78_101117_104946.142.cbin', ...
-    'pu69wh78_101117_114457.188.cbin', 'pu69wh78_101117_114745.3.cbin'};
-notes_jbh_lo = [27 51 71];
-
-
-% ReplacementFiles = {...
-%     '/bluejay5/lucas/birds/pu69wh78/110317_songs/pu69wh78_031117_102806.9552.cbin', ...
-%     '/bluejay5/lucas/birds/pu69wh78/110317_songs/pu69wh78_031117_102806.9552.cbin', ...
-%     '/bluejay5/lucas/birds/pu69wh78/110317_songs/pu69wh78_031117_102806.9552.cbin'}; % list of files - extract replacement syls (provide in order, of sylstoremove)
-% NotesToTake = [16 32 47]; % array, corresponding to Replacement files
-
-
-
-% ========================== 1) ab(h) high; jb(h) low
-ReplacementFiles = [replfiles_abh_hi replfiles_jbh_lo];
-NotesToTake = [notes_abh_hi notes_jbh_lo];
-suffix = 'aHI_jLO'; % for naming
-
-UseOriginalDigPulse = 0; % if 0, then resegements with new onsets, offsets.
-OutDir = '/bluejay5/egret_data/lucas/Test_Songs/BOS';
-
-lt_songtools_splicesyls(songfname, sylstoremove, ReplacementFiles, NotesToTake, ...
-    UseOriginalDigPulse, suffix, OutDir)
-
-
-
-% ========================== 1) ab(h) high; jb(h) high
-ReplacementFiles = [fliplr(replfiles_abh_hi) replfiles_jbh_hi];
-NotesToTake = [fliplr(notes_abh_hi) notes_jbh_hi];
-suffix = 'aHI_jHI'; % for naming
-
-UseOriginalDigPulse = 0; % if 0, then resegements with new onsets, offsets.
-OutDir = '/bluejay5/egret_data/lucas/Test_Songs/BOS';
-
-lt_songtools_splicesyls(songfname, sylstoremove, ReplacementFiles, NotesToTake, ...
-    UseOriginalDigPulse, suffix, OutDir)
-
-
-% ========================== 1) ab(h) lo; jb(h) high
-ReplacementFiles = [replfiles_abh_lo fliplr(replfiles_jbh_hi)];
-NotesToTake = [notes_abh_lo fliplr(notes_jbh_hi)];
-suffix = 'aLO_jHI'; % for naming
-
-UseOriginalDigPulse = 0; % if 0, then resegements with new onsets, offsets.
-OutDir = '/bluejay5/egret_data/lucas/Test_Songs/BOS';
-
-lt_songtools_splicesyls(songfname, sylstoremove, ReplacementFiles, NotesToTake, ...
-    UseOriginalDigPulse, suffix, OutDir)
-
-
-
-% ========================== 1) ab(h) lo; jb(h) lo
-ReplacementFiles = [fliplr(replfiles_abh_lo) fliplr(replfiles_jbh_lo)];
-NotesToTake = [fliplr(notes_abh_lo) fliplr(notes_jbh_lo)];
-suffix = 'aLO_jLO'; % for naming
-
-UseOriginalDigPulse = 0; % if 0, then resegements with new onsets, offsets.
-OutDir = '/bluejay5/egret_data/lucas/Test_Songs/BOS';
-
-lt_songtools_splicesyls(songfname, sylstoremove, ReplacementFiles, NotesToTake, ...
-    UseOriginalDigPulse, suffix, OutDir)
-
-
-
-
-
-
-
-
-
+lt_neural_BOS_MakeBOS_Script;

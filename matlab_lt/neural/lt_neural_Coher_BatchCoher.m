@@ -1,5 +1,5 @@
 function [C, t, f, phi,S12,S1,S2] = lt_neural_Coher_BatchCoher(lfpmat1, lfpmat2, version, t_LFP, ...
-    ntapers, movingwin, tw)
+    ntapers, movingwin, tw, welchn)
 %% lt 12/9/18 - calculates across trial coherence
 
 % lfpmat, samples x trials
@@ -10,6 +10,8 @@ function [C, t, f, phi,S12,S1,S2] = lt_neural_Coher_BatchCoher(lfpmat1, lfpmat2,
 % over trials.
 
 % t_LFP, time base for LFP;'
+
+% welch's params
 
 %%
 % === chronux p[arams

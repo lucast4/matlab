@@ -1,5 +1,5 @@
 function indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday, firstswitchofday)
+    firstswitchfortarget_withinday, firstswitchofday, birdtoget)
 %% lt 12/16/18 - FIND DATA THAT MATCH CRITERIA OF SWITCH TYPE
 % == will consider it a match if EVERY target motif for a given switch
 % pasess criterion.
@@ -12,6 +12,10 @@ function indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, 
 if ~exist('firstswitchofday', 'var')
     firstswitchofday = 0; % if 1, then must be first switch out of any target.
 end
+
+if ~exist('birdtoget', 'var')
+    birdtoget = [];
+end
 %% hand entered things that should not be included...
 
 % === wh72pk12, RALMANLearn3, switch 7 should be excluded becuase show
@@ -22,6 +26,13 @@ end
 indtoget_b_e_s = [];
 for j=1:length(SwitchStruct.bird)
     birdname = SwitchStruct.bird(j).birdname;
+    
+    if ~isempty(birdtoget)
+        if ~ismember(j, birdtoget)
+            disp(['SKIPPING bird ' num2str(j)]);
+            continue
+        end
+    end
     for jj=1:length(SwitchStruct.bird(j).exptnum)
         exptname = SwitchStruct.bird(j).exptnum(jj).exptname;
         
@@ -35,6 +46,11 @@ for j=1:length(SwitchStruct.bird)
                 continue
                 % excluded becuase show
                 % weird opposite direction learning.
+%             elseif strcmp(birdname, 'gr48bu5') & strcmp(exptname, 'RALMANLearn3')
+%                 continue
+%             elseif strcmp(birdname, 'wh72pk12') & strcmp(exptname, 'RALMANLearn6')
+%                 continue
+                % --- no learning.
             end
             
             % ##################################

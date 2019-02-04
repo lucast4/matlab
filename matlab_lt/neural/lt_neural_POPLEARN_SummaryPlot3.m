@@ -9,15 +9,15 @@ for i=1:numbirds
     birdname = SwitchStruct.bird(i).birdname;
     for ii=1:numexpts
         
-% --- initiate figure        
+        % --- initiate figure
         figcount=1;
-subplotrows=3;
-subplotcols=5;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-% =========== go thru switches
+        subplotrows=3;
+        subplotcols=5;
+        fignums_alreadyused=[];
+        hfigs=[];
+        hsplots = [];
+        
+        % =========== go thru switches
         exptname = SwitchStruct.bird(i).exptnum(ii).exptname;
         
         numswitches = length(OUTSTRUCT.bird(i).expt(ii).swnum);
@@ -43,7 +43,7 @@ hsplots = [];
             if ~any([swthis.neurFakeID.haspresongs]) & ...
                     ~any([swthis.neurFakeID.haspostsongs]);
                 %  then no songs, so skip
-               continue 
+                continue
             end
             
             % ##################################### PRE
@@ -62,7 +62,7 @@ hsplots = [];
                 
                 % ==== what class is this motif?
                 sylthis = motiflist{mm};
-
+                
                 % -------------- TARG?
                 if any(strcmp(sylthis, targsyls))==1
                     istarg =1;
@@ -106,36 +106,37 @@ hsplots = [];
             % ================== PLOT HISTOGRAM
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname ',' exptname ',sw' num2str(ss) ',[' epochthis ']']);
+            xlabel('xcov');
             
             if ~isempty(AllCC)
-            % === annotate targets and switch status
-            lt_plot_annotation(1, swthis.learningContingencies);
-            
-            % --- get xbins
-            [Ybinned, Xcenters, hbar]=lt_plot_histogram(AllCC, ...
-                [], 0, 0, 0.5, 0, [0.6 0.6 0.6]);
-            
-            % --- diff syls
-            indstmp = AllIsTarg==0 & AllIsSame==0;
-            lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, [0.7 0.7 0.7]);
-            
-            % --- histogram of target
-            indstmp = AllIsTarg==1;
-            targmotifs = unique(AllMotifNum(indstmp));
-            pcols = lt_make_plot_colors(length(targmotifs), 0,0);
-            for mmm=1:length(targmotifs)
-                indstmp = AllIsTarg==1 & AllMotifNum==targmotifs(mmm);
-                pcol = pcols{mmm};
+                % === annotate targets and switch status
+                lt_plot_annotation(1, swthis.learningContingencies);
+                
+                % --- get xbins
+                [Ybinned, Xcenters, hbar]=lt_plot_histogram(AllCC, ...
+                    [], 0, 0, 0.5, 0, [0.6 0.6 0.6]);
+                
+                % --- diff syls
+                indstmp = AllIsTarg==0 & AllIsSame==0;
                 lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, pcol);
-                lt_plot_annotation(2, ['targ ' motiflist{targmotifs(mmm)}], pcol);
-            end
-            
-            % --- histogram of same types
-            indstmp = AllIsSame==1 & AllIsTarg==0;
-            lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, [0.3 0.3 0.7]);
+                    Xcenters, 1, 0.4, 0.5, 1, [0.7 0.7 0.7]);
+                
+                % --- histogram of target
+                indstmp = AllIsTarg==1;
+                targmotifs = unique(AllMotifNum(indstmp));
+                pcols = lt_make_plot_colors(length(targmotifs), 0,0);
+                for mmm=1:length(targmotifs)
+                    indstmp = AllIsTarg==1 & AllMotifNum==targmotifs(mmm);
+                    pcol = pcols{mmm};
+                    lt_plot_histogram(AllCC(indstmp), ...
+                        Xcenters, 1, 0.4, 0.5, 1, pcol);
+                    lt_plot_annotation(2, ['targ ' motiflist{targmotifs(mmm)}], pcol);
+                end
+                
+                % --- histogram of same types
+                indstmp = AllIsSame==1 & AllIsTarg==0;
+                lt_plot_histogram(AllCC(indstmp), ...
+                    Xcenters, 1, 0.4, 0.5, 1, [0.3 0.3 0.7]);
             end
             
             
@@ -156,7 +157,7 @@ hsplots = [];
                 
                 % ==== what class is this motif?
                 sylthis = motiflist{mm};
-
+                
                 % -------------- TARG?
                 if any(strcmp(sylthis, targsyls))==1
                     istarg =1;
@@ -202,37 +203,37 @@ hsplots = [];
             title([birdname ',' exptname ',sw' num2str(ss) ',[' epochthis ']']);
             
             if ~isempty(AllCC)
-            % === annotate targets and switch status
-            lt_plot_annotation(1, swthis.learningContingencies);
-            
-            % --- get xbins
-            [Ybinned, Xcenters, hbar]=lt_plot_histogram(AllCC, ...
-                [], 0, 0, 0.5, 0, [0.6 0.6 0.6]);
-            
-            % --- diff syls
-            indstmp = AllIsTarg==0 & AllIsSame==0;
-            lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, [0.7 0.7 0.7]);
-            
-            % --- histogram of target
-            indstmp = AllIsTarg==1;
-            targmotifs = unique(AllMotifNum(indstmp));
-            pcols = lt_make_plot_colors(length(targmotifs), 0,0);
-            for mmm=1:length(targmotifs)
-                indstmp = AllIsTarg==1 & AllMotifNum==targmotifs(mmm);
-                pcol = pcols{mmm};
+                % === annotate targets and switch status
+                lt_plot_annotation(1, swthis.learningContingencies);
+                
+                % --- get xbins
+                [Ybinned, Xcenters, hbar]=lt_plot_histogram(AllCC, ...
+                    [], 0, 0, 0.5, 0, [0.6 0.6 0.6]);
+                
+                % --- diff syls
+                indstmp = AllIsTarg==0 & AllIsSame==0;
                 lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, pcol);
-                lt_plot_annotation(2, ['targ ' motiflist{targmotifs(mmm)}], pcol);
+                    Xcenters, 1, 0.4, 0.5, 1, [0.7 0.7 0.7]);
+                
+                % --- histogram of target
+                indstmp = AllIsTarg==1;
+                targmotifs = unique(AllMotifNum(indstmp));
+                pcols = lt_make_plot_colors(length(targmotifs), 0,0);
+                for mmm=1:length(targmotifs)
+                    indstmp = AllIsTarg==1 & AllMotifNum==targmotifs(mmm);
+                    pcol = pcols{mmm};
+                    lt_plot_histogram(AllCC(indstmp), ...
+                        Xcenters, 1, 0.4, 0.5, 1, pcol);
+                    lt_plot_annotation(2, ['targ ' motiflist{targmotifs(mmm)}], pcol);
+                end
+                
+                % --- histogram of same types
+                indstmp = AllIsSame==1 & AllIsTarg==0;
+                lt_plot_histogram(AllCC(indstmp), ...
+                    Xcenters, 1, 0.4, 0.5, 1, [0.3 0.3 0.7]);
             end
             
-            % --- histogram of same types
-            indstmp = AllIsSame==1 & AllIsTarg==0;
-            lt_plot_histogram(AllCC(indstmp), ...
-                Xcenters, 1, 0.4, 0.5, 1, [0.3 0.3 0.7]);
-            end
             
-
         end
     end
 end

@@ -23,6 +23,9 @@ NumSyls = length(motif_regexpr_str);
 targnum = find(strcmp(motif_regexpr_str, TargSyls{1}));
 DatenumsAll = [];
 for i=1:NumNeurons
+    if isempty(MOTIFSTATS.neurons(i).motif(targnum).SegmentsExtract)
+        continue
+    end
     datenumstmp = [MOTIFSTATS.neurons(i).motif(targnum).SegmentsExtract.song_datenum];
     
     DatenumsAll = [DatenumsAll datenumstmp];
@@ -40,6 +43,9 @@ plotcols = lt_make_plot_colors(NumNeurons, 0, 0);
 hsplots = [];
 for i=1:NumNeurons
     
+    if isempty(MOTIFSTATS.neurons(i).motif(targnum).SegmentsExtract)
+        continue
+    end
     hsplot1 = lt_subplot(3, 1,1:2); hold on;
     hsplots = [hsplots hsplot1];
     plotcols_targs = lt_make_plot_colors(length(TargSyls), 0, 0);

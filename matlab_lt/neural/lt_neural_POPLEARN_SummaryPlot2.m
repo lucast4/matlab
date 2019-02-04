@@ -38,7 +38,13 @@ for i=1:numbirds
                 if isempty(DAT.(epoch))
                     continue
                 end
+                if length(DAT.(epoch).motif)<m
+                    continue
+                end
                 
+                if isempty(DAT.(epoch).motif(m).neurset)
+                    continue
+                end
                 numsets = length(DAT.(epoch).motif(m).neurset);
                 
                 % --- COLLECT ALL Xcov (even across diff sets of neurons pairs)
@@ -68,6 +74,14 @@ for i=1:numbirds
                 DAT = OUTSTRUCT.bird(i).expt(ii).swnum(ss);
                 
                 if isempty(DAT.(epoch))
+                    continue
+                end
+                
+                                if length(DAT.(epoch).motif)<m
+                    continue
+                end
+
+                if isempty(DAT.(epoch).motif(m).neurset)
                     continue
                 end
                 

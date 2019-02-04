@@ -1,5 +1,5 @@
 function lt_neural_FullMotif_SmFR(MOTIFSTATS_Compiled, birdtoplot, ...
-    motiftoplot, plotcv, bregionsToPlot, plotRaw)
+    motiftoplot, plotcv, bregionsToPlot, plotRaw, doshuffle, whichhalf)
 
 
 lt_figure; hold on;
@@ -65,6 +65,13 @@ for ii=1:numneurons
     if isempty(segextract)
         continue
     end
+%     
+%     if doshuffle==1
+%         for tt=1:length(segextract)
+%             
+%             segextract(tt).spk_Times 
+%             
+%     end
     
     % -- make sure has been timewarped
     assert(isfield(segextract, 'LinTWSeg_OriginalSpkTimes'), 'need to time warp!!');
@@ -106,12 +113,12 @@ for ii=1:numneurons
     offsets = segextract(1).motifsylOffsets;
     
     if plotRaw==1
-    for j=1:length(onsets)
-        line([onsets(j) offsets(j)], [3 3], 'Color', 'k', 'LineWidth', 4);
-        line([onsets(j) offsets(j)], [YLIM(2)-4 YLIM(2)-4], 'Color', 'k', 'LineWidth', 4);
-        line([onsets(j) onsets(j)], ylim, 'Color', 'r');
-        line([offsets(j) offsets(j)], ylim, 'Color', 'r');
-    end
+        for j=1:length(onsets)
+            line([onsets(j) offsets(j)], [3 3], 'Color', 'k', 'LineWidth', 4);
+            line([onsets(j) offsets(j)], [YLIM(2)-4 YLIM(2)-4], 'Color', 'k', 'LineWidth', 4);
+            line([onsets(j) onsets(j)], ylim, 'Color', 'r');
+            line([offsets(j) offsets(j)], ylim, 'Color', 'r');
+        end
     end
     
     % =========================== COLLECT FOR PLOTTING
@@ -122,7 +129,24 @@ for ii=1:numneurons
 end
 
 if plotRaw==1
-linkaxes(hsplots, 'x');
+    linkaxes(hsplots, 'x');
+end
+
+
+%% ===== maximum timepoint shared by all trial
+
+% XMAX = 
+%% ================== SPLIT DATA BY HALVES?
+
+if whichhalf==1
+    
+    AllFRsm
+    
+elseif whichhalf==2
+    
+elseif isempty(whichhalf)
+   % then keep all data.
+  
 end
 
 %% =================== each brain region own plot, overlay all neurons
@@ -137,7 +161,7 @@ for i=1:length(bregionsToPlot)
     title(bregion);
     
     indstoplot = find(strcmp(AllBregion, bregion));
-        
+    
     tmp = cellfun('length', AllFRsm(indstoplot));
     xmax = min(tmp);
     
@@ -156,7 +180,7 @@ for i=1:length(bregionsToPlot)
         
         % ------- plot
         plot(x,y+3*(k-1), '-', 'Color', pcol, 'LineWidth', 2);
-% plot(x,y+3*(k-1), '-', 'Color', 'k', 'LineWidth', 2);
+        % plot(x,y+3*(k-1), '-', 'Color', 'k', 'LineWidth', 2);
         
     end
     
@@ -172,11 +196,55 @@ for i=1:length(bregionsToPlot)
         line([onsets(j) onsets(j)], ylim, 'Color', 'k');
         line([offsets(j) offsets(j)], ylim, 'Color', 'k');
     end
-
+    
 end
 
 %%
-% ======================== PLOT OVELRAY
+if doztransform==1
+    AllFRsm = cellfun(@zscore, AllFRsm, 'UniformOutput', 0);
+    AllFRsmActual = cellfun(@zscore, AllFRsmActual, 'UniformOutput', 0);
+end
+
+%% ================= [HEAT MAP, OVER ALL NEURONS]
+
+lt_figure; hold on;
+xmax = min(cellfun('length', AllFRsm));
+
+% ======================
+for i=1:length(bregionsToPlot)
+    bregion = bregionsToPlot{i};
+    
+    lt_subplot(2,1,i); hold on;
+    title(bregion);
+    
+    indstoplot = find(strcmp(AllBregion, bregion));
+    
+    %     tmp = cellfun('length', AllFRsm(indstoplot));
+    
+    y = cellfun(@(x)x(1:xmax)', AllFRsm(indstoplot), 'UniformOutput', 0);
+    y = cell2mat(y);
+    x = 0:0.001:0.001*(size(y,2)-1);
+    xx = 1:size(y,1);
+    imagesc(x, xx, y, [-3 3]);
+    lt_plot_colormap('centered');
+    colorbar('EastOutside');
+    
+    % === overlay onsets/offsets
+    onsets = median(AllOnsets,1);
+    offsets = median(AllOffsets,1);
+    axis tight
+    YLIM = ylim;
+    
+    for j=1:length(onsets)
+        line([onsets(j) offsets(j)], [YLIM(1)+1 YLIM(1)+1], 'Color', 'k', 'LineWidth', 4);
+        line([onsets(j) offsets(j)], [YLIM(2)-1 YLIM(2)-1], 'Color', 'k', 'LineWidth', 4);
+        line([onsets(j) onsets(j)], ylim, 'Color', 'k');
+        line([offsets(j) offsets(j)], ylim, 'Color', 'k');
+    end
+    
+end
+
+%%  ======================== PLOT OVELRAY
 lt_figure; hold on;
 
 % ====================== 1) overlay all trials
@@ -306,8 +374,9 @@ end
 
 
 
-% ====================== CROSS CORRELATION
+%% ====================== CROSS CORRELATION
 xcovwindmax = 0.1;
+xbin = 0.001;
 if plotcv==0
     
     % --- only do if is for FR
@@ -319,7 +388,7 @@ if plotcv==0
     for j=indstoplot'
         
         y = AllFRsm{j}(1:xmax);
-        x = 0:0.001:0.001*(length(y)-1);
+        %         x = 0:0.001:0.001*(length(y)-1);
         
         % -------- z-transform fr
         if doztransform==1
@@ -337,7 +406,7 @@ if plotcv==0
     for j=indstoplot'
         
         y = AllFRsm{j}(1:xmax);
-        x = 0:0.001:0.001*(length(y)-1);
+        %         x = 0:0.001:0.001*(length(y)-1);
         
         % -------- z-transform fr
         if doztransform==1
@@ -351,9 +420,205 @@ if plotcv==0
     
     % ================ DO XCORR
     [cc, lags] = xcov(Ybyregion(1,:), Ybyregion(2,:), xcovwindmax/0.001, 'coeff');
+    %     [cc, lags] = xcov(Ybyregion(1,:), Ybyregion(2,:), xcovwindmax/0.001, 'unbiased');
+    %     [cc, lags] = xcov(Ybyregion(1,:), Ybyregion(2,:), xcovwindmax/0.001);
     lt_figure; hold on ;
+    lt_subplot(2,2,1); hold on;
     xlabel('LMAN ---- RA');
     ylabel('xcov');
     plot(lags*0.001, cc, '-k');
+    axis tight;
     lt_plot_zeroline_vert;
+    
+    
+    % ================ GET COHERENCE
+    % ======== CHORNUX PARAMS
+    lt_switch_chronux(1);
+    
+    params = struct;
+    params.Fs = 1/xbin;
+    %     tw = 5;
+    %     params.tapers = [tw 2*tw-1];
+    params.tapers = [5 xmax/params.Fs 1];
+    params.fpass = [5 60];
+    params.err = [2 0.05];
+    
+    [C,phi,S12,S1,S2,f, confC,phistd,Cerr] = coherencyc(Ybyregion(1,:), Ybyregion(2,:), ...;
+        params);
+    
+    %     lt_figure; hold on;
+    lt_subplot(2,2,2); hold on;
+    %     plot(f, C, 'g');
+    ylabel('coherence');
+    xlabel('f');
+    shadedErrorBar(f, C, Cerr, {'Color', 'k'},1);
+    axis tight;
+    
+    
+    % ================= SPEC
+    % ------- LMAN
+    [S,f_spec]=mtspectrumc(Ybyregion(1,:),params);
+    lt_subplot(2,2,3); hold on;
+    title('SPEC, LMAN');
+    xlabel('f');
+    ylabel('spec power');
+    plot(f_spec, S);
+    axis tight;
+    
+    % ------- RA
+    [S,f_spec]=mtspectrumc(Ybyregion(2,:),params);
+    lt_subplot(2,2,4); hold on;
+    title('SPEC, RA');
+    xlabel('f');
+    ylabel('spec power');
+    plot(f_spec, S);
+    axis tight;
+    lt_switch_chronux(0);
 end
+
+
+%% =================== ztramnsform all data if wanted
+if doztransform==1
+    AllFRsm = cellfun(@zscore, AllFRsm, 'UniformOutput', 0);
+    AllFRsmActual = cellfun(@zscore, AllFRsmActual, 'UniformOutput', 0);
+end
+%% ================= XCOV AND COHERENCE ACROSS ALL PAIRS.
+xcovwindmax = 0.1;
+xbin = 0.001;
+if plotcv==0
+    
+    xcorr_all = [];
+    coh_all = [];
+    phi_all = [];
+    spec_all = [];
+    
+    % ======== CHORNUX PARAMS
+    lt_switch_chronux(1);
+    
+    params = struct;
+    params.Fs = 1/xbin;
+    %     tw = 5;
+    %     params.tapers = [tw 2*tw-1];
+    params.tapers = [5 xmax/params.Fs 1];
+    params.fpass = [5 60];
+    params.err = [2 0.05];
+    
+    
+    % ============= RUN
+    ncase = length(AllBregion);
+    for i=1:ncase
+        disp(i);
+        for ii=i+1:ncase
+            
+            
+            if strcmp(AllBregion{i}, 'LMAN') & strcmp(AllBregion{ii}, 'RA')
+                dat1 = AllFRsm{i}(1:xmax);
+                dat2 = AllFRsm{ii}(1:xmax);
+            elseif strcmp(AllBregion{i}, 'RA') & strcmp(AllBregion{ii}, 'LMAN')
+                dat1 = AllFRsm{ii}(1:xmax);
+                dat2 = AllFRsm{i}(1:xmax);
+            else
+                continue
+            end
+            
+            % ===================== 1) XCORR
+            [cc, lags] = xcov(dat1, dat2, xcovwindmax/xbin, 'coeff');
+            xcorr_all = [xcorr_all; cc'];
+            
+            % ===================== 2) COHERENCE
+            [C,phi,S12,S1,S2,f, confC,phistd,Cerr] = coherencyc(dat1, dat2, ...;
+                params);
+            coh_all = [coh_all; C'];
+            phi_all = [phi_all; phi'];
+            
+            
+            
+            
+        end
+        
+        % ===================== 3) SPECTRUM
+        datthis = AllFRsm{i}(1:xmax);
+        [S,f_spec]=mtspectrumc(datthis,params);
+        spec_all = [spec_all; S'];
+    end
+    
+    
+    % ############ PLOT
+    lt_switch_chronux(0);
+    
+    lt_figure; hold on;
+    
+    % =====
+    lt_subplot(2,2,1); hold on;
+    title('xcorr (coeff)');
+    xlabel('lag(s) [LMAN leads ---- RA leads]');
+    plot(lags*xbin, xcorr_all', '-', 'Color', [0.7 0.7 0.7]);
+    ymean = mean(xcorr_all, 1);
+    ysem = lt_sem(xcorr_all);
+    shadedErrorBar(lags*xbin, ymean, ysem, {'Color', 'k'},1);
+    axis tight;
+    lt_plot_zeroline_vert;
+    
+    
+    % =====
+    lt_subplot(2,2,2); hold on;
+    title('coherence, all chan pairs');
+    xlabel('f');
+    ylabel('coh');
+    plot(f, coh_all', '-', 'Color', [0.7 0.7 0.7]);
+    ymean = mean(coh_all, 1);
+    ysem = lt_sem(coh_all);
+    shadedErrorBar(f, ymean, ysem, {'Color', 'k'},1);
+    axis tight;
+    %     lt_plot_zeroline_vert;
+    
+    % =====
+    lt_subplot(2,2,3); hold on;
+    title('SPEC, LMAN');
+    xlabel('f');
+    ylabel('spec power');
+    indstmp = strcmp(AllBregion, 'LMAN');
+    %     y = 10*log10(spec_all(indstmp,:));
+    y = spec_all(indstmp,:);
+    plot(f_spec, y', '-', 'Color', [0.7 0.7 0.7]);
+    ymean = mean(y, 1);
+    ysem = lt_sem(y);
+    shadedErrorBar(f_spec, ymean, ysem, {'Color', 'k'},1);
+    axis tight;
+    %     lt_plot_zeroline_vert;
+    
+    
+    % =====
+    lt_subplot(2,2,4); hold on;
+    title('SPEC, RA');
+    xlabel('f');
+    ylabel('spec power');
+    indstmp = strcmp(AllBregion, 'RA');
+    %     y = 10*log10(spec_all(indstmp,:));
+    y = spec_all(indstmp,:);
+    plot(f_spec, y', '-', 'Color', [0.7 0.7 0.7]);
+    ymean = mean(y, 1);
+    ysem = lt_sem(y);
+    shadedErrorBar(f_spec, ymean, ysem, {'Color', 'k'},1);
+    axis tight;
+    %     lt_plot_zeroline_vert;
+    
+    % ============ COHERENCE PHI
+    lt_figure; hold on;
+    lt_subplot(2,2,1); hold on;
+    xlabel('f');
+    ylabel('phi (pos = RA lead) [std]');
+%     plot(f, phi_all', '-', 'Color', [0.7 0.7 0.7]);
+%     circ_stats(phi_all(1,:), []); 
+    ymean = circ_mean(phi_all, [], 1);
+    ystd = circ_std(phi_all, [], [], 1);
+    shadedErrorBar(f, ymean, ystd, {'Color', 'k'}, 1);
+    axis tight;
+    lt_plot_zeroline;
+end
+
+
+
+
+
+

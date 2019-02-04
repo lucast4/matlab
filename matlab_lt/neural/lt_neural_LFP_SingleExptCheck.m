@@ -1,6 +1,6 @@
 %% ++++++++++++++ 1) COHSCALAR, OVER TRIALS
 % close all;
-BirdToPlot =3;
+BirdToPlot =1;
 plotSameTypesOnly = 0;
 
 for i=1:length(SummaryStruct.birds)
@@ -150,14 +150,17 @@ for i=1:length(SummaryStruct.birds)
 end
 
 
-%% ++++++++++++++ 2) RAW NEURAL DATA
+%% ++++++++++++++ 2) RAW NEURAL DATA [i.e. LFP traces]
+
 %         birdplot = 'pu69wh78';
 %         exptplot = 'RALMANlearn1';
-birdplot = 'wh72pk12';
-exptplot = 'RALMANLearn3';
-swplot = 11;
+birdplot = 'gr48bu5';
+exptplot = 'RALMANLearn6';
+swplot = 1;
 motifplot = []; % [string] leave blank for target
 
+
+% #####################################################
 i = find(strcmp({SummaryStruct.birds.birdname}, birdplot));
 ii = find(strcmp({SummaryStruct.birds(i).exptnum_pop.exptname}, exptplot));
 ss = swplot;
@@ -219,7 +222,7 @@ extrapad = 0.05; % seconds, pre and post...
 
 % ============ 2) FOR BASE AND WN, PLOT N TRIALS OF LFP, NEURAL
 %     close all;
-ntoplot = 10; % trials pre and post
+ntoplot = 5; % trials pre and post
 filt_low = 20;
 filt_hi = 35;
 % filt_fs = fs;

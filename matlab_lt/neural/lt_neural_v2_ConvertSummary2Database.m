@@ -1,7 +1,14 @@
 function [NeuronDatabase, SummaryStruct_filtered] = ...
     lt_neural_v2_ConvertSummary2Database(BirdsToKeep, BrainArea, ExptToKeep, ...
     RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
-    extractpreDatenums)
+    extractpreDatenums, onlySpikes)
+%%
+if onlySpikes==0
+    disp('not sure what to do with wh72 - some chans multiple extractions, LFP vs spikes');
+    pause;
+end
+disp('NOTE: if OnlySpikes=1, then this will not work for any birds that added after gr48bu5, since assumes that any bird other than gr48bu5 and wh72pk12 are all spike data (which is true)');
+pause
 %% lt 12/1/17 - for RA, added this, so extracts both SAm/Mel and my RA dat
 
 %% TO DO:
@@ -34,10 +41,10 @@ if isempty(BirdsToKeep)
 end
 
 if isempty(BrainArea);
-%     BrainArea = {};
-            %  DEFAULT IS TO ONLY KEEP IF IS SONG SYSTEMS
-            BrainArea = {'HVC', 'RA', 'LMAN', 'X'};
-
+    %     BrainArea = {};
+    %  DEFAULT IS TO ONLY KEEP IF IS SONG SYSTEMS
+    BrainArea = {'HVC', 'RA', 'LMAN', 'X'};
+    
 end
 
 if ~exist('BatchesDesired', 'var')
@@ -45,7 +52,7 @@ if ~exist('BatchesDesired', 'var')
 end
 
 
-if ~exist('ExptToKeep', 'var');
+if ~exist('ExptToKeep', 'var')
     ExptToKeep = {};
 end
 
@@ -86,7 +93,7 @@ for i=1:numbirds
     for ii=1:numneurons
         
         % ======== note that is not Sam/mel data
-%         SummaryStruct.birds(i).neurons(ii).isRAsobermel = 0; 
+        %         SummaryStruct.birds(i).neurons(ii).isRAsobermel = 0;
         
         if ~isempty(BrainArea)
             if ~any(strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_Location, BrainArea))
@@ -181,8 +188,51 @@ for i=1:numbirds
             end
         end
         
+        % ============== ONLY SPIKES?
+        if onlySpikes==1
+            
+            if strcmp(SummaryStruct.birds(i).birdname, 'wh72pk12')
+                % ---- if is "LFP, tjhen skip
+                if strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, 'LF')
+                    continue
+                    
+                    % ---- if doesn't have entyr, then skip (since is LFP, I
+                    % did not give entry earlier on, and those were all LFP)
+                elseif isempty(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType)
+                    continue
+                    
+                    
+                    % --- if is MU or SU, then continue
+                elseif ismember(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, {'MU', 'SU'})
+                    disp('is spikes, keeping');
+                    % --- good
+                else
+                    disp('PROBLEM - what cell type is this?')
+                    pause;
+                end
+                
+            elseif strcmp(SummaryStruct.birds(i).birdname, 'gr48bu5')
+                if strcmp(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, 'LF')
+                    continue
+                elseif ismember(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, {'MU', 'SU'})
+                    disp('is spikes, keeping');
+                else
+                    disp('PROBLEM - what cell type is this?')
+                    pause;
+                end
+            else
+                % ---- if is any bird other than wh72, then they are
+                % allspikes..
+            end
+        elseif onlySpikes==2
+            % skip if is both wh72 and (SU or MU)
+            if strcmp(birdname, 'wh72pk12') & ...
+                    ismember(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, {'MU', 'SU'})
+                continue
+            end
+        end
         
-        
+            
         tmpstruct = SummaryStruct.birds(i).neurons(ii);
         disp(['---- EXTRACTING TO NEURON DATABASE ... ' SummaryStruct.birds(i).birdname ...
             ' neuron ' num2str(ii)]);
@@ -227,7 +277,7 @@ for i=1:numbirds
 end
 
 % ========== IF ANY BIRDS EMPTY, REMOVE
-if isfield(SummaryStruct_filtered, 'birds');
+if isfield(SummaryStruct_filtered, 'birds')
     birdstoremove = [];
     for i=1:length(SummaryStruct_filtered.birds)
         if isempty(SummaryStruct_filtered.birds(i).neurons)

@@ -5,11 +5,13 @@ close all;
 xcov_dattotake = [-0.01 0.05];
 xcov_dattotake = [-0.08 0.04];
 xcov_dattotake = [-0.075 0.025];
-xcovwindmax = 0.04;
+xcov_dattotake = [-0.1 0.02];
+xcovwindmax = 0.06;
 binsize_spk = 0.0025;
 
+birdstoskip = [3];
 MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
-    xcov_dattotake, xcovwindmax, binsize_spk);
+    xcov_dattotake, xcovwindmax, binsize_spk, [], birdstoskip);
 
 
 %% #######################################################################
@@ -26,8 +28,8 @@ close all;
 % motiftoplot = 'c(b)';
 % BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'};
 % motiftoplot = 'aa(b)';
-BirdExptPairsToPlot = {'wh72pk12', 'RALMANLearn5'};
-motiftoplot = 'io(b)';
+BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn2'};
+motiftoplot = 'aa(b)';
 
 lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
     SummaryStruct, BirdExptPairsToPlot, motiftoplot);
@@ -37,9 +39,9 @@ lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
 %% ############################# CROSS CORR CHANGE DURING LAERNING
 %% ================ PLOT CROSS CORR WRT TO LEARNING
 close all;
-BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
 % BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn2'};
-SwitchToPlot = [2];
+SwitchToPlot = [1];
 BregionWantedList = {{'LMAN', 'RA'}};
 onlyPlotIfBothPrePostTrials = 0;
 lt_neural_POPLEARN_Plot(MOTIFSTATS_pop, SwitchStruct, BirdExptPairsToPlot, ...
@@ -48,9 +50,10 @@ lt_neural_POPLEARN_Plot(MOTIFSTATS_pop, SwitchStruct, BirdExptPairsToPlot, ...
 
 %% ================ SUMMARIZE CROSS CORRELATION OVER COURSE OF EXPERIMENT
 % over multiple switches
+% =========== EXTRACTION 
 close all;
+birdnum = [1];
 exptnum = [1];
-birdnum = [2];
 BregionWantedList = {{'LMAN', 'RA'}};
 [OUTSTRUCT, birdnum] = lt_neural_POPLEARN_Summary(MOTIFSTATS_pop, SwitchStruct, ...
     birdnum, exptnum, BregionWantedList);
@@ -91,6 +94,8 @@ close all;
 bregionwanted = {'LMAN', 'RA'};
 lt_neural_POPLEARN_SumTraj(MOTIFSTATS_pop, SwitchStruct, ...
     metadatstruct, bregionwanted);
+
+
 
 %% ================ PLOT PAIRED RASTERS WRT TO LEARNING
 % [IN PROGRESS!!!]

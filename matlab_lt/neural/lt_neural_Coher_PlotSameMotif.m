@@ -225,7 +225,10 @@ for i=unique(All_swunique)'
     % -- rest
     Y(3) = mean(cohscal(pos<-1));
     
-    assert(all(pos<1), 'assumed that all are precedeing...');
+    if any(pos>0)
+        disp('NOTE: in some case ther eare syls folliowujng - ignoreing those for "adjavent');
+    end
+%     assert(all(pos<1), 'assumed that all are precedeing...');
     
     plot(X+0.4*rand-0.2, Y, '-o', 'Color', pcol);
    
@@ -376,6 +379,170 @@ end
 lt_plot_zeroline;
 xlim([0 4]);
 
+
+%%  === plot coherence chnage a function fo distance from target syl
+lt_figure; hold on;
+
+
+% ================ ALL
+lt_subplot(2,2,1); hold on;
+title('all syl');
+xlabel('pos rel target');
+ylabel('coh change');
+getsame = 1;
+
+pcolall = lt_make_plot_colors(length(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i;
+    
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+%     keyboard
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+    issame = issame(indsort);
+    istarg = istarg(indsort);
+    
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    plot(pos+0.4*rand-0.2, cohscal, '-o', 'Color', pcol);
+   
+Xall = [Xall; pos];
+Yall =[Yall; cohscal];
+end
+[ymean, ysem] = grpstats(Yall, Xall, {'mean', 'sem'});
+lt_plot(unique(Xall)+0.2, ymean, {'Errors', ysem});
+axis tight
+lt_plot_zeroline;
+
+% xlim([0 4]);
+
+
+
+% ================ SAME
+lt_subplot(2,2,2); hold on;
+title('same syl');
+xlabel('pos rel target');
+ylabel('coh change');
+getsame = 1;
+
+pcolall = lt_make_plot_colors(length(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i & All_issame==getsame;
+    
+    if ~any(indsthis)
+        continue
+    end
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+%     keyboard
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+    issame = issame(indsort);
+    istarg = istarg(indsort);
+    
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    plot(pos+0.4*rand-0.2, cohscal, '-o', 'Color', pcol);
+   
+Xall = [Xall; pos];
+Yall =[Yall; cohscal];
+end
+[ymean, ysem] = grpstats(Yall, Xall, {'mean', 'sem'});
+lt_plot(unique(Xall)+0.2, ymean, {'Errors', ysem});
+axis tight
+lt_plot_zeroline;
+
+% xlim([0 4]);
+
+
+
+% ================ DIFF
+lt_subplot(2,2,3); hold on;
+title('diff syl');
+xlabel('pos rel target');
+ylabel('coh change');
+getsame = 0;
+
+pcolall = lt_make_plot_colors(length(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i & All_issame==getsame;
+    
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+%     keyboard
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+    issame = issame(indsort);
+    istarg = istarg(indsort);
+    
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    plot(pos+0.4*rand-0.2, cohscal, '-o', 'Color', pcol);
+   
+Xall = [Xall; pos];
+Yall =[Yall; cohscal];
+end
+[ymean, ysem] = grpstats(Yall, Xall, {'mean', 'sem'});
+lt_plot(unique(Xall)+0.2, ymean, {'Errors', ysem});
+axis tight
+lt_plot_zeroline;
+
+% xlim([0 4]);
 
 %%  === plot coherence chnage a function fo distance from target syl
 lt_figure; hold on;

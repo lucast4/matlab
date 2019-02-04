@@ -1164,7 +1164,7 @@ switch plottype
 end
 
 
-for i=5
+for i=1
     lt_figure; hold on ;
     subplot(4,1,1:2); hold on;
     birdname = MOTIFSTATS_Compiled.birds(i).birdname;

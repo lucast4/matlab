@@ -74,10 +74,12 @@ end
 
 %% ====================== collect data
 AllOnlyMinusBase_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract baseline
+
 % === absoulte balues
 AllMinusAll_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract baseline, then abs(subtract global mean)
 AllMinusAllMinusDiff_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % above, one step further, subtract mean of diff types.
 AllOnlyMinusDiff_FRsmooth = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then abs dev from mean of diff type
+
 % --- not absolute balues
 AllDevDiff_NotAbs = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then dev from mean of diff typ
 AllDevAll_NotAbs = cell(size(OUTDAT.All_FRsmooth,1),1); % subtract base, then dev from mean of all syls

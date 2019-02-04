@@ -1,5 +1,6 @@
 function lt_neural_Coher_CohScalPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_global, ...
-    rho_norm_to_global, centerdata, onlyfirstswitch, useFFchangeInsteadOfLearnDir)
+    rho_norm_to_global, centerdata, onlyfirstswitch, useFFchangeInsteadOfLearnDir, ...
+    onlygoodexpt)
 
 %% lt 11/11/18 - plots summary across and within experiments
 
@@ -9,17 +10,24 @@ function lt_neural_Coher_CohScalPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_gl
 % centerdata = 0; % then for each switch, centers data (i.e. across channels)
 % % NOTE: this is useful if want to ask about, within a tgiven expt, is there
 % % correlation.
-% 
+%
 % % change across syllables.
 % onlyfirstswitch = 1; % if 0, then all siwtches.
-% 
+%
 % useFFchangeInsteadOfLearnDir=0; % then sign(ff(WN)-ff(base)); if 0, then learndir
-% 
+%
 
+
+%% ======= 2) FILTER DATA
+% == filter by specific types of switches.
+
+if onlygoodexpt==1
+    OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
+end
 
 %% +++++++++++++++++++++++++++++++++++++++
 if cohdiff_norm_to_global==1
-    % ------- for each channel, get a global
+    % ------- for each channel, get a global across motifs.
     Cohdiffmean = nan(length(OUTSTRUCT.bnum),1);
     Rhomean = nan(length(OUTSTRUCT.bnum),1);
     [inds_grp, inds_unique] = lt_tools_grp2idx(...
@@ -55,7 +63,7 @@ CohDiffAll = [];
 LearnDirAll = [];
 GrpIndAll = [];
 for j=inds_unique'
-   
+    
     indsthis = inds_grp==j & OUTSTRUCT.istarg==1;
     
     % ======== for each channel pair, collect correlation and change in coh
@@ -78,25 +86,25 @@ for j=inds_unique'
     swnum = unique(OUTSTRUCT.switch(indsthis));
     bname = SwitchStruct.bird(bnum).birdname;
     ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
-
+    
     if onlyfirstswitch==1 & swnum~=1
         continue
-    end        
+    end
     
-    % ----- 1) Colelct data    
+    % ----- 1) Colelct data
     rho_base = OUTSTRUCT.cohscal_ff_rho_rhoSE_base(indsthis,:);
     assert(~any(isnan(rho_base(:))), 'shoud not be nan since have ff since is targ');
     
     coh_WNminBase = OUTSTRUCT.cohscal_WN_minus_base(indsthis);
     if cohdiff_norm_to_global==1
-       % --- get global mean of coh diff
-       cohglobmean = Cohdiffmean(indsthis);
-       coh_WNminBase = coh_WNminBase-cohglobmean;
+        % --- get global mean of coh diff
+        cohglobmean = Cohdiffmean(indsthis);
+        coh_WNminBase = coh_WNminBase-cohglobmean;
     end
     if rho_norm_to_global==1
-       % --- norm to global (within channel, across motifs);
-       rhoglobmean = Rhomean(indsthis);
-       rho_base(:,1) = rho_base(:,1)-rhoglobmean;
+        % --- norm to global (within channel, across motifs);
+        rhoglobmean = Rhomean(indsthis);
+        rho_base(:,1) = rho_base(:,1)-rhoglobmean;
     end
     
     if centerdata==1
@@ -126,92 +134,134 @@ end
 
 linkaxes(hsplots, 'xy');
 
+%% ====================== limits
+
+YLIM = [-max(abs(CohDiffAll))-0.01 max(abs(CohDiffAll))+0.01];
+XLIM = [-max(abs(RhoAll))-0.01 max(abs(RhoAll))+0.01];
+    
 %% ====================== COMBINE ALL DATAPOINTS INTO ONE PLOT
 % DATAPOINT = channelpair;
 
 % -------------- 1) POSITIVE LEARNING
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('All dat (pos learn)');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('All dat (pos learn)');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)');
 
-    x = RhoAll(LearnDirAll==1);
-    y = CohDiffAll(LearnDirAll==1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-    
+x = RhoAll(LearnDirAll==1);
+y = CohDiffAll(LearnDirAll==1);
+plot(x,y, 'ok');
+xlim(XLIM); ylim(YLIM);
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
 % -------------- 1) NEGATIVE LEARNING
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('All dat (neg learn)');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('All dat (neg learn)');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)');
 
-    x = RhoAll(LearnDirAll== -1);
-    y = CohDiffAll(LearnDirAll== -1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
+x = RhoAll(LearnDirAll== -1);
+y = CohDiffAll(LearnDirAll== -1);
+plot(x,y, 'ok');
+xlim(XLIM); ylim(YLIM);
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
 
 % ---------------- 2) COMBINE ONTO SAME PLOT
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('All dat');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)[flip if neg learn');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('All dat');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)[flip if neg learn');
 
-    x = RhoAll;
-    y = CohDiffAll;
-    y(LearnDirAll==-1) = -y(LearnDirAll==-1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-    lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+x = RhoAll;
+y = CohDiffAll;
+y(LearnDirAll==-1) = -y(LearnDirAll==-1);
+plot(x,y, 'ok');
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+xlim(XLIM); ylim(YLIM);
+
+
+% ---------------- 2) COMBINE ONTO SAME PLOT
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('All dat');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)[no flip]');
+
+x = RhoAll;
+y = CohDiffAll;
+plot(x,y, 'ok');
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+xlim(XLIM); ylim(YLIM);
 
 %% ====== one plot per SWITCH
 RhoAll = grpstats(RhoAll, GrpIndAll, {'mean'});
 CohDiffAll = grpstats(CohDiffAll, GrpIndAll, {'mean'});
 LearnDirAll = grpstats(LearnDirAll, GrpIndAll, {'mean'});
-    
+
 % -------------- 1) POSITIVE LEARNING
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('DAT=switch (pos learn)');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('DAT=switch (pos learn)');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)');
 
-    x = RhoAll(LearnDirAll==1);
-    y = CohDiffAll(LearnDirAll==1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-    
+x = RhoAll(LearnDirAll==1);
+y = CohDiffAll(LearnDirAll==1);
+plot(x,y, 'ok');
+xlim(XLIM); ylim(YLIM);
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
 % -------------- 1) NEGATIVE LEARNING
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('DAT=switch (neg learn)');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('DAT=switch (neg learn)');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)');
 
-    x = RhoAll(LearnDirAll== -1);
-    y = CohDiffAll(LearnDirAll== -1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
+x = RhoAll(LearnDirAll== -1);
+y = CohDiffAll(LearnDirAll== -1);
+plot(x,y, 'ok');
+xlim(XLIM); ylim(YLIM);
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
 
 % ---------------- 2) COMBINE ONTO SAME PLOT
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots; hsplot];
-    title('DAT=switch');
-    xlabel('rho (coh vs. ff, BASE)');
-    ylabel('change in coh(WN - base)[flip if neg learn');
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('DAT=switch');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)[flip if neg learn');
 
-    x = RhoAll;
-    y = CohDiffAll;
-    y(LearnDirAll==-1) = -y(LearnDirAll==-1);
-    plot(x,y, 'ok');
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert;
-    lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+x = RhoAll;
+y = CohDiffAll;
+y(LearnDirAll==-1) = -y(LearnDirAll==-1);
+plot(x,y, 'ok');
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+xlim(XLIM); ylim(YLIM);
+
+% ---------------- 2) COMBINE ONTO SAME PLOT
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('DAT=switch');
+xlabel('rho (coh vs. ff, BASE)');
+ylabel('change in coh(WN - base)[no flip]');
+
+x = RhoAll;
+y = CohDiffAll;
+plot(x,y, 'ok');
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+lt_regress(y, x, 0, 0, 0, 1, 'r',1);
+xlim(XLIM); ylim(YLIM);

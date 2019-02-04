@@ -49,10 +49,11 @@ for j=1:NumBirds
     NumNeurons = length(SummaryStruct.birds(j).neurons);
     
     for jj=1:NumNeurons
-        
+        disp('daasdf');
         birdname = SummaryStruct.birds(j).birdname;
         exptname = SummaryStruct.birds(j).neurons(jj).exptID;
         
+        disp(['$$$$$$$$$$$$$$$$$$$$$$$$$ ' exptname]);
         %% === what motifs, modified 6/26, see above.
         
         islearning = SummaryStruct.birds(j).neurons(jj).INFO_islearning;
@@ -242,10 +243,49 @@ for j=1:NumBirds
                         '(g)', '(a)', ...
                         '(m)k', 'm(k)', 'mk(d)', ...
                         };
+                elseif strcmp(exptname, 'RALMANLearn6')
+                    MotifsActual = {'(j)rb', 'j(r)b', 'jr(b)', 'jrb(h)', ...
+                        'j(k)l', 'jk(l)', 'kl(b)', 'klb(h)', ...
+                        '(j)io', '(i)ob', 'i(o)b', 'io(b)', 'iob(h)', ...
+                        '(g)', '(a)', ...
+                        'm(k)', 'mk(d)', ...
+                        };
+                elseif strcmp(exptname, 'RALMANLearn7')
+                    MotifsActual = {'(j)rb', 'j(r)b', 'jr(b)', 'jrb(h)', ...
+                        '(j)kl', 'j(k)l', 'jk(l)', 'kl(b)', 'klb(h)', ...
+                        '(j)io', '(i)ob', 'i(o)b', 'io(b)', 'iob(h)', ...
+                        '(g)', '(a)', ...
+                        '(m)k', 'm(k)', 'mk(d)', ...
+                        };
+                elseif strcmp(exptname, 'RALMANLearn8')
+                    MotifsActual = {'(j)rb', 'j(r)b', 'jr(b)', 'jrb(h)', ...
+                        '(j)kl', 'j(k)l', 'jk(l)', 'kl(b)', 'klb(h)', ...
+                        '(j)io', '(i)ob', 'i(o)b', 'io(b)', 'iob(h)', ...
+                        '(g)', '(a)', ...
+                        '(m)k', 'm(k)', 'mk(d)', ...
+                        };
+                end
+            elseif strcmp(birdname, 'gr48bu5')
+                if strcmp(exptname, 'RALMANLearn2')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'ab', 'ab(h)', ...
+                        '(a)j', '(j)jbh', 'jbh'};
+                elseif strcmp(exptname, 'RALMANLearn3')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
+                        '(a)j', '(j)jb', 'jb', 'jb(h)'};
+                elseif strcmp(exptname, 'RALMANLearn4')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
+                        '(a)j', '(j)jb', 'jb', 'jb(h)'};
+                elseif strcmp(exptname, 'RALMANLearn5')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'ab', 'ab(h)', ...
+                        '(a)j', '(j)jb', 'jb', 'jb(h)'};
+                elseif strcmp(exptname, 'RALMANLearn6')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
+                        '(a)j', '(j)jb', 'jb', 'jb(h)'};
                 end
             else
                 disp('NO MOTIFS INPUTED!!');
                 failures = failures+1;
+                pause;
             end
             
         else
@@ -324,6 +364,9 @@ for j=1:NumBirds
             elseif strcmp(birdname, 'wh72pk12')
                 MotifsActual = {'jrbh', 'ga', 'jklbh', 'mkd', 'jiobh', ...
                     'jklbh'};
+            elseif strcmp(birdname, 'gr48bu5')
+                MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
+                    '(a)j', '(j)jbh', 'jbh'};
             else
                 disp('NO MOTIFS INPUTED!!');
                 failures = failures+1;
@@ -369,7 +412,7 @@ for j=1:NumBirds
         %         assert(~isempty(MotifsActual), 'no motifs given...');
         
         if isempty(MotifsActual)
-            
+            keyboard
             return
         end
         

@@ -1,13 +1,23 @@
 function lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, ...
     sumplottype, plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, ...
     timewindowtoplot, zscoreLFP, expttoplot, swtoplot, ffbinsedges, ...
-    indtoget_b_e_s)
+    indtoget_b_e_s, useAbsVal)
 %% lt 11/5/18 - simpler version that is more general
 % CAn do any of the matrix data (e.g. S, coh...)
+
+% useAbsVal = 1; then for coherence difference uses abs value of diff
+% [takes the abs after doing teh averages across channels];
 
 % sumplottype = 'switches'; % i.e. what is datapoint?
 % switches
 % chanpairs
+
+
+if ~exist('useAbsVal', 'var')
+    useAbsVal = 0;
+end
+
+%%
 if (0)
     assert(all(strcmp(OUTSTRUCT.bregionpair, 'LMAN-RA')), 'assumes chan1 is LAMN, chang 2 is RA...');
 end
@@ -108,6 +118,10 @@ if strcmp(fieldtoplot, 'coher')
         
     end
     
+        if useAbsVal==1
+            DATSTRUCT.cohdiff = abs(DATSTRUCT.cohdiff);
+        end
+        
     
     
 elseif strcmp(fieldtoplot, 'spec')
@@ -355,7 +369,7 @@ if strcmp(fieldtoplot, 'coher')
     %% ============= DIFFERENCE MATRICES
     figcount=1;
     subplotrows=3;
-    subplotcols=6;
+    subplotcols=4;
     fignums_alreadyused=[];
     hfigs=[];
     hsplots = [];
@@ -447,6 +461,64 @@ if strcmp(fieldtoplot, 'coher')
     lt_neural_Coher_Plot(cohmat, tbins, ffbins, 2, '-', clim, 1, plotindivtraces, ffbinsedges);
     lt_plot_zeroline;
     lt_plot_text(0, clim(2)-0.05, ['n=' num2str(sum(squeeze(~isnan(cohmat(1,1,:)))))], 'b');
+    
+    
+    % ########################### PVALUE PLOTS
+    figcount=1;
+    subplotrows=2;
+    subplotcols=5;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+
+    % ------------- TARG
+    cohmat = squeeze(CohMatDat(:,:,1,:));
+    plottit = 'TARG';
+    % 1. cohgram of diff
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 3, '');
+    title(plottit);
+        
+    % ------------- SAME
+    cohmat = squeeze(CohMatDat(:,:,2,:));
+    plottit = 'SAME';
+    % 1. cohgram of diff
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 3, '');
+    title(plottit);
+    
+    
+    % ------------- diff
+    cohmat = squeeze(CohMatDat(:,:,3,:));
+    plottit = 'DIFF';
+    % 1. cohgram of diff
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 3, '');
+    title(plottit);
+    colorbar('East');
+    
+    
+    % ================== TARG MINUS SAME
+    cohmat1 = squeeze(CohMatDat(:,:,1,:));
+    cohmat2 = squeeze(CohMatDat(:,:,2,:));
+    cohmat = cohmat1 - cohmat2;
+    plottit = 'TARG - SAME';
+    % 1. cohgram of diff
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 3, '');
+    title(plottit);
+    
+    
+    % ================== TARG MINUS DIFF
+    cohmat1 = squeeze(CohMatDat(:,:,1,:));
+    cohmat2 = squeeze(CohMatDat(:,:,3,:));
+    cohmat = cohmat1 - cohmat2;
+    plottit = 'TARG - DIFF';
+    % 1. cohgram of diff
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(cohmat, tbins, ffbins, 3, '');
+    title(plottit);
+    
     
     % ########################### SCALAR PLOTS
     if any(~isnan(CohScalDat(:)))

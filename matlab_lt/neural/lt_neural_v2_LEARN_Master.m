@@ -51,6 +51,7 @@ collectWNhit=0; % NOTE!!! temporary - need to change so don't need to extract au
     collectWNhit, 0, 1, 0, 1, 1, [], Params_regexp);
 
 
+
 %% =========== [PREPROCESSING REQUIRED]
 % =============== PICK OUT SAME TYPE/DIFF [LEANRING SPECIFIC]
 numbirds = length(MOTIFSTATS_Compiled.birds);
@@ -119,7 +120,7 @@ end
 
 %% ======================== PLOT LEARNING (hz), SIMPLE VERSION
 bnum = 1;
-enum = 1;
+enum = 4;
 
 summarystruct_tmp = MOTIFSTATS_Compiled.birds(bnum).exptnum(enum).SummaryStruct;
 motifstats = MOTIFSTATS_Compiled.birds(bnum).exptnum(enum).MOTIFSTATS;
@@ -253,8 +254,8 @@ lt_neural_v2_ANALY_LrnSwtchPLOT(MOTIFSTATS_Compiled, SwitchStruct);
 
 % ============ TIMECOURSES FOR NEURAL FOR SWITCHES
 close all;
-birdname_get = 'pu69wh78'; % keep empty if want all.
-exptname_get = 'RALMANlearn2';
+birdname_get = 'gr48bu5'; % keep empty if want all.
+exptname_get = 'RALMANLearn2';
 switchnum_get = [1];
 plotneurzscore=0;
 onlyPlotTargNontarg=1;
@@ -266,9 +267,9 @@ lt_neural_v2_ANALY_Swtch_Tcourse(MOTIFSTATS_Compiled, SwitchStruct, ...
 % ========================= TIMECOURSES, BINNING BY TIME, showing smoothed
 % FR and rasters [GOOD]
 close all;
-birdname_get = 'pu69wh78'; % keep empty if want all.
-exptname_get = 'RALMANlearn1';
-switchnum_get = [1];
+birdname_get = 'wh72pk12'; % keep empty if want all.
+exptname_get = 'RALMANLearn3';
+switchnum_get = [3];
 plotneurzscore=0;
 FFzscore =1;
 onlyPlotTargNontarg=1;
@@ -281,25 +282,26 @@ lt_neural_v2_ANALY_Swtch_Tcourse2(MOTIFSTATS_Compiled, SwitchStruct, ...
 %% ==== BINNED LEARNING
  
 close all;
-birdname_get = 'bk7'; % keep empty if want all.
-exptname_get = 'LearnLMAN1';
-switchnum_get = [1];
-Bregion = {'LMAN', 'X'};
+birdname_get = ''; % keep empty if want all.
+exptname_get = '';
+switchnum_get = [];
+Bregion = {'RA'};
 plotneurzscore=0;
 FFzscore =1;
 onlyPlotTargNontarg=3; % 1 is targ/same; 3 is all [DEFAULT: 3]
 saveFigs =0;
 onlySingleDir =1; % if 1, then only does cases where all targs same dir
+removebadsyl = 1;
 lt_neural_v2_ANALY_Swtch_Binned(MOTIFSTATS_Compiled, SwitchStruct, ...
     birdname_get, exptname_get, switchnum_get, plotneurzscore, FFzscore, ...
-    onlyPlotTargNontarg, saveFigs, onlySingleDir, Bregion);
+    onlyPlotTargNontarg, saveFigs, onlySingleDir, Bregion, removebadsyl);
 
 
 %% ======= BINNED LEARNING V2 (SONG BY SONG)
 close all;
-birdname_get = ''; % JUST FOR PLOTTING
-exptname_get = ''; 
-switchnum_get = [];
+birdname_get = 'wh72pk12'; % JUST FOR PLOTTING
+exptname_get = 'RALMANLearn3'; 
+switchnum_get = [9];
 Bregion = {'RA'};
 plotneurzscore=0;
 FFzscore =1;
@@ -311,7 +313,7 @@ lt_neural_v2_ANALY_Swtch_Binned2(MOTIFSTATS_Compiled, SwitchStruct, ...
     onlyPlotTargNontarg, saveFigs, onlySingleDir, Bregion);
 
 
-%%
+%% PLOT LEANRING (FF) TRAJECTORIES [and rasters...]
 
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
@@ -416,25 +418,36 @@ lt_neural_v2_ANALY_Swtch_LME(DATSylMot)
 
 
 
-
+%% ########################################################################
 %% ============= LEARNING CHANGE, SEPARATE BY BASELINE FR-PITCH CORRELATION
-% ================== DIAGNOSTIC
+%% ========== first run preprocessgin stuff above
+% ============== 1) LOAD MOTIFSTATS
+load(['/bluejay0/bluejay2/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_06Jul2018_1227.mat']);
+load(['/bluejay0/bluejay2/lucas/analyses/neural/MOTIFSTATS_Compiled/Params_06Jul2018_1227.mat']);
+
+lt_neural_v2_ANALY_FRsmooth_Pre; % this just references functions from above.
+
+%% ================== DIAGNOSTIC
 if (0)
     sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, ss, motifthis);
 end
 
-
+%%
 clear OUTDAT
 % *************************************** EXTRACTION
-onlyFirstSwitch = 1; % then only first switch...
-onlyIfSameTarg = 1; % only if targ are all same sylalbles
+onlyFirstSwitch = 0; % then only first switch...
+onlyIfSameTarg = 0; % only if targ are all same sylalbles
+onlyiftargsamedir = 1; % only if targs are all driving same directyion.
 % BirdsToPlot = {'pu69wh78', 'wh44wh39'};
 BrainLocation = {'RA'};
 BirdsToPlot = {};
 % BrainLocation = {};
 throwoutlonggap = 0; % gap betwen end of base and start of train.
+removebadsyls = 1;
 OUTDAT = lt_neural_v2_ANALY_FRsmooth(MOTIFSTATS_Compiled, SwitchStruct, onlyFirstSwitch, ...
-    onlyIfSameTarg, BirdsToPlot, BrainLocation, throwoutlonggap);
+    onlyIfSameTarg, BirdsToPlot, BrainLocation, throwoutlonggap, onlyiftargsamedir, ...
+    removebadsyls);
+
 
 % =========== 1) PERFORM BASELINE SUBTRACT
 usepercent = 0;
@@ -493,20 +506,26 @@ analytype = 'AllOnlyMinusDiff_FRsmooth';
 % analytype = 'AllMinusAll_FRsmooth';
 doShuff=1;
 syltypesneeded = [1 0 1];
-premotorwind = [-0.08 0.03];
+% premotorwind = [-0.08 0.03]; % ORIGINAL
+premotorwind = [-0.08 0.02];
+premotorwind = [-0.05 0.03];
 nshuffs = 1000;
+minmotifs = 5; % min motif types to include.
 lt_neural_v2_ANALY_FRsmooth_BaseMinu(OUTDAT, SwitchStruct, ...
-    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs);
+    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs, ...
+    minmotifs);
 
 % ============= v2, PLOTS DISTRIBUTIONS FOR EACH NEURON
 lt_neural_v2_ANALY_FRsmooth_BaseMinu2(OUTDAT, SwitchStruct, ...
     epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs)
 
 
+%%
+
 % ========== 4) PREDICT FR CHANGE BASED ON LEARNING?
 close all;
-corrwindow = [-0.08 0.03];
-% corrwindow = [-0.05 0.05];
+corrwindow = [-0.08 0.02];
+% corrwindow = [-0.1 0.02];
 syltypesneeded = [1 0 1];
 analytoplot = 'AllDevDiff_NotAbs';
 % analytoplot = 'AllMinusBase_FRmeanAll';
@@ -514,9 +533,9 @@ syltoplot = 'targ';
 % syltypesneeded = [1 1 1];
 docorrvsdiff = 1; % default is 1 
 onlyPlotIfAllTargSameDir=1;
-onlyIfLearnCorrectDir = 0; % onoy applies to summary plots
+onlyIfLearnCorrectDir = 1; % onoy applies to summary plots
 doregression = 0; % mixed effects model.
-plotRaw = 0; % i.e. each experiment broken out.
+plotRaw = 1; % i.e. each experiment broken out.
 plotSummary = 1;
 OutStruct = lt_neural_v2_ANALY_FRsmooth_PredLearn(OUTDAT, MOTIFSTATS_Compiled, ...
     SwitchStruct, corrwindow, syltypesneeded, epochtoplot, analytoplot, ...
@@ -555,7 +574,7 @@ lt_neural_v2_ANALY_FRsmooth_CompSylTypes(OUTDAT, MOTIFSTATS_Compiled, ...
 
 % ###################### [v2] COMPARE SYLTYPES
 close all;
-nshuff = 5000;
+nshuff = 500;
 usediffFromBase = 1; % if 0, then also norms to global drift.
 plotdifftype = 1;
 [rhomean_dat, rhomean_shuff, rhomean_dat_diff, rhomean_shuff_diff] ...

@@ -65,8 +65,8 @@ end
 %% ######################### TIMES OF WN HITS
 
 figcount=1;
-subplotrows=4;
-subplotcols=3;
+subplotrows=5;
+subplotcols=2;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
@@ -118,7 +118,9 @@ for i=1:length(SwitchCohStruct.bird)
                     title({[bname '-' ename '-s' num2str(ss)], [motifthis '[NONTARG]']});
                 end
                 %             xcenters = -PARAMS.motif_predur:0.01:
-                lt_plot_histogram(wnonsets, '', 1, 0, '', 0, 'r');
+                xcenters = -0.02:0.005:0.05;
+                lt_plot_histogram(wnonsets, xcenters, 1, 0, '', 0, 'r');
+                axis tight
                 XLIM = xlim;
                 %             xlim([-PARAMS.motif_predur XLIM(2)]);
                 lt_plot_zeroline_vert;

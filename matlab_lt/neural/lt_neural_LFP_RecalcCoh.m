@@ -1,20 +1,34 @@
 function [OUTSTRUCT, PARAMS, LFPXCORR_Base_tr_f_cclag, LFPXCORR_WN_tr_f_cclag, ...
     LFPXCORR_freqsall] = lt_neural_LFP_RecalcCoh(OUTSTRUCT, SwitchCohStruct, LFPSTRUCT, SwitchStruct, ...
-    PARAMS, usecorrcoeff, thingstodo)
+    PARAMS, usecorrcoeff, thingstodo, saveON, savename, overwriteOUT)
 %% lt 12/14/18 - recalcualte things like coherence, lfp xcorr...
 
+% overwriteOUT = 1; 
+% overwrite 3 things: cohbase, cohwn, and PARAMS.
+
+%%
 assert(length(thingstodo)==1, 'currently the last thing will override all other thiongs ...');
+if any(strcmp(thingstodo, 'lfpxcorr'))
+    disp('NOTE: must have extracted all filter data first before run this...');
+    pause
+end
+
+%% =======================
+if saveON==1
+    assert(~isempty(savename));
+end
 
 %% ######################## LFP XCORR PARAMS
-% Unbiased, but not normal;ized (i.e. is not corr coeff. this 
+% Unbiased, but not normal;ized (i.e. is not corr coeff. this
 % NOTE: takes xcorr of the real part of hilvert trasnform.
 lfpxcorr_dir = ['/bluejay5/lucas/analyses/neural/FILTER/MOTIFEXTRACT/' PARAMS.savemarker];
-lfpxcorr_twindtoget = [-0.1 0.02]; % relative syl onset
-lfpxcorr_ffwindtoget = [20 40]; % inclusive [min max]
+lfpxcorr_twindtoget = [-0.09 0.01]; % relative syl onset
+lfpxcorr_twindtoget = [-0.1 0.01]; % relative syl onset
+lfpxcorr_ffwindtoget = [20 35]; % inclusive [min max]
 % maxlag = 0.05*1500; % 50 ms % NOW is deteriend automatically based on
 % peridicyt.
 
-usecorrcoeff = 1;
+% usecorrcoeff = 0; % default is 0.
 
 LFPXCORR_Base_tr_f_cclag = cell(size(OUTSTRUCT.bnum,1),1);
 LFPXCORR_WN_tr_f_cclag = cell(size(OUTSTRUCT.bnum,1),1);
@@ -29,18 +43,18 @@ onlyOnePeriod =1 ; % then only looks at peaks less than one period off from 0 (x
 % ==== 1) USE ACROSS TRIALS X TAPERS,
 % equalizeN = 1; % trial number. bootstraps muyltipel subsamples.
 
-% cohversion = 'mtaper_all'; % trials x tapers number of datapoints..
+cohversion = 'mtaper_all'; % trials x tapers number of datapoints..
 % cohversion = 'mtaper_trials'; % one coh for each trial, then takes average
-cohversion = 'welch_trials'; % one coh for each trial, then takes average [divides up each segment into 1/2 length windows, and gets 4 overlapping ones]
+% cohversion = 'welch_trials'; % one coh for each trial, then takes average [divides up each segment into 1/2 length windows, and gets 4 overlapping ones]
 
-trialstouse = 'default'; % then inds_epoch as in origianl analysis
-% trialstouse = 'default(matched)'; % then inds_epoch as in origianl analysis, but downsamples whichever one is longer.
+% trialstouse = 'default'; % then inds_epoch as in origianl analysis
+trialstouse = 'default(matched)'; % then inds_epoch as in origianl analysis, but downsamples whichever one is longer.
 % trialstouse = 'onlyescapes(matched)'; % then only escapes (entire training duration), sample sizes matched
 % trialstouse = 'onlyescapes'; % escapes, takes all trials ignore sample size matching
 % trialstouse = 'onlyescapes (epoch)'; % escapes, takes only trials within epoch (ignore sample size matching)
 % trialstouse = 'all'; % entire wn vs. base
 % (takes entire train and base).
-ntapers = []; % leave [] to set as default.
+ntapers = [1]; % leave [] to set as default.
 movingwin = [0.1 0.01]; % leave exmpty for default. [applies for both welches and multiutaper]
 tw = [];
 
@@ -49,6 +63,20 @@ CohMean_WN = cell(size(OUTSTRUCT.bnum,1),1);
 Tall = [];
 Fall = [];
 
+%% save params (for save to disk)
+
+paramsthis = struct;
+
+paramsthis.lfpxcorr_twindtoget = lfpxcorr_twindtoget;
+paramsthis.lfpxcorr_ffwindtoget = lfpxcorr_ffwindtoget;
+paramsthis.onlyOnePeriod = onlyOnePeriod; % then only looks at peaks less than one period off from 0 (xcorr lags);
+paramsthis.cohversion = cohversion;
+paramsthis.trialstouse = trialstouse; 
+paramsthis.ntapers = ntapers;
+paramsthis.movingwin = movingwin;
+paramsthis.tw = tw;
+paramsthis.usecorrcoeff = usecorrcoeff;
+paramsthis.thingstodo = thingstodo;
 
 %% RUN
 SampleSizes = []; % base wn
@@ -58,8 +86,8 @@ for i=1:length(SwitchCohStruct.bird)
         for ss=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist)
             
             for mm=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum)
-                                    disp([i ii ss mm]);
-
+                disp([i ii ss mm]);
+                
                 datthis = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm);
                 if isempty(datthis.bregionpair)
                     continue
@@ -76,8 +104,10 @@ for i=1:length(SwitchCohStruct.bird)
                 
                 
                 ishit = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhit;
-%                 ishit_time = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhittimes_min;
+                %                 ishit_time = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhittimes_min;
                 
+                inds_base = [];
+                inds_WN = [];
                 if strcmp(trialstouse, 'default')
                     inds_base = datthis.indsbase_epoch;
                     inds_WN = datthis.indsWN_epoch;
@@ -107,6 +137,9 @@ for i=1:length(SwitchCohStruct.bird)
                 elseif strcmp(trialstouse, 'onlyescapes (epoch)')
                     inds_base = intersect(find(ishit==0), datthis.indsbase_epoch);
                     inds_WN = intersect(find(ishit==0), datthis.indsWN_epoch);
+                    if sum(ishit)>5 
+                        keyboard
+                    end
                 else
                     assert(1==2, 'need to code..');
                 end
@@ -144,12 +177,13 @@ for i=1:length(SwitchCohStruct.bird)
                     assert(length(indthis_out)==1, 'not in outstruct..');
                     
                     
-                    % ##########################  BASELINE
+                    %% ##########################  BASELINE
                     indstoget = inds_base;
                     
                     lfp1_tmp = cell2mat(cellfun(@transpose, lfp1(indstoget), 'UniformOutput', 0))';
                     lfp2_tmp = cell2mat(cellfun(@transpose, lfp2(indstoget), 'UniformOutput', 0))';
                     
+                    % ========================== COHERENCE
                     [C, t, f] = lt_neural_Cohere_Recalcsub(thingstodo, lfp1_tmp, lfp2_tmp, cohversion, ...
                         ntapers, movingwin, tw, t_LFP);
                     
@@ -160,6 +194,7 @@ for i=1:length(SwitchCohStruct.bird)
                     assert(isempty(CohMean_Base{indthis_out}));
                     CohMean_Base{indthis_out} = C;
                     
+                    % ============================= LFP XCORR
                     if any(strcmp(thingstodo, 'lfpxcorr'))
                         [xcorr_max, xcorr_lag, freqsthis] = ...
                             lt_neural_LFP_RecalcCoh_sub0(filtdatstruct, ...
@@ -177,12 +212,13 @@ for i=1:length(SwitchCohStruct.bird)
                     
                     
                     
-                    % ##########################  WN
+                    %% ##########################  WN
                     indstoget = inds_WN;
                     
                     lfp1_tmp = cell2mat(cellfun(@transpose, lfp1(indstoget), 'UniformOutput', 0))';
                     lfp2_tmp = cell2mat(cellfun(@transpose, lfp2(indstoget), 'UniformOutput', 0))';
                     
+                    % ========================== COHERENCE
                     [C, t, f] = lt_neural_Cohere_Recalcsub(thingstodo, lfp1_tmp, lfp2_tmp, cohversion, ...
                         ntapers, movingwin, tw, t_LFP);
                     if isempty(t)
@@ -192,6 +228,7 @@ for i=1:length(SwitchCohStruct.bird)
                     assert(isempty(CohMean_WN{indthis_out}));
                     CohMean_WN{indthis_out} = C;
                     
+                    % ============================= LFP XCORR
                     if any(strcmp(thingstodo, 'lfpxcorr'))
                         [xcorr_max, xcorr_lag, freqsthis] = ...
                             lt_neural_LFP_RecalcCoh_sub0(filtdatstruct, ...
@@ -204,11 +241,14 @@ for i=1:length(SwitchCohStruct.bird)
                         tmp(:,:, 2) = xcorr_lag';
                         LFPXCORR_WN_tr_f_cclag{indthis_out} = tmp;
                     end
-
                     
                     
                     
-                    % -=-- sanity check, compare previuosly extracted to
+                    %% ======================= collect t, f
+                    Tall = [Tall; t];
+                    Fall = [Fall; f];
+                    
+                    %% -=-- sanity check, compare previuosly extracted to
                     % current.
                     if (0)
                         lt_figure; hold on;
@@ -242,9 +282,7 @@ for i=1:length(SwitchCohStruct.bird)
                         plot(OUTSTRUCT.CohMean_WN{indthis_out}(:), ...
                             CohMean_WN{indthis_out}(:), 'ok');
                     end
-                    % --- collect t, f
-                    Tall = [Tall; t];
-                    Fall = [Fall; f];
+                    
                     
                 end
                 
@@ -253,16 +291,44 @@ for i=1:length(SwitchCohStruct.bird)
     end
 end
 
-if all(~cellfun(@isempty, CohMean_Base))
-    OUTSTRUCT.CohMean_Base = CohMean_Base;
-    OUTSTRUCT.CohMean_WN = CohMean_WN;
-% UPDATE PARAMS
-PARAMS.tbins = Tall(1,:);
-PARAMS.ffbins = Fall(1,:);
+%% SAVE OUTPUT TO DISK
+
+if saveON==1
+   savedir = ['/bluejay5/lucas/analyses/neural/COHERENCE/RecalcCoh/' PARAMS.savemarker];
+   if ~exist(savedir, 'dir')
+       mkdir(savedir)
+   end
+   
+   fname = [savedir '/savestruct_' savename '.mat'];
+   
+   savestruct = struct;
+   
+%    cellfun(@single, CohMean_Base, 'UniformOutput', 0)
+   savestruct.dat.CohMean_Base = cellfun(@single, CohMean_Base, 'UniformOutput', 0);
+   savestruct.dat.CohMean_WN = cellfun(@single, CohMean_WN, 'UniformOutput', 0);
+   savestruct.dat.LFPXCORR_Base_tr_f_cclag = cellfun(@single, LFPXCORR_Base_tr_f_cclag, 'UniformOutput', 0);
+   savestruct.dat.LFPXCORR_WN_tr_f_cclag = cellfun(@single, LFPXCORR_WN_tr_f_cclag, 'UniformOutput', 0);
+   savestruct.dat.LFPXCORR_freqsall = cellfun(@single, LFPXCORR_freqsall, 'UniformOutput', 0);
+    
+   savestruct.params = paramsthis;
+   
+   save(fname, 'savestruct');
+end
+
+%% SAVE OUTPUT OVERQWRITE PREVIUOS DATA
+% == ONLY update if actually collected new coherence.
+if overwriteOUT==1
+    if all(~cellfun(@isempty, CohMean_Base))
+        OUTSTRUCT.CohMean_Base = CohMean_Base;
+        OUTSTRUCT.CohMean_WN = CohMean_WN;
+        % UPDATE PARAMS
+        PARAMS.tbins = Tall(1,:);
+        PARAMS.ffbins = Fall(1,:);
+    end
 end
 
 
-% === plot sampel size
+%% === plot sampel size
 lt_figure; hold on;
 xlabel('base');
 ylabel('wn');

@@ -92,6 +92,7 @@ for i=1:numbirds
             if SwitchStruct.bird(i).exptnum(ii).switchlist(ss).targsAreSameSyl==0 | ...
                     length(unique([SwitchStruct.bird(i).exptnum(ii).switchlist(ss).learningDirs{2:2:end}]))>1
                 disp('skip!!');
+                disp('NOTE: currently only works with one target - if multiple, need to modify so that each target is compared to its matched same-types')
                 continue
             end
             

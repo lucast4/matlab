@@ -250,8 +250,11 @@ for j=1:length(metadatstruct)
     % ======= TARGET
     hsplot = lt_subplot(3,2,1); hold on;
     hsplots = [hsplots hsplot];
-    title('targ');
+    ylabel('targ');
+    title([birdthis '-' exptthis]);
+
     motifind= find(strcmp(motiflist, targsylthis));
+    
     
     % ----
     indstoplot = AllMotifID == motifind;

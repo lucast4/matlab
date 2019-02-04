@@ -1,4 +1,5 @@
-function [indmotif_all, motiflist_out, motifposition_all] = lt_neural_QUICK_MotifID(birdname, motifregexp)
+function [indmotif_all, motiflist_out, motifposition_all] = ...
+    lt_neural_QUICK_MotifID(birdname, motifregexp)
 %% lt 10/14/18 - tells you position of a given motif name in global rference frame
 % NOTE: if multiple motifs spelled differently, but refer to same thing
 % (e.g. a(b)h and a(b)hh), then can make them the same below.
@@ -48,7 +49,7 @@ if (0)
             
         end
         MotiflistAll = unique(MotiflistAll);
-        disp(['BIRD: ' birdname]);
+        disp(['BIRD: ' bname]);
         disp(MotiflistAll);
     end
     
@@ -113,6 +114,22 @@ MotifDatabase.bird(3).motifs = {...
     {'(g)', 5}};
 
 
+MotifDatabase.bird(4).birdname = 'gr48bu5';
+MotifDatabase.bird(4).motifs = {...
+    {'(r)rd', 1}, ...
+    {'(a)rd', 2}, ...
+    {'(r)d', 2}, ...
+    {'r(d)', 2}, ...
+    {'(a)b', '(a)bh', 2}, ...
+    {'a(b)',  'a(b)h',  2}, ...
+    {'ab(h)', 2}, ...
+    {'(a)j', 3}, ...
+    {'(j)jbh', '(j)jb', 3}, ...
+    {'(j)bh', '(j)b', 3}, ...
+    {'j(b)h', 'j(b)', 3}, ...
+    {'jb(h)', 3}, ...
+    };
+
 %% ==== recode the way motif numebr and position are coded
 % DONT ask me how this work.s it just does...
 
@@ -125,15 +142,15 @@ for i=1:length(MotifDatabase.bird)
     indtmp = find([1 diff(tmp)]);
     tmp2 = nan(size(tmp));
     tmp2(find([1 diff(tmp)])) = find([1 diff(tmp)]);
-%     tmp2(end
+    %     tmp2(end
     
-%     counter = nan(size(tmp));
+    %     counter = nan(size(tmp));
     for j=1:length(indtmp)
         
         if j==length(indtmp)
             tmp2(indtmp(j)+1:end) = tmp2(indtmp(j));
         else
-        tmp2(indtmp(j)+1:indtmp(j+1)-1) = tmp2(indtmp(j));
+            tmp2(indtmp(j)+1:indtmp(j+1)-1) = tmp2(indtmp(j));
         end
         
         
@@ -143,19 +160,19 @@ for i=1:length(MotifDatabase.bird)
     out = [tmp' tmp2'];
     
     % ============= OUTPUT
-     MotifDatabase.bird(i).motifs = cellfun(@(x)(x(1:end-1)), ...
-         MotifDatabase.bird(i).motifs, 'UniformOutput', 0); % remove the last number
+    MotifDatabase.bird(i).motifs = cellfun(@(x)(x(1:end-1)), ...
+        MotifDatabase.bird(i).motifs, 'UniformOutput', 0); % remove the last number
     MotifDatabase.bird(i).motifposition = out;
 end
 
-               
+
 %% ============= CONVERT EACH TO MOTIF LISTS (removing redundant - only for output)
 
 for i=1:length(MotifDatabase.bird)
     
     motiflist_short = {};
     for ii=1:length(MotifDatabase.bird(i).motifs)
-       
+        
         motifthis = MotifDatabase.bird(i).motifs{ii}{1};
         motiflist_short = [motiflist_short motifthis];
         
@@ -177,29 +194,29 @@ if isempty(motifregexp)
     motifposition_all = [];
 else
     if iscell(motifregexp)
-    indmotif_all = [];
-    motifposition_all = [];
-    for j=1:length(motifregexp)
-        motifthis = motifregexp{j};
-        functmp = @(X)any(strcmp(X, motifthis));
-        indmotif = find(cellfun(functmp, MotifDatabase.bird(indbird).motifs));
-        motifposition = MotifDatabase.bird(indbird).motifposition(indmotif, :);
-        assert(length(indmotif)<2, 'PROBLEM - entered same motif in multiple entries ...');
-        if isempty(indmotif)
+        indmotif_all = [];
+        motifposition_all = [];
+        for j=1:length(motifregexp)
+            motifthis = motifregexp{j};
+            functmp = @(X)any(strcmp(X, motifthis));
+            indmotif = find(cellfun(functmp, MotifDatabase.bird(indbird).motifs));
+            motifposition = MotifDatabase.bird(indbird).motifposition(indmotif, :);
+            assert(length(indmotif)<2, 'PROBLEM - entered same motif in multiple entries ...');
+            if isempty(indmotif)
+                keyboard
+                disp('PROBLEM --- this motif not entered for this bird...');
+            end
+            indmotif_all = [indmotif_all; indmotif];
+            motifposition_all = [motifposition_all; motifposition];
+        end
+    else % then is a single motif
+        functmp = @(X)any(strcmp(X, motifregexp));
+        indmotif_all = find(cellfun(functmp, MotifDatabase.bird(indbird).motifs));
+        motifposition_all = MotifDatabase.bird(indbird).motifposition(indmotif_all, :);
+        assert(length(indmotif_all)<2, 'PROBLEM - entered same motif in multiple entries ...');
+        if isempty(indmotif_all)
             keyboard
             disp('PROBLEM --- this motif not entered for this bird...');
         end
-        indmotif_all = [indmotif_all; indmotif];
-        motifposition_all = [motifposition_all; motifposition];
-    end
-else % then is a single motif
-    functmp = @(X)any(strcmp(X, motifregexp));
-    indmotif_all = find(cellfun(functmp, MotifDatabase.bird(indbird).motifs));
-    motifposition_all = MotifDatabase.bird(indbird).motifposition(indmotif_all, :);
-    assert(length(indmotif_all)<2, 'PROBLEM - entered same motif in multiple entries ...');
-    if isempty(indmotif_all)
-        keyboard
-        disp('PROBLEM --- this motif not entered for this bird...');
-    end
     end
 end

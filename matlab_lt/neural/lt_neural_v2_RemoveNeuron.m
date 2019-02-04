@@ -19,7 +19,8 @@ for i=1:numbirds
     for j=1:numneurons    
         
         dirname = SummaryStruct.birds(i).neurons(j).dirname;
-        disp([num2str(count) ' - ' dirname]);
+        clustnum = SummaryStruct.birds(i).neurons(j).clustnum;
+        disp([num2str(count) ' - ' dirname '-clust' num2str(clustnum)]);
         
         % ---
         birdlist = [birdlist i];

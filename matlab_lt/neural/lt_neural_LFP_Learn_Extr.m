@@ -168,11 +168,11 @@ for i=1:numbirds
                 indsWN_epoch = datthis.motifnum(mm).indsWN_epoch;
                 
                 
-%                 indsbase_epoch = find(indsbase);
-%                 indsbase_epoch = indsbase_epoch(round(length(indsbase_epoch)/2):end);
+                %                 indsbase_epoch = find(indsbase);
+                %                 indsbase_epoch = indsbase_epoch(round(length(indsbase_epoch)/2):end);
                 
-%                 indsWN_epoch = find(indsWN);
-%                 indsWN_epoch = indsWN_epoch(round(length(indsWN_epoch)/2):end);
+                %                 indsWN_epoch = find(indsWN);
+                %                 indsWN_epoch = indsWN_epoch(round(length(indsWN_epoch)/2):end);
                 npairs = size(cohmat,4);
                 
                 % ------- COHERENCE
@@ -273,7 +273,7 @@ for i=1:numbirds
                 
                 %% ============== GET SCALAR VALUES OF COHERENCE
                 if isfield(datthis.motifnum(mm), 'cohscalar')
-                   cohscalar = datthis.motifnum(mm).cohscalar';
+                    cohscalar = datthis.motifnum(mm).cohscalar';
                 else
                     if scalarcounter==1
                         scalarcounter=2;
@@ -399,7 +399,7 @@ for i=1:numbirds
                         OUTSTRUCT.indsWN_epoch = [OUTSTRUCT.indsWN_epoch; single(indsWN_epoch)];
                         
                         if scalarcounter==1
-                        OUTSTRUCT.cohscal = [OUTSTRUCT.cohscal; cohscalar(k,:)];
+                            OUTSTRUCT.cohscal = [OUTSTRUCT.cohscal; cohscalar(k,:)];
                         end
                         
                         if collectDiffMats ==1
@@ -464,12 +464,58 @@ if (0)
     OUTSTRUCT.indsWN_epoch = indsWN_epoch;
 end
 %% ======== remove individual trials of cohernece>?
-    OUTSTRUCT_CohMatOnly = OUTSTRUCT.CohMat;
-    if collectonlyMeans==1
-
+OUTSTRUCT_CohMatOnly = OUTSTRUCT.CohMat;
+if collectonlyMeans==1
+    
     OUTSTRUCT = rmfield(OUTSTRUCT, 'CohMat');
 end
 
+
+%% for each case get wn minus base, mean coh scalar
+cohscal_diff = [];
+for i=1:length(OUTSTRUCT.bnum)
+    
+    indsbase = OUTSTRUCT.indsbase_epoch{i};
+    indswn = OUTSTRUCT.indsWN_epoch{i};
+    
+    cohscal = OUTSTRUCT.cohscal{i};
+    
+    cohdiff = mean(cohscal(indswn)) - mean(cohscal(indsbase));
+    
+    cohscal_diff = [cohscal_diff; cohdiff];
+end
+
+OUTSTRUCT.cohscal_diff = cohscal_diff;
+
+
+%% ====== COLLECT LEARN DIR AT TARGET
+
+OUTSTRUCT = lt_neural_LFP_GetLearnDir(OUTSTRUCT, SwitchStruct);
+
+%% ====== GET UNIQUE MOTIF ID FOR EACH CASE
+motifID_unique = nan(length(OUTSTRUCT.bnum), 1);
+
+for j=1:length(OUTSTRUCT.bnum)
+   
+    bnum = unique(OUTSTRUCT.bnum(j));
+    bname = SwitchStruct.bird(bnum).birdname;
+    
+    enum = unique(OUTSTRUCT.enum(j));
+    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
+    
+    motifname = OUTSTRUCT.motifname{j};
+    
+    try
+    motifID = lt_neural_QUICK_MotifID(bname, {motifname});
+    assert(~isempty(motifID));
+    catch err
+        motifID = nan;
+    end
+    motifID_unique(j) = motifID;
+    
+end
+
+OUTSTRUCT.motifID_unique = motifID_unique;
 
 end
 

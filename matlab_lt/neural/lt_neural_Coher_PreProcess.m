@@ -19,41 +19,43 @@ if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
 end
 PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
 PARAMS.ffbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).ffbins;
-PARAMS.ffbinsedges = [10 25 32 80]; % edges, to plot timecourse in frequency bands
+PARAMS.ffbinsedges = [20 35 80 130]; % edges, to plot timecourse in frequency bands
 
 %% ################ NOTE DOWN BRAIN REGION PAIRS
 
 COHSTRUCT = lt_neural_Coher_GetBrRegPairs(COHSTRUCT, MOTIFSTATS_pop, SummaryStruct);
 
-    %% ======== FOR LEARNING, GET SWITCHES
+%% ======== FOR LEARNING, GET SWITCHES
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 
 %% ====== GET DATA FOR LEARNING (RELATIVE TO LEARNING SWITCHES)
 
-    % --- doesn't extract cohmat, just saves path to cohmat.
- baseuseallinds =0 ;
+% --- doesn't extract cohmat, just saves path to cohmat.
+baseuseallinds =0 ;
 pairtoget = 'LMAN-RA';
 % pairtoget = 'LMANoutside-RA';
-pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
+% pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
-    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);    
+    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);
 
 
 %% ======== EXTRACT SCALARS
 
-twind = [-0.08 -0.03];
-fwind = [25 35];
-twind = [-0.08 -0.03];
-fwind = [22 32];
-% twind = [-0.05 -0.0];
-% fwind = [25 40];
-% twind = [-0.09 -0.02];
-% fwind = [15 40];
 twind = [-0.07 -0.03]; % all combined
-fwind = [25 35];
+% twind = [-0.02 0]; % all combined
+fwind = [22 32];
+
+% ============= EXTRACT RELATIVE TO WN ONSET?
+useWNtiming=1;
+WNprctile = 2.5;
+prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
+
+% === linearly interpolate coherence?
+interpol =0; % across time  [NOT YET DONE].
 
 [SwitchCohStruct, PARAMS] = lt_neural_LFP_PitchCorr(COHSTRUCT, SwitchCohStruct,...
-    PARAMS, twind, fwind);
+    SwitchStruct, PARAMS, twind, fwind, useWNtiming, WNprctile, prewind_relWN, ...
+    interpol);
 
 
 %% ====== EXTRACT LFP ACROSS LEARNING
@@ -74,34 +76,13 @@ zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 collectDiffMats = 0; % if 1, then collects differences (WN minus base). redundant, so leave at 0.
 
 if (0)
-[OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
-    plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats);
+    [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
+        plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
+        collectAllProcess, zscoreLFP, collectDiffMats);
 end
 
 
 [OUTSTRUCT] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
     collectAllProcess, zscoreLFP, collectDiffMats);
-
-%% for each case get wn minus base, mean coh scalar
-cohscal_diff = [];
-for i=1:length(OUTSTRUCT.bnum)
-    
-    indsbase = OUTSTRUCT.indsbase_epoch{i};
-    indswn = OUTSTRUCT.indsWN_epoch{i};
-    
-    cohscal = OUTSTRUCT.cohscal{i};
-    
-    cohdiff = mean(cohscal(indswn)) - mean(cohscal(indsbase));
-    
-    cohscal_diff = [cohscal_diff; cohdiff];
-end
-
-OUTSTRUCT.cohscal_diff = cohscal_diff;
-
-%% ====== COLLECT LEARN DIR AT TARGET
-
-OUTSTRUCT = lt_neural_LFP_GetLearnDir(OUTSTRUCT, SwitchStruct);
-    
 

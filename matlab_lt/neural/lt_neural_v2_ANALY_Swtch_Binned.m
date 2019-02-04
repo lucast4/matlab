@@ -1,6 +1,6 @@
 function lt_neural_v2_ANALY_Swtch_Binned(MOTIFSTATS_Compiled, SwitchStruct, ...
     birdname_get, exptname_get, switchnum_get, plotneurzscore, FFzscore, ...
-    onlyPlotTargNontarg, saveFigs, onlySingleDir, Bregion)
+    onlyPlotTargNontarg, saveFigs, onlySingleDir, Bregion, removebadsyl)
 %% ------------
 
 binbysong = 1; % this first makes datapoints by song, not by rendition. this allows comparing targ and nontarg
@@ -206,6 +206,13 @@ for i=1:Numbirds
                         learnconting = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).learningContingencies{indtmp+1};
                     else
                         learnconting = [];
+                    end
+                    
+                    if removebadsyl==1
+                        sylbad = lt_neural_QUICK_LearnRemoveBadSyl(birdname, exptname, iii, motiflist{j});
+                        if sylbad==1
+                            continue
+                        end
                     end
                     
                     
@@ -1064,7 +1071,7 @@ ylim([-100 100]);
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-' exptname '-sw' num2str(iii)]);
             ylabel('sd of mean spike');
-            
+            xlabel('syltype (targ, same, diff)');
             plot(SylType, SpksdAll, 'ok');
             ymean = grpstats(SpksdAll, SylType);
             x = unique(SylType)+0.1;
@@ -1076,8 +1083,8 @@ ylim([-100 100]);
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-' exptname '-sw' num2str(iii)]);
             ylabel('rho of mean spike');
-            x = unique(SylType)+0.1;
-            plot(x, RhoAll, 'ok');
+%             x = unique(SylType)+0.1;
+            plot(SylType, RhoAll, 'ok');
             ymean = grpstats(RhoAll, SylType);
             plot([1.1 2.1 3.1], ymean, 'or-');
 %             plot(1:length(RhoAll), RhoAll, 'ok');
@@ -1089,8 +1096,8 @@ ylim([-100 100]);
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-' exptname '-sw' num2str(iii)]);
             ylabel('abs(rho) of mean spike');
+           plot(SylType, abs(RhoAll), 'ok');
              x = unique(SylType)+0.1;
-           plot(x, abs(RhoAll), 'ok');
             ymean = grpstats(abs(RhoAll), SylType);
             plot([1.1 2.1 3.1], ymean, 'or-');
 %             plot(1:length(RhoAll), RhoAll, 'ok');
@@ -1103,6 +1110,8 @@ ylim([-100 100]);
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-' exptname '-sw' num2str(iii)]);
             ylabel('xcorr (spk vs. ff)');
+            xlabel('spk lead -- FF lead');
+            
                indtmp = SylType==j;
                
                cc = Xcorr_NspkFF(indtmp,:);
@@ -1130,6 +1139,7 @@ ylim([-100 100]);
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-' exptname '-sw' num2str(iii)]);
             ylabel('xcorr (spkstd vs. ffmedian');
+            xlabel('spkstd --- ff median');
                indtmp = SylType==j;
                
                cc = Xcorr_NspkSTD_vs_FFmedian(indtmp,:);

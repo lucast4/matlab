@@ -63,9 +63,9 @@ for i=1:numbirds
                     if isempty(motifname)
                         keyboard
                     end
-%                     if size(cohdat.Chanpairs,1)>3
-%                         keyboard
-%                     end
+                    %                     if size(cohdat.Chanpairs,1)>3
+                    %                         keyboard
+                    %                     end
                     if iscell(pairtoget)
                         % then can match any of the pairs
                         functmp = @(x)strcmp(cohdat.bregionpairs_sorted, x);
@@ -75,7 +75,7 @@ for i=1:numbirds
                         % then match the single pair
                         indtmp = strcmp(cohdat.bregionpairs_sorted, pairtoget);
                     end
-                        indtmp_num = find(indtmp);
+                    indtmp_num = find(indtmp);
                     if ~any(indtmp)
                         continue
                     end
@@ -132,7 +132,7 @@ for i=1:numbirds
                                 % then is hit, but no onset, means there must
                                 % be an offset onlly
                                 assert(length(segextract(jj).WNoffset_sec)==1);
-                                hittimes_min(jj) = segextract(jj).WNoffset_sec - 0.06; % assume ~60ms window.
+                                hittimes_min(jj) = segextract(jj).WNoffset_sec - 0.04; % assume ~50ms window.
                             end
                         end
                         assert(all(~isnan(hittimes_min(hit))), 'some trials hit but no onset?');
@@ -180,6 +180,8 @@ for i=1:numbirds
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).chanpair = chanpair;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch = indsbase;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch = indsWN;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase = find(tvals>tstart & tvals<tswitch);
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN = find(tvals>tswitch & tvals<tend);
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhittimes_min = hittimes_min;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).WNhit = hit;
                     setskept = [setskept k];

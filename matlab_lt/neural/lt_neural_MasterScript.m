@@ -1,6 +1,6 @@
 %% TO DO:
 % 1) save new time base for amplitude plotting (lin warped)
-% 2) 
+% 2)
 
 
 %% ===== plot song
@@ -24,17 +24,21 @@ end
 
 %% ====== plot single file dat [align neural and song]
 close all;
-filename='wh72pk12_181219_113341.rhd';
+filename='wh44wh39_180219_175145.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
 ChansToPlot.AmpChans_zero=[9 11 12 14 1 18];
 % ChansToPlot.AmpChans_zero=[8 9 11 16 17 20 21];
+
 ChansToPlot.AmpChans_zero=[9 14 17 18 21];
 ChansToPlot.AmpChans_zero=[9 14 21];
 ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
-ChansToPlot.AmpChans_zero=0:31;
-ChansToPlot.AmpChans_zero=16:31;
+% ChansToPlot.AmpChans_zero=16:31;
+ChansToPlot.AmpChans_zero=0:15;
+% ChansToPlot.AmpChans_zero=[8 10 15];
+% ChansToPlot.AmpChans_zero=[16:31];
+ChansToPlot.AmpChans_zero=[15 18 8 20];
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
@@ -47,13 +51,13 @@ PlotWhat.raster=0;
 PlotWhat.digital=0;
 
 Rect_sm.windowsize=0.03; % in sec, size of window, equals -2 to +2 sd.
-Raster.ThrXNoise=4; % threshold for units, used for all channels, uses absolute data for peak detection
+Raster.ThrXNoise=3; % threshold for units, used for all channels, uses absolute data for peak detection
 Raster.PosOrNeg=-1; % -1 or +1, for crossings.
 
-        numsubplots = 3;
+numsubplots = 4;
 
 lt_neural_alignRawDat(filename, ChansToPlot, neuralFiltLow, PlotWhat, Rect_sm, Raster, ...
-            numsubplots)
+    numsubplots)
 
 %% ======= clean song files
 
@@ -91,7 +95,7 @@ lt_neural_commonNoise(batchf, ChansToUse, plotOn, save_raw_dat, ...
     PlotAllChanSep, ChanToSave, onlyPlotFinalRegressionFig, skipPCAmethod, Subsample_NumSec)
 
 % NOTE (12/2/16) - currently regression method worked well for one set of
-% songs and PCA method for another. Neither method worked great. 
+% songs and PCA method for another. Neither method worked great.
 
 % NOTE (2/22/17) - regression method seems to work well. An issue that I am
 % worried about is introducing spikes where there should not be any. Is not
@@ -112,8 +116,8 @@ clear all; close all; fclose all;
 channel_board = [9 14 17 18 21];
 channel_board = 0:31;
 channel_board = [8 9 14 21];
-channel_board = [18];
-batchf = 'Batch1042to2349';
+channel_board = [23];
+batchf = 'Batch1058to2152';
 
 %% ==== exploratory - concat all audio and neural and plot for each neural channel
 close all;
@@ -128,7 +132,7 @@ end
 PlotRectDat=0; % 1, plots, 0 skips.
 PlotFiltDat=1; % usually 1, filt neural.
 PosAndNeg =0; % then gets both. if 0, then just downwards
-PlotLFP = 1; % takes precedence...
+PlotLFP = 0; % takes precedence...
 
 lt_neural_concatExplore_v2(batchf, channel_board, PlotRectDat, PlotFiltDat, ...
     PlotLFP, PosAndNeg); % WAVEFORMS ONLY PLOTTED FOR ONE CHANNEL!!
@@ -189,19 +193,19 @@ cd(['Chan' num2str(channel_board) 'amp-' batchf]);
 
 lt_neural_AutoMakeNotmat(batchf);
 
-        
+
 %% ==== [SANITY CHECK] plot song files in entirety, aligned to extracted spikes
 % -- makes multiple plots if too much dat.
 close all;
 PlotSecondChan = 1;
-SecondChan = 17;
+SecondChan = 15;
 plotcols={'m', 'r','c', 'b', 'g'};
 
 % want to plot 2nd channel to compare noise?
 if (0)
     lt_neural_AlgnWavclus(batchf, channel_board, plotcols, PlotSecondChan, SecondChan);
 end
-        
+
 % === VERSION 2 - PLOTS EACH SONG FILE ONE AT A TIME - CAN CLOSE THEM ONE
 % AT A TIME
 maxfiguuresopen = 20;
@@ -226,26 +230,26 @@ lt_neural_CheckClust(channel_board, batchf, SecondChan);
 % clusters. THen run below (MODIFIED!) to manually change cluster numbers,
 % whithout wiping out hand checked (cluster -1)
 
-if (0) 
-tmp = load('times_data_TMPBACKUP.mat');
-
-% to convert cluster 2 to 0
-inds = tmp.cluster_class(:,1)==2;
-tmp.cluster_class(inds,1) = 0;
-
-% to convert clusters 3 and 4 to 1
-inds = tmp.cluster_class(:,1) == 3 | tmp.cluster_class(:,1) == 4;
-tmp.cluster_class(inds,1) = 1;
-
-% to save
-ver = '-v6';
-save('times_data.mat', '-struct', 'tmp' , ver);
-disp('SAVED');
+if (0)
+    tmp = load('times_data_TMPBACKUP.mat');
+    
+    % to convert cluster 2 to 0
+    inds = tmp.cluster_class(:,1)==2;
+    tmp.cluster_class(inds,1) = 0;
+    
+    % to convert clusters 3 and 4 to 1
+    inds = tmp.cluster_class(:,1) == 3 | tmp.cluster_class(:,1) == 4;
+    tmp.cluster_class(inds,1) = 1;
+    
+    % to save
+    ver = '-v6';
+    save('times_data.mat', '-struct', 'tmp' , ver);
+    disp('SAVED');
 end
 %% +++++++++++++++++++++++++++++++++++++== NOTES THINGS TO UPDATE WITH ANALYSIS PIPELINE
 
 % save all things to a common folder. Levels:
-% bird, 
+% bird,
 % batch - metadata (real times of files. names of files, etc).
 %     do not save neural data. [if eventually need this can easily write
 %     script to get]
@@ -259,7 +263,7 @@ end
 
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-%% ++++++++++ ANALYSIS (NEURONS ONE BY ONE) 
+%% ++++++++++ ANALYSIS (NEURONS ONE BY ONE)
 %% ==== EXTRACT SONG, LABEL,SongDat ONSETS, SPIKE DATA
 close all; clear all;
 batchf='Batch0922to1251';
@@ -268,7 +272,7 @@ extractsound = 1;
 [SongDat, NeurDat, Params] = lt_neural_ExtractDat(batchf, channel_board, extractsound);
 
 
-%% ===== Extract song segments that match the desired regexp 
+%% ===== Extract song segments that match the desired regexp
 % along with associated neural data
 close all;
 
@@ -306,7 +310,7 @@ keepRawSongDat = 1;
 %% ===== uniformly stretch durations of segments
 % assumes that onset of syl 1 to offset of syl last should be aligned.
 close all;
-TargetDur=[]; 
+TargetDur=[];
 [SegmentsExtract, Params] = lt_neural_LinTimeWarp(SegmentsExtract, Params, TargetDur);
 
 
@@ -322,7 +326,7 @@ plotAllSegs=1; % then plots each trial own plot.
 % will align them by their own respective alignment locations.
 % - can either rescale them to all be the same dur, or not rescale.
 
-close all; 
+close all;
 % MotifList_regexp={'(S)[\w-]*?E'};
 % MotifList_regexp={'g(h)h', 'n(h)h'};
 % MotifList_regexp={'v(b)b', '[^vb](b)b'};
@@ -364,34 +368,34 @@ times_data=load('times_data.mat');
 numclust=size(times_data.cluster_class,2);
 
 % - plot this file
-    ChansToPlot.DigChans_zero=[]; % make string "all" to plot all that exist. empty array to ignore
-    ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
-    ChansToPlot.AmpChans_zero=amplifier_channels(chan).chip_channel;
-    % ChansToPlot.AmpChans_zero=[10 14 18 23];
+ChansToPlot.DigChans_zero=[]; % make string "all" to plot all that exist. empty array to ignore
+ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
+ChansToPlot.AmpChans_zero=amplifier_channels(chan).chip_channel;
+% ChansToPlot.AmpChans_zero=[10 14 18 23];
 
-    neuralFiltLow=500;
+neuralFiltLow=500;
 
-    PlotWhat.raw=0;
-    PlotWhat.filt=1;
-    PlotWhat.rect_sm=1;
-    PlotWhat.raster=1;
+PlotWhat.raw=0;
+PlotWhat.filt=1;
+PlotWhat.rect_sm=1;
+PlotWhat.raster=1;
 
-    Rect_sm.windowsize=0.03; % in sec, size of window, equals -2 to +2 sd.
-    Raster.ThrXNoise=times_data.par.stdmin; % threshold for units, used for all channels, uses absolute data for peak detection
-    Raster.PosOrNeg=-1; % -1 or +1, for crossings.
+Rect_sm.windowsize=0.03; % in sec, size of window, equals -2 to +2 sd.
+Raster.ThrXNoise=times_data.par.stdmin; % threshold for units, used for all channels, uses absolute data for peak detection
+Raster.PosOrNeg=-1; % -1 or +1, for crossings.
 lt_neural_alignRawDat(filename, ChansToPlot, neuralFiltLow, PlotWhat, Rect_sm, Raster)
 
 % - overlay spikes detected from wave_clus
 plotcols={'g', 'b', 'm', 'c'};
 for i=1:numclust
-   inds=find([times_data.cluster_class(:,1)]==i);
-   
-   for ii=inds
-      
-       spktime=times_data.cluster_class(ii, 2); % in ms
-       
-       line([spktime spktime], [-20 -40], 'Color', plotcols{i}, 'LineWidth',2);
-   end
+    inds=find([times_data.cluster_class(:,1)]==i);
+    
+    for ii=inds
+        
+        spktime=times_data.cluster_class(ii, 2); % in ms
+        
+        line([spktime spktime], [-20 -40], 'Color', plotcols{i}, 'LineWidth',2);
+    end
 end
 
 
@@ -401,7 +405,205 @@ end
 % for each song file, have a data structure containing various things
 
 
+%% #######################################################################
+%% ######################## LOOK AT LFP
+clear all; close all;
+fname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110117_RALMANlearn1/pu69wh78_171101_164255.rhd';
+% fname = '/bluejay5/lucas/birds/pu69wh78/NEURAL/110117_RALMANlearn1/pu69wh78_171101_164255.rhd';
+chanstoget = [9 14 21];
+chansbregions = {'LMAN', 'LMAN', 'RA'};
+freqwind = [25 25];
+dozscore = 1; % for lfp amplitude and coerehce.
+disp('NOTE: by default opnly gets coehrence btween LAMN and RA');
 
 
+
+% ################################ load file
+
+[amplifier_data,board_dig_in_data,frequency_parameters, board_adc_data, ...
+    board_adc_channels, amplifier_channels, board_dig_in_channels, t_amplifier] =...
+    pj_readIntanNoGui(fname);
+
+% ############################### RUNA ND PLOT
+
+figcount=1;
+subplotrows=6;
+subplotcols=1;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+% ==== 1) LOAD AUDIO
+dataudio = board_adc_data(1,:);
+fs = frequency_parameters.amplifier_sample_rate;
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title(fname);
+lt_plot_spectrogram(dataudio, fs, 1, 0);
+
+
+% ====== IONE COLOR FOR EACH CHANEL
+pcols = lt_make_plot_colors(length(chanstoget), 0,0);
+
+
+% ====== 1) RAW NEURAL (UNFILTERED)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title('raw neural');
+indschan = ismember([amplifier_channels.chip_channel], chanstoget);
+assert(all([amplifier_channels(indschan).chip_channel] == chanstoget));
+datneur = amplifier_data(indschan, :);
+tbin = 1:length(datneur);
+tbin = tbin./fs;
+for i=1:size(datneur,1)
+    plot(tbin, datneur(i,:), '-', 'Color', pcols{i});
+    disp(i)
+end
+
+
+% ===== 2) PLOT LFP (UNFILTERED)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+ylabel('lfp (0-400hz');
+hsplots = [hsplots; hsplot];
+datlfp = load([fname, '.lfp'], '-mat');
+
+indschan = ismember(datlfp.lfpstruct.chanlist, chanstoget);
+datlfp2 = datlfp.lfpstruct.dat(:, indschan);
+assert(all(datlfp.lfpstruct.chanlist(indschan) == chanstoget'));
+tbin = datlfp.lfpstruct.t;
+
+for i=1:size(datlfp2,2)
+    y = datlfp2(:,i);
+    plot(tbin, y, '-', 'Color', pcols{i});
+end
+
+
+% ==== 2) PLOT LFP FOR EACH CHANNEL
+% [AND DIFF FILTERED BANDS]
+datfilt = load([fname '.filt'], '-mat');
+indsthis = ismember(datfilt.filtstruct.chanlist, chanstoget);
+assert(all(datfilt.filtstruct.chanlist(indsthis) == chanstoget'));
+
+indsf = datfilt.filtstruct.freqvals>=freqwind(1) & datfilt.filtstruct.freqvals<=freqwind(2);
+fbins = datfilt.filtstruct.freqvals(indsf);
+
+datfilt2 = cellfun(@(x)x(indsf), datfilt.filtstruct.datfilt_chans(indsthis), 'UniformOutput', 0);
+datfilt2 = cellfun(@cell2mat, cellfun(@transpose, datfilt2, 'UniformOutput', 0), 'UniformOutput', 0);
+% datfilt2 = cell2mat(tmp);
+
+tbins = linspace(datfilt.filtstruct.t_edges(1), datfilt.filtstruct.t_edges(2), size(datfilt2{1},1));
+
+
+% - one plot for each frequency
+for i=1:length(fbins)
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots; hsplot];
+    title([num2str(fbins(i)) ' hz']);
+    % === once for each chan
+    for cc=1:length(chanstoget)
+        chanthis = chanstoget(cc);
+        y = datfilt2{cc}(:, i);
+        plot(tbins, real(y), '-', 'Color', pcols{cc});
+    end
+end
+% --- note down chans/bregions relative to color
+for cc=1:length(chanstoget)
+    chanthis = chanstoget(cc);
+    bregionthis = chansbregions{cc};
+    y = datfilt2{cc}(:, i);
+    lt_plot_text(tbins(end), real(y(end)), ['ch' num2str(chanthis) ',' bregionthis], pcols{cc});
+    %         plot(tbins, real(y), '-', 'Color', pcols{cc});
+end
+
+
+% ==== 3) PLOT POWER (AMPLITUDE OF HILBERT TRANSFORM)
+% - one plot for each frequency
+for i=1:length(fbins)
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots; hsplot];
+    title([num2str(fbins(i)) ' hz']);
+    ylabel('amplitude');
+    % === once for each chan
+    for cc=1:length(chanstoget)
+        chanthis = chanstoget(cc);
+        y = datfilt2{cc}(:, i);
+        %         y = abs(y).^2;
+        y = abs(y).^2;
+        if dozscore==1
+            y = (y-mean(y))./std(y);
+        end
+        plot(tbins, real(y), '-', 'Color', pcols{cc});
+%         end
+    end
+end
+
+
+% ==== 3) PLOT COHERENCE
+% --- pairwise coherence for all pairs
+lt_switch_chronux(1);
+movingwin = [0.1 0.01];
+params = struct;
+params.fpass = [1/movingwin(1) 150];
+w = 30; % in hz, for desired frequency resolution of tapers. % note, t is set to movingwin(1)
+tw = movingwin(1)*w;
+params.tapers = [tw 2*tw-1];
+params.Fs = 1500;
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+title([num2str(fbins(i)) ' hz']);
+ylabel('coherence');
+
+for i=1:size(datlfp2,2)
+    for ii=i+1:size(datlfp2,2)
+        bregion1 = chansbregions{i};
+        bregion2 = chansbregions{ii};
+        if strcmp(bregion1, 'LMAN') & strcmp(bregion2, 'RA')
+            dat1 = datlfp2(:, i);
+            dat2 = datlfp2(:, ii);
+            chan1 = chanstoget(i);
+            chan2 = chanstoget(ii);
+        elseif strcmp(bregion1, 'RA') & strcmp(bregion2, 'LMAN')
+            dat1 = datlfp2(:, ii);
+            dat2 = datlfp2(:, i);
+            chan1 = chanstoget(ii);
+            chan2 = chanstoget(i);
+        else
+            % then skip./
+            continue
+        end
+        
+        [C,phi,S12,S1,S2,t,f] = cohgramc(dat1, dat2, movingwin, params);
+        colthis = [rand rand rand];
+        
+        % == take mean over those freqency b ands
+        if freqwind(2) ==freqwind(1)
+            % then get closest single band
+            [~, indf] = min(abs(f-freqwind(1)));
+            fthis = f(indf);
+            y = mean(C(:, indf),2);
+        else
+            indf = f>freqwind(1) & f<freqwind(2);
+            y = mean(C(:, indf),2);
+        end
+        
+        if dozscore==1
+            y = (y-mean(y))./std(y);
+        end
+        plot(t, y, '-', 'Color', colthis);
+        lt_plot_text(t(end), y(end), ['ch:' num2str(chan1) '-' num2str(chan2)], colthis);
+        
+        % ====== smooth
+        tsm = lt_running_stats(t, round(1/(t(2)-t(1))));
+        ysm = lt_running_stats(y, round(1/(t(2)-t(1))));
+        shadedErrorBar(tsm.Mean, ysm.Mean, ysm.STD, {'Color', colthis}, 1);
+        
+    end
+end
+lt_switch_chronux(0);
+
+
+linkaxes(hsplots, 'x');
 
 

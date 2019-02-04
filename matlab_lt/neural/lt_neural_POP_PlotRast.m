@@ -2,9 +2,9 @@ function lt_neural_POP_PlotRast(MOTIFSTATS_pop, SummaryStruct)
 
 %% plots rasters for pair of neuron
 
-bb =2;
-ee =2;
-ss = 2;
+bb =4;
+ee =1;
+ss = 1;
 mm = 1;
 
 %%

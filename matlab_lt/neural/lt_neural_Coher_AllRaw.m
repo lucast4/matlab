@@ -1,8 +1,9 @@
 close all;
 % ---- what to plot?
-birdtoplot = 'wh72pk12';
-expttoplot = 'RALMANLearn3';
-swnum = 11;
+birdtoplot = 'pu69wh78';
+expttoplot = 'RALMANOvernightLearn1';
+% expttoplot = 'RALMANlearn1';
+swnum = 1;
 
 
 % ##################################### 1) ======= PLOT RAW (EACH MOTIF AND CHAN PAIR)

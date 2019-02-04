@@ -131,6 +131,7 @@ typetoget = [1 2 3]; % i.e. [1 2 3] means must have targ, same and diff.
 xlabel('targ - same - diff');
 lt_neural_Coher_SumPlotMotifs2_sub;
 
+
 % ============== 1) ONLY CASES WITH TARG, SAME
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 [indsgrp, indsunique] = lt_tools_grp2idx({All_bnum, All_motifID});
@@ -172,4 +173,39 @@ lt_neural_Coher_SumPlotMotifs2_sub;
 typetoget = [3]; % i.e. [1 2 3] means must have targ, same and diff.
 xlabel('diff');
 lt_neural_Coher_SumPlotMotifs2_sub;
+
+
+%% ======= convert to x values based on type of syl
+% i.e. x = 1 2 3 corresponds to targ, same, diff
+
+All_xval = nan(size(All_issame));
+
+All_xval(All_istarg==1) =1;
+All_xval(All_istarg==0) =2;
+% All_xval(All_istarg==0 & All_issame==0) =3;
+
+
+%% =========== [PLOT]
+figcount=1;
+subplotrows=3;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+% ================= 1) One plot for each bird.
+[indsgrp, indsunique] = lt_tools_grp2idx({All_bnum, All_motifID});
+
+
+% =================== ALL IN ONE PLOT, ONE LINE FOR EACH UNIQUE MOTIF
+% ============== 1) ONLY CASES WITH TARG, SAME, DIFF
+% ============== 1) ONLY CASES WITH TARG, SAME, DIFF
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+typetoget = [1 2]; % i.e. [1 2 3] means must have targ, same and diff.
+xlabel('targ - [nontarg]');
+lt_neural_Coher_SumPlotMotifs2_sub;
+
+
+
 

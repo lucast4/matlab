@@ -1,5 +1,5 @@
-function lt_neural_Coher_PhiSumPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_global, ...
-    rho_norm_to_global, centerdata, onlyfirstswitch, useFFchangeInsteadOfLearnDir)
+function lt_neural_Coher_PhiSumPlot(OUTSTRUCT, SwitchStruct, ...
+    useFFchangeInsteadOfLearnDir, onlygood)
 
 %% lt 11/11/18 - plots summary across and within experiments
 
@@ -16,6 +16,10 @@ function lt_neural_Coher_PhiSumPlot(OUTSTRUCT, SwitchStruct, cohdiff_norm_to_glo
 % useFFchangeInsteadOfLearnDir=0; % then sign(ff(WN)-ff(base)); if 0, then learndir
 % 
 
+
+if onlygood==1
+    OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
+end
 
 %% +++++++++++++++++++++++++++++++++++++++
 % if cohdiff_norm_to_global==1
@@ -87,11 +91,6 @@ for j=inds_unique'
     bname = SwitchStruct.bird(bnum).birdname;
     ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
 
-    if onlyfirstswitch==1 & swnum~=1
-        continue
-    end        
-    
-    
     % ----- 1) Colelct data
     phimean_BaseWN = OUTSTRUCT.Phi_mean_BaseWN(indsthis,:); % [base, WN]
     phiPLV_BaseWN = OUTSTRUCT.Phi_PLV_BaseWN(indsthis,:);

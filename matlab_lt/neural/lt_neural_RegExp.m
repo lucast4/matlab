@@ -168,6 +168,14 @@ end
 
 UseLastSylAsToken=0;
 
+
+%% ========== IF NOT LABELS, THEN SKIP ENTIRE THING
+if isempty(SongDat.AllLabels)
+    SegmentsExtract = [];
+    Params = [];
+    return
+end
+    
 %% === extract stuff from inputs
 
 AllLabels=SongDat.AllLabels;

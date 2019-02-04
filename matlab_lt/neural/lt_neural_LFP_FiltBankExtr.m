@@ -113,6 +113,10 @@ for i=1:numbirds
                     filtstruct = filtstruct.filtstruct;
                     
                     indschans = ismember(filtstruct.chanlist, Chanlist);
+                    if size(Chanlist',1)~=size([filtstruct.chanlist(indschans)], 1)
+                        Chanlist = Chanlist';
+                    end
+%                         assert(all([filtstruct.chanlist(indschans)]==Chanlist'), 'not matcjed..');    
                     assert(all([filtstruct.chanlist(indschans)]==Chanlist'), 'not matcjed..');
                     indsfreq = ismember(filtstruct.freqvals, freqvals);
                     assert(sum(indsfreq) == length(freqvals), 'have not previusly extracted all desired freqeunces...');

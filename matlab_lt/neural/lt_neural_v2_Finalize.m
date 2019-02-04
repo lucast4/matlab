@@ -24,6 +24,7 @@ function lt_neural_v2_Finalize(DesiredClust, electrode_depth, Notes, LearningPar
     % Notes = {'SUnit_0', 'Location_LMAN', 'Random stuff....'}; not single unit. in LMAN
     %   Location can be: 'LMAN', 'X', 'LMAN?', 'X?', '?'
     %   SUnit can be 0 or 1
+    %   Celltype can be PN, IN, MU, LFP
     % e.g. lt_neural_v2_Finalize(1, 1900, {'SUnit_0', 'could get more song'})
 
 % LearningParams{1} = '05Feb2017-1718'; % time of WN on [or when WN

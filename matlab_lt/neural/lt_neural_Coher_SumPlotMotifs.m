@@ -20,7 +20,7 @@ clim = [-0.2 0.2];
 %
 % OUTSTRUCT.cohscal_diff = cohscal_diff;
 
-%% ############
+%% ############ ONE PLOT FOR EACH SWITCH, SHOW ALL MOTIFS.
 
 [indsgrp_switch, indsgrp_switch_unique] = lt_tools_grp2idx({OUTSTRUCT.bnum, OUTSTRUCT.enum, OUTSTRUCT.switch});
 [indsgrp_chanpair, indsgrp_chanpair_unique] = lt_tools_grp2idx({OUTSTRUCT.bnum, OUTSTRUCT.enum, OUTSTRUCT.switch, ...
@@ -41,6 +41,8 @@ All_bname ={};
 All_bnum = [];
 All_ename = {};
 All_swnum = [];
+All_learndir = [];
+
 for i=1:length(indsgrp_switch_unique)
     swgrpthis = indsgrp_switch_unique(i);
     bnum = unique(OUTSTRUCT.bnum(indsgrp_switch==swgrpthis));
@@ -84,6 +86,9 @@ for i=1:length(indsgrp_switch_unique)
     motifID = lt_neural_QUICK_MotifID(bname, motifs); % ---- get positions within global motif
     %     cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
     cohscal = OUTSTRUCT.cohscal_diff(indsthis);
+    learndir = unique(OUTSTRUCT.learndirTarg(indsthis));
+    assert(length(learndir)==1);
+    
     
     [ymean, ysem] = grpstats(cohscal, motifID, {'mean', 'sem'});
     [istarg] = grpstats(istarg, motifID, {'mean'});
@@ -114,10 +119,35 @@ for i=1:length(indsgrp_switch_unique)
     ylim(clim);
     
     
-     % ========= NOTE DOWN IF THIS IS AN EXPERIMENT TO GET
-    if ismember([bnum enum swnum], indtoget_b_e_s, 'rows')
-        lt_plot_annotation(3, 'expttoget', 'm');
-    
+    % ========= NOTE DOWN IF THIS IS AN EXPERIMENT TO GET
+    if ~isempty(indtoget_b_e_s)
+        if ismember([bnum enum swnum], indtoget_b_e_s, 'rows')
+            lt_plot_annotation(3, 'expttoget', 'm');
+            
+            % ============= ALSO COLLECT DATA FOR SUMMARY PLOT
+            Y = nan(1,4);
+            
+            % - targ
+            Y(1) = nanmean(ymean(istarg==1));
+            
+            % - same
+            Y(2) = nanmean(ymean(istarg==0 & issame==1));
+            
+            % - diff
+            Y(3) = nanmean(ymean(istarg==0 & issame==0));
+            
+            % -- nontarg
+            Y(4) = nanmean(ymean(istarg==0));
+            
+            Yall = [Yall; Y];
+            
+            All_bname = [All_bname; bname];
+            All_ename = [All_ename; ename];
+            All_swnum = [All_swnum; swnum];
+            All_bnum = [All_bnum; bnum];
+            All_learndir = [All_learndir; learndir];
+        end
+    else
         % ============= ALSO COLLECT DATA FOR SUMMARY PLOT
         Y = nan(1,4);
         
@@ -126,10 +156,10 @@ for i=1:length(indsgrp_switch_unique)
         
         % - same
         Y(2) = nanmean(ymean(istarg==0 & issame==1));
-    
+        
         % - diff
         Y(3) = nanmean(ymean(istarg==0 & issame==0));
-    
+        
         % -- nontarg
         Y(4) = nanmean(ymean(istarg==0));
         
@@ -139,8 +169,9 @@ for i=1:length(indsgrp_switch_unique)
         All_ename = [All_ename; ename];
         All_swnum = [All_swnum; swnum];
         All_bnum = [All_bnum; bnum];
+        All_learndir = [All_learndir; learndir];
     end
-   
+    
 end
 
 
@@ -217,8 +248,62 @@ for i=1:size(ythis,1)
 end
 
 
-% ======== EACH BIRD ONE DOT
+% ===== 
 lt_subplot(3,2,4); hold on;
+xlabel('TRAIN UP/DOWN [lines: TARG--NONTARG]');
+ylabel('coh (WN - base)');
+
+% ==== UP
+indsthis = all(~isnan(Yall(:,colsthis))')' & All_learndir==1;
+XSHIFT = 0;
+
+% ---
+colsthis = [1 4];
+
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis + XSHIFT;
+plot(xthis, ythis', 'o-k');
+xlim([0 5+XSHIFT]);
+if size(ythis,1)>1
+lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+end
+if length(colsthis)==2
+%     [~, p] = ttest(ythis(:,1), ythis(:,2));
+    [p] = signrank(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 'srank', 1);
+end
+bnumthis = All_bnum(indsthis);
+for i=1:size(ythis,1)
+   plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)}); 
+end
+
+% === DOWN
+indsthis = all(~isnan(Yall(:,colsthis))')' & All_learndir==-1;
+XSHIFT = 6;
+
+% ---
+colsthis = [1 4];
+
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis + XSHIFT;
+plot(xthis, ythis', 'o-k');
+xlim([0 5+XSHIFT]);
+if size(ythis,1)>1
+lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+end
+if length(colsthis)==2
+%     [~, p] = ttest(ythis(:,1), ythis(:,2));
+    [p] = signrank(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 'srank', 1);
+end
+bnumthis = All_bnum(indsthis);
+for i=1:size(ythis,1)
+   plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)}); 
+end
+
+
+% ======== EACH BIRD ONE DOT
+lt_subplot(3,2,5); hold on;
 title('dat = bird');
 xlabel('TARG - NONTARG');
 ylabel('coh (WN - base)');
@@ -231,8 +316,10 @@ xthis = colsthis;
 bnumthis = All_bnum(indsthis);
 
 [ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
 for i=1:size(ymean,1)
     lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(i)]);
 end
 xlim([0 5]);
 

@@ -13,10 +13,11 @@ for nt = 1:ntrials
         if onlyOnePeriod==1
             maxlag = fix(0.75*(1500/freqsthis(nf)));
         end
+        
         if usecorrcoeff==1
-        [c, lags] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'coeff');            
+            [c, lags] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'coeff');
         else
-        [c, lags] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'unbiased');
+            [c, lags] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'unbiased');
         end
         
         % -- find peak
@@ -31,7 +32,7 @@ for nt = 1:ntrials
             if usecorrcoeff==1
                 [ctmp, lagstmp] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'coeff');
             else
-        [ctmp, lagstmp] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'biased');
+                [ctmp, lagstmp] = xcorr(dat1(:, nf, nt), dat2(:, nf, nt), maxlag, 'biased');
             end
             lt_figure; hold on;
             

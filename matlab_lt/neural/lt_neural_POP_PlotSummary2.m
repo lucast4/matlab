@@ -4,13 +4,13 @@ function lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, DATSTRUCT, ..
 
 consolidateSamePairs=1; % if 1, then for any pair of neurons and a given motif,
 % takes average of pair
+bregionWanted = 'LMAN-RA';
 
 %% PARAMS
 
 smoothBeforeSubtr = 0; % smooth before subtract psth or shuffle corrector - see Kass
 
 %% ============= PLOT DISTIRBUTIONS ACROSS MOTIFS/BIRDS
-bregionWanted = 'LMAN-RA';
 
 numbirds = max(DATSTRUCT.Pairs.birdID);
 CCallbirds = [];
@@ -96,6 +96,10 @@ for i=1:numbirds
         MotifNames{mm} = motifname{1};
         FFcvMat(mm) = ffcv;
         
+    end
+    
+    if isempty(CCrealCell)
+        continue
     end
     
     % ################### PLOT FOR ALL MOTIFS [this bird]
@@ -216,9 +220,7 @@ lt_plot_zeroline_vert;
 
 %% ====== PLOT RAW,. EACH MOTIF
 if plotRaw==1
-    
-    bregionWanted = 'LMAN-RA';
-    
+
     numbirds = max(DATSTRUCT.Pairs.birdID);
     numexpts = max(DATSTRUCT.Pairs.exptID);
     nummotifs = max(DATSTRUCT.Pairs.motifnum);

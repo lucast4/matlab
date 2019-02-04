@@ -39,6 +39,9 @@ function lt_neural_QUICK_PlotSylPatches(ons, offs, y, linemode, color)
 
 % linemode=1; then instead of patches plots lines.
 
+if ~exist('color', 'var')
+    color = 'k';
+end
 if ~exist('linemode', 'var')
     linemode=0;
 end

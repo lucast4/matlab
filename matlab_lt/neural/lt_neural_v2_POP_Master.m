@@ -22,7 +22,7 @@ MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStru
 % clear MOTIFSTATS_Compiled;
 
 %% ================ 
-birdnum = 2;
+birdnum = 4;
 
 lt_neural_POP_PlotRast
 
@@ -56,12 +56,20 @@ MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
 % 
 % end
 
-%% =============== SUMMARY PLOT OF ALL CROSS-CORRELATIONS
-OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct);
+%% =============== SUMMARY PLOT OF ALL CROSS-CORRELATIONS [GOOD - XCOV OF SPIKING]
+% i.e. spike-spike xcov
+plotRaw = 1;
+birdstoplot = [];
+% OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct, plotRaw, ...
+%     birdstoplot);
+OUTSTRUCT = lt_neural_POP_PlotSummary_v2(MOTIFSTATS_pop, SummaryStruct, plotRaw, ...
+    birdstoplot);
 
 close all;
 plotRaw =0;
-lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
+% lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
+%     plotRaw);
+lt_neural_POP_PlotSummary2_v2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
     plotRaw);
 
 %% ================= PLOT DISTRIBUTIONS ACROSS ALL BIRDS
@@ -81,13 +89,16 @@ lt_neural_v2_ExtractFullMotifs;
 MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
 
 
+%% summary struct
+SummaryStruct = MOTIFSTATS_Compiled.SummaryStruct;
+
 %% ======================== EXTRACT POPULATION
 close all;
 MOTIFSTATS_pop = lt_neural_v2_POP_ExtractMotifs(MOTIFSTATS_Compiled, SummaryStruct);
 % clear MOTIFSTATS_Compiled;
 
 
-%% ================ PLOT [CORRELATION WITH FF]
+%% ================ PLOT [CORRELATION WITH FF] [RUN THIS FIRST!!]
 close all;
 xcov_dattotake = [-0.02 0.02];
 xcov_dattotake_anchorpoints = 2; % 
@@ -99,10 +110,18 @@ MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
 
 %% =============== SUMMARY PLOT OF ALL CROSS-CORRELATIONS
 close all;
-OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct);
+% i.e. spike-spike xcov
+plotRaw = 1;
+birdstoplot = [];
+OUTSTRUCT = lt_neural_POP_PlotSummary(MOTIFSTATS_pop, SummaryStruct, plotRaw, ...
+    birdstoplot);
+% OUTSTRUCT = lt_neural_POP_PlotSummary_v2(MOTIFSTATS_pop, SummaryStruct, [], ...
+%     birdstoplot);
 
-plotRaw=0;
+close all;
+plotRaw =0;
 lt_neural_POP_PlotSummary2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
     plotRaw);
-
+% lt_neural_POP_PlotSummary2_v2(MOTIFSTATS_pop, SummaryStruct, OUTSTRUCT, ...
+%     plotRaw);
 

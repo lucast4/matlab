@@ -16,16 +16,23 @@ for j=1:length(Allbird_Fnames)
         continue
     end
     
+    
+    
     % ########################### SAVE LFP
     fnamesave = [fnamethis '.lfp'];
     load(fnamesave, '-mat');
     
-    
+        
     % --=-- skuip if already done
     if skipifdone ==1
         if exist([fnamethis '.filt'], 'file')
-            disp(['skip ' fnamethis '[alraedy done]']);
+            % === cjheck that all chans are dopne
+            
+            tmp = load([fnamethis '.filt'], '-mat');
+            if all(ismember(lfpstruct.chanlist, tmp.filtstruct.chanlist))
+                            disp(['skip ' fnamethis '[alraedy done, including desired chans]']);
             continue
+            end
         end
     end
     

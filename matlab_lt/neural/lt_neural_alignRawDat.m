@@ -338,8 +338,8 @@ if PlotWhat.filt==1;
                     line([x x], [-10 10], 'Color','r');
                 end
             end
-            
-            ylim([-300 300]);
+            ylim([-5*std(dat) 5*std(dat)]);
+%             ylim([-300 300]);
         end
         
         

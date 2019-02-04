@@ -20,6 +20,7 @@ end
 % plottype:
 % 1 - imagesc
 % 2 - diff frequency bands (line plot)
+% 3 - heat map of p values
 
 % plottype 1:
 if ~exist('clim', 'var')
@@ -48,7 +49,8 @@ if plottype==1
     axis tight;
     line([0 0], ylim, 'Color', 'k');
 %     colormap('spring');
-    lt_plot_colormap('centered')
+    lt_plot_colormap('centered');
+    colorbar('EastOutside');
 elseif plottype==2
     pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
     
@@ -96,5 +98,42 @@ elseif plottype==2
         ylim(clim);
     end
     line([0 0], ylim, 'Color', 'k');
+    
+elseif plottype==3
+    % FOR each t, ff bin, compute p-value (i.e. deviation from 0, distr
+    % over dim 3)
+    
+    nrows = size(cohmat,1);
+    ncols = size(cohmat,2);
+    pmat = nan(nrows, ncols);
+    for rr=1:nrows
+        for cc=1:ncols      
+            tmp = squeeze(cohmat(rr, cc, :));
+            if all(isnan(tmp))
+            pmat(rr, cc) = nan;
+            else
+            pmat(rr, cc) = signrank(squeeze(cohmat(rr, cc, :)));
+            end
+        end
+    end
+    
+    pmat = log10(pmat);
+    
+    imagesc(tbins, ffbins, pmat', [-4 0]);
+    axis tight;
+    line([0 0], ylim, 'Color', 'k');
+    lt_plot_colormap('pval');
+%     colorbar('East');
+    
+    % --- mark places with pval <0.05
+    pmatsig = pmat<log10(0.05);
+    for rr=1:length(tbins)
+        for cc=1:length(ffbins)
+            if pmatsig(rr, cc)==1
+                plot(tbins(rr), ffbins(cc), 'or');
+            end
+            
+        end
+    end
     
 end

@@ -10,6 +10,7 @@ function OUTDAT = lt_neural_v2_ANALY_FRsmooth_MinusBase(OUTDAT, SwitchStruct,...
 % usepercent = 0; % if 1, then gets fr percent deviation from baseline. otherwise uses hz diff
 % nbasetime = 60; % 60 minutes bnefore first WN trial is min time for baseline
 % nbasetime = []; % 60 minutes bnefore first WN trial is min time for baseline
+    % changed to be before onset of WN...
 
 
 %%
@@ -41,6 +42,8 @@ for i=1:numbirds
                 continue
             end
             
+            swtime = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
+            
             % ################### SECOND, PLOT SMOOTH FR FOR ALL SYLS, SUBTRACT BASE
             for nn=1:maxneur
                 
@@ -60,7 +63,8 @@ for i=1:numbirds
                             timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent);
                     else
                         [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, nbasetime);
+                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, ...
+                            nbasetime, swtime);
                     end
                     
                     % =========== SAVE
@@ -113,7 +117,8 @@ end
 
 
 function [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-    timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, nbasetime)
+    timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, ...
+    nbasetime, swtime)
 % ===== PARAMS
 % j is ind to extract from in OUTDAT.
 % nbasetime in minutes, counting back from first WN song
@@ -127,14 +132,17 @@ if ~exist('nbasetime', 'var')
 end
 if isempty(nbasetime)
     nbasetime = 10000000;
+    swtime = 0;
 end
+
 % ====== RUN
 % =========== 1) collect baseline mean (use last N trials)
 indtmp = 1;
 
 % --- minimum time for base trials
 ttmp = OUTDAT.All_FF_t{j,2}(1);
-mintime = ttmp - nbasetime/(24*60); % the earliest data to take for baseline
+% mintime = ttmp - nbasetime/(24*60); % the earliest data to take for baseline
+mintime = swtime - nbasetime/(24*60);
 
 % -- which bnase inds to keep?
 tbase = OUTDAT.All_FF_t{j,1};
@@ -152,6 +160,22 @@ ff_base_std = std(ff);
 timesbase = tbase(indstokeep);
 ffbase = ff_base;
 
+if (0)
+   
+    tbase = OUTDAT.All_FF_t{j, 1};
+twn = OUTDAT.All_FF_t{j,2};
+fbase = OUTDAT.All_FF{j,1};
+fwn = OUTDAT.All_FF{j,2};
+    figure; hold on;
+    
+    if isnan(fbase(1))
+        plot(tbase, 1, 'ok');
+    plot(twn, 2, 'or');
+    else
+    plot(tbase, fbase, 'ok');
+    plot(twn, fwn, 'or');    
+    end
+end
 % ------------- collect mean baseline divided by median of FF
 if (0)
     thresh = median(ff);

@@ -1,5 +1,6 @@
 function lt_neural_v2_ANALY_FRsmooth_BaseMinu(OUTDAT, SwitchStruct, ...
-    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs)
+    epochtoplot, analytype, doShuff, syltypesneeded, premotorwind, nshuffs, ...
+    minmotifs)
 %%
 
 dattype = 'neuron'; % for breaking down shuffle into lower level data.
@@ -69,6 +70,25 @@ end
 
 disp(['Keeping ' num2str(length(indstokeep)) '/' num2str(length(OUTDAT.All_birdnum)) ' datapoints, passes syltypes required criterion']);
 
+OUTDAT = lt_structure_subsample_all_fields(OUTDAT, indstokeep, 1);
+
+
+%% =================== ONLY KEEP SWITCHES THAT HAVE A MINIMUM NUMBER OF MOTIFS
+
+[indsgrp, indsgrpU] = lt_tools_grp2idx({OUTDAT.All_birdnum, OUTDAT.All_exptnum, OUTDAT.All_swnum, OUTDAT.All_neurnum});
+indstoremove = [];
+for i=indsgrpU'
+    
+    indsthis = indsgrp==i;
+    
+    nmot = length(unique(OUTDAT.All_motifnum(indsthis)));
+    if nmot < minmotifs
+        indstoremove = [indstoremove; find(indsthis)];
+    end
+    
+end
+
+indstokeep = ~ismember(1:length(OUTDAT.All_birdnum), indstoremove');
 OUTDAT = lt_structure_subsample_all_fields(OUTDAT, indstokeep, 1);
 
 %% ####################### SUMMARY - collect, for each subtract global mean

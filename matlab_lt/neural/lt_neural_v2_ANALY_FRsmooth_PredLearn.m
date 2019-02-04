@@ -124,6 +124,15 @@ if plotRaw==1
                 % ########################## CALCUALTE THINGS
                 for j=indsthis'
                     
+                    % ============== skip if bad syl
+                    
+%                 if removeBadSyls==1
+%                     sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bthis, ename, ss, motifthis);
+%                     if sylbad==1
+%                         continue
+%                     end
+%                 end
+                    
                     % ----- get time window
                     t = OUTDAT.AllMinusBase_tbinAll{j};
                     indstokeep_t = t>=corrwindow(1) & t<corrwindow(2);
@@ -133,6 +142,7 @@ if plotRaw==1
                     ybase_lo = OUTDAT.AllBase_FRsmooth_Lo{j}(indstokeep_t);
                     ybase_hi = OUTDAT.AllBase_FRsmooth_Hi{j}(indstokeep_t);
                     ybase_himinuslo = ybase_hi - ybase_lo;
+                    
                     if all(isnan(ybase_himinuslo))
                         assert(all(isnan(OUTDAT.All_FF{j,1})));
                         continue
@@ -473,6 +483,14 @@ OutStruct.LearnDirAll = [LearnDirAll];
 OutStruct.CorrAll = [CorrAll];
 OutStruct.EcounterAll = [EcounterAll];
 
+%% =========
+lt_figure; hold on;
+
+% plot(CorrAll(LearnDirAll==1), 'ok');
+plot(LearnDirAll, CorrAll, 'ok');
+xlim([-2 2])
+
+
 
 %% ##################################### PLOT, BASED ON DIR OF LEARNING
 if plotSummary==1
@@ -500,21 +518,23 @@ if plotSummary==1
         lt_plot(x+rand, ymean, {'Errors', ysem, 'Color', pcol, 'LineStyle', '-'});
         
         if any(x==-1)
-        Yall(ee, 1) = ymean(find(x==-1));
+            Yall(ee, 1) = ymean(find(x==-1));
         end
         if any(x==1)
-        Yall(ee, 2) = ymean(find(x==1));
+            Yall(ee, 2) = ymean(find(x==1));
         end
-
+        
     end
     lt_plot_zeroline;
     
-    indstmp = ~any(isnan(Yall)');
-    p = signrank(Yall(indstmp, 1), Yall(indstmp,2));
-    lt_plot_pvalue(p, 'signrank (only those paired)');
-    p = ranksum(Yall(:,1), Yall(:,2));
-    lt_plot_text(0, 0, ['ranksum:' num2str(p)], 'b');
-    
+    try
+        indstmp = ~any(isnan(Yall)');
+        p = signrank(Yall(indstmp, 1), Yall(indstmp,2));
+        lt_plot_pvalue(p, 'signrank (only those paired)');
+        p = ranksum(Yall(:,1), Yall(:,2));
+        lt_plot_text(0, 0, ['ranksum:' num2str(p)], 'b');
+    catch err
+    end
     
     
     % ================ SUMMARY ACROSS ALL NEURONS
@@ -528,17 +548,23 @@ if plotSummary==1
     lt_plot(x, ymean, {'Errors', ysem, 'Color', 'r'});
     
     % ---- significance
-    p = ranksum(CorrAll(LearnDirAll==1), CorrAll(LearnDirAll==-1));
-    lt_plot_pvalue(p, 'ranksum');
+    try
+        p = ranksum(CorrAll(LearnDirAll==1), CorrAll(LearnDirAll==-1));
+        lt_plot_pvalue(p, 'ranksum');
+    catch err
+    end
     
     % --- significance (each one)
-    p = signrank(CorrAll(LearnDirAll==1));
-    if p<0.2
-        lt_plot_text(1, 1, [num2str(p)], 'r');
-    end
-    p = signrank(CorrAll(LearnDirAll==-1));
-    if p<0.2
-        lt_plot_text(-1, 1, [num2str(p)], 'r');
+    try
+        p = signrank(CorrAll(LearnDirAll==1));
+        if p<0.2
+            lt_plot_text(1, 1, [num2str(p)], 'r');
+        end
+        p = signrank(CorrAll(LearnDirAll==-1));
+        if p<0.2
+            lt_plot_text(-1, 1, [num2str(p)], 'r');
+        end
+    catch err
     end
     
     xlim([-2 2]);
@@ -581,18 +607,20 @@ if doregression==1
     lme = fitlme(tbl, mdl)
 end
 
-% ========== ALWAYS DO THIS REGRESSION FOR OUTPUT
+try
+    % ========== ALWAYS DO THIS REGRESSION FOR OUTPUT
     CorrAll = double(CorrAll);
     tbl = table(CorrAll, LearnDirAll, EcounterAll, PitchDiffZ);
     mdl = 'CorrAll ~ LearnDirAll + (LearnDirAll|EcounterAll)';
     lme = fitlme(tbl, mdl);
-assert(strcmp(lme.Coefficients.Name{2}, 'LearnDirAll'));
-beta = lme.Coefficients.Estimate(2);
-beta_CI = [lme.Coefficients.Lower(2) lme.Coefficients.Upper(2)];
-beta_p = lme.Coefficients.pValue(2);
-
-OutStruct.FITLME.beta = beta;
-OutStruct.FITLME.beta_CI = beta_CI;
-OutStruct.FITLME.beta_p = beta_p;
-
+    assert(strcmp(lme.Coefficients.Name{2}, 'LearnDirAll'));
+    beta = lme.Coefficients.Estimate(2);
+    beta_CI = [lme.Coefficients.Lower(2) lme.Coefficients.Upper(2)];
+    beta_p = lme.Coefficients.pValue(2);
+    
+    OutStruct.FITLME.beta = beta;
+    OutStruct.FITLME.beta_CI = beta_CI;
+    OutStruct.FITLME.beta_p = beta_p;
+catch err
+end
 

@@ -33,12 +33,19 @@ for ii=1:numexpts
             
             DAT = OUTSTRUCT.bird(i).expt(ii).swnum(ss);
             
+            if length(DAT.(epoch).motif)<m
+                continue
+            end
+            if isempty(DAT.(epoch).motif(m).neurset)
+                continue
+            end
+            
             if isempty(DAT.(epoch))
                 continue
             end
             
             numsets = length(DAT.(epoch).motif(m).neurset);
-            
+                        
             % --- COLLECT ALL Xcov (even across diff sets of neurons pairs)
             CCthis = [DAT.(epoch).motif(m).neurset.CCallpairs];
             xlagstmp = [DAT.(epoch).motif(m).neurset.xlags_sec];
