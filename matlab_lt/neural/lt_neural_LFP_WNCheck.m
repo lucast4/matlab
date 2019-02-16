@@ -92,8 +92,8 @@ for i=1:length(SwitchCohStruct.bird)
                 segextract = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(neurset).motif(mm).SegExtr_neurfakeID(1).SegmentsExtract;
                 t = any(strcmp(motifthis, SwitchStruct.bird(i).exptnum(ii).switchlist(ss).learningDirs(1:2:end)));
                                 
-                trialsthis = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch(1):...
-                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch(end);
+                trialsthis = min(SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch):...
+                    max(SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch);
                 
                 fh = sum([segextract(trialsthis).hit_WN])./length(segextract(trialsthis));
 

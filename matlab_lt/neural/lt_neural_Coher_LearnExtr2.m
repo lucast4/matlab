@@ -1,5 +1,5 @@
 function SwitchCohStruct = lt_neural_Coher_LearnExtr(COHSTRUCT, MOTIFSTATS_pop, SwitchStruct, pairtoget, ...
-    LFPSTRUCT, PARAMS, baseuseallinds)
+    LFPSTRUCT, PARAMS, baseuseallinds, removeBadTrials)
 %% lt 10/12/18 - extract lerning related coherence dataset
 
 % pairtoget = 'LMAN-RA';
@@ -21,8 +21,9 @@ SwitchCohStruct = struct;
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
-    %     birdname = SwitchStruct.bird(i)
+     bname = SwitchStruct.bird(i).birdname;
     for ii=1:numexpts
+     ename = SwitchStruct.bird(i).exptnum(ii).exptname;
         numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
         for ss=1:numswitch
             
@@ -112,7 +113,20 @@ for i=1:numbirds
                     indsbase = find(tvals>tstart & tvals<tswitch);
                     indsWN = find(tvals>tswitch & tvals<tend);
                     
-                    % -------------- take second half of WN inds
+                    % ==================== REMOVE BAD TRIALS?
+                    if removeBadTrials==1
+                        
+                        badtrials = lt_neural_QUICK_RemoveTrials(bname, ename, ss, tvals);
+                        
+                        % === reextract base and wn
+                        indsbase = find(tvals>tstart & tvals<tswitch & badtrials==0);
+                        indsWN = find(tvals>tswitch & tvals<tend & badtrials==0);
+                    else
+                        badtrials = nan;
+                    end
+                    
+                    
+                    % =============== take second half of WN inds
                     if baseuseallinds==0
                         indsbase = indsbase(round(length(indsbase)/2):end);
                     end
@@ -173,6 +187,7 @@ for i=1:numbirds
                         ['_bird' num2str(i) '_expt' num2str(ii) '_set' num2str(k) '_mot' num2str(mm) '.mat'];
                     %                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).cohmat = cohmatall;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals = tvals;
+                    SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).badtrials_removedfromepoch = badtrials;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals = ffvals;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair = bregionpair;
                     SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).bregionpair_originalorder = ...

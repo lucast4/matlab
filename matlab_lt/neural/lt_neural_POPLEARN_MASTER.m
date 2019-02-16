@@ -95,70 +95,8 @@ PARAMS.savemarker = input('what is save marker? (e.g. 14Oct2018_2147)? ', 's');
 timewindhit = [-0.15 0.1]; % window, rel syl onset, during which any WN onset or offset will be considered a hit.
 % leave expty [] to use pre and postdur from data extraction.
 
-numbirds = length(MOTIFSTATS_Compiled.birds);
-
-for i=1:numbirds
-   
-    numneurons = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons);
-    birdname = MOTIFSTATS_Compiled.birds(i).birdname;
-    
-    for ii=1:numneurons
-       
-        nummotifs = length(MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif);
-        exptid = MOTIFSTATS_Compiled.SummaryStruct.birds(i).neurons(ii).exptID;
-        
-        hasdir = 0;
-        for mm=1:nummotifs
-           
-            
-            segextract = MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif(mm).SegmentsExtract;
-            
-            if isempty(segextract)
-                continue
-            end
-            
-            % ========== get time of WN for all trials
-            ntrials = length(segextract);
-            for tt = 1:ntrials
-               fname = segextract(tt).song_filename;
-               disp(fname);
-               ons = segextract(tt).WithinSong_TokenOns;
-               
-               datdur = segextract(tt).actualmotifdur;
-               
-               if isempty(timewindhit)
-               windon = ons-PARAMS.motif_predur;
-               windoff = ons + datdur + PARAMS.motif_postdur;
-               else
-                   windon = ons + timewindhit(1);
-                   windoff = ons + timewindhit(2);
-               end
-               [a] = fileparts(SummaryStruct.birds(i).neurons(ii).dirname);
-               tmp = load([a '/' fname '.wntime.mat']);
-               tmp.wnstruct;
-               
-               % ---- FIND WN ONSETS/OFFSETS WITHIN WINDOW (collect if on
-               % OR off is within data window)
-               indsthis1 = tmp.wnstruct.WNonsets>windon & tmp.wnstruct.WNonsets<windoff;
-               onsthis = tmp.wnstruct.WNonsets(indsthis1) - windon;
-               
-               indsthis2 = tmp.wnstruct.WNoffsets>windon & tmp.wnstruct.WNoffsets<windoff;
-               offthis = tmp.wnstruct.WNoffsets(indsthis2) - windon;
-               
-               wasTrialHit = any([indsthis1 indsthis2]);
-               
-               segextract(tt).hit_WN = wasTrialHit;
-               segextract(tt).WNonset_sec = onsthis;
-               segextract(tt).WNoffset_sec = offthis;
-            end
-            MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif(mm).SegmentsExtract = segextract;
-        end
-    end
-end
-
-
-
-
+MOTIFSTATS_Compiled = lt_neural_POPLEARN_ExtrWNtime(timewindhit, SummaryStruct,...
+    MOTIFSTATS_Compiled, PARAMS);
 
 %% =============== [WN hits] - resave structure
 
@@ -167,8 +105,10 @@ save(['/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_'
     PARAMS.savemarker '.mat'], ...
     'MOTIFSTATS_Compiled', '-v7.3');
 
+
 %% ==== REMOVE DIR SONG
 MOTIFSTATS_Compiled = lt_neural_QUICK_MotCom_RemoveDIR(MOTIFSTATS_Compiled);
+
 
 %% ================ extraction continued
 close all;
@@ -401,6 +341,30 @@ lt_neural_LFP_SingleExptCheck;
 lt_neural_Coher_AllRaw;
 
 
+%% #################### [DIAGNOSTIC] - display times of songs for each experiment
+
+for i=1:length(SwitchCohStruct.bird)
+    bname = SwitchStruct.bird(i).birdname;
+   for ii=1:length(SwitchCohStruct.bird(i).exptnum)
+       ename = SwitchStruct.bird(i).exptnum(ii).exptname;
+       for iii=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist)
+           if isempty(SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum)
+               continue
+           end
+          indsbase = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(1).indsbase;
+          indswn = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(1).indsWN;
+           
+          disp(' ');
+          disp('===================================== ');
+          disp([bname ' - ' ename ' - sw' num2str(iii)]);
+          t = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(1).tvals;
+          t = [t(indsbase) t(indswn)];
+          disp([datestr(t(1), 'ddmmmyyyy-HHMM') ' to ' datestr(max(t), 'ddmmmyyyy-HHMM')]);
+       end
+   end
+end
+
+
 %% #######################################################################
 %% ====== CALCULATE COHERENCE USING LFP
 % GOAL TO GET COHSTRUCT
@@ -437,6 +401,14 @@ save('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14
     'MOTIFSTATS_Compiled', '-v7.3');
 
 % ==== LOAD 
+% 1) all data, 2/5/19, up to gr48, RALMANLearn6
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_05Feb2019_2142.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_05Feb2019_2142.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_05Feb2019_2142.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/05Feb2019_2142/COHSTRUCT.mat');
+
+
 % 1) all data (100ms window)
 clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat');
@@ -642,8 +614,9 @@ else
 pairtoget = 'LMAN-RA';
 % pairtoget = 'LMANoutside-RA';
 % pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
+removeBadTrials = 1; % will only affect epoch inds.
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
-    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);    
+    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds, removeBadTrials);    
 end
 
 PARAMS.bregionpair_toget = pairtoget;
@@ -688,7 +661,7 @@ twind = [-0.07 -0.03]; % all combined
 fwind = [22 32];
 
 % ============= EXTRACT RELATIVE TO WN ONSET?
-useWNtiming=1;
+useWNtiming=0;
 WNprctile = 2.5;
 prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
 
@@ -843,7 +816,6 @@ collectAllProcess =1; % then colelcts not just Cohmat, but all phi and spectra.
 plotON = 0;
 averagechanpairs= 0; % for each motif, average over all chan pairs [NOTE: this is not up to date]
 onlyfirstswitch = 0;
-removeBadSyls = 1; % LEAVE AT 1.
 zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 2, then doesn't zscore, instead normalizes as power proprotion
 % (separately for each time slice and trial).
@@ -851,19 +823,29 @@ zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 4, then first 1) zscores within f, and 2) normalizes to all f (i.e.
 % proportion
 collectDiffMats = 0; % if 1, then collects differences (WN minus base). redundant, so leave at 0.
+removeBadChans = 1; % default: 1
+removeBadSyls = 1; % LEAVE AT 1.
+typesToRemove = {'wn'}; % only remove syls that are bad becuase preceded by WN
+% typesToRemove = {'wn', 'noise'};
 
 if (0)
 [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats);
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove);
 end
 
 
 [OUTSTRUCT] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats);
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove);
 
 
+%% ===== get wn timing.
+onlyusegoodtargsyls = 1;
+prctiletouse = 2.5;
+useallwn = 1;
+[OUTSTRUCT] = lt_neural_Coher_GetWNtiming(OUTSTRUCT, onlyusegoodtargsyls, ...
+    useallwn, prctiletouse, SwitchStruct, SwitchCohStruct, PARAMS);
 
 %% ====== don't want raw data?
 clear SwitchCohStruct;
@@ -991,8 +973,9 @@ indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
 
 %% ========= [COHERENCE MATRIX] REALIGN BY WN ONSET
 % Realign all cohernece matrices by WN time of target.
-
-[OUTSTRUCT, PARAMS] = lt_neural_Coher_RealignbyWN(OUTSTRUCT, SwitchCohStruct, SwitchStruct, PARAMS);
+useallwn = 1; % default is 0 (just epoch) but for some experiments not enough data in those epoch?
+[OUTSTRUCT, PARAMS] = lt_neural_Coher_RealignbyWN(OUTSTRUCT, SwitchCohStruct, ...
+    SwitchStruct, PARAMS, useallwn);
 
 
 %% ====== SUMMARY PLOT OF COHERENCE LARNING
@@ -1058,9 +1041,9 @@ fieldtoplot = 'coher';
 % breakpoint using spec and evaluate cohgram version instead. Should
 % modify to plot cohgram.
 timewindowtoplot = [-0.08 0]; % for spectra.
-birdstoplotTMP = [];
-expttoplotTMP = [];
-swtoplotTMP = [];
+birdstoplotTMP = [2];
+expttoplotTMP = [4];
+swtoplotTMP = [1];
 for i=1:max(OUTSTRUCT.bnum)
     if ~isempty(birdstoplotTMP)
         if ~any(birdstoplotTMP==i)
@@ -1088,7 +1071,8 @@ for i=1:max(OUTSTRUCT.bnum)
             birdstoplot = [i];
             expttoplot = [ii];
             swtoplot = [ss];
-            lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
+            sumplottypeTMP = 'chanpairs'; % i.e. what is datapoint?
+            lt_neural_Coher_Learn_PlotSum2(OUTSTRUCT, PARAMS, SwitchStruct, sumplottypeTMP, ...
                 plotAllSwitchRaw, clim, fieldtoplot, birdstoplot, timewindowtoplot, ...
                 zscoreLFP, expttoplot, swtoplot, ffbinsedges);
             
@@ -1101,8 +1085,30 @@ for i=1:max(OUTSTRUCT.bnum)
 end
 
 
+%% ==================== [RECALCULATE COHERENCE MATRIX and SCLALAR
+% BASED ON NEW SET OF TRIALS]
 
-%% ################# [MOTIFPLOT - MAIN] SUMMARIZE SCALAR CHANGE IN LEARNING 
+% ===== params for recalc of sclar
+twind = [-0.07 -0.03]; % all combined
+% twind = [-0.07 -0.02]; % all combined
+fwind = [22 32];
+
+% - EXTRACT RELATIVE TO WN ONSET?
+useWNtiming=1;
+WNprctile = 2.5;
+prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
+
+% wntouse = 'half';
+wntouse = 'quarter';
+% wntouse = 'third';
+% wntouse = 'firsthalf';
+% wntouse = 'half';
+% ---------- RUN
+[OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(OUTSTRUCT, OUTSTRUCT_CohMatOnly, ...
+    SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
+    prewind_relWN, COHSTRUCT);
+
+%% ################# [MOTIFPLOT - MAIN] SUMMARIZE SCALAR CHANGE IN LEARNING
 % I.E. EACH syl in order...
 % ======= SUMMARIZE SCALAR RESULT, OVER ALL SWITCHES, MOTIFS, AND CHANNELS
 
@@ -1123,8 +1129,9 @@ lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARA
 
 %% ################## [GOOD] [SCALAR & PITCH LERANING- COMPARE TO LEARNING RATE]
 close all;
-
-lt_neural_Coher_PitchLearnCoh(OUTSTRUCT, PARAMS, SwitchCohStruct, SwitchStruct);
+nsegs = 4; % quartiles, then 4... (for both coh and learning)
+lt_neural_Coher_PitchLearnCoh(OUTSTRUCT, PARAMS, SwitchCohStruct, ...
+    SwitchStruct, nsegs);
 
 
 %% ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1170,7 +1177,9 @@ close all;
 
 % ########## FOR A GIVEN SYL, PLOT ITS CHANGE IN COHERNECE DEPENDING ON WHETHER IT IS TARG, SAME OR DIFF ACROSS EXPERIMENTS
 averageOverChanPairs = 1; % default, since chan pairs are so similar.
-statmethod = 'diff';
+% statmethod = 'diff'; % diff minus mean across all motifs in each expt.
+statmethod = 'minDiffType'; % minsu diff type.
+% statmethod = 'minusbase'; % simply minus base.
 meanOverExpt = 1; % then for each motif gets one value for each status type (targ, same ..);
 
 birdstoplot = [];
@@ -1889,18 +1898,21 @@ close all;
 % 3) SPIKE XCOV (NOT SHUFFLE SUBTRACTED)
 % 4) SPIKE XCOV (USING FREQUENCY DOMAIN)
 
+BirdsToSkip = {'wh72pk12'};
+
 % ====== binning spikes:
-binsize_spk = 0.005; % default, 5ms bins for cross corr
+binsize_spk = 0.0025; % default, 5ms bins for cross corr
 % xcov_dattotake = [-0.12 0.02]; % rel syl onset.
-xcov_dattotake = [-0.05 0.02]; % rel syl onset.
-xcov_dattotake = [-0.12 0.02]; % rel syl onset.
-xcov_dattotake = [-0.1 0]; % rel syl onset. [BEST WINDOW]
+% xcov_dattotake = [-0.05 0.02]; % rel syl onset.
 xcov_dattotake = [-0.1 0]; % rel syl onset. [BEST WINDOW]
 % xcov_dattotake = [-0.08 0.02]; % rel syl onset.
-% xcov_dattotake = [-0.08 0.02]; % rel syl onset.
+% xcovwindmax = 0.06; % seconds
 xcovwindmax = 0.06; % seconds
-% normmethod = 'unbiased';
-normmethod = 'coeff';
+normmethod = 'unbiased';
+% normmethod = 'coeff';
+
+% ======= norm bined spikes to prob in bin? (i.e. sum to 1)
+normspiketoprob = 0; % if 0, then uses spike count
 
 % ======= bregionpairtoget
 bregionpairtoget = 'LMAN-RA';
@@ -1910,12 +1922,12 @@ removeIfLFPOnly = 1;
 
 % ====== FOR GETTING RUNNING XCOV
 getXgram=1;
-% windsize = 0.1;
-% windshift = 0.01;
 windsize = 0.1;
 windshift = 0.005;
+% windsize = 0.08;
+% windshift = 0.005;
 % ---
-windlist = [-0.15:windshift:(0.05-windsize)];
+windlist = [-0.13:windshift:(0.055-windsize)];
 windlist = [windlist' windlist'+windsize];
 
 
@@ -1931,43 +1943,45 @@ PARAMS.Xcov.Xgram.windlist = windlist;
 SwitchXCovStruct = struct;
 
 for i=1:length(SwitchCohStruct.bird)
+    bname = SwitchStruct.bird(i).birdname;
+    if any(ismember(BirdsToSkip, bname))
+        continue
+    end
     for ii=1:length(SwitchCohStruct.bird(i).exptnum)
-%         for ii=1:1
-            disp([i ii]);
+        disp([i ii]);
         for iii=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist)
-           DAT = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii);
-           
-           
-           % ========= FOR THIS DATASET, GET SPIKES OVER ALL TRIALS FOR
-           % RELEVANT CHANNELS.
-           nmotifs = length(DAT.motifnum);
-           for mm=1:nmotifs
-               neurset = DAT.motifnum(mm).neursetused;
-               
-               if isempty(neurset)
-                   continue
-               end
-               
-               % ======== get segmentsextract data
-               neurlist = MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons{neurset};
-               bregionlist = {SummaryStruct.birds(i).neurons(neurlist).NOTE_Location};
-               segextract_all = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(neurset).motif(mm).SegExtr_neurfakeID;
-               segcommon = segextract_all(1).SegmentsExtract;
-               chanlist = [SummaryStruct.birds(i).neurons(neurlist).channel];
-               
-               if removeIfLFPOnly==1
+            DAT = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii);
+            
+            % ========= FOR THIS DATASET, GET SPIKES OVER ALL TRIALS FOR
+            % RELEVANT CHANNELS.
+            nmotifs = length(DAT.motifnum);
+            for mm=1:nmotifs
+                neurset = DAT.motifnum(mm).neursetused;
+                
+                if isempty(neurset)
+                    continue
+                end
+                
+                % ======== get segmentsextract data
+                neurlist = MOTIFSTATS_pop.birds(i).exptnum(ii).Sets_neurons{neurset};
+                bregionlist = {SummaryStruct.birds(i).neurons(neurlist).NOTE_Location};
+                segextract_all = MOTIFSTATS_pop.birds(i).exptnum(ii).DAT.setnum(neurset).motif(mm).SegExtr_neurfakeID;
+                segcommon = segextract_all(1).SegmentsExtract;
+                chanlist = [SummaryStruct.birds(i).neurons(neurlist).channel];
+                
+                if removeIfLFPOnly==1
                     % -- check unit type for each neuron
                     isLFP = strcmp({SummaryStruct.birds(i).neurons(neurlist).NOTE_PutativeCellType}, 'LF');
                     neurlist(isLFP) = [];
                     bregionlist(isLFP) = [];
                     segextract_all(isLFP) = [];
-               end
-               
-               if length(segcommon)<3 % too few trials
-                   continue
-               end
-               
-               % ========= GO THRU ALL PAIRS OF NEURONS. ONLY GET PAIRWISE
+                end
+                
+                if length(segcommon)<3 % too few trials
+                    continue
+                end
+                
+                % ========= GO THRU ALL PAIRS OF NEURONS. ONLY GET PAIRWISE
                 % STATS IF THEY ARE BREGIONS OF INTEREST.
                 ccRealAllPair = {};
                 ccShiftAllPair = {};
@@ -1994,7 +2008,7 @@ for i=1:length(SwitchCohStruct.bird)
                             continue
                             % since is not desired pair
                         end
-                            
+                        
                         
                         %% =============== COLLECT ALL PAIRWISE THINGS
                         % ======== 1) XCOV (SPIKES)
@@ -2013,7 +2027,7 @@ for i=1:length(SwitchCohStruct.bird)
                         
                         [ccRealAll, ccShiftAll, lags_sec] = lt_neural_POP_GetXcov(...
                             dattmp1, dattmp2, xcov_dattotake, PARAMS.motif_predur, ...
-                            xcovwindmax, binsize_spk, 0, 0, normmethod);
+                            xcovwindmax, binsize_spk, 0, 0, normmethod, normspiketoprob);
                         
                         ccRealAllPair = [ccRealAllPair; ccRealAll];
                         ccShiftAllPair = [ccShiftAllPair; ccShiftAll];
@@ -2022,12 +2036,10 @@ for i=1:length(SwitchCohStruct.bird)
                         
                         chanPair = [chanPair; ...
                             [SummaryStruct.birds(i).neurons([neur1 neur2]).channel]];
-                            
-                        
                         
                         
                         if (0)
-                        figure; hold on; plot(lags_sec, mean(ccRealAll) - mean(ccShiftAll), '-k')    ;
+                            figure; hold on; plot(lags_sec, mean(ccRealAll) - mean(ccShiftAll), '-k')    ;
                         end
                         
                         %% ================ COLLECT XCOV, WITH SHIFTING TIME WINDOW
@@ -2039,7 +2051,8 @@ for i=1:length(SwitchCohStruct.bird)
                                 windthis = windlist(ww,:);
                                 [ccreal, ccshift] = lt_neural_POP_GetXcov(...
                                     dattmp1, dattmp2, windthis, PARAMS.motif_predur, ...
-                                    xcovwindmax, binsize_spk, 0, 0, normmethod);
+                                    xcovwindmax, binsize_spk, 0, 0, normmethod, ...
+                                    normspiketoprob);
                                 
                                 % -- save
                                 ccreal_allwind{ww} = ccreal;
@@ -2050,7 +2063,7 @@ for i=1:length(SwitchCohStruct.bird)
                             ccShiftAllPair_allwind = [ccShiftAllPair_allwind; ccshift_allwind];
                         end
                     end
-                end   
+                end
                 
                 
                 % ================ OUTPUT FOR THIS MOTIF
@@ -2062,174 +2075,72 @@ for i=1:length(SwitchCohStruct.bird)
                 SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif(mm).neurPair = neurPair;
                 SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif(mm).chanPair = chanPair;
                 
-           end           
-        end        
+            end
+        end
     end
 end
 
 PARAMS.Xcov_ccLags = lags_sec;    
 
 
-%% ====================== [XCOV] FOR EACH EXPT
+%% ====================== [XCOV] EXTRACTION
+
+if isfield(PARAMS, 'Xcov_ccLags_beforesmooth')
+   % --- reset lag values to before smoothing... (so that can redo
+   % extraction here)
+    PARAMS.Xcov_ccLags=PARAMS.Xcov_ccLags_beforesmooth;
+end
+
 % ====== usealltrial
-usealltrials =0; % otehrwise uses epchs.
-useallbase = 0; % trumps usealltrials
-useallwn = 0; % trumps usealltrials
-dosmooth = 0; % interpolate, then smooth
+% --- option 1: [this trumps others]
+usealltrials = 0; % otehrwise uses epchs.
+% --- option 2: [only does this if usealltrials=0]
+useallbase = 0; % 1: all; 0=last half.
+% wntouse = 'all';
+% wntouse = 'half';
+% wntouse = 'third';
+wntouse = 'quarter';
+
+% ============== smoothe in lag space? 
+dosmooth = 1; % interpolate, then smooth
 dosmooth_sigma = 2*binsize_spk; % sec
+
+% ===== what version of xcov?
+xcovver = 'zscore'; % i.e. each lag bin, zscore relative to shuffle.
+% xcovver = 'scale'; % % NOT DONE YET! scales by relative magnitude of shuffle functions.
+% xcovver = ''; % empty means difference of means.
+
+% ===== get xcovgram?
+getxgram = 1;
 
 % ====== removebad syl?
 removebadsyl = 1;
+removebadtrials =1;
+removebadchans = 0;
+plotraw = 0; % will keyboard on targets, and can run to see how compute xcov [i.e. different methods]
+[OUTSTRUCT_XCOV, PARAMS, NanCountAll] = lt_neural_POPLEARN_XcovExtr(SwitchXCovStruct, ...
+    SwitchStruct, PARAMS, SwitchCohStruct, OUTSTRUCT, usealltrials, ...
+    useallbase, dosmooth, dosmooth_sigma, removebadsyl, ...
+    windlist, plotraw, xcovver, wntouse, removebadtrials, getxgram, removebadchans);
 
-% ===================================
-OUTSTRUCT_XCOV = struct;
-
-OUTSTRUCT_XCOV.XcovBase = [];
-OUTSTRUCT_XCOV.XcovWN = [];
-
-OUTSTRUCT_XCOV.XcovgramBase = {};
-OUTSTRUCT_XCOV.XcovgramWN = {};
-
-OUTSTRUCT_XCOV.neurpairnum = [];
-OUTSTRUCT_XCOV.neurpair = [];
-OUTSTRUCT_XCOV.bnum = [];
-OUTSTRUCT_XCOV.enum =[];
-OUTSTRUCT_XCOV.swnum = [];
-OUTSTRUCT_XCOV.motifnum = [];
-OUTSTRUCT_XCOV.issame = [];
-OUTSTRUCT_XCOV.istarg = [];
-OUTSTRUCT_XCOV.learndirTarg = [];
-
-OUTSTRUCT_XCOV.XcovBase_NoMinShuff = ...
-    [];
-OUTSTRUCT_XCOV.XcovWN_NoMinShuff = ...
-    [];
-
-for i=1:length(SwitchXCovStruct.bird)
-    bname = SwitchStruct.bird(i).birdname;
-    for ii=1:length(SwitchXCovStruct.bird(i).exptnum)
-        ename = SwitchStruct.bird(i).exptnum(ii).exptname;
-        disp([i ii]);
-        for iii=1:length(SwitchXCovStruct.bird(i).exptnum(ii).switchlist)
-            nmotifs = length(SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif);
-            
-            for mm=1:nmotifs
-                motifthis = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).motifname;
-                
-                % ========== CHECK IF IS BAD SYL?
-                if removebadsyl==1
-                    sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, iii, motifthis);
-                    if sylbad==1
-                        continue
-                    end
-                end
-                
-                datthis = SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif(mm);
-                if usealltrials==1
-                    inds_base = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase;
-                    inds_WN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsWN;
-                elseif usealltrials==0
-                    inds_base = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase_epoch;
-                    inds_WN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsWN_epoch;
-                end
-                if useallbase==1
-                    inds_base = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase;
-                end
-                if useallwn==1
-                     inds_WN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsWN;
-                end
-                %                 datthis.ccLags;
-                
-                
-                
-                % ================== things about this syl
-                %                 motifname = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm);
-                indsOUT = OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==iii & ...
-                    OUTSTRUCT.motifnum==mm;
-                if ~any(indsOUT)
-                    % skip, since not part of oringial outsrtuct. (e.g., is
-                    % bad syl
-                    continue
-                end
-                istarg = unique(OUTSTRUCT.istarg(indsOUT));
-                issame = unique(OUTSTRUCT.issame(indsOUT));
-                learndir = unique(OUTSTRUCT.learndirTarg(indsOUT));
-                
-                
-                
-                % =============== GET BASELINE AND WN FOR ALL PAIRS
-                npairs = length(datthis.ccRealAllPair);
-                for np=1:npairs
-                    datmat_real = datthis.ccRealAllPair{np};
-                    datmat_shuff = datthis.ccShiftAllPair{np};
-                    neurpair = datthis.neurPair(np, :);
-                    % ==== process (e.g. smooth) and get xcov output
-                    [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq] = ...
-                        lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
-                        dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags);
-                    
-                    % ===== get xcov-gram...
-                    nwinds = size(datthis.ccRealAllPair_allwind,2);
-                    xcovgram_base = nan(nwinds, length(datbase)); % win x lags
-                    xcovgram_wn= nan(nwinds, length(datbase));
-                    xcenters = mean(windlist,2);
-                    for ww=1:nwinds
-                        
-                        datmat_real = datthis.ccRealAllPair_allwind{np, ww};
-                        datmat_shuff = datthis.ccShiftAllPair_allwind{np, ww};
-                        
-                        [db, dw] = ...
-                            lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
-                            dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags);
-                        
-                        xcovgram_base(ww, :) = db;
-                        xcovgram_wn(ww, :) = dw;
-                    end
-                    
-                    %%
-                    OUTSTRUCT_XCOV.XcovgramBase = [OUTSTRUCT_XCOV.XcovgramBase; xcovgram_base];
-                    OUTSTRUCT_XCOV.XcovgramWN = [OUTSTRUCT_XCOV.XcovgramWN; xcovgram_wn];
-
-                    OUTSTRUCT_XCOV.XcovBase = [OUTSTRUCT_XCOV.XcovBase; datbase];
-                    OUTSTRUCT_XCOV.XcovWN = [OUTSTRUCT_XCOV.XcovWN; datWN];
-                    
-                    OUTSTRUCT_XCOV.XcovBase_NoMinShuff = ...
-                        [OUTSTRUCT_XCOV.XcovBase_NoMinShuff; datbase_notminshuff];
-                    OUTSTRUCT_XCOV.XcovWN_NoMinShuff = ...
-                        [OUTSTRUCT_XCOV.XcovWN_NoMinShuff; datWN_notminshuff];
-                    
-                    OUTSTRUCT_XCOV.neurpairnum = [OUTSTRUCT_XCOV.neurpairnum; np];
-                    OUTSTRUCT_XCOV.neurpair = [OUTSTRUCT_XCOV.neurpair; neurpair];
-                    OUTSTRUCT_XCOV.bnum = [OUTSTRUCT_XCOV.bnum; i];
-                    OUTSTRUCT_XCOV.enum = [OUTSTRUCT_XCOV.enum; ii];
-                    OUTSTRUCT_XCOV.swnum = [OUTSTRUCT_XCOV.swnum; iii];
-                    OUTSTRUCT_XCOV.motifnum = [OUTSTRUCT_XCOV.motifnum; mm];
-                    OUTSTRUCT_XCOV.issame = [OUTSTRUCT_XCOV.issame; issame];
-                    OUTSTRUCT_XCOV.istarg = [OUTSTRUCT_XCOV.istarg; istarg];
-                    OUTSTRUCT_XCOV.learndirTarg = [OUTSTRUCT_XCOV.learndirTarg; learndir];
-                    
-                end
-            end
-        end
-    end
-end
-
-if dosmooth==1
-PARAMS.Xcov_ccLags = Xq;    
-else
-PARAMS.Xcov_ccLags = datthis.ccLags;
-end
-PARAMS.xcenters_gram = xcenters;
+assert(all(PARAMS.xcenters_gram == mean(PARAMS.Xcov.Xgram.windlist,2)))
 
 
-%% ======== name change, so OUTSTRUCT_XCOV matches OUTSTRUCT
+% ================ plot nans
+lt_figure; hold on;
+title('trials with nan for xcorr [real dat]');
+xlabel('N total');
+ylabel('N that is nan');
+plot(NanCountAll(:,2), NanCountAll(:,1), 'ok');
+
+
+% ======== name change, so OUTSTRUCT_XCOV matches OUTSTRUCT
 OUTSTRUCT_XCOV.switch = OUTSTRUCT_XCOV.swnum;
 OUTSTRUCT_XCOV.chanpair = OUTSTRUCT_XCOV.neurpair;
 
 
 
-%% ========= EXTRACT CERTAIN THINGS INTO OUTSTRUCT_XCOV
-
+% ####################### EXTRACT CERTAIN THINGS INTO OUTSTRUCT_XCOV
 % ====== 1) MOTIFNAME
 motifname_all = {};
 chanpair_actual = [];
@@ -2261,6 +2172,63 @@ save([savedir '/OUTSTRUCT_XCOV.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 save([savedir '/SwitchXCovStruct.mat'], 'SwitchXCovStruct', '-v7.3');
 save([savedir '/PARAMS.mat'], 'PARAMS', '-v7.3');
 
+% === save variant
+savemarker = 'zscore';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = '80mswind_zscore_smooth';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = '40mswind_zscore_smooth';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = 'zscore_25msbin';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = 'zscore_25msbin_smoothed';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = 'frprob';
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+
+% ==============
+savemarker = '80mswind_zscore_smooth_021319'; % latest (clean chans, syls, trials).
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+
+% ========== 80ms, zscore, smoothed, using all base and 1/3 of WN trials.
+savemarker = '80mswind_zscore_smooth_021319_2'; % latest (clean chans, syls, trials).
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+% ========== 100ms, zscore, smoothed, using 1/2 base and 1/3 of WN trials.
+savemarker = '100mswind_zscore_smooth_021419'; % latest (clean chans, syls, trials).
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+% ========== 100ms, zscore, smoothed, using 1/2 base and 1/4 of WN trials
+% [GOOD]
+savemarker = '100mswind_zscore_smooth_021419_2'; % latest (clean chans, syls, trials).
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
 
 %% [LOAD] --- 
 if (0)
@@ -2270,31 +2238,99 @@ load([savedir '/SwitchXCovStruct.mat']);
 load([savedir '/PARAMS.mat']);
 end
 
-%% =========== [EXTRACT SCALARS] 
-% ========= 1) REALIGN TO TIME OF WN?
-% 1) extract for each switch the time of WN onset for the target
-% NOTE: this also realigns all cohernece matrices by WN time of target.
-[OUTSTRUCT, PARAMS] = lt_neural_Coher_RealignbyWN(OUTSTRUCT, ...
-    SwitchCohStruct, SwitchStruct, PARAMS);
+if (0)
+savemarker = '80mswind_zscore_smooth';
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+end
 
+%% ========== [REALIGN XCOVGRAMS TO WN ONSET]
+
+
+
+
+
+
+%% =========== [SEE IF ALIGNT TO WN?]
 % 2) Plot separating expereiments by timing.
+close all;
 dozscore=1;
 prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
 lt_neural_LFP_AlignToWN_Xcov(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchStruct, ...
     PARAMS, dozscore, prewind_relWN);
 
 
-% ========= 2) EXTRACT SCALAR FOR TWO PEAKS FOR EACH EXPERIMENT
-% twindows = {[-0.065 -0.035], [-0.95 -0.04]}; % one array for each window [x centers...] [inclusive]
-% lagwindows = {[-0.01 -0.005], [0.03 0.05]};
+%% ========= 2) EXTRACT SCALAR FOR TWO PEAKS FOR EACH EXPERIMENT
 twindows = {[-0.06 -0.03], [-0.95 -0.035], [-0.06 -0.03]}; % one array for each window [x centers...] [inclusive]
 lagwindows = {[-0.01 -0.005], [0.02 0.05], [0.005 0.01]};
+
+% 5ms bins
+twindows = {[-0.08 -0.03], [-0.08 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.01 0], [0.03 0.045]};
+
+% 2.5ms bins, 80ms, default.
+twindows = {[-0.07 -0.03], [-0.08 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.008 0.001], [0.028 0.047]};
+
+
+% 2.5ms bin, smoothed, 80ms window, good?
+twindows = {[-0.06 -0.03], [-0.08 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.012 0.002], [0.028 0.047]};
+
+% 2.5ms bins, 100ms, default.
+twindows = {[-0.07 -0.03], [-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.011 0.005], [0.03 0.045]};
+
+lagwindows = {[-0.014 0.006], [0.03 0.045]}; % OK
+% lagwindows = {[-0.008 0.001], [0.03 0.045]};
+
+% lagwindows = {[-0.015 0.005], [0.026 0.048]};
+% twindows = {[-0.06 -0.03], [-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
+
+% ========= GOOD:
+% alignto = 'sylonset'; 
+% twindows = {[-0.07 -0.03], [-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
+% lagwindows = {[-0.014 0.006], [0.03 0.045]}; % OK
+
+alignto = 'wnonset'; 
+twindows = {[-0.1 -0.06], [-0.1 -0.06]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.014 0.006], [0.03 0.045]}; % OK
+
 % NOTE: 
 % pu69, overnight, max preceding: -0.08 (center)
-alignto = 'sylonset'; 
+% alignto = 'sylonset'; 
 % alignto = 'wnonset';
 OUTSTRUCT_XCOV = lt_neural_POPLEARN_XCov_ExtrScal(OUTSTRUCT_XCOV, OUTSTRUCT, ...
     PARAMS, twindows, lagwindows, alignto);
+
+
+%% ========= 2) EXTRACT TIME SLICE (OVERWRITE ORIGINAL TIME SLICE...)
+twindow = [-0.085 -0.04]; % DEFAULT, 80ms, smoothed... one array for each window [x centers...] [inclusive]
+% twindow = [-0.08 -0.04]; % one array for each window [x centers...] [inclusive]
+twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
+
+% NOTE: 
+% pu69, overnight, max preceding: -0.08 (center)
+% alignto = 'sylonset'; 
+alignto = 'wnonset';
+
+% ======= GOOD;
+% twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
+% alignto = 'sylonset'; 
+
+twindow = [-0.1 -0.06]; % one array for each window [x centers...] [inclusive]
+alignto = 'wnonset';
+
+OUTSTRUCT_XCOV = lt_neural_POPLEARN_XCov_ExtrSlice(OUTSTRUCT_XCOV, ...
+    OUTSTRUCT, PARAMS, twindow, alignto);
+
+%% ============ [REALIGN TO WN ONSET]
+
+disp('NOT READY! see code');
+pause;
+lt_neural_POPLEARN_XCov_ReAlign(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchCohStruct, ...
+    SwitchStruct, PARAMS, useallwn);
 
 
 %% =========== [XCOV] PLOT EACH INDIVIDUAL EXPERIMENT
@@ -2302,22 +2338,22 @@ OUTSTRUCT_XCOV = lt_neural_POPLEARN_XCov_ExtrScal(OUTSTRUCT_XCOV, OUTSTRUCT, ...
 close all;
 plotNotminShuff=0; % 1, then not shift subtracted
 onlygoodexpt = 1;
+clim = [-0.1 0.1];
 lt_neural_POPLEARN_XCov_PlotAll(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
-    plotNotminShuff, onlygoodexpt);
-
+    plotNotminShuff, onlygoodexpt, clim);
 
 
 
 %% ============ [XCOV] PLOT SUMMARY ACROSS EXPERIMENTS
 close all;
-datlevel = 'switch';
-% datlevel = 'neurpair';
+% datlevel = 'switch';
+datlevel = 'neurpair';
 fracchange = 0; % if 1, then frac change in xcov. if 0, then difference
 plotNotminShuff=0;
 
 % --- to get specific switch types. ... [is done in addition to above
 % fitlers]
-birdtoget = [2];
+birdtoget = [1 2 4];
 swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
 firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets
 % for a given switch did not have a previous switch on the same day
@@ -2329,23 +2365,54 @@ indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
     firstswitchfortarget_withinday, firstswitchofday, birdtoget);
 % indtoget_b_e_s = [];
 
+% clim = [-1.5e-4 1.5e-4];
+clim = [-0.15 0.15];
 lt_neural_POPLEARN_XCov_PlotSum(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
-    indtoget_b_e_s, datlevel, fracchange, plotNotminShuff);
+    indtoget_b_e_s, datlevel, fracchange, plotNotminShuff, clim);
 
 lt_subtitle(['[' normmethod '], alltrials=' num2str(usealltrials)]);
 
+%% =========== [XCOV] TIMECOURSES
+
+% lagwindows = {[-0.01 0], [0.03 0.055]};
+
+
+close all;
+onlygoodexpt = 1;
+lagwindows = [-0.011 -0.001 0.029 0.056]; % exclusive... , will take all intervals.
+lagwindows = [-0.011 -0.001 0.029 0.046]; % exclusive... , will take all intervals.
+lagwindows = [-0.0126 0.001 0.029 0.046]; % 2.5ms windows
+lagwindows = [-0.011 0.001 0.027 0.045]; % 2.5ms, smoothed DEFAULT
+lagwindows = [-0.015 0.007 0.029 0.046]; % OK
+ffbinsedges_indstoplot = [1 3]; % which ones of lagwindow intervals to p[lot?
+dattype = 'chan';
+% dattype = 'switch';
+% clim = [-0.015 0.015];
+plotindivswitch=0;
+% clim = [-1.5e-4 1.5e-4];
+clim = [-0.1 0.1];
+XLIM = [-0.1 -0.04];
+YLIMGRAM = [-0.05 0.05];
+clim = [-0.1 0.1];
+XLIM = [-0.1 -0.01];
+YLIMGRAM = [-0.05 0.05];
+lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
+    onlygoodexpt, PARAMS, dattype, lagwindows, clim, ffbinsedges_indstoplot, ...
+    plotindivswitch, XLIM, YLIMGRAM);
 
 
 %% =========== [XCOV] PLOT INVIDIDUAL EXPEIRMNTS, BUT XCOV GRAM
 close all;
-clim = [-0.1 0.1];
-lt_neural_POPLEARN_XCov_PlotAllGram(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, clim )
+clim = [-0.15 0.15];
+birdtoplot = [1];
+lt_neural_POPLEARN_XCov_PlotAllGram(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
+    clim, birdtoplot)
 
 
 %% =========== [XCOV] PLOT EACH MOTIF/CHAN, FOR A GIVEN EXPERIMENT
 close all;
 
-bb = 2;
+bb = 4;
 ee = 1;
 sw = 1;
 clim = [-0.15 0.15];
@@ -2419,18 +2486,157 @@ end
 
 %% =========== [XCOV SCALAR] - plot each experiment [MOTIFS]
 close all;
-windthis = 3;
+windthis = 2;
 Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
-clim = [-0.1 0.1];
+% clim = [-0.2 0.2];
+clim = [-0.2 0.2];
+% clim = [-1.5e-4 1.5e-4];
 onlygoodexpt = 1;
 expttype = 'xcov_spikes';
 % plotlevel = 'switch';
 plotlevel = 'chanpair';
 lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
-    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel);
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, OUTSTRUCT);
+
+
+
+%% ========= ACROSS-EXPERIMENT CORRELATIONS
 
 
 
 
-%% ===== COMPUTE SPECTROGRAMS USING EXTRACTED
+%% ========== [XCOV, XCOV PEAK OVER TIME]
 
+
+
+
+
+%% ========= [RAW, RASTERS]
+
+close all;
+% ======================== PLOT PAIRED RASTERS, ALIGNED TO SYL
+% BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn1'}; % ordered p[aors {bird, expt, bird, expt } ....
+% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn3'}; % ordered p[aors {bird, expt, bird, expt } ....
+BirdExptPairsToPlot = {'gr48bu5', 'RALMANLearn2'}; % ordered p[aors {bird, expt, bird, expt } ....
+SwitchToPlot = [1]; % array of swiches.
+neurpair_globID = [2 4]; % only one pair allowed: e.g. [9 17], actual global ID.
+TypeOfPairToPlot = {'LMAN-RA'}; % e.g. 'LMAN-RA' (in alphabetical order)
+motiftoplot = {}; % if empty, then plots target(s).
+xgramxlim = [-0.085 -0.03];
+xgramylim = [-0.045 0.045];
+clim = [-0.25 0.25]; % for cov gram;
+lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
+    neurpair_globID, motiftoplot, OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+    SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
+    PARAMS, xgramxlim, xgramylim, clim);
+
+
+
+
+%% ##################################### [MORE CONSISTENT SYLLABLE LOCKED ACTIVITY?]
+%% ============= [CONSISTENT ACTIVITY] EXTRACTION
+% onlykeepgoodcase = 1;
+% onlyadjacentpairs = 1; % if 0, then all trial pairs...
+% corrwind = [-0.1 0.01]; % rel syl onset, to get pairwise trial by trial correlations.
+% corrwind = [-0.12 0]; % rel syl onset, to get pairwise trial by trial correlations.
+% baseallinds = 1; % 0 is epocjh, 1 is all % default:1
+% wnallinds = 0;
+% if strcmp(wntouse, 'quarter')
+% usehalfwntmp = 1; % entered above...
+% end
+% % usehalfwntmp = 0; % entered above...
+onlykeepgoodcase = 1;
+onlyadjacentpairs = 1; % if 0, then all trial pairs...
+corrwind = [-0.1 0.01]; % rel syl onset, to get pairwise trial by trial correlations.
+baseallinds = 0; % 0 is epocjh, 1 is all % default:1
+wnallinds = 0;
+if strcmp(wntouse, 'quarter')
+usehalfwntmp = 1; % entered above...
+end
+% usehalfwntmp = 0; % entered above...
+usesameindsasXcov = 1; % this trumps everything else --> will use same inds as xcov analyses.
+OUTSTRUCT_units = lt_neural_POPLEARN_Cons_Extr(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+    SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
+    PARAMS, onlykeepgoodcase, onlyadjacentpairs, corrwind, baseallinds, ...
+    wnallinds, usehalfwntmp, usesameindsasXcov);
+
+
+%% ============ [CONSISTENT ACTIVITY - LFP ONLY]
+
+
+onlykeepgoodcase = 1;
+onlyadjacentpairs = 1; % if 0, then all trial pairs...
+corrwind = [-0.1 0.01]; % rel syl onset, to get pairwise trial by trial correlations.
+corrwind = [-0.1 0]; % rel syl onset, to get pairwise trial by trial correlations.
+baseallinds = 0; % 0 is epocjh, 1 is all % default:1
+wnallinds = 0;
+if strcmp(wntouse, 'quarter')
+usehalfwntmp = 1; % entered above...
+end
+usehalfwntmp = 0; % entered above...
+lfpfilt = [15 35];
+OUTSTRUCT_lfp = lt_neural_POPLEARN_Cons_Extr_LFP(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+    SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
+    PARAMS, onlykeepgoodcase, onlyadjacentpairs, corrwind, baseallinds, ...
+    wnallinds, usehalfwntmp, lfpfilt);
+
+OUTSTRUCT_lfp.neurID =  OUTSTRUCT_lfp.chanthis;
+
+%% ============= [PLOTS] OVERVIEW
+% === FOR EACH EXPERIMENT, PLOT ALL DATA
+close all;
+birdtoplot = [];
+onlygoodexpt = 1;
+lt_neural_POPLEARN_Cons_PlotOver(OUTSTRUCT_units, SwitchStruct, SummaryStruct, ...
+    birdtoplot, onlygoodexpt);
+
+
+%% ============ [PLOTS] SUMMARY
+
+% === FOR EACH EXPERIMENT, PLOT ALL DATA
+close all;
+birdtoplot = [];
+expttoplot = [];
+onlygoodexpt = 1;
+plotlevel = 'switch';
+% plotlevel = 'chanpair';
+lt_neural_POPLEARN_Cons_PlotOverSum(OUTSTRUCT_units, OUTSTRUCT_XCOV, ...
+    SwitchStruct, SummaryStruct, birdtoplot, onlygoodexpt, plotlevel, ...
+    corrwind, expttoplot);
+
+%% ============ [PLOTS-LFP] SUMMARY
+close all;
+birdtoplot = [1 2 4];
+expttoplot = [];
+onlygoodexpt = 1;
+% plotlevel = 'switch';
+plotlevel = 'chanpair';
+lt_neural_POPLEARN_Cons_PlotOverSum_LFP(OUTSTRUCT_lfp, OUTSTRUCT, ...
+    SwitchStruct, SummaryStruct, birdtoplot, onlygoodexpt, plotlevel, ...
+    corrwind, expttoplot);
+
+
+%% ##############################################################
+%% ################## [COMPARE SYL-LOCKED ACTIVITY] 
+% ============== WILL ALWAYS USE TRIALS IN OUTSTRUCT_XCOV (THOSE ARE GOOD)
+
+% =============== 1) FOR EACH TARGET SYL PLOT ALL LFP AND NEURONS (IN RA
+% AND LMAN)
+close all;
+onlygoodexpt = 1;
+xtoplot = [-0.12 0.02];
+xtoplot = [-0.1 0.01];
+plotraw = 0; % 1: plots each syl/expt, chan etc...
+disp('NOTE: remember to include wh72 in this analysis');
+lt_neural_POPLEARN_SylLocked_Over(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+    SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
+    PARAMS, onlygoodexpt, xtoplot, plotraw);
+
+
+
+
+%% ######################################################################
+%% ################################ [SIMULATION]
+%% ========== 1) trial to trial mean fluctuation - could that account for xcov changes?
+
+lt_neural_POPLEARN_MODEL_meanfluc;

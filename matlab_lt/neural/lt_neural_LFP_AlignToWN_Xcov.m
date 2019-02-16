@@ -8,8 +8,8 @@ function lt_neural_LFP_AlignToWN_Xcov(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchStruct, .
 clim = [-0.15 0.15];
 % ffbintoget = [20 35];
 % dozscore = 0; % 0=no, 1=yes, 2=center onoy
-prctiletouse = 2.5;
-
+% prctiletouse = 2.5;
+xlimplot = [-0.09 0.055];
 %%
 
 %% ======= 2) FILTER DATA
@@ -57,7 +57,7 @@ for i=1:length(allbnum)
     
     wntime = unique(OUTSTRUCT.WNonset(indstmp));
     
-
+    
     % ========= IOUTPUT
     allwntimes = [allwntimes; wntime];
 end
@@ -70,7 +70,7 @@ allbnum = allbnum(indsort);
 allenum = allenum(indsort);
 allswnum = allswnum(indsort);
 allDatDiff = allDatDiff(:,:,:, indsort);
-% 
+%
 % allcohdiff = allcohdiff(:,:,:,indsort);
 
 %% ############################ [PLOTS]
@@ -95,11 +95,12 @@ for i=1:length(allbnum)
     cohdiff = allDatDiff(:,:,:,i);
     Y = cohdiff(:,:,1) - cohdiff(:,:,3);
     lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', clim);
-%     ylim([20 100]);
+    %     ylim([20 100]);
+    xlim(xlimplot);
     
     % === note down time of min WN
     line([allwntimes(i) allwntimes(i)], ylim, 'Color', [0.2 0.8 0.5], 'LineWidth', 2);
-    lt_plot_zeroline;    
+    lt_plot_zeroline;
 end
 
 %% ================ 1) plot all xcovgrams, sorted by WN onset
@@ -123,11 +124,12 @@ for i=1:length(allbnum)
     cohdiff = allDatDiff(:,:,:,i);
     Y = cohdiff(:,:,1);
     lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', clim);
-%     ylim([20 100]);
+    %     ylim([20 100]);
+    xlim(xlimplot);
     
     % === note down time of min WN
     line([allwntimes(i) allwntimes(i)], ylim, 'Color', [0.2 0.8 0.5], 'LineWidth', 2);
-    lt_plot_zeroline;    
+    lt_plot_zeroline;
 end
 
 
@@ -196,6 +198,7 @@ YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
+xlim(xlimplot);
 lt_plot_zeroline;
 
 % --- TARG - DIFF
@@ -208,6 +211,7 @@ YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
+xlim(xlimplot);
 lt_plot_zeroline;
 
 % --- TARG
@@ -220,4 +224,5 @@ YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
+xlim(xlimplot);
 lt_plot_zeroline;

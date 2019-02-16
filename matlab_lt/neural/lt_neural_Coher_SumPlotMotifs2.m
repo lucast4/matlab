@@ -2,7 +2,7 @@ function lt_neural_Coher_SumPlotMotifs2(OUTSTRUCT, SwitchStruct, ...
     averageOverChanPairs, statmethod, indtoget_b_e_s, meanOverExpt, ...
     birdstoplot, expttoplot, swtoplot)
 %% lt 12/18/18 - [MOTIFPLOT] FOR EACH MOTIF, PLOT COH CHANGE DEPEDNING ON STATUS
-% ########## FOR A GIVEN SYL, PLOT ITS CHANGE IN COHERNECE DEPENDING ON 
+% ########## FOR A GIVEN SYL, PLOT ITS CHANGE IN COHERNECE DEPENDING ON
 % WHETHER IT IS TARG, SAME OR DIFF ACROSS EXPERIMENTS
 
 
@@ -27,8 +27,8 @@ end
 
 
 if ~isempty(indtoget_b_e_s)
-indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget_b_e_s, 'rows');
-OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
+    indstokeep = ismember([OUTSTRUCT.bnum OUTSTRUCT.enum OUTSTRUCT.switch], indtoget_b_e_s, 'rows');
+    OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);
 end
 
 %%
@@ -41,16 +41,16 @@ end
 
 
 %%
-    All_bnum = [];
-    All_istarg = [];
-    All_issame = [];
-    All_cohscal = [];
-    All_motifID = [];
+All_bnum = [];
+All_istarg = [];
+All_issame = [];
+All_cohscal = [];
+All_motifID = [];
 All_motifname = {};
 
 % --- COLLECT DATA FOR EACH SWITCH.
 for i=1:length(indsgrp_switch_unique)
-%     swgrpthis = indsgrp_switch_unique(i);
+    %     swgrpthis = indsgrp_switch_unique(i);
     indsthis = indsgrp_switch==indsgrp_switch_unique(i);
     
     bnum = unique(OUTSTRUCT.bnum(indsthis));
@@ -63,7 +63,7 @@ for i=1:length(indsgrp_switch_unique)
     
     istarg = OUTSTRUCT.istarg(indsthis);
     issame = OUTSTRUCT.issame(indsthis);
-%     motifs = OUTSTRUCT.motifname(indsthis);
+    %     motifs = OUTSTRUCT.motifname(indsthis);
     [motifID, motiflist] = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
     %     cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
     cohscal = OUTSTRUCT.cohscal_diff(indsthis);
@@ -89,11 +89,16 @@ for i=1:length(indsgrp_switch_unique)
     elseif strcmp(statmethod, 'diff')
         ymean = mean(cohscal);
         cohscal = cohscal-ymean;
+    elseif strcmp(statmethod, 'minusbase')
+        % do nothing
+    elseif strcmp(statmethod, 'minDiffType')
+        ymean = mean(cohscal(istarg==0 & issame==0));
+        cohscal = cohscal-ymean;
     end
     
     % ==================== SAVE ALL OUTPUTS
     All_bnum = [All_bnum; bnum*ones(size(istarg))];
-    All_motifname = [All_motifname; motiflist(motifID)']; 
+    All_motifname = [All_motifname; motiflist(motifID)'];
     All_istarg = [All_istarg ; istarg];
     All_issame = [All_issame; issame];
     All_cohscal = [All_cohscal; cohscal];
@@ -184,6 +189,9 @@ All_xval(All_istarg==1) =1;
 All_xval(All_istarg==0) =2;
 % All_xval(All_istarg==0 & All_issame==0) =3;
 
+% All_xval(All_istarg==1) =1;
+% All_xval(All_istarg==0 & All_issame==1) =2;
+% All_xval(All_istarg==0 & All_issame==0) =3;
 
 %% =========== [PLOT]
 figcount=1;

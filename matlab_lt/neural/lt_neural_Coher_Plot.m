@@ -1,9 +1,13 @@
 function lt_neural_Coher_Plot(cohmat, tbins, ffbins, plottype, linestyle, clim, ...
-    plotsig, plotindivtraces, ffbinsedges)
+    plotsig, plotindivtraces, ffbinsedges, colorbarloc, ffbinsedges_indstoplot)
 %% lt 10/9/18 - various plots for coherence
 
 % cohmat can be multiple trials (dim 3 is trials).
 %%
+
+if ~exist('colorbarloc', 'var')
+    colorbarloc = 'EastOutside';
+end
 
 if ~exist('plotindivtraces', 'var')
     plotindivtraces = [];
@@ -38,6 +42,10 @@ if isempty(ffbinsedges)
     ffbinsedges = [20 30 80 120]; % edges, to plot timecourse in frequency bands
     % ffbinsedges = [15 30 80 150]; % edges, to plot timecourse in frequency bands
 end
+
+if ~exist('ffbinsedges_indstoplot', 'var')
+    ffbinsedges_indstoplot = 1:(length(ffbinsedges)-1); % which one of the intervals to plot?
+end
 %%
 if plottype==1
     cohmean = nanmean(cohmat,3);
@@ -50,11 +58,11 @@ if plottype==1
     line([0 0], ylim, 'Color', 'k');
 %     colormap('spring');
     lt_plot_colormap('centered');
-    colorbar('EastOutside');
+    colorbar(colorbarloc);
 elseif plottype==2
     pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
     
-    for k=1:length(ffbinsedges)-1
+    for k=ffbinsedges_indstoplot
         
         indsff = ffbins>ffbinsedges(k) & ffbins<=ffbinsedges(k+1);
         ffmean = mean(ffbins(indsff));

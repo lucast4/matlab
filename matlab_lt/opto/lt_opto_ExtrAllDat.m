@@ -1,4 +1,5 @@
-function [allffstim, alltraindir, allexptnum, allbirdname, alldaynums] ...
+function [allffstim, alltraindir, allexptnum, allbirdname, alldaynums, ...
+    alltrial_ff, alltrial_t, alltrial_isstim, alltrial_stimlatency] ...
     = lt_opto_ExtrAllDat(ExptList, normeachexpt, valfield, groupbybird, ...
     onlylongepoch, StartDaySkipTime)
 
@@ -21,7 +22,7 @@ function [allffstim, alltraindir, allexptnum, allbirdname, alldaynums] ...
 OUTSTRUCT = struct;
 
 for j=1:length(ExptList)
-    
+    disp(j);
     if isempty(ExptList(j).dirtoplot)
         % then tyr to extract previously saved summary data
         
@@ -44,18 +45,24 @@ alltraindir = [];
 allexptnum = [];
 allbirdname = {};
 alldaynums = [];
+
+alltrial_ff = {};
+alltrial_t = {};
+alltrial_isstim = {};
+alltrial_stimlatency = {};
+
 for j=1:length(ExptList)
     
     ffdiff_stim = OUTSTRUCT.exptnum(j).dat.(valfield);
     try
-    daynum = OUTSTRUCT.exptnum(j).dat.All_Daynum;
+        daynum = OUTSTRUCT.exptnum(j).dat.All_Daynum;
     catch err
         daynum = OUTSTRUCT.exptnum(j).dat.All_daynums;
     end
     traindir = OUTSTRUCT.exptnum(j).dat.All_traindir;
     birdname = ExptList(j).birdname;
     
-
+    
     % --------------------- NORMALIZE EACH EXPT (by mean of means over pos and
     % neg train
     if (0) %NOTE: moved to below grouping, so that the noarmlization is done after
@@ -77,6 +84,13 @@ for j=1:length(ExptList)
     tmp(:) = {birdname};
     allbirdname = [allbirdname; tmp];
     alldaynums = [alldaynums; daynum];
+    
+    
+    % ================== COLLECT TRIAL BY TRIAL DATA
+    alltrial_ff = [alltrial_ff; OUTSTRUCT.exptnum(j).dat.AllTrialsStimEpoch_ff];
+    alltrial_t = [alltrial_t; OUTSTRUCT.exptnum(j).dat.AllTrialsStimEpoch_tval];
+    alltrial_isstim = [alltrial_isstim; OUTSTRUCT.exptnum(j).dat.AllTrialsStimEpoch_isStim];
+    alltrial_stimlatency = [alltrial_stimlatency; OUTSTRUCT.exptnum(j).dat.AllTrialsStimEpoch_tstim_relonset];
 end
 
 

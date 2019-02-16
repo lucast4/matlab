@@ -1,5 +1,6 @@
 function [ccRealAll, ccShiftAll, lags_sec] = lt_neural_POP_GetXcov(dattmp1, dattmp2, xcov_dattotake, ...
-    motifpredur, xcovwindmax, binsize_spk, plotSummary, plotThisCC, normmethod)
+    motifpredur, xcovwindmax, binsize_spk, plotSummary, plotThisCC, normmethod, ...
+    normspiketoprob)
 %% lt 1/9/19 - copied over from code for POPLEARN, XCov analyses
 % NOTE: have only looked carefully at things that will run by default (i.e
 % not things like plotSummary.
@@ -65,179 +66,128 @@ for t = 1:ntrials
     %         plot(1:length(spkbin2), spkbin2+t+0.3, '-or');
     
     
+    if normspiketoprob ==1
+        % ========= THEN MAKE IT PROB OF FINDINGS SPIKE IN BIN...
+        spkbin1 = spkbin1./sum(spkbin1);
+        spkbin2 = spkbin2./sum(spkbin2);
+    end
     
     % ------------------- calculate
     %                                 [cc, lags] = xcov(fr1_short, fr2_short, xcovwindmax/0.001, 'coeff');
     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, normmethod);
-    if all(spkbin1==0) | all(spkbin2==0)
-        cc = zeros(size(cc)); % i.e. will give nans is using coeff.
-    end
-%     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, ');
-    %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
-    assert(~any(isnan(cc)))
-        
+%     if all(spkbin1==0) | all(spkbin2==0)
+%         cc = zeros(size(cc)); % i.e. will give nans is using coeff.
+%     end
+%     %     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, ');
+%     %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
+%     assert(~any(isnan(cc)))
+    
     ccRealAll = [ccRealAll; cc'];
     
     
     %% ############################  SHIFT
     % PREDICTOR
-    if t<ntrials
-        tshift = t+1;
-    else
-        tshift = t-2;
+    if (0) % ===== OLD VERSION, ONLY GET N VS. N+1 IN ONE DIRECTION.
+        if (1)
+            if t<ntrials
+                tshift = t+1;
+            else
+                tshift = t-2;
+            end
+        else
+            if t>1
+                tshift = t-1;
+            else
+                tshift = t+1;
+            end
+        end
+        spkbin2shift = dattmp2.SegmentsExtract(tshift).spk_Binned;
+        x = dattmp2.SegmentsExtract(tshift).spk_Binned_x;
+        
+        % ============================ COMPUTE CORR
+        % --- limit to data in "premotor" window
+        indtmp = x>=windtmp(1) & x<windtmp(2);
+        spkbin2shift = spkbin2shift(indtmp);
+        
+        if normspiketoprob ==1
+            % ========= THEN MAKE IT PROB OF FINDINGS SPIKE IN BIN...
+            spkbin2shift = spkbin2shift./sum(spkbin2shift);
+        end
+        
+        % ------------------------------ calculate
+        [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
+%         if all(spkbin1==0) | all(spkbin2shift==0)
+%             cc = zeros(size(cc));
+%         end
+%         %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+%         assert(~any(isnan(cc)))
+        
+        % ==================== OUTPUT
+        ccShiftAll = [ccShiftAll; cc'];
+        
+    else % ========== NEW METHOD, DO BOTH DIRECTIONS AND COMBINE (SO OUTPUT SAMPLE SIZE OF SHUFFLE TRIALS WILL BE (N-1)*2)
+        %  ###################### DIRECTION 1
+        if t>1
+            tshift = t-1;
+            spkbin2shift = dattmp2.SegmentsExtract(tshift).spk_Binned;
+            x = dattmp2.SegmentsExtract(tshift).spk_Binned_x;
+            
+            % ============================ COMPUTE CORR
+            % --- limit to data in "premotor" window
+            indtmp = x>=windtmp(1) & x<windtmp(2);
+            spkbin2shift = spkbin2shift(indtmp);
+            
+            if normspiketoprob ==1
+                % ========= THEN MAKE IT PROB OF FINDINGS SPIKE IN BIN...
+                spkbin2shift = spkbin2shift./sum(spkbin2shift);
+            end
+            
+            % ------------------------------ calculate
+            [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
+%             if all(spkbin1==0) | all(spkbin2shift==0)
+%                 cc = zeros(size(cc));
+%             end
+%             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+%             assert(~any(isnan(cc)))
+            
+            % ==================== OUTPUT
+            ccShiftAll = [ccShiftAll; cc'];
+        end
+        
+        
+        %  ###################### DIRECTION 2
+        if t<ntrials
+            tshift = t+1;
+            spkbin2shift = dattmp2.SegmentsExtract(tshift).spk_Binned;
+            x = dattmp2.SegmentsExtract(tshift).spk_Binned_x;
+            
+            % ============================ COMPUTE CORR
+            % --- limit to data in "premotor" window
+            indtmp = x>=windtmp(1) & x<windtmp(2);
+            spkbin2shift = spkbin2shift(indtmp);
+            
+            if normspiketoprob ==1
+                % ========= THEN MAKE IT PROB OF FINDINGS SPIKE IN BIN...
+                spkbin2shift = spkbin2shift./sum(spkbin2shift);
+            end
+            
+            % ------------------------------ calculate
+            [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
+%             if all(spkbin1==0) | all(spkbin2shift==0)
+%                 cc = zeros(size(cc));
+%             end
+%             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+%             assert(~any(isnan(cc)))
+            
+            % ==================== OUTPUT
+            ccShiftAll = [ccShiftAll; cc'];
+        end
+        
+        
     end
-    spkbin2shift = dattmp2.SegmentsExtract(tshift).spk_Binned;
-    x = dattmp2.SegmentsExtract(tshift).spk_Binned_x;
-    
-    % --- limit to data in "premotor" window
-    indtmp = x>=windtmp(1) & x<windtmp(2);
-    spkbin2shift = spkbin2shift(indtmp);
-    
-
-    % ------------------------------ calculate
-    [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-    if all(spkbin1==0) | all(spkbin2shift==0)
-        cc = zeros(size(cc));
-    end
-    %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-        assert(~any(isnan(cc)))
-
-    ccShiftAll = [ccShiftAll; cc'];
 end
 
-lags_sec = lags*binsize_spk;
 
-
-% % ############################### pSTH control
-% spkall1 = [dattmp1.SegmentsExtract.spk_Binned];
-% spkall2 = [dattmp2.SegmentsExtract.spk_Binned];
-%
-% psth1 = single(mean(spkall1,2));
-% psth2 = single(mean(spkall2,2));
-%
-%
-% % --- limit to data in "premotor" window
-% if ~isempty(xcov_dattotake)
-%     % shorten to desired window
-%     x = dattmp1.SegmentsExtract(t).spk_Binned_x;
-%     indtmp = x>=windtmp(1) & x<windtmp(2);
-%     psth1 = psth1(indtmp);
-%     psth2 = psth2(indtmp);
-% end
-%
-% [ccPSTH, lags] = xcorr(psth1, psth2, xcovwindmax/binsize_spk);
-% %                             [ccPSTH, lags] = xcov(psth1, psth2, xcovwindmax/binsize_spk);
-
-% %% ========================= AUTO COVARIANCE (1)
-% for t = 1:ntrials
-%
-%     % -------- extract spks binned
-%     spkbin1 = single(dattmp1.SegmentsExtract(t).spk_Binned);
-%     spkbin2 = single(dattmp1.SegmentsExtract(t).spk_Binned);
-%
-%     % --- limit to data in "premotor" window
-%     if ~isempty(xcov_dattotake)
-%         % shorten to desired window
-%         x = dattmp1.SegmentsExtract(t).spk_Binned_x;
-%
-%         indtmp = x>=windtmp(1) & x<windtmp(2);
-%         spkbin1 = spkbin1(indtmp);
-%         spkbin2 = spkbin2(indtmp);
-%     end
-%
-%
-%     % ------------------- calculate
-%     %                                 [cc, lags] = xcov(fr1_short, fr2_short, xcovwindmax/0.001, 'coeff');
-%     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, normmethod);
-%     %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
-%
-%     ccAuto1 = [ccAuto1; cc'];
-%
-%
-%     % ========================== SHIFT
-%     % PREDICTOR
-%     if t<ntrials
-%         spkbin2shift = dattmp1.SegmentsExtract(t+1).spk_Binned;
-%     else
-%         spkbin2shift = dattmp1.SegmentsExtract(t-1).spk_Binned;
-%     end
-%
-%     % --- limit to data in "premotor" window
-%     if ~isempty(xcov_dattotake)
-%         % shorten to desired window
-%         x = dattmp1.SegmentsExtract(t).spk_Binned_x;
-%
-%         indtmp = x>=windtmp(1) & x<windtmp(2);
-%         spkbin2shift = spkbin2shift(indtmp);
-%     end
-%
-%     % ------------------------------ calculate
-%     [cc, lags] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-%     %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-%
-%     ccAuto1Shift = [ccAuto1Shift; cc'];
-% end
-%
-% %% ========================= AUTO COVARIANCE (2)
-% for t = 1:ntrials
-%
-%     % -------- extract spks binned
-%     spkbin1 = single(dattmp2.SegmentsExtract(t).spk_Binned);
-%     spkbin2 = single(dattmp2.SegmentsExtract(t).spk_Binned);
-%
-%     % --- limit to data in "premotor" window
-%     if ~isempty(xcov_dattotake)
-%         % shorten to desired window
-%         x = dattmp2.SegmentsExtract(t).spk_Binned_x;
-%
-%         indtmp = x>=windtmp(1) & x<windtmp(2);
-%         spkbin1 = spkbin1(indtmp);
-%         spkbin2 = spkbin2(indtmp);
-%     end
-%
-%
-%     % ------------------- calculate
-%     %                                 [cc, lags] = xcov(fr1_short, fr2_short, xcovwindmax/0.001, 'coeff');
-%     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, normmethod);
-%     %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
-%
-%     ccAuto2 = [ccAuto2; cc'];
-%
-%
-%     % ========================== SHIFT
-%     % PREDICTOR
-%     if t<ntrials
-%         spkbin2shift = dattmp2.SegmentsExtract(t+1).spk_Binned;
-%     else
-%         spkbin2shift = dattmp2.SegmentsExtract(t-1).spk_Binned;
-%     end
-%
-%     % --- limit to data in "premotor" window
-%     if ~isempty(xcov_dattotake)
-%         % shorten to desired window
-%         x = dattmp2.SegmentsExtract(t).spk_Binned_x;
-%
-%         indtmp = x>=windtmp(1) & x<windtmp(2);
-%         spkbin2shift = spkbin2shift(indtmp);
-%     end
-%
-%     % ------------------------------ calculate
-%     [cc, lags] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-%     %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-%
-%     ccAuto2Shift = [ccAuto2Shift; cc'];
-% end
-%
-%
-% % ################################## sanity
-% % check
-% if ~isempty(xcov_dattotake)
-%     % then should all be same duration
-%     assert(length(spkbin1) == length(spkbin2shift), 'sadf');
-%     assert(length(spkbin2) == length(psth1), 'asfasd');
-% end
-%
-%
 % ################################## OUTPUT
 lags_sec = lags*binsize_spk;
 

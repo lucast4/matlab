@@ -88,9 +88,15 @@ else
     end
 end
 
+if any(strcmp(Modifiers, 'Color'))
+    pcol = Modifiers{find(strcmp(Modifiers, 'Color'))+1};
+else
+   pcol = 'k'; 
+end
 if plot_Xerrors==1
     for j=1:length(Xerr)
-        line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'Color', 'k');
+        line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'Color', pcol);
+%         line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'LineCor', pcol);
     end
 end
 

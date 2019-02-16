@@ -89,11 +89,11 @@ if plotON==1
             x = ceil(tvals(end))-0.1;
             lt_plot(x, mean(ffvals), {'Errors', lt_sem(ffvals), 'Color', pcol});
         end
-                    % ---------- SKIP EARLY DATA?
-            % --- assume 7am wakeup time
-            tmp = floor(min(tvals))+lightson/24 + StartDaySkipTime/24;
-            line([tmp tmp], ylim, 'Color', [0.7 0.3 0.7]);
-
+        % ---------- SKIP EARLY DATA?
+        % --- assume 7am wakeup time
+        tmp = floor(min(tvals))+lightson/24 + StartDaySkipTime/24;
+        line([tmp tmp], ylim, 'Color', [0.7 0.3 0.7]);
+        
     end
     
     %%
@@ -155,12 +155,12 @@ if plotON==1
             % ======= PLOT
             % - raw
             pcol = pcolstruct.(fthis{1});
-%             plot(tvals, ffvals, 'x', 'Color', pcol);
+            %             plot(tvals, ffvals, 'x', 'Color', pcol);
             % - mean
             x = median(tvals);
             if strcmp(fieldsthis, 'All')
-            
-            lt_plot(x, mean(ffvals), {'Errors', lt_sem(ffvals), 'Color', pcol});
+                
+                lt_plot(x, mean(ffvals), {'Errors', lt_sem(ffvals), 'Color', pcol});
             end
             
             
@@ -175,8 +175,8 @@ if plotON==1
             lt_tools_SwitchTimes(SwitchTimes, PARAMS.global.LastDate_num+1);
         
         % ====== put lines for swich times
-            YLIMreal = ylim;
-            YLIM = [0 max(allff)];
+        YLIMreal = ylim;
+        YLIM = [0 max(allff)];
         for i=1:length(SwitchTimes)/2
             dtime = datenum(SwitchTimes{(i*2-1)}, 'ddmmmyyyy-HHMM');
             conting = SwitchTimes{(i*2)};
@@ -214,9 +214,16 @@ OUTSTRUCT.All_traindir = [];
 OUTSTRUCT.All_FFdaymean = [];
 OUTSTRUCT.All_Daynum = [];
 
+% ===== indivbidual trials
+OUTSTRUCT.AllTrialsStimEpoch_ff = {};
+OUTSTRUCT.AllTrialsStimEpoch_tval = {};
+OUTSTRUCT.AllTrialsStimEpoch_tstim_relonset = {};
+OUTSTRUCT.AllTrialsStimEpoch_isStim = {};
+
 [SwitchTimesMat, SwitchTimesMat_conting] = ...
     lt_tools_SwitchTimes(SwitchTimes, PARAMS.global.LastDate_num+1);
 
+assert(length(PARAMS.indiv) == length(DATSTRUCT.data), 'I assumed that these indices are "days"');
 
 if ~isempty(SwitchTimes)
     
@@ -250,6 +257,87 @@ if ~isempty(SwitchTimes)
         % -------- check that distributions for tvals are similar
         if (0) % ignore this since should be obiuos by inspection of trial data whether this is the case
             assert(ranksum(t1, t2)>0.01, 'are time values different? then is problem as this assumes interleaves stim/nostim');
+        end
+        
+        %% ======== EXTRACT THIGNS THAT REQUIRE GOING BACK TO EARLIER PROCESSED DATA
+        if length(PARAMS.indiv{i}.Params)>1
+            %  then ignore the one for "All", i.e. only take during stim
+            %  epoch
+            indParam = [];
+            for ii=1:length(PARAMS.indiv{i}.Params)
+                if length(PARAMS.indiv{i}.Params{ii}.FieldsToCheck)==2 ...
+                        & all(ismember({'NotStim_StimCatch', 'StimNotCatch'}, PARAMS.indiv{i}.Params{ii}.FieldsToCheck))
+                    % === then this is for stim epoch...
+                    indParam = ii;
+                elseif length(PARAMS.indiv{i}.Params{ii}.FieldsToCheck)==2 ...
+                        & all(ismember({'StimCatch', 'StimNotCatch'}, PARAMS.indiv{i}.Params{ii}.FieldsToCheck))
+                    indParam = ii;
+                end
+            end
+        else
+            indParam = 1;
+        end
+        
+        
+        % ========== Load data
+        tmp = strfind(PARAMS.indiv{i}.Params{indParam}.savefolder , 'bluejay');
+        if PARAMS.indiv{i}.Params{indParam}.savefolder(tmp+7)=='3'
+            PARAMS.indiv{i}.Params{indParam}.savefolder(tmp+7)='2'; % resasign to bluejay 2...
+        end
+        try
+            if PARAMS.indiv{i}.Params{indParam}.PLOT_TimeWindow_savedir(tmp+7)=='3'
+                PARAMS.indiv{i}.Params{indParam}.PLOT_TimeWindow_savedir(tmp+7)='2'; % resasign to bluejay 2...
+            end
+        catch err
+        end
+        
+        
+        if exist([PARAMS.indiv{i}.Params{indParam}.savefolder '/StatsStruct.mat'], 'file')
+            ststruct = load([PARAMS.indiv{i}.Params{indParam}.savefolder '/StatsStruct.mat']);
+        else
+            ststruct = load([PARAMS.indiv{i}.Params{indParam}.PLOT_TimeWindow_savedir '/StatsStruct.mat']);
+        end
+        fnamesthis = fieldnames(ststruct.StatsStruct);
+        
+        tval_all = []; % datenum
+        tSinceStim_all = []; % time from syl onset to stim (pos means stim occured first)
+        isStim_all = []; % 1 for stim, 0 for stim catch or no stim
+        pitch_all = [];
+        twindname = PARAMS.indiv{i}.Params{indParam}.TimeField{twind};
+        
+        for ff=1:length(fnamesthis)
+            fthis = fnamesthis{ff};
+            tval = ststruct.StatsStruct.(fthis).datenum;
+            tsincetrig = ststruct.StatsStruct.(fthis).TimeSinceLastTrig; % THIS IS LASER STIM.
+            pitch = ststruct.StatsStruct.(fthis).WINDOWED.(twindname).Pitch.vals';
+            tval2 = ststruct.StatsStruct.(fthis).WINDOWED.(twindname).Time.datenum;
+            %            tval2 = DATSTRUCT.data{i}.timewindow{twind}.(fthis).timevals_dnum;
+            %                 outlierinds = ststruct.StatsStruct.(fthis).WINDOWED.(twindname).OutlierInds;
+            
+            % === sanity check to make sure both dartasets are aligned
+            if ~(all(tval==tval2))
+                
+                disp('why arent they aligned? likely becuase of outliers:...');
+                disp(outlierinds);
+                keyboard
+            end
+            
+            % ============= SAVE TO OUTPUT
+            tval_all = [tval_all; tval'];
+            pitch_all = [pitch_all; pitch];
+            tSinceStim_all = [tSinceStim_all; tsincetrig'];
+            
+            if strcmp(fthis, 'StimNotCatch')
+                % --- STIM ON
+                isstim = ones(size(tval))';
+            elseif strcmp(fthis, 'NotStim_StimCatch') | strcmp(fthis, 'StimCatch')
+                % ---- STIM OFF or CATCH
+                isstim = zeros(size(tval))';
+            else
+                disp('WHAT IS THIS?')
+                keyboard;
+            end
+            isStim_all = [isStim_all; isstim];
         end
         
         %% ========================
@@ -325,8 +413,45 @@ if ~isempty(SwitchTimes)
         indstmp = t2>tmp;
         t2 = t2(indstmp);
         f2 = f2(indstmp);
-
         
+        
+        %% ======================= MAP BACK TO FIGURE OUT TRIG TIMES
+        idunique = pitch_all-tval_all; % each trial marked by unique combination of pitch and time.
+        assert(length(unique(idunique))==length(idunique), 'the follwoing assumes each trial assigned to unqiue pitch...');
+        %         assert(length(unique(pitch_all))==length(pitch_all), 'the follwoing assumes each trial assigned to unqiue pitch...');
+        
+        %         [tmp, ind1] = intersect(pitch_all, f1); assert(all(ismember(tmp, f1)), 'did not matchall of f, why?');
+        %         tstim1 = tSinceStim_all(ind1);
+        %         isstim1 = isStim_all(ind1);
+        %
+        %         [tmp, ind1] = intersect(pitch_all, f2); assert(all(ismember(tmp, f2)), 'did not matchall of f, why?');
+        %         tstim2= tSinceStim_all(ind1);
+        %         isstim2 = isStim_all(ind1);
+        
+        [tmp, ind1] = intersect(idunique, f1-t1); assert(all(ismember(tmp, f1-t1)), 'did not matchall of f, why?');
+        tstim1 = tSinceStim_all(ind1);
+        isstim1 = isStim_all(ind1);
+        
+        [tmp, ind1] = intersect(idunique, f2-t2); assert(all(ismember(tmp, f2-t2)), 'did not matchall of f, why?');
+        tstim2= tSinceStim_all(ind1);
+        isstim2 = isStim_all(ind1);
+        
+        % ==================== SAVE INDIVIDUAL TRIALS AND STIM TIMES
+        ffall = [f1 f2];
+        timeall = [t1 t2];
+        tstimall = [tstim1' tstim2'];
+        isstimall = [isstim1' isstim2'];
+        
+        if isempty(tstimall)
+            % ========== not sure why... just ignore this day I guess
+            tstimall = nan;
+            isstimall = nan;
+        end
+        if length(isstimall)~=length(ffall)
+            % NOT EXACTLY SURE WHY TO BE HONEST...
+            tstimall = nan;
+            isstimall = nan;
+        end
         %% calculate stats
         dprime = (mean(f2)-mean(f1))/(sqrt(0.5*(var(f1)+var(f2))));
         ffmeandiff_stim = mean(f2)-mean(f1);
@@ -337,7 +462,7 @@ if ~isempty(SwitchTimes)
         % --- overlay on plot
         if plotON==1
             % - mean
-%             x = ceil(t1(end))+0.1;
+            %             x = ceil(t1(end))+0.1;
             x = ceil(t1(end))-0.2;
             % -- stim
             lt_plot(x, mean(f2), {'Errors', lt_sem(f2), 'Color', pcolstruct.StimNotCatch, 'MarkerFaceColor', 'none'});
@@ -355,6 +480,17 @@ if ~isempty(SwitchTimes)
         OUTSTRUCT.All_FFmedianStimMinusNostim = [OUTSTRUCT.All_FFmedianStimMinusNostim; ffmedian];
         OUTSTRUCT.All_pvalranksum = [OUTSTRUCT.All_pvalranksum; p];
         OUTSTRUCT.All_traindir = [OUTSTRUCT.All_traindir; learndir];
+        
+        OUTSTRUCT.AllTrialsStimEpoch_ff = [OUTSTRUCT.AllTrialsStimEpoch_ff; ffall];
+        OUTSTRUCT.AllTrialsStimEpoch_tval = [OUTSTRUCT.AllTrialsStimEpoch_tval; timeall];
+        OUTSTRUCT.AllTrialsStimEpoch_tstim_relonset = [OUTSTRUCT.AllTrialsStimEpoch_tstim_relonset; tstimall];
+        if isempty(isstimall)
+            keyboard
+        end
+        OUTSTRUCT.AllTrialsStimEpoch_isStim = [OUTSTRUCT.AllTrialsStimEpoch_isStim; isstimall];
+%         if length(isstimall)~=length(ffall)
+%             keyboard
+%         end
     end
 end
 

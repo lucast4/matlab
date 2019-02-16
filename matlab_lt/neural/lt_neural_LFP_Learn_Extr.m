@@ -1,6 +1,6 @@
 function [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats)
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove)
 %% lt 11/1/18 - added option to collect also phi and psds
 
 if collectAllProcess==1
@@ -23,6 +23,7 @@ end
 tbins = PARAMS.tbins;
 ffbins = PARAMS.ffbins;
 numbirds = length(SwitchCohStruct.bird);
+
 %%
 % =============== INITIATE
 
@@ -109,7 +110,8 @@ for i=1:numbirds
                 motifthis = datthis.motifnum(mm).motifname;
                 
                 if removeBadSyls==1
-                    sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bthis, ename, ss, motifthis);
+                    sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bthis, ename, ...
+                        ss, motifthis, typesToRemove);
                     if sylbad==1
                         continue
                     end
@@ -120,6 +122,7 @@ for i=1:numbirds
                 end
                 
                 %% ========= [COHERENCE] COLLECT MEAN COHERENCE PRE AND POST SWITCH
+                %% ================= EXTRACT COHERENCE DATA
                 if isfield(datthis.motifnum(mm), 'cohmat')
                     cohmat = datthis.motifnum(mm).cohmat;
                 else
@@ -133,12 +136,14 @@ for i=1:numbirds
                     continue
                 end
                 
-                % ------ take mean across all channels paiors
-                if averagechanpairs ==1
-                    cohmat = nanmean(cohmat, 4);
-                end
+                % shoudl save one series for each channel pair
+                chanpairs = datthis.motifnum(mm).chanpair;
+                bregionpairs = datthis.motifnum(mm).bregionpair;
+                bregionpairs_originalorder = datthis.motifnum(mm).bregionpair_originalorder;
                 
-                %% ======= [OTHER PROCESSED DATA]
+                
+                
+                % ###################### [OTHER PROCESSED DATA]
                 if collectAllProcess==1
                     pairstoget = datthis.motifnum(mm).chanpairstokeep;
                     
@@ -156,12 +161,40 @@ for i=1:numbirds
                 end
                 
                 
+                
+                % ######################## REMOVE ANY PAIRS THAT INCLUDE A
+                % --- go thru each channel pair and ask if it is good.
+                numpairs = size(chanpairs,1);
+                if removeBadChans==1
+                    chanbad_all = [];
+                    for k=1:numpairs
+                        chanbad = lt_neural_QUICK_RemoveBadChans(bthis, ename, ss, chanpairs(k,:));
+                        chanbad_all = [chanbad_all; chanbad];
+                    end
+                    % ---- DO REMOVAL
+                    chanpairs = chanpairs(~chanbad_all, :);
+                    bregionpairs = bregionpairs(~chanbad_all);
+                    bregionpairs_originalorder = bregionpairs_originalorder(~chanbad_all);
+                    cohmat = cohmat(:,:,:,~chanbad_all);
+                    
+                    phimat = phimat(:,:,:,~chanbad_all);
+                    S1mat = S1mat(:,:,:,~chanbad_all);
+                    S2mat = S2mat(:,:,:,~chanbad_all);
+                end
+                
+                %% ############### take mean across all channels paiors
+                if averagechanpairs ==1
+                    cohmat = nanmean(cohmat, 4);
+                end
+                
+                
                 %% =============== CALCULATE DEVIATION (WN MINUS BASE)
                 tvals = datthis.motifnum(mm).tvals;
                 indsbase = tvals>tstart & tvals<tswitch;
                 indsWN = tvals>tswitch & tvals<tend;
-                
-                
+
+                % ======================== REMOVE BAD TRIALS?
+
                 
                 % ---------------- EPOCHS
                 indsbase_epoch = datthis.motifnum(mm).indsbase_epoch;
@@ -354,13 +387,8 @@ for i=1:numbirds
                     OUTSTRUCT.indsbase = [OUTSTRUCT.indsbase; indsbase];
                     OUTSTRUCT.indsWN = [OUTSTRUCT.indsWN; indsWN];
                 else
-                    % shoudl save one series for each channel pair
-                    chanpairs = datthis.motifnum(mm).chanpair;
-                    bregionpairs = datthis.motifnum(mm).bregionpair;
-                    bregionpairs_originalorder = datthis.motifnum(mm).bregionpair_originalorder;
+                    
                     numpairs = size(chanpairs,1);
-                    
-                    
                     for k=1:numpairs
                         % -- save for this pair
                         OUTSTRUCT.CohMat = [OUTSTRUCT.CohMat; single(cohmat(:,:,:,k))];
@@ -496,7 +524,7 @@ OUTSTRUCT = lt_neural_LFP_GetLearnDir(OUTSTRUCT, SwitchStruct);
 motifID_unique = nan(length(OUTSTRUCT.bnum), 1);
 
 for j=1:length(OUTSTRUCT.bnum)
-   
+    
     bnum = unique(OUTSTRUCT.bnum(j));
     bname = SwitchStruct.bird(bnum).birdname;
     
@@ -506,8 +534,8 @@ for j=1:length(OUTSTRUCT.bnum)
     motifname = OUTSTRUCT.motifname{j};
     
     try
-    motifID = lt_neural_QUICK_MotifID(bname, {motifname});
-    assert(~isempty(motifID));
+        motifID = lt_neural_QUICK_MotifID(bname, {motifname});
+        assert(~isempty(motifID));
     catch err
         motifID = nan;
     end
@@ -516,6 +544,7 @@ for j=1:length(OUTSTRUCT.bnum)
 end
 
 OUTSTRUCT.motifID_unique = motifID_unique;
+
 
 end
 

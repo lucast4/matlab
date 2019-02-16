@@ -1,8 +1,14 @@
 function lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT, SwitchCohStruct, SwitchStruct, ...
-    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel)
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, OUTSTRUCT_LFP)
 %% 2/1/19 - Plots each scalar, each experiement...
 
 % clim = [-0.1 0.1];
+useglobalmotifname = 0; % then all expt across a bird will be aligned... motif names will not necessarily be correct for each experiement though;
+minDiffN = 3; % will only noramlize to diff ytpe if diff type has N this or larger.
+takeindsWNsecondhalf = 0; % then essentially takes last quartile to compute learning.
+% LEAVE AT 0 - if 1, then inds will not necessariyl be exactly matched
+% between xcov, coh, and laerning.
+
 
 %% ======== filter experiments
 if onlygoodexpt==1
@@ -37,9 +43,11 @@ All_bnum = [];
 All_ename = {};
 All_swnum = [];
 All_learndir = [];
-
+All_enum = [];
 Allchanpair_Y = [];
 Allchanpair_idx = [];
+
+All_Nmotifs = [];
 
 % ========= GO THRU ALL SWITCHES AND CHAN PAIRS.
 for i=1:length(indsgrp_switch_unique)
@@ -63,14 +71,28 @@ for i=1:length(indsgrp_switch_unique)
             continue
         end
         %         OUTSTRUCT.motifnum(indsthis)
-        motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
+        if useglobalmotifname==1
+            motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
+        else
+            motifID = OUTSTRUCT.motifnum(indsthis);
+        end
         
         if isfield(OUTSTRUCT, 'chanpair_actual')
             chnums = OUTSTRUCT.chanpair_actual(indsthis,:);
         else
-        chnums = OUTSTRUCT.chanpair(indsthis,:);
+            chnums = OUTSTRUCT.chanpair(indsthis,:);
         end
-        chnums = unique(chnums)'; assert(length(chnums)==2);
+        assert(length(unique(chnums)')==2);
+        chnums = chnums(1,:);
+        
+        % ----- might also have neuron ID
+        if isfield(OUTSTRUCT, 'neurpair')
+            % ---- then has neuron id
+            neurpair = OUTSTRUCT.neurpair(indsthis,:);
+            assert(length(unique(neurpair)')==2);
+            neurpair = neurpair(1,:);
+        end
+        
         cohscal = Yscalar(indsthis);
         assert(length(unique(motifID)) == length(motifID), 'each motif shoudl have at most 1 datapoint');
         
@@ -81,7 +103,12 @@ for i=1:length(indsgrp_switch_unique)
         
         % =================== PLOT FOR THIS CHAN PAIR.
         plot(motifID, cohscal, 'o-k');
-        lt_plot_text(motifID(end)+0.3, cohscal(end), num2str(chnums), 'm', 9);
+        if isempty(neurpair)
+            tmp = num2str(chnums);
+        else
+            tmp = [num2str(chnums) ' [nID:' num2str(neurpair) ']'];
+        end
+        lt_plot_text(motifID(end)+0.3, cohscal(end), tmp, 'm', 8);
         
         % ==================== ADD
         istarg = OUTSTRUCT.istarg(indsthis);
@@ -98,15 +125,23 @@ for i=1:length(indsgrp_switch_unique)
     
     istarg = OUTSTRUCT.istarg(indsthis);
     issame = OUTSTRUCT.issame(indsthis);
-    motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
     cohscal = Yscalar(indsthis);
     learndir = unique(OUTSTRUCT.learndirTarg(indsthis));
     assert(length(learndir)==1);
     
+    if useglobalmotifname==1
+        motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
+    else
+        motifID = OUTSTRUCT.motifnum(indsthis); % ---- get positions within global motif
+        motifnames = OUTSTRUCT.motifname(indsthis);
+    end
+    
     % ============= GET MEAN ACROSS CHANNEL PAIRS.
     [ymean, ysem] = grpstats(cohscal, motifID, {'mean', 'sem'});
-    [istarg] = grpstats(istarg, motifID, {'mean'});
-    [issame] = grpstats(issame, motifID, {'mean'});
+    [istarg, Ntarg] = grpstats(istarg, motifID, {'mean', 'numel'});
+    istarg = logical(istarg);
+    [issame, Nsame] = grpstats(issame, motifID, {'mean', 'numel'});
+    issame = logical(issame);
     x = unique(motifID);
     
     % ================= PLOT MEAN
@@ -115,15 +150,19 @@ for i=1:length(indsgrp_switch_unique)
     
     % ===================== ANNOTATE PLOT.
     % -------- NOTE DOWN POSITION OF TARGET SYSL
-    indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==1;
-    xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
-    plot(xtarg, clim(1)+0.02, '^r');
+    %     indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==1;
+    %     xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
+    %     plot(xtarg, clim(1)+0.02, '^r');
+    plot(x(istarg), clim(1)+0.02, '^r');
     
     % ------- NOTE POSITION OF SAME_TYPES
-    indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==1;
-    xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
-    if ~isempty(xtarg)
-        plot(xtarg, clim(1)+0.02, '^b');
+    %     indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==1;
+    %     xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
+    %     if ~isempty(xtarg)
+    %         plot(xtarg, clim(1)+0.02, '^b');
+    %     end
+    if any(issame)
+        plot(x(issame), clim(1)+0.02, '^b');
     end
     
     % ------- note down global mean [of diff types]
@@ -134,7 +173,21 @@ for i=1:length(indsgrp_switch_unique)
     
     
     % ----- labels
-    [~, motiflabels] = lt_neural_QUICK_MotifID(bname);
+    if useglobalmotifname==1
+        [~, motiflabels] = lt_neural_QUICK_MotifID(bname);
+    else
+        motiflabels = {};
+        for j=1:max(x)
+            if ~any(x==j)
+                motiftmp = ' ';
+            else
+                indstmp = indsgrp_switch==swgrpthis & OUTSTRUCT.motifnum==j;
+                motiftmp = unique(OUTSTRUCT.motifname(indstmp));
+                motiftmp = motiftmp{1};
+            end
+            motiflabels = [motiflabels motiftmp];
+        end
+    end
     set(gca, 'XTick', 1:length(motiflabels));
     set(gca, 'XTickLabel', motiflabels);
     rotateXLabels(gca, 90);
@@ -161,9 +214,206 @@ for i=1:length(indsgrp_switch_unique)
     All_ename = [All_ename; ename];
     All_swnum = [All_swnum; swnum];
     All_bnum = [All_bnum; bnum];
+    All_enum = [All_enum; enum];
     All_learndir = [All_learndir; learndir];
     
+    % =========== SAVE STUFF FOR MOTIFS.
+    All_Nmotifs = [All_Nmotifs; [sum(istarg) sum(issame) sum(istarg==0 & issame==0)]];
+    
 end
+
+
+%% ======= COPY THINGS FROM OLD OUTSTRUCT TO NEW OUTSTRUCT
+disp('NOTE: using the exact same trial inds to compute the xcov and learning and cohscalar');
+
+All_learn_targdir_z = nan(length(OUTSTRUCT.bnum), 1);
+All_cohdiff_z = nan(length(OUTSTRUCT.bnum), 1);
+for i=1:length(OUTSTRUCT.bnum)
+    
+    % === FIND THE MATCHING BIRD, EXPT, AND MOTIF
+    bnum = OUTSTRUCT.bnum(i);
+    enum = OUTSTRUCT.enum(i);
+    swnum = OUTSTRUCT.switch(i);
+    mm = OUTSTRUCT.motifnum(i);
+    
+    inds_old = OUTSTRUCT_LFP.bnum==bnum & OUTSTRUCT_LFP.enum==enum & ...
+        OUTSTRUCT_LFP.switch==swnum & OUTSTRUCT_LFP.motifnum==mm;
+    assert(sum(inds_old)>0, 'why cant find?');
+    assert(length(unique(cellfun('length', OUTSTRUCT_LFP.tvals(inds_old))))==1, 'why different?');
+    indthis = find(inds_old);
+    indthis = indthis(1);
+    
+    % ================ EXTRACT THINGS
+    % ======= 1) LEARNING
+    ffvals = OUTSTRUCT_LFP.ffvals{indthis};
+    if (0)
+    indsbase = OUTSTRUCT_LFP.indsbase_epoch{indthis};
+    indswn = OUTSTRUCT_LFP.indsWN_epoch{indthis};
+    else
+       indsbase = OUTSTRUCT.inds_base_epoch{i};
+       indswn = OUTSTRUCT.inds_WN_epoch{i};
+    end
+    % ------ DIRECTION OF LEARNING?
+    learndir = OUTSTRUCT_LFP.learndirTarg(indthis);
+    
+    if takeindsWNsecondhalf==1
+        indswn = indswn(round(length(indswn)/2):end);
+    end
+    
+    learn_targdir_z = (mean(ffvals(indswn))-mean(ffvals(indsbase)))./std(ffvals(indsbase)); % zscore
+    learn_targdir_z = learn_targdir_z*learndir;
+    
+    All_learn_targdir_z(i) = learn_targdir_z;
+    
+    % ========= COHERENCE CHANGE (z-score) (take average over all chan
+    % pairs
+    inds_old = find(inds_old);
+    tmp = [];
+    for ii=1:length(inds_old)
+           cohscal = OUTSTRUCT_LFP.cohscal{inds_old(ii)};
+           cohdiff_z = (mean(cohscal(indswn)) - mean(cohscal(indsbase)))./std(cohscal(indsbase));
+%            cohdiff_z = (mean(cohscal(indswn)) - mean(cohscal(indsbase)));
+           tmp = [tmp cohdiff_z]; 
+    end
+    All_cohdiff_z(i) = mean(tmp);
+    
+    
+    % sanity check...
+%     cohscal = OUTSTRUCT_LFP.cohscal{indthis}
+%     mean(cohscal(OUTSTRUCT_LFP.indsbase_epoch{indthis})) - mean(cohscal(OUTSTRUCT_LFP.indsWN_epoch{indthis}))
+%     OUTSTRUCT_LFP.cohscal_diff(indthis)
+end
+
+OUTSTRUCT.All_learn_targdir_z = All_learn_targdir_z;
+OUTSTRUCT.All_cohdiff_z = All_cohdiff_z;
+
+
+%% ======= EXTRACT OTHER THINGS (This is better code, but confirmed that aligns perfectly with previous
+
+% ====================== GET BOTH WINDOWS
+% ========= SCALAR 1
+windthis = 1;
+OUTSTRUCT.yscal1 = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT.Xcovscal_window_BaseWN);
+
+% ========= SCALAR 2
+windthis = 2;
+OUTSTRUCT.yscal2 = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT.Xcovscal_window_BaseWN);
+
+% ========= LAERNING
+if strcmp(plotlevel, 'chanpair')
+    [ ~, ~, ~, All_yscal1, ~, ~, ~, ~] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'yscal1');
+    [ ~, ~, ~, All_yscal2, ~, ~, ~, ~] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'yscal2');
+    [ ~, ~, ~, All_learn_targdir_z, ~, ~, ~, ~] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'All_learn_targdir_z');
+    [ ~, ~, ~, All_cohdiff_z, ~, ~, ~, ~] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'All_cohdiff_z');
+elseif strcmp(plotlevel, 'switch')
+    [ ~, ~, ~, ~, ~, ~, ~, All_yscal1] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'yscal1');
+    [ ~, ~, ~, ~, ~, ~, ~, All_yscal2] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'yscal2');
+    [ ~, ~, ~, ~, ~, ~, ~, All_learn_targdir_z] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'All_learn_targdir_z');
+    [ ~, ~, ~, ~, ~, ~, ~, All_cohdiff_z] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'All_cohdiff_z');
+end
+
+    
+
+%% === sanity check, plot coherenec change
+
+lt_figure; hold on;
+y = squeeze(All_cohdiff_z(1,1,1,:) - nanmean(All_cohdiff_z(1,1,[2:3],:), 3)); % targ minus mean(same,diff), coherence change from baseline
+plot(y, 'ok');
+title('change in coherence?');
+ylabel('coh change (z) (targ - [same,diff]))');
+
+%% ============= CORRELATION BETWEEN THE TWO SCALARS? BETWEEN SCALARS AN COHERENCE?
+lt_figure; hold on;
+
+lt_subplot(3,2,1); hold on;
+title('[TARG] WN-base, corr scalar');
+indthis = 1;
+
+xlabel('first window');
+ylabel('second window');
+x = squeeze(All_yscal1(1,1,indthis, :));
+y = squeeze(All_yscal2(1,1,indthis, :));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+% plot(x,y, 'ok');
+
+lt_subplot(3,2,2); hold on;
+title('TARG');
+xlabel('Change in spike corr (window 1)');
+ylabel('Change in coherence (z rel base)');
+x = squeeze(All_yscal1(1,1,1,:));
+y = squeeze(All_cohdiff_z(1,1,1,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
+
+lt_subplot(3,2,3); hold on;
+title('TARG');
+xlabel('Change in spike corr (window 2)');
+ylabel('Change in coherence (z rel base)');
+x = squeeze(All_yscal2(1,1,1,:));
+y = squeeze(All_cohdiff_z(1,1,1,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
+
+lt_subplot(3,2,4); hold on;
+title('TARG');
+xlabel('Change in spike corr (mean of wind 1 and 2)');
+ylabel('Change in coherence (z rel base)');
+x = mean([squeeze(All_yscal1(1,1,1,:)) squeeze(All_yscal2(1,1,1,:))], 2);
+y = squeeze(All_cohdiff_z(1,1,1,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
+
+%% ============= CORRELATION BETWEEN THE TWO SCALARS? BETWEEN SCALARS AN COHERENCE?
+% TARGET MINUS DIFF TYPE
+lt_figure; hold on;
+
+lt_subplot(3,2,1); hold on;
+title('[TARG-DIFF] WN-base, corr scalar');
+indthis = 1;
+
+xlabel('first window');
+ylabel('second window');
+x = squeeze(All_yscal1(1,1,indthis, :) - All_yscal1(1,1,3, :));
+y = squeeze(All_yscal2(1,1,indthis, :) - All_yscal2(1,1,3, :));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+% plot(x,y, 'ok');
+    
+lt_subplot(3,2,2); hold on;
+title('TARG-DIFF');
+xlabel('Change in spike corr (window 1)');
+ylabel('Change in coherence (z rel base)');
+x = squeeze(All_yscal1(1,1,1,:)-All_yscal1(1,1,3,:));
+y = squeeze(All_cohdiff_z(1,1,1,:) - All_cohdiff_z(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
+
+lt_subplot(3,2,3); hold on;
+title('TARG-DIFF');
+xlabel('Change in spike corr (window 2)');
+ylabel('Change in coherence (z rel base)');
+x = squeeze(All_yscal2(1,1,1,:) - All_yscal2(1,1,3,:));
+y = squeeze(All_cohdiff_z(1,1,1,:) - All_cohdiff_z(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
+
+lt_subplot(3,2,4); hold on;
+title('TARG-DIFF');
+xlabel('Change in spike corr (mean of wind 1 and 2)');
+ylabel('Change in coherence (z rel base)');
+x1 = mean([squeeze(All_yscal1(1,1,1,:)) squeeze(All_yscal2(1,1,1,:))], 2);
+x2 = mean([squeeze(All_yscal1(1,1,3,:)) squeeze(All_yscal2(1,1,3,:))], 2);
+x = x1-x2;
+y = squeeze(All_cohdiff_z(1,1,1,:) - All_cohdiff_z(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1, 'k');
+
 
 %% ==========
 
@@ -171,10 +421,11 @@ end
 if strcmp(plotlevel, 'chanpair')
     % ============== 1) for each channel, collapse across syl types.
     OUTSTRUCT.Yscalar = Yscalar;
-    [All_bnum, allenum, All_swnum, allDat] = ...
+    [All_bnum, allenum, All_swnum, allDat, ~, ~, ~, ~, ...
+        All_Nmotifs, ~] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT, 'Yscalar');
-%     [~,~,~,~, All_bnum, allenum, All_swnum, allDat] = ...
-%         lt_neural_LFP_GrpStats(OUTSTRUCT, 'Yscalar');
+    %     [~,~,~,~, All_bnum, allenum, All_swnum, allDat] = ...
+    %         lt_neural_LFP_GrpStats(OUTSTRUCT, 'Yscalar');
     
     % ======= convert to correct variables.
     Yall = squeeze(allDat)';
@@ -195,7 +446,14 @@ if strcmp(plotlevel, 'chanpair')
         All_ename = [All_ename; ename];
         All_learndir = [All_learndir; learndir];
     end
+else
+    OUTSTRUCT.Yscalar = Yscalar;
+    [~, ~, ~, ~, ~, ~, ~, ~, ...
+        ~, All_Nmotifs] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT, 'Yscalar');
 end
+
+All_Nmotifs = squeeze(All_Nmotifs)';
 %% ========= SUMMARY ACROSS EXPERIMENTS
 
 lt_figure; hold on;
@@ -213,12 +471,32 @@ xthis = colsthis(1):colsthis(end);
 % plot(xthis, ythis', 'o-k');
 xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank (1vs2)', 1);
+[p] = signrank(ythis(:,1), ythis(:,2));
+lt_plot_pvalue(p, 'srank (1vs2)', 1);
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
     plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)});
 end
+
+
+% ===== only those with all 3
+xlabel('TARG - SAME - DIFF');
+ylabel('coh (WN - base)');
+colsthis = 1:3;
+
+indsthis = all(~isnan(Yall(:,colsthis))');
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis;
+bnumthis = All_bnum(indsthis);
+
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
+for i=1:size(ymean,1)
+    lt_plot(xthis+0.7*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i))]);
+end
+xlim([0 5]);
+
 
 % ===== only those with 2 (targ diff)
 lt_subplot(3,2,2); hold on;
@@ -317,26 +595,26 @@ if size(Yall,2)>3
     
 end
 
-    % ======== EACH BIRD ONE DOT
-    lt_subplot(3,2,5); hold on;
-    title('dat = bird');
-    xlabel('TARG - DIFF');
-    ylabel('coh (WN - base)');
-    colsthis = [1 3];
-    
-    indsthis = all(~isnan(Yall(:,colsthis))');
-    ythis = Yall(indsthis,colsthis);
-    xthis = colsthis;
-    bnumthis = All_bnum(indsthis);
-    
-    [ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
-    bnumtmp = unique(bnumthis);
-    for i=1:size(ymean,1)
-        lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
-        lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(i)]);
-    end
-    xlim([0 5]);
-    
+% ======== EACH BIRD ONE DOT
+lt_subplot(3,2,5); hold on;
+title('dat = bird');
+xlabel('TARG - DIFF');
+ylabel('coh (WN - base)');
+colsthis = [1 3];
+
+indsthis = all(~isnan(Yall(:,colsthis))');
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis;
+bnumthis = All_bnum(indsthis);
+
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
+for i=1:size(ymean,1)
+    lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i))]);
+end
+xlim([0 5]);
+
 % =====
 lt_subplot(3,2,6); hold on;
 xlabel('TRAIN UP/DOWN [lines: TARG--DIFF]');
@@ -385,3 +663,194 @@ bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
     plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)});
 end
+
+%% ====== [PLOTS MORE]
+figcount=1;
+subplotrows=3;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+% ===== only those with 2 (targ diff)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('Targ, corr (WN - base)');
+
+y = Yall(:,1);
+lt_plot_histogram(y, '', 1, 0, '', 0, 'k');
+
+[p] = signrank(y);
+lt_plot_pvalue(p, 'srank', 1);
+lt_plot_zeroline_vert;
+
+
+% ===== only those with 2 (targ diff)
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title(['only if Ndiff >= ' num2str(minDiffN)]);
+xlabel('TARG - DIFF');
+ylabel('coh (WN - base)');
+
+colsthis = [1 3];
+indsthis = all(~isnan(Yall(:,colsthis))') & All_Nmotifs(:,3)'>=minDiffN';
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis;
+plot(xthis, ythis', 'o-k');
+xlim([0 5]);
+lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+if length(colsthis)==2
+    [p] = signrank(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 'srank', 1);
+end
+bnumthis = All_bnum(indsthis);
+for i=1:size(ythis,1)
+    plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)});
+end
+
+
+% ==================
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title(['only if Ndiff >= ' num2str(minDiffN)]);
+xlabel('TARG - DIFF');
+ylabel('coh (WN - base)');
+colsthis = [1 3];
+
+indsthis = all(~isnan(Yall(:,colsthis))') & All_Nmotifs(:,3)'>=minDiffN';
+ythis = Yall(indsthis,colsthis);
+xthis = colsthis;
+bnumthis = All_bnum(indsthis);
+
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
+for i=1:size(ymean,1)
+    lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(i)]);
+end
+xlim([0 5]);
+
+
+%% ########## [MORE PLOTS] NOT DIRECTLY REALTED TO YSCALAR.
+% ==== CORREALTING SCALARS WITH BEHAVIOR
+
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(window 1)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:));
+y = squeeze(All_yscal1(1,1,indthis,:));
+lt_regress(y, x, 1, 0, 1, 1);
+% lt_regress(y, c, 1, 0, 1, 1)
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(window 2)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:));
+y = squeeze(All_yscal2(1,1,indthis,:));
+lt_regress(y, x, 1, 0, 1, 1);
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(mean of wind 1 and 2)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:));
+y = mean([squeeze(All_yscal1(1,1,indthis,:)) squeeze(All_yscal2(1,1,indthis,:))], 2);
+lt_regress(y, x, 1, 0, 1, 1);
+
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG-DIFF');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(window 1)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:) - All_learn_targdir_z(1,1,3,:));
+y = squeeze(All_yscal1(1,1,indthis,:) - All_yscal1(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1);
+% lt_regress(y, c, 1, 0, 1, 1)
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG-DIFF');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(window 2)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:) - All_learn_targdir_z(1,1,3,:));
+y = squeeze(All_yscal2(1,1,indthis,:) - All_yscal2(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1);
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG-DIFF');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, corr scalar(mean of wind 1 and 2)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:));
+y1 = mean([squeeze(All_yscal1(1,1,indthis,:)) squeeze(All_yscal2(1,1,indthis,:))], 2);
+y2 = mean([squeeze(All_yscal1(1,1,3,:)) squeeze(All_yscal2(1,1,3,:))], 2);
+y = y1-y2;
+lt_regress(y, x, 1, 0, 1, 1);
+
+
+
+%% ====== change in coherence correlate with learning?
+
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, coh (z)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:));
+y = squeeze(All_cohdiff_z(1,1,indthis,:));
+lt_regress(y, x, 1, 0, 1, 1);
+% lt_regress(y, c, 1, 0, 1, 1)
+
+
+% ================== RELATED TO ELARNIG?
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('TARG-DIFF');
+indthis = 1; % targ, same,. diff
+xlabel('learning (z, targ dir)');
+ylabel('WN-base, coh (z)');
+
+x = squeeze(All_learn_targdir_z(1,1,indthis,:) - All_learn_targdir_z(1,1,3,:));
+y = squeeze(All_cohdiff_z(1,1,indthis,:) - All_cohdiff_z(1,1,3,:));
+lt_regress(y, x, 1, 0, 1, 1);
+% lt_regress(y, c, 1, 0, 1, 1)

@@ -3,19 +3,20 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'gr48bu5'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {'pu69wh78', 'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-% BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
-BrainArea = {'LMAN', 'RA'}; % 
+BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
+% BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
-ExptToKeep = {'RALMANLearn5'};
+ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 0;
+LearningOnly = 1;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
-onlySpikes = 1; % [default]if 1, then ignores if is LFP only.; if 0, then gets anything.
+onlySpikes = 2; % [default =0]if 1, then only keeps if have spiking data; if 0, then gets anything.
 % if 2, then is for LFP analysis - i.e. for wh72 gets only if not SU or MU
+% set to 2 if want to get data for cohere/xcov.
 [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database(BirdsToKeep, ...
     BrainArea, ExptToKeep, RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
     extractpreDatenums, onlySpikes);

@@ -1,8 +1,34 @@
-function sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, swnum, syltoken)
+function sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, swnum, ...
+    syltoken, typesToRemove)
+%% 
+
+if ~exist('typesToRemove', 'var')
+   typesToRemove = {'wn', 'noise'}; % by default remove all 
+end
+
 %% tells you whether you should keep a given syl for a given switch, learing
 % NOTE: have looked closely at all expts so far for wh44 and pu69
-% 
-
+%
+%%  TOOL TO LIST ALL SYLS THAT EXIST FOR A GIVEN SWITCH
+if (0)
+    for i=1:length(SwitchCohStruct.bird)
+        bname = SwitchStruct.bird(i).birdname;
+        for ii=1:length(SwitchCohStruct.bird(i).exptnum)
+            ename = SwitchStruct.bird(i).exptnum(ii).exptname;
+            
+            for iii=1:length(SwitchCohStruct.bird(i).exptnum(ii).switchlist)
+                if isempty(SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum)
+                    continue
+                end
+                % ============================== get list of motifs.
+                disp(' ======================================================= ');
+                disp([bname ' -- ' ename  ' -- sw' num2str(iii)]);
+                disp({SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum.motifname});
+                
+            end
+        end
+    end
+end
 %% syllabels that follow the target (on same motif up to 2+ syls) should be excluded
 
 % @# = NOIASE, base and WN
@@ -10,15 +36,23 @@ function sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, swnum, syltoke
 % # = NOISE, WN
 % ? = potentially salvagable (i.e. only noisy epochs, could remove those)
 
+% e.g. {'pu69wh78', 'RALMANOvernightLearn1', 1, 'aabh(h)', 'WN'}, where
+% "wn" or "noise" at end means that it is removed becuase it follows WN
+% dring elarning or becuase of artifact (noise). if empty, then assues it
+% is because follows "wn" [this is actually the case, since I did nto start
+% including artifact cases until later]
+% NOTE: "wn" could mean that is also has noise ...
+
+
 SylsBad = {...,
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'aabh(h)'}, ...
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, '(a)ab'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'a(a)b'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'aa(b)'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'j(j)b'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jj(b)'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'h(g)'}, ... % @#
-    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jjbhh(g)'}, ... % #
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'aabh(h)', 'wn'}, ...
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, '(a)ab', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'a(a)b', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'aa(b)', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'j(j)b', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jj(b)', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'h(g)', 'wn'}, ... % @#
+    {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jjbhh(g)', 'noise'}, ... % #
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'aab(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'aabh(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'jjb(h)'}, ...
@@ -43,93 +77,111 @@ SylsBad = {...,
     {'pu69wh78', 'RALMANOvernightLearn1', 11, 'jjbh(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 12, 'aabh(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 12, 'jjbh(h)'}, ...
-    {'pu69wh78', 'RALMANlearn1', 1, '(a)ab'}, ... % @#
-    {'pu69wh78', 'RALMANlearn2', 1, '(a)ab'}, ... % @#
-    {'pu69wh78', 'RALMANlearn2', 1, 'a(a)b'}, ... % @#
-    {'pu69wh78', 'RALMANlearn2', 1, 'j(j)b'}, ... % @#
-    {'pu69wh78', 'RALMANlearn2', 1, '(j)jb'}, ... % #
-    {'pu69wh78', 'RALMANlearn2', 1, 'jj(b)'}, ... % #
-    {'wh44wh39', 'RALMANlearn1', 1, 'dk(c)'}, ... % # [note: is actually not bad, except for ch17. others are sort of bad at around 1704+ (sometimes clack). Easiest is just to remove all c]
+    {'pu69wh78', 'RALMANlearn1', 1, '(a)ab', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANlearn2', 1, '(a)ab', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANlearn2', 1, 'a(a)b', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANlearn2', 1, 'j(j)bhh', 'noise'}, ... % @#
+    {'pu69wh78', 'RALMANlearn2', 1, '(j)jbhh', 'noise'}, ... % #
+    {'pu69wh78', 'RALMANlearn2', 1, 'jj(b)hh', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn1', 1, 'dk(c)c', 'noise'}, ... % # [note: is actually not bad, except for ch17. others are sort of bad at around 1704+ (sometimes clack). Easiest is just to remove all c]
     {'wh44wh39', 'RALMANlearn1', 2, 'cb(b)'}, ...
     {'wh44wh39', 'RALMANlearn1', 7, 'cb(b)'}, ...
     {'wh44wh39', 'RALMANlearn1', 8, 'cb(b)'}, ...
     {'wh44wh39', 'RALMANlearn1', 9, 'cb(b)'}, ...
-    {'wh44wh39', 'RALMANlearn2', 1, 'dk(c)'}, ... % @#
-    {'wh44wh39', 'RALMANlearn2', 1, '(m)d'}, ... % #
-    {'wh44wh39', 'RALMANlearn2', 1, '(n)h'}, ... % @#
-    {'wh44wh39', 'RALMANlearn2', 1, '(j)n'}, ... % #
-    {'wh44wh39', 'RALMANlearn2', 1, '(d)kc'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, '(m)d'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, '(n)h'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, 'dk(c)'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, 'dkc(c)'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, '(d)kc'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, '(j)n'}, ... % #
-    {'wh44wh39', 'RALMANlearn3', 1, 'nh(h)'}, ...
-    {'wh44wh39', 'RALMANlearn4', 1, '(m)d'}, ... % @
-    {'wh44wh39', 'RALMANlearn4', 1, '(d)kc'}, ... % @
-    {'wh44wh39', 'RALMANlearn4', 1, 'dk(c)'}, ... % @
-    {'wh44wh39', 'RALMANlearn4', 1, '(j)n'}, ... % @
-    {'wh44wh39', 'RALMANlearn4', 1, '(n)h'}, ... % @#
+    {'wh44wh39', 'RALMANlearn2', 1, 'dk(c)c', 'noise'}, ... % @#
+    {'wh44wh39', 'RALMANlearn2', 1, '(m)d', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn2', 1, '(n)hh', 'wn'}, ... % @#
+    {'wh44wh39', 'RALMANlearn2', 1, '(j)n', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn2', 1, '(d)kcc', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, '(m)d', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, '(n)h', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, 'dk(c)c', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, 'dkc(c)', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, '(d)kcc', 'noise'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, '(j)n', 'wn'}, ... % #
+    {'wh44wh39', 'RALMANlearn3', 1, 'nh(h)', 'wn'}, ...
+    {'wh44wh39', 'RALMANlearn4', 1, '(m)d', 'noise'}, ... % @  **********************************
+    {'wh44wh39', 'RALMANlearn4', 1, '(d)kc', 'noise'}, ... % @
+    {'wh44wh39', 'RALMANlearn4', 1, 'dk(c)', 'noise'}, ... % @
+    {'wh44wh39', 'RALMANlearn4', 1, '(j)n', 'noise'}, ... % @
+    {'wh44wh39', 'RALMANlearn4', 1, '(n)hh', 'noise'}, ... % @#
     {'wh44wh39', 'RALMANlearn4', 2, 'dkc(c)'}, ...
     {'wh72pk12', 'RALMANLearn3', 7, 'jrb(h)'}, ...
     {'wh72pk12', 'RALMANLearn3', 9, 'jrb(h)'}, ...
     {'wh72pk12', 'RALMANLearn3', 11, 'jrb(h)'}, ...
-    {'wh72pk12', 'RALMANLearn4', 1, 'klb(h)'}, ...
-    {'wh72pk12', 'RALMANLearn5', 1, 'iob(h)'}, ...
-    {'wh72pk12', 'RALMANLearn7', 1, 'klb(h)'}, ...
-    {'wh72pk12', 'RALMANLearn7', 1, '(g)'}, ...
-    {'wh72pk12', 'RALMANLearn7', 1, '(j)rb'}, ...
+    {'wh72pk12', 'RALMANLearn4', 1, 'klb(h)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn4', 1, '(g)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn5', 1, 'iob(h)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn5', 1, '(j)rb', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn5', 1, '(g)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn7', 1, 'klb(h)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn7', 1, '(g)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn7', 1, '(j)rb', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn7', 1, '(a)', 'wn'}, ...
     {'wh72pk12', 'RALMANLearn7', 2, 'klb(h)'}, ...
     {'wh72pk12', 'RALMANLearn7', 2, '(g)'}, ...
     {'wh72pk12', 'RALMANLearn7', 2, '(j)rb'}, ...
-    {'wh72pk12', 'RALMANLearn8', 1, '(m)k'}, ...
-    {'wh72pk12', 'RALMANLearn8', 1, '(j)kl'}, ...
-    {'gr48bu5', 'RALMANLearn2', 1, 'ab(h)'}, ...
-    {'gr48bu5', 'RALMANLearn2', 1, '(a)j'}, ... % @#
-    {'gr48bu5', 'RALMANLearn2', 1, '(r)d'}, ... 
-    {'gr48bu5', 'RALMANLearn2', 1, '(a)rd'}, ...% @#
-    {'gr48bu5', 'RALMANLearn2', 1, '(a)b'}, ...% @#
-    {'gr48bu5', 'RALMANLearn3', 1, 'jb(h)'}, ...
-    {'gr48bu5', 'RALMANLearn3', 1, '(a)j'}, ...
-    {'gr48bu5', 'RALMANLearn3', 1, '(a)rd'}, ...
-    {'gr48bu5', 'RALMANLearn3', 1, '(a)b'}, ... % @#
-    {'gr48bu5', 'RALMANLearn4', 1, 'jb(h)'}, ...
-    {'gr48bu5', 'RALMANLearn4', 1, '(a)rd'}, ...
-    {'gr48bu5', 'RALMANLearn4', 1, '(a)b'}, ...
-    {'gr48bu5', 'RALMANLearn4', 1, '(a)j'}, ... % @#
-    {'gr48bu5', 'RALMANLearn4', 1, 'a(b)'}, ... % @#
-    {'gr48bu5', 'RALMANLearn4', 1, '(r)rd'}, ... % @#
-    {'gr48bu5', 'RALMANLearn5', 1, 'ab(h)'}, ...
-    {'gr48bu5', 'RALMANLearn5', 1, '(a)j'}, ...
-    {'gr48bu5', 'RALMANLearn5', 1, '(j)jbh'}, ...    
-    {'gr48bu5', 'RALMANLearn5', 1, '(a)rd'}, ... % @#
-    {'gr48bu5', 'RALMANLearn5', 1, '(a)b'}, ... % @#
-    {'gr48bu5', 'RALMANLearn5', 1, '(r)rd'}, ... % @#
-    {'gr48bu5', 'RALMANLearn5', 1, '(r)d'}, ... % @#
-    {'gr48bu5', 'RALMANLearn5', 1, 'r(d)'}, ... % @#
-    {'gr48bu5', 'RALMANLearn6', 1, '(r)rd'}, ...
-    {'gr48bu5', 'RALMANLearn6', 1, '(r)d'}, ... 
-    {'gr48bu5', 'RALMANLearn6', 1, '(a)rd'}, ... % @#
-    {'gr48bu5', 'RALMANLearn6', 1, '(a)j'}, ... % @#
-    {'gr48bu5', 'RALMANLearn6', 1, '(a)b'}, ... % @#
-    {'gr48bu5', 'RALMANLearn6', 1, 'ab(h)'}, ...
-    {'gr48bu5', 'RALMANLearn6', 1, 'jb(h)'}, ...
-};
+    {'wh72pk12', 'RALMANLearn8', 1, '(m)k', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn8', 1, 'm(k)', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn8', 1, '(j)kl', 'wn'}, ...
+    {'wh72pk12', 'RALMANLearn8', 1, 'j(k)l', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn2', 1, 'ab(h)', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn2', 1, '(a)j', 'wn'}, ... % @#
+    {'gr48bu5', 'RALMANLearn2', 1, '(r)d', 'noise'}, ...
+    {'gr48bu5', 'RALMANLearn2', 1, '(a)rd', 'noise'}, ...% @#
+    {'gr48bu5', 'RALMANLearn2', 1, '(a)b', 'noise'}, ...% @#
+    {'gr48bu5', 'RALMANLearn3', 1, 'jb(h)', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn3', 1, '(a)j', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn3', 1, '(a)rd', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn3', 1, '(a)bh', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn3', 1, '(r)rd', 'noise'}, ... % @# **********************
+    {'gr48bu5', 'RALMANLearn4', 1, 'jb(h)', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn4', 1, '(a)rd', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn4', 1, '(a)bh', 'noise'}, ...
+    {'gr48bu5', 'RALMANLearn4', 1, '(a)j', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn4', 1, 'a(b)h', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn4', 1, '(r)rd', 'wn'}, ... % @#
+    {'gr48bu5', 'RALMANLearn5', 1, 'ab(h)', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn5', 1, '(a)j', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn5', 1, '(j)jb', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn5', 1, '(a)rd', 'wn'}, ... % @#
+    {'gr48bu5', 'RALMANLearn5', 1, '(a)b', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn5', 1, '(r)rd', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn5', 1, '(r)d', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn5', 1, 'r(d)', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn6', 1, '(r)rd', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn6', 1, '(r)d', 'wn'}, ...
+    {'gr48bu5', 'RALMANLearn6', 1, '(a)rd', 'wn'}, ... % @#
+    {'gr48bu5', 'RALMANLearn6', 1, '(a)j', 'wn'}, ... % @#
+    {'gr48bu5', 'RALMANLearn6', 1, '(a)bh', 'noise'}, ... % @#
+    {'gr48bu5', 'RALMANLearn6', 1, 'ab(h)', 'noise'}, ...
+    {'gr48bu5', 'RALMANLearn6', 1, 'jb(h)', 'wn'}, ...
+    };
+
+
+
+%% ========== fill in whether is "noise" or "wn"
+% === if empty, then is "wn"
+for i=1:length(SylsBad)
+   if length(SylsBad{i})==4
+       % then add on the end
+      SylsBad{i} = [SylsBad{i} 'wn'];
+   end
+end
 
 
 %% ========== ask whether the input matches any of the bad syls
 sylbad = 0;
 for j=1:length(SylsBad)
-   tmp1 = strcmp(SylsBad{j}{1}, bname);
-   tmp2 = strcmp(SylsBad{j}{2}, ename);
-   tmp3 = SylsBad{j}{3}==swnum;
-   tmp4 = strcmp(SylsBad{j}{4}, syltoken);
-   
-   if all([tmp1 tmp2 tmp3 tmp4])
-       sylbad=1;
-       disp(['BAD SYL: ' bname '-' ename '-sw' num2str(swnum) '-' syltoken]);
-       break
-   end
+    tmp1 = strcmp(SylsBad{j}{1}, bname);
+    tmp2 = strcmp(SylsBad{j}{2}, ename);
+    tmp3 = SylsBad{j}{3}==swnum;
+    tmp4 = strcmp(SylsBad{j}{4}, syltoken);
+    
+    if all([tmp1 tmp2 tmp3 tmp4]) & any(ismember(typesToRemove, SylsBad{j}{5}))
+        sylbad=1;
+        disp(['BAD SYL: ' bname '-' ename '-sw' num2str(swnum) '-' syltoken]);
+        break
+    end
 end
 

@@ -1,6 +1,8 @@
 %% lt 10/11/18 - once do extractions for each bird, this plots summaries across birds
 
-%% ============ LIST OF EXPERIEMNTS
+%% ============ LIST OF EXPERIEMNTS [DEFAULT - USE THIS FOR REVERSION, 
+% IF COMBINE EXPTS, WILL COMBINE ALL FOR SAME BIRDS EXCEPT PU83, WHICH HAS 
+% TWO EXPETS ON DIFF SYLS...]
 clear all; close all;
 ind = 0;
 
@@ -92,7 +94,253 @@ ExptList(ind).TrainDirForStimContext = {...
 % =========== TO ADD: WH73, 
 ind=ind+1;
 ExptList(ind).birdname = 'wh73pk60';
-ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/wh73pk61/Opto_Stim_analy/Reversion';
+ExptList(ind).dirtoplot = '/bluejay2/lucas/birds/wh73pk61/Opto_Stim_analy/Reversion';
+ExptList(ind).twind = 4;
+ExptList(ind).SwitchTimes = {...
+    '08Mar2015-2330', 'of-up', ...
+    '25Mar2015-1832', 'up-of', ... % IMPORTANT: from before and including 25Mar2015-1832 I did not enter all swicfhes. many switches, each day, and multiple syls sometimes in diff directions. fine as I am not looking at that data
+    '26Mar2015-1233', 'of-up', ...
+    '28Mar2015-1714', 'up-dn', ...
+    '28Mar2015-1920', 'dn-up', ...
+    '29Mar2015-1551', 'up-dn', ...
+    '29Mar2015-1838', 'dn-up', ...
+    '30Mar2015-1650', 'up-dn', ...
+    '30Mar2015-1856', 'dn-up', ...
+    '31Mar2015-1122', 'up-dn', ...
+    '31Mar2015-1550', 'dn-up', ...
+    '01Apr2015-1238', 'up-dn', ...
+    '01Apr2015-1548', 'dn-up', ...
+    '01Apr2015-1925', 'up-dn', ...
+    '01Apr2015-2330', 'dn-up', ...
+    '02Apr2015-1143', 'up-of', ... % NOTE: actually started assoc here... [and other stuff...]
+    '20Apr2015-1232', 'of-dn', ...
+    '01May2015-1434', 'dn-of', ...
+    '06May2015-1131', 'of-up', ...
+    '14May2015-2330', 'up-dn', ...
+    '16May2015-1946', 'dn-of', ...
+   };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+%% ============ LIST OF EXPERIEMNTS [REVERSION, EACH EXPT SEPARATE]
+clear all; close all;
+ind = 0;
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '29Sep2018-2021', 'of-up', ...
+    '04Oct2018-2400', 'up-dn', ...
+    '09Oct2018-2400', 'dn-up'...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Reversion2';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '14Nov2018-1410', 'of-dn', ...
+    '19Nov2018-1339', 'dn-up', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'pu83wh58';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/pu83wh58/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '29Sep2018-2016', 'of-dn', ...
+    '06Oct2018-2400', 'dn-up', ...
+    '11Oct2018-2400', 'up-dn', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'pu83wh58';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/pu83wh58/Opto_Stim_analy/OneDirLearn';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '07Nov2018-2020', 'of-up', ...
+    '14Nov2018-2330', 'up-dn', ...
+    '20Nov2018-1405', 'dn-up', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ######################################### [OLD EXPT]
+ind=ind+1;
+ExptList(ind).birdname = 'or60';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/or60/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '19Feb2017-1115', 'of-dn', ...
+    '22Feb2017-1737', 'dn-up',...
+    '06Mar2017-1137', 'up-dn',...
+    '09Mar2017-1223', 'dn-up', ...
+    '09Mar2017-1821', 'up-dn',...
+    '10Mar2017-1023', 'dn-up',...
+    '10Mar2017-1338', 'up-of'
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+ind=ind+1;
+ExptList(ind).birdname = 'or60';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/or60/Opto_Stim_analy/Reversion2';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '13Mar2017-2312', 'of-up', ...
+    '15Mar2017-2300', 'up-dn', ...
+    '18Mar2017-1432', 'dn-up'};
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% =========== TO ADD: WH73, 
+ind=ind+1;
+ExptList(ind).birdname = 'wh73pk60';
+ExptList(ind).dirtoplot = '/bluejay2/lucas/birds/wh73pk61/Opto_Stim_analy/Reversion';
+ExptList(ind).twind = 4;
+ExptList(ind).SwitchTimes = {...
+    '08Mar2015-2330', 'of-up', ...
+    '25Mar2015-1832', 'up-of', ... % IMPORTANT: from before and including 25Mar2015-1832 I did not enter all swicfhes. many switches, each day, and multiple syls sometimes in diff directions. fine as I am not looking at that data
+    '26Mar2015-1233', 'of-up', ...
+    '28Mar2015-1714', 'up-dn', ...
+    '28Mar2015-1920', 'dn-up', ...
+    '29Mar2015-1551', 'up-dn', ...
+    '29Mar2015-1838', 'dn-up', ...
+    '30Mar2015-1650', 'up-dn', ...
+    '30Mar2015-1856', 'dn-up', ...
+    '31Mar2015-1122', 'up-dn', ...
+    '31Mar2015-1550', 'dn-up', ...
+    '01Apr2015-1238', 'up-dn', ...
+    '01Apr2015-1548', 'dn-up', ...
+    '01Apr2015-1925', 'up-dn', ...
+    '01Apr2015-2330', 'dn-up', ...
+    '02Apr2015-1143', 'up-of', ... % NOTE: actually started assoc here... [and other stuff...]
+    '20Apr2015-1232', 'of-dn', ...
+    '01May2015-1434', 'dn-of', ...
+    '06May2015-1131', 'of-up', ...
+    '14May2015-2330', 'up-dn', ...
+    '16May2015-1946', 'dn-of', ...
+   };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+%% ============ LIST OF EXPERIEMNTS [STIM LATENCY ANALYSIS]
+% USE THIS IF WANT TO HAVE SEPARATE 
+% EXPERIMENTS THAT DIFFER BY STIM LATENCY - ONLY DIFFERENCE FROM ABOVE IS
+% THAT HERE AM NOT COMBINNIG THE TWO BU6 EXPERIMENTS, SINCE THEY ARE DIFF
+% LATENCIES (ALTHOUGH THE SAME SYLLABLE).
+clear all; close all;
+ind = 0;
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98v1';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '29Sep2018-2021', 'of-up', ...
+    '04Oct2018-2400', 'up-dn', ...
+    '09Oct2018-2400', 'dn-up'...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'bu6bu98';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/bu6bu98/Opto_Stim_analy/Reversion2';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '14Nov2018-1410', 'of-dn', ...
+    '19Nov2018-1339', 'dn-up', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'pu83wh58v1';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/pu83wh58/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '29Sep2018-2016', 'of-dn', ...
+    '06Oct2018-2400', 'dn-up', ...
+    '11Oct2018-2400', 'up-dn', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ================== 
+ind=ind+1;
+ExptList(ind).birdname = 'pu83wh58v2';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/pu83wh58/Opto_Stim_analy/OneDirLearn';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '07Nov2018-2020', 'of-up', ...
+    '14Nov2018-2330', 'up-dn', ...
+    '20Nov2018-1405', 'dn-up', ...
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% ######################################### [OLD EXPT]
+ind=ind+1;
+ExptList(ind).birdname = 'or60';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/or60/Opto_Stim_analy/Reversion1';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '19Feb2017-1115', 'of-dn', ...
+    '22Feb2017-1737', 'dn-up',...
+    '06Mar2017-1137', 'up-dn',...
+    '09Mar2017-1223', 'dn-up', ...
+    '09Mar2017-1821', 'up-dn',...
+    '10Mar2017-1023', 'dn-up',...
+    '10Mar2017-1338', 'up-of'
+    };
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+ind=ind+1;
+ExptList(ind).birdname = 'or60';
+ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/or60/Opto_Stim_analy/Reversion2';
+ExptList(ind).twind = 1;
+ExptList(ind).SwitchTimes = {...
+    '13Mar2017-2312', 'of-up', ...
+    '15Mar2017-2300', 'up-dn', ...
+    '18Mar2017-1432', 'dn-up'};
+ExptList(ind).TrainDirForStimContext = {...
+    };
+
+
+% =========== TO ADD: WH73, 
+ind=ind+1;
+ExptList(ind).birdname = 'wh73pk60';
+ExptList(ind).dirtoplot = '/bluejay2/lucas/birds/wh73pk61/Opto_Stim_analy/Reversion';
 ExptList(ind).twind = 4;
 ExptList(ind).SwitchTimes = {...
     '08Mar2015-2330', 'of-up', ...
@@ -231,7 +479,7 @@ ExptList(ind).daystoignore = {...
 % incredibly noisy and not enough data.
 ind=ind+1;
 ExptList(ind).birdname = 'wh73pk61';
-ExptList(ind).dirtoplot = '/bluejay5/lucas/birds/wh73pk61/Opto_Stim_analy/Association1';
+ExptList(ind).dirtoplot = '/bluejay2/lucas/birds/wh73pk61/Opto_Stim_analy/Association1';
 ExptList(ind).twind = 1;
 % ExptList(ind).SwitchTimes = {...
 %     '02Apr2015-1143', 'of-up', ...
@@ -451,14 +699,237 @@ normeachexpt=0; % NORMALIZE EACH EXPT (by mean of means over pos and
 valfield = 'All_FFmeanStimMinusNostim';
 % valfield = 'All_Dprime';
 % valfield = 'All_FFmedianStimMinusNostim';
-groupbybird = 0; % if 0, then by expt.
-onlylongepoch = 0;
+groupbybird = 0; % if 0, then by expt.% note: USE 1 FOR STIM LATENCY STUFF.
+onlylongepoch = 1;
 StartDaySkipTime = 1;
 
-[allffstim, alltraindir, allexptnum, allbirdname] ...
+[allffstim, alltraindir, allexptnum, allbirdname, alldaynums, ...
+    alltrial_ff, alltrial_t, alltrial_isstim, alltrial_stimlatency] ...
     = lt_opto_ExtrAllDat(ExptList, normeachexpt, valfield, groupbybird, ...
     onlylongepoch, StartDaySkipTime);
 
+
+
+%% =============== [PLOTS] Summary, stim effect vs. stim latency
+close all;
+binsize =10; % trials, for runing smooth;
+plotRaw =0; % i.e. each day for each expt...
+
+numexpts = max(allexptnum);
+numdays = max(alldaynums);
+
+nbins = 5;
+ffdiff_AllExpt = cell(numexpts, nbins);
+stimLat_AllExpt = cell(numexpts, nbins);
+
+if groupbybird==1
+    % then daynums are meaningless, 
+    alldaynums = 1:length(alldaynums);
+    alldaynums = alldaynums';
+    disp('NOTE: daynums are meaningless,s ince sombining across experiments [this only matters for raw plots]');
+    pause;
+end
+
+for j=1:numexpts
+    bname = ExptList(j).birdname;
+    ename = ExptList(j).exptID;
+    
+    if plotRaw==1
+        figcount=1;
+        subplotrows=4;
+        subplotcols=2;
+        fignums_alreadyused=[];
+        hfigs=[];
+        hsplots = [];
+    end
+    
+    % ========= COMBINE TO PLOT ACROSS DAYS
+    ffdiff_all= [];
+    stimlatency_all =[];
+    
+    % ========== ONE PLOT FOR EACH DAY
+    for dd = 1:numdays
+        indsthis = allexptnum==j & alldaynums==dd;
+        if ~any(indsthis)
+            continue
+        end
+        assert(sum(indsthis)==1);
+        
+        % ==== for plotting
+        
+        ff = alltrial_ff{indsthis};
+        latency = alltrial_stimlatency{indsthis};
+        traindir = alltraindir(indsthis);
+        isstim = alltrial_isstim{indsthis};
+        
+        if plotRaw==1
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            hsplots = [hsplots hsplot];
+            title({[bname '-' ename '-d' num2str(dd)], ['traindir: ' num2str(traindir)]});
+            xlabel('stim latency (rel syl ons) [nostim std included]');
+            ylabel('learning (pos=traindir), rel nostim');
+        end
+        
+        if isnan(isstim)
+            continue
+        end
+        % --- plot all nonstim (line for mean and std
+        ymean = mean(ff(isstim==0));
+        ystd = std(ff(isstim==0));
+        if plotRaw==1
+            % subtract base
+            if traindir==0
+                lt_plot(0, ymean, {'Errors', ystd, 'Color', 'k'});
+            else
+                lt_plot(0, 0, {'Errors', ystd, 'Color', 'k'});
+            end
+        end
+        
+        % --- plot all stim
+        y = ff(isstim==1);
+        x = -latency(isstim==1);
+        if traindir~=0 % then is during training
+            y = y-ymean; % subtract base
+            y = y*traindir; % positive = learn dir.
+        else
+        end
+        if plotRaw==1
+            plot(x, y, 'xk');
+        end
+        % -- smooth
+        [~, indsort] = sort(x);
+        x = x(indsort); y = y(indsort);
+        xsm = lt_running_stats(x, binsize);
+        ysm = lt_running_stats(y, binsize);
+        if plotRaw==1
+            if length(xsm.Mean)>1
+                shadedErrorBar(xsm.Mean, ysm.Mean, ysm.SEM, {'Color', 'r'},1);
+            end
+            axis tight;
+            
+            if traindir~=0 % then is during training
+                lt_plot_zeroline;
+            end
+        end
+        
+        % ============ COLLECT TO PLOT ACROSS DAYS
+        if traindir~=0 % then is during training
+            
+            ffdiff_all= [ffdiff_all; y'];
+            stimlatency_all =[stimlatency_all; x'];
+        end
+    end
+    if plotRaw==1
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots hsplot];
+    title('ALL DAYS (train only)');
+    xlabel('stim latency (rel syl ons) [nostim std included]');
+    ylabel('learning (pos=traindir), rel nostim');
+    plot(stimlatency_all, ffdiff_all, 'xk');
+    %         lt_regress(ffdiff_all, stimlatency_all, 1, 0, 1, 1);
+    end
+    
+    [~, indsort] = sort(stimlatency_all);
+    x = stimlatency_all(indsort);
+    y = ffdiff_all(indsort);
+    xsm = lt_running_stats(x, binsize*2);
+    ysm = lt_running_stats(y, binsize*2);
+    if plotRaw==1
+    if length(xsm.Mean)>1
+        shadedErrorBar(xsm.Mean, ysm.Mean, ysm.SEM, {'Color', 'r'},1);
+    end
+    end
+    lt_plot_zeroline;
+    
+    % =========== COLLECT ACROSS EXPERIEMNTS
+    % --- TERCILES
+    nperbin = round(length(x)/nbins);
+    binedges = [1 [1:nbins]*nperbin];
+    binedges(end) = length(x)+1;
+    
+    for bb=1:nbins
+        indtmp = binedges(bb):binedges(bb+1)-1;
+        
+        stimLat_AllExpt{j, bb} = x(indtmp);
+        ffdiff_AllExpt{j, bb} = y(indtmp);
+        
+    end
+    xtmp = cellfun(@mean, stimLat_AllExpt(j,:));
+    ytmp = cellfun(@mean, ffdiff_AllExpt(j,:));
+    if plotRaw==1
+    plot(xtmp, ytmp, 's-b');
+    
+    linkaxes(hsplots, 'x');
+    end
+end
+
+% ################# PLOT SUMMARY, ONE LINE FOR EACH EXPT
+lt_figure; hold on;
+
+% =========== WITH CONNECTING LINES
+lt_subplot(3,1,1); hold on;
+xlabel('stim latency (rel ons)');
+ylabel('mean stim effect (dir opposite training)');
+pcols = lt_make_plot_colors(size(stimLat_AllExpt,1), 0,0);
+if size(stimLat_AllExpt,2)>1
+for j=1:size(stimLat_AllExpt,1)
+    bname = ExptList(j).birdname;
+    ename = ExptList(j).exptID;
+    
+    x = cellfun(@mean, stimLat_AllExpt(j,:));
+    ymean = cellfun(@mean, ffdiff_AllExpt(j,:));
+    ysem = cellfun(@lt_sem, ffdiff_AllExpt(j,:));
+    %     lt_plot(x, ymean, {'Errors', ysem, 'LineStyle', '-', 'Color', pcols{j}, ...
+    %         'LineWidth', 0.5});
+    shadedErrorBar(x, ymean, ysem, {'Color', pcols{j}}, 1);
+    lt_plot(x, ymean, {'Color', pcols{j}});
+    
+    lt_plot_text(x(end), ymean(end), [bname '-' ename], pcols{j}, 6);
+end
+lt_plot_zeroline;
+end
+
+% =========== WITH CONNECTING LINES
+lt_subplot(3,1,2); hold on;
+xlabel('stim latency (rel ons)');
+ylabel('mean stim effect (dir opposite training)');
+pcols = lt_make_plot_colors(size(stimLat_AllExpt,1), 0,0);
+for j=1:size(stimLat_AllExpt,1)
+    bname = ExptList(j).birdname;
+    ename = ExptList(j).exptID;
+    
+    x = cellfun(@mean, stimLat_AllExpt(j,:));
+    ymean = cellfun(@mean, ffdiff_AllExpt(j,:));
+    ysem = cellfun(@lt_sem, ffdiff_AllExpt(j,:));
+    %     lt_plot(x, ymean, {'Errors', ysem, 'LineStyle', '-', 'Color', pcols{j}, ...
+    %         'LineWidth', 0.5});
+    lt_plot(x, ymean, {'Color', pcols{j}, 'LineStyle', '-'});
+    
+    lt_plot_text(x(end), ymean(end), [bname '-' ename], pcols{j}, 6);
+end
+lt_plot_zeroline;
+
+
+% =========== NO CONNECTING LINES
+lt_subplot(3,1,3); hold on;
+xlabel('stim latency (rel ons)');
+ylabel('mean stim effect (dir opposite training)');
+for j=1:size(stimLat_AllExpt,1)
+    bname = ExptList(j).birdname;
+    ename = ExptList(j).exptID;
+    
+    x = cellfun(@mean, stimLat_AllExpt(j,:));
+    ymean = cellfun(@mean, ffdiff_AllExpt(j,:));
+    ysem = cellfun(@lt_sem, ffdiff_AllExpt(j,:));
+    %     lt_plot(x, ymean, {'Errors', ysem, 'LineStyle', '-', 'Color', pcols{j}, ...
+    %         'LineWidth', 0.5});
+    lt_plot(x, ymean, {'Color', pcols{j}});
+    
+    lt_plot_text(x(end), ymean(end), [bname '-' ename], pcols{j}, 6);
+end
+lt_plot_zeroline;
+
+%% =========== PLOT SUMMARY ACROSS BIRDS
 
 %% ================ [PLOTS] Summary, each bird histrogram of stim effects.
 figcount=1;
@@ -616,6 +1087,231 @@ lt_plot(unique(tdall)+0.15, y, {'Errors', ysem});
 lt_plot_zeroline;
 [~, p] = ttest(ffall(tdall==-1), ffall(tdall==1));
 lt_plot_pvalue(p, 'ttest, means', 1);
+
+
+
+%% ============== [MODELING REVERSION AS FUNCTION OF STIM]
+% ==== EACH TRIAL ONE DATAPOINT.
+% ===== VERSION 1 - flip ff based on train direction.
+
+% model
+% ff ~
+
+% ======= first convert FF to normalized FF
+% 1) subtract day means
+alltrial_ff_norm = cellfun(@(x)(x-mean(x)), alltrial_ff, 'UniformOutput', 0);
+% 2) flip so that negative is opposite direction of learning
+for i=1:length(alltrial_ff_norm)
+    alltrial_ff_norm{i} = alltrial_ff_norm{i}*alltraindir(i);
+end
+
+AllFF = [];
+AllTvals = [];
+AllStim = [];
+AllTdir = [];
+AllEnum = [];
+AllBname = {};
+AllDaynum = [];
+
+% ======= EXPAND INTO ARRAYS
+for i=1:length(alltrial_ff_norm)
+    ff = alltrial_ff_norm{i};
+    tvals = alltrial_t{i};
+    isstim = alltrial_isstim{i};
+    
+    if isnan(isstim)
+        continue
+    end
+    if length(ff)~=length(isstim)
+        keyboard
+    end
+    
+    % --- things that need to be repeated
+    traindir = alltraindir(i)*ones(size(ff));
+    enum = allexptnum(i)*ones(size(ff));
+    bname = repmat(allbirdname(i), 1, size(ff,2));
+    daynum = alldaynums(i)*ones(size(ff));
+%     ONLY KEEP THOSE ON TRAINING DAYS
+% -- I assumed this would be done, and so ff on nontrain days have been set to 0.
+    if alltraindir(i)==0
+        continue
+    end
+    
+    % ---- CONCAT
+    AllFF = [AllFF; ff'];
+    AllTvals = [AllTvals; tvals'];
+    AllStim = [AllStim; isstim'];
+    AllTdir = [AllTdir; traindir'];
+    AllEnum = [AllEnum; enum'];
+    AllBname = [AllBname; bname'];
+    AllDaynum = [AllDaynum; daynum'];
+end
+
+
+% ===== get ind for unique song number
+AllSongUnique = lt_tools_grp2idx({AllEnum, AllTvals});
+AllDaynumUnique = lt_tools_grp2idx({AllEnum, AllDaynum});
+
+% ==== make sure numbered things are categorical arrays
+AllDaynumUnique = categorical(AllDaynumUnique);
+AllSongUnique = categorical(AllSongUnique);
+AllEnum = categorical(AllEnum);
+AllDaynum = categorical(AllDaynum);
+    
+% ======= MODEL
+dat = table(AllFF, AllStim, AllEnum, AllBname, AllSongUnique, AllDaynumUnique);
+% mdl = 'AllFF ~ AllStim';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllEnum) + (AllStim-1|AllDaynumUnique)';
+mdl = 'AllFF ~ AllStim + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum) + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllBname) + (AllStim-1|AllDaynumUnique)';
+
+lme = fitlme(dat, mdl)
+
+% [mean(dat.AllFF(dat.AllStim==1)) mean(dat.AllFF(dat.AllStim==0))];
+
+
+%% ============== [MODELING REVERSION AS FUNCTION OF STIM]
+% ==== EACH TRIAL ONE DATAPOINT.
+% METHOD: ASKING WHETHER THERE IS INTERACTION BETWEEN TRAIN DIR ADN EFFECT
+% OF STIM.
+
+% model
+% ff ~
+
+% ======= first convert FF to normalized FF
+% 1) subtract day means
+alltrial_ff_norm = cellfun(@(x)(x-mean(x)), alltrial_ff, 'UniformOutput', 0);
+% % 2) flip so that negative is opposite direction of learning
+% for i=1:length(alltrial_ff_norm)
+%     alltrial_ff_norm{i} = alltrial_ff_norm{i}*alltraindir(i);
+% end
+
+AllFF = [];
+AllTvals = [];
+AllStim = [];
+AllTdir = [];
+AllEnum = [];
+AllBname = {};
+AllDaynum = [];
+
+% ======= EXPAND INTO ARRAYS
+for i=1:length(alltrial_ff_norm)
+    ff = alltrial_ff_norm{i};
+    tvals = alltrial_t{i};
+    isstim = alltrial_isstim{i};
+    
+    if isnan(isstim)
+        continue
+    end
+    if length(ff)~=length(isstim)
+        keyboard
+    end
+    
+    % --- things that need to be repeated
+    traindir = alltraindir(i)*ones(size(ff));
+    enum = allexptnum(i)*ones(size(ff));
+    bname = repmat(allbirdname(i), 1, size(ff,2));
+    daynum = alldaynums(i)*ones(size(ff));
+%     ONLY KEEP THOSE ON TRAINING DAYS
+% -- I assumed this would be done, and so ff on nontrain days have been set to 0.
+    if alltraindir(i)==0
+        continue
+    end
+    
+    % ---- CONCAT
+    AllFF = [AllFF; ff'];
+    AllTvals = [AllTvals; tvals'];
+    AllStim = [AllStim; isstim'];
+    AllTdir = [AllTdir; traindir'];
+    AllEnum = [AllEnum; enum'];
+    AllBname = [AllBname; bname'];
+    AllDaynum = [AllDaynum; daynum'];
+end
+
+
+% ===== get ind for unique song number
+AllSongUnique = lt_tools_grp2idx({AllEnum, AllTvals});
+AllDaynumUnique = lt_tools_grp2idx({AllEnum, AllDaynum});
+
+% ==== make sure numbered things are categorical arrays
+AllDaynumUnique = categorical(AllDaynumUnique);
+AllSongUnique = categorical(AllSongUnique);
+AllEnum = categorical(AllEnum);
+AllDaynum = categorical(AllDaynum);
+    
+% ======= MODEL
+dat = table(AllFF, AllStim, AllEnum, AllBname, AllSongUnique, AllDaynumUnique, AllTdir);
+mdl = 'AllFF ~ AllStim*AllTdir';
+% mdl = 'AllFF ~ AllStim*AllTdir + (AllStim*AllTdir|AllEnum)';
+% mdl = 'AllFF ~ AllStim*AllTdir + (AllStim:AllTdir|AllEnum)';
+% mdl = 'AllFF ~ AllStim*AllTdir + (AllStim:AllTdir|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllEnum) + (AllStim-1|AllDaynumUnique)';
+
+lme = fitlme(dat, mdl)
+
+% [mean(dat.AllFF(dat.AllStim==1)) mean(dat.AllFF(dat.AllStim==0))];
+
+
+%% ============== [MODELING REVERSION AS FUNCTION OF STIM]
+% ==== EACH DAY ONE DATAPOINT. [EFFECT OF STIM, FLIP BY TRAINING DAY...]
+
+% ======= ONLY KEEP TRAINING DAYS
+allffstim_days = allffstim(alltraindir~=0);
+alltraindir_days = alltraindir(alltraindir~=0);
+allbirdname_days = allbirdname(alltraindir~=0);
+allexptnum_days = categorical(allexptnum(alltraindir~=0));
+
+% === make sure negative means in direction opposite training
+allffstim_days = allffstim_days.*alltraindir_days;
+
+
+% ======= MODEL
+dat = table(allffstim_days, alltraindir_days, allbirdname_days, allexptnum_days);
+% mdl = 'AllFF ~ AllStim';
+% mdl = 'AllFF ~ AllStim + (AllStim|AllEnum) + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum) + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllBname) + (AllStim-1|AllDaynumUnique)';
+mdl = 'allffstim_days ~ 1 + (1|allexptnum_days)';
+
+lme = fitlme(dat, mdl)
+
+% [mean(dat.AllFF(dat.AllStim==1)) mean(dat.AllFF(dat.AllStim==0))];
+
+%% ============== [MODELING REVERSION AS FUNCTION OF STIM]
+% ==== EACH DAY ONE DATAPOINT.
+% DIFF FROM ABOVE - HERE DO NOT FLIP DIR OF STIM - QUSETION IS WHETHER
+% TRAINING HAS EFFECT ON STIM
+
+% ======= ONLY KEEP TRAINING DAYS
+allffstim_days = allffstim(alltraindir~=0);
+alltraindir_days = alltraindir(alltraindir~=0);
+allbirdname_days = allbirdname(alltraindir~=0);
+allexptnum_days = categorical(allexptnum(alltraindir~=0));
+
+
+% ======= MODEL
+dat = table(allffstim_days, alltraindir_days, allbirdname_days, allexptnum_days);
+% mdl = 'AllFF ~ AllStim';
+% mdl = 'AllFF ~ AllStim + (AllStim|AllEnum) + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllSongUnique) + (AllStim-1|AllEnum) + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllDaynumUnique)';
+% mdl = 'AllFF ~ AllStim + (AllStim-1|AllBname) + (AllStim-1|AllDaynumUnique)';
+
+mdl = 'allffstim_days ~ alltraindir_days + (alltraindir_days|allbirdname_days)';
+mdl = 'allffstim_days ~ alltraindir_days + (alltraindir_days|allexptnum_days)';
+mdl = 'allffstim_days ~ alltraindir_days';
+
+lme = fitlme(dat, mdl)
+
+% [mean(dat.AllFF(dat.AllStim==1)) mean(dat.AllFF(dat.AllStim==0))];
 
 
 %% ============== [COMPARING REVERSION AND ASSOCIATION WITHIN SAME EXPERIMENT]

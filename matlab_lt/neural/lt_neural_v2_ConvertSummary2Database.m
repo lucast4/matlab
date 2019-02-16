@@ -9,6 +9,19 @@ if onlySpikes==0
 end
 disp('NOTE: if OnlySpikes=1, then this will not work for any birds that added after gr48bu5, since assumes that any bird other than gr48bu5 and wh72pk12 are all spike data (which is true)');
 pause
+
+% NOTE:
+% For all birds did not enter what cell type it is, except following
+% situation:
+% wh72
+%     - empty ==> LFP
+%     - "LF" ==> LFP
+%     - "MU"/"SU" ==> spikes.
+%     Note that there are some cases where same data extracted both spikes and LFP (e.g. spikes fewer trials).
+%     To get only LFP in these cases, use onlySpikes=2;
+% gr48 and after, explicitly noted down either LF, MU, or SU.
+
+    
 %% lt 12/1/17 - for RA, added this, so extracts both SAm/Mel and my RA dat
 
 %% TO DO:
@@ -189,7 +202,9 @@ for i=1:numbirds
         end
         
         % ============== ONLY SPIKES?
-        if onlySpikes==1
+        if onlySpikes==0 % THEN all data
+            
+        elseif onlySpikes==1 % THEN only spiking data
             
             if strcmp(SummaryStruct.birds(i).birdname, 'wh72pk12')
                 % ---- if is "LFP, tjhen skip
@@ -225,7 +240,10 @@ for i=1:numbirds
                 % allspikes..
             end
         elseif onlySpikes==2
-            % skip if is both wh72 and (SU or MU)
+            % This is special code that applies only for birds that have
+            % multiple extractions for same channel, some with and some without
+            % LFP. This will make sure that only keeps if is explicitly LFP
+            % USE THIS IF WANT TO DO COHERE/XCOV ANALYSES.
             if strcmp(birdname, 'wh72pk12') & ...
                     ismember(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, {'MU', 'SU'})
                 continue

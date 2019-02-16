@@ -1,5 +1,5 @@
 function lt_neural_POPLEARN_XCov_PlotAllGram(OUTSTRUCT_XCOV, SwitchStruct, ...
-    PARAMS, clim)
+    PARAMS, clim, birdtoplot)
 
 
 %% 1/9/19 - lt plots each expt, targ, same, diff, xcov (minus shift predictor
@@ -27,6 +27,11 @@ for i=1:length(indsgrpUni)
     bname = SwitchStruct.bird(bnum).birdname;
     ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
     
+    if ~isempty(birdtoplot)
+        if ~ismember(birdtoplot, bnum)
+            continue
+        end
+    end
     
     % ################################ TARGET
     indstmp = indsgrp==indsgrpUni(i) & OUTSTRUCT_XCOV.istarg==1;
@@ -44,7 +49,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel('lag (neg = LMAN lead');
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     
     % 1) WN 
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -52,7 +57,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
 
     % wn MINUS BASE
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -60,7 +65,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [],clim);
     
     
     
@@ -81,7 +86,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel('lag (neg = LMAN lead');
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     
     % 1) WN 
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -89,7 +94,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
 
     % wn MINUS BASE
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -97,7 +102,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     
     
     
@@ -117,7 +122,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel('lag (neg = LMAN lead');
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     
     % 1) WN 
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -125,7 +130,7 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
 
     % wn MINUS BASE
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -133,6 +138,6 @@ for i=1:length(indsgrpUni)
     xlabel('xbin (center');
     ylabel(ptit);
     hsplots = [hsplots hsplot];
-    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], '', clim);
+    lt_neural_Coher_Plot(covWN-covbase, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     
 end

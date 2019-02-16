@@ -1,7 +1,12 @@
-function     lt_neural_PLOT_rasterline(spktimes, yval, plotcol, plotdot)
+function     lt_neural_PLOT_rasterline(spktimes, yval, plotcol, plotdot, ...
+    linesize)
 
 if ~exist('plotdot', 'var')
     plotdot = [];
+end
+
+if ~exist('linesize', 'var')
+    linesize = 0.8;
 end
 
 %% plots a single line of raster (lt, 11/4/17)
@@ -15,7 +20,7 @@ if plotdot==1
 else
     for ttt =1:length(spktimes)
         
-        line([spktimes(ttt) spktimes(ttt)], [yval-0.4 yval+0.4], ...
+        line([spktimes(ttt) spktimes(ttt)], [yval-linesize/2 yval+linesize/2], ...
             'Color', plotcol, 'LineWidth', 1);
     end
 end

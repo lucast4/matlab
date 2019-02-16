@@ -1,7 +1,7 @@
 function [BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
     onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw)
-%% 10/6/18 - 
+%% 10/6/18 -
 
 % BirdExptIncluded = []; 'i-ii' where i and ii are numbers and concat into
 % string.
@@ -22,7 +22,7 @@ useregression=0; % then gets day on and off by fitting each day separately
 % otherwise get first and last N renditions
 Nrend = 10;
 
-% ======== throw out same-type syls that don't show any learning? 
+% ======== throw out same-type syls that don't show any learning?
 % threshOnSametype = 1; % threshold is 0 for mean of mrinig and night of last day.
 
 %%
@@ -54,10 +54,10 @@ for i=1:Numbirds
         
         % ---------- SKIP IF NO DATA
         if isempty(TrialStruct.birds(i).exptnum(ii).sylnum)
-                disp(['[no DATA] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
+            disp(['[no DATA] skipping ' TrialStruct.birds(i).exptnum(ii).exptname]);
             continue
         end
-            
+        
         
         % --------- ignore if lMAN?
         if ignoreLMANexpt==1
@@ -91,7 +91,7 @@ for i=1:Numbirds
             if any(isnan(ff))
                 keyboard
             end
-               
+            
             % --------------- lines for base mean and 1std
             basedays = TrialStruct.birds(i).exptnum(ii).BaseDays;
             wndays = TrialStruct.birds(i).exptnum(ii).WNDays;
@@ -211,7 +211,7 @@ for i=1:Numbirds
             sylnames_allsyls = [sylnames_allsyls; sylname];
             
         end
-
+        
         % ==================== OUTPUTS
         indstoremove = []; % the ones that I am combining
         % ---------- combine within syl types?
@@ -229,7 +229,7 @@ for i=1:Numbirds
             end
             
             % --- DIFF
-                indstmp = find(istarg_allsyls==0 & issame_allsyls==0);
+            indstmp = find(istarg_allsyls==0 & issame_allsyls==0);
             if ~isempty(indstmp)
                 
                 ffedges_allsyls = [ffedges_allsyls; nanmean(ffedges_allsyls(indstmp,:),1)];
@@ -271,10 +271,10 @@ for i=1:Numbirds
         % ========= need all syl types?
         if onlyifhaveAllSylTypes==1
             if ~(any(istarg_allsyls==1) & any(istarg_allsyls==0 & issame_allsyls==1) ...
-                & any(istarg_allsyls==0 & issame_allsyls==0))
-            disp('SKIP, dosnt have all syltypes');
+                    & any(istarg_allsyls==0 & issame_allsyls==0))
+                disp('SKIP, dosnt have all syltypes');
                 continue
-            end            
+            end
         end
         
         
@@ -315,90 +315,90 @@ BirdExptIncluded  = [col1 col2];
 %% ================= PLOT EACH EXPERIEMNT, OPVERLAYING CALCULATED EDGE VALUES.
 if plotEachExptRaw==1
     disp('ONLY WORKS WELL IF USE OVERALL BASE AS NORM...');
-
-pcol = {};
-pcol{2,2} = 'k'; %(targ, smae)
-pcol{1,2} = 'b';
-pcol{1,1} = 'r';
-
-for i=1:maxbirds
-    for ii=1:maxexpts
-   
-        indsthis = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii;
-        if ~any(indsthis)
-            continue
-        end
-        
-        bname = TrialStruct.birds(i).birdname;
-        ename = TrialStruct.birds(i).exptnum(ii).exptname;
-        
-        % ======= plot this experiment
-        figcount=1;
-        subplotrows=6;
-        subplotcols=2;
-        fignums_alreadyused=[];
-        hfigs=[];
-        hsplots = [];
-
-        % ====== go thru all syls
-        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-        for ss=1:numsyls
+    
+    pcol = {};
+    pcol{2,2} = 'k'; %(targ, smae)
+    pcol{1,2} = 'b';
+    pcol{1,1} = 'r';
+    
+    for i=1:maxbirds
+        for ii=1:maxexpts
             
-            sylname = TrialStruct.birds(i).exptnum(ii).sylnum(ss).syl;
-            t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
-            ff_minusbase = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ff_minusbase;
-            ffedges = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFedges_byday;
-            tedges = reshape([unique(floor(t))'+0.2917; unique(floor(t))'+0.875], length(ffedges), [])';
-            assert(length(tedges)==length(ffedges));
-            
-            % is targ?
-            istarg = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget;
-            issame = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_similar;
-            pcthis = pcol{istarg+1, issame+1};
-            
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title(sylname);
-            if ss==1
-                ylabel([bname '-' ename]);
+            indsthis = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii;
+            if ~any(indsthis)
+                continue
             end
-            plot(t, ff_minusbase, 'x', 'Color', pcthis);
-            lt_plot(tedges, ffedges);
-            axis tight;
-            lt_plot_zeroline;
-        end
-         
-        % ====== plot summary for this expt
+            
+            bname = TrialStruct.birds(i).birdname;
+            ename = TrialStruct.birds(i).exptnum(ii).exptname;
+            
+            % ======= plot this experiment
+            figcount=1;
+            subplotrows=6;
+            subplotcols=2;
+            fignums_alreadyused=[];
+            hfigs=[];
+            hsplots = [];
+            
+            % ====== go thru all syls
+            numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+            for ss=1:numsyls
+                
+                sylname = TrialStruct.birds(i).exptnum(ii).sylnum(ss).syl;
+                t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).Tvals;
+                ff_minusbase = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ff_minusbase;
+                ffedges = TrialStruct.birds(i).exptnum(ii).sylnum(ss).FFedges_byday;
+                tedges = reshape([unique(floor(t))'+0.2917; unique(floor(t))'+0.875], length(ffedges), [])';
+                assert(length(tedges)==length(ffedges));
+                
+                % is targ?
+                istarg = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget;
+                issame = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_similar;
+                pcthis = pcol{istarg+1, issame+1};
+                
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                hsplots = [hsplots hsplot];
+                title(sylname);
+                if ss==1
+                    ylabel([bname '-' ename]);
+                end
+                plot(t, ff_minusbase, 'x', 'Color', pcthis);
+                lt_plot(tedges, ffedges);
+                axis tight;
+                lt_plot_zeroline;
+            end
+            
+            % ====== plot summary for this expt
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-% hsplots = [hsplots hsplot];
-title('summary - actual analysis dat');
-        % -- targ
+            % hsplots = [hsplots hsplot];
+            title('summary - actual analysis dat');
+            % -- targ
             indtmp = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==1;
-         ff = DATSTRUCT.AllFFedges(indtmp,:);
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xk');
-         end
-         
-        % -- same
+            ff = DATSTRUCT.AllFFedges(indtmp,:);
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xk');
+            end
+            
+            % -- same
             indtmp = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0 & ...
                 DATSTRUCT.AllIsSame==1;
-         ff = DATSTRUCT.AllFFedges(indtmp,:);
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xb');
-         end
-        % -- diff
+            ff = DATSTRUCT.AllFFedges(indtmp,:);
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xb');
+            end
+            % -- diff
             indtmp = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0 & ...
                 DATSTRUCT.AllIsSame==0;
-         ff = DATSTRUCT.AllFFedges(indtmp,:);
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xr');
-         end
-         lt_plot_zeroline;
-         
-         % ----------------
-        linkaxes(hsplots, 'xy');
+            ff = DATSTRUCT.AllFFedges(indtmp,:);
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xr');
+            end
+            lt_plot_zeroline;
+            
+            % ----------------
+            linkaxes(hsplots, 'xy');
+        end
     end
-end
 end
 
 
@@ -527,7 +527,7 @@ Yall_diff_gen = [];
 
 for i=1:maxbirds
     for ii=1:maxexpts
-   
+        
         indtarg = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==1;
         indrest = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0;
         indsame = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0 ...
@@ -538,7 +538,7 @@ for i=1:maxbirds
         if ~any(indtarg)
             continue
         end
-
+        
         fftarg = DATSTRUCT.AllFFedges(indtarg,:);
         ffrest = DATSTRUCT.AllFFedges(indrest,:);
         ffsame = DATSTRUCT.AllFFedges(indsame,:);
@@ -560,15 +560,15 @@ for i=1:maxbirds
         Yall_diff_gen = [Yall_diff_gen; ydiff./ytarg];
         
         % === calculate specificity index
-%         ffall = sum([fftarg; ffrest],1);
+        %         ffall = sum([fftarg; ffrest],1);
         
-%         FFtargAll = [FFtargAll; fftarg];
-%         FFsumAll = [FFsumAll; ffall];
+        %         FFtargAll = [FFtargAll; fftarg];
+        %         FFsumAll = [FFsumAll; ffall];
     end
 end
 
 % ==================== PLOT
-lt_figure; 
+lt_figure;
 
 % ------
 lt_subplot(3,1,1); hold on;
@@ -721,14 +721,14 @@ FFtargAll = [];
 FFsumAll = [];
 for i=1:maxbirds
     for ii=1:maxexpts
-   
+        
         indtarg = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==1;
         indrest = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0;
         
         if ~any(indtarg)
             continue
         end
-
+        
         fftarg = DATSTRUCT.AllFFedges(indtarg,:);
         ffrest = DATSTRUCT.AllFFedges(indrest,:);
         
@@ -759,7 +759,7 @@ for j=1:size(FFtargAll,2)
     y = FFtargAll(:,j);
     
     lt_regress(y, x, 1, 0, 1, 1, 'k');
-        
+    
 end
 linkaxes(hsplots, 'xy');
 %% ================= [PLOT] --- MEAN CHANGE IN FF..
@@ -883,197 +883,197 @@ lt_plot_zeroline;
 
 %% ############## [SCATTER PLOT] TARG/NONTARG, OVER EDGES (MONRING, NIGHT)
 if combineSylsInExpt==1 & onlyifhaveAllSylTypes==1
-numbasedays  = -ParamsTrial.DayWindow(1);
-numdays = -ParamsTrial.DayWindow(1) + ParamsTrial.DayWindow(2);
-timeinds = numbasedays*2:numdays*2; % from ngiht of last base day...
-
-% ============ PLOT EACH DAY-NIGHT PAIR INDIVIDUALLY
-% ========= COLLECT (this ensures that same and targ are matched data)
-Yall_targ = [];
-Yall_same = [];
-for i=1:maxbirds
-    for ii=1:maxexpts
-   
-        indtarg = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==1;
-        indsame = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1;
-        
-        if ~any(indtarg)
-            continue
+    numbasedays  = -ParamsTrial.DayWindow(1);
+    numdays = -ParamsTrial.DayWindow(1) + ParamsTrial.DayWindow(2);
+    timeinds = numbasedays*2:numdays*2; % from ngiht of last base day...
+    
+    % ============ PLOT EACH DAY-NIGHT PAIR INDIVIDUALLY
+    % ========= COLLECT (this ensures that same and targ are matched data)
+    Yall_targ = [];
+    Yall_same = [];
+    for i=1:maxbirds
+        for ii=1:maxexpts
+            
+            indtarg = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==1;
+            indsame = DATSTRUCT.AllBirdnum==i & DATSTRUCT.AllExptnum==ii & DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1;
+            
+            if ~any(indtarg)
+                continue
+            end
+            
+            if sum(indsame)~=1
+                disp('need 1:1 to do this analysis...');
+                continue
+            end
+            
+            Yall_targ = [Yall_targ; DATSTRUCT.AllFFedges(indtarg,:)];
+            Yall_same = [Yall_same; DATSTRUCT.AllFFedges(indsame,:)];
         end
-        
-        if sum(indsame)~=1
-            disp('need 1:1 to do this analysis...');
-            continue
-        end
-        
-        Yall_targ = [Yall_targ; DATSTRUCT.AllFFedges(indtarg,:)];
-        Yall_same = [Yall_same; DATSTRUCT.AllFFedges(indsame,:)];
-    end
-end
-
-
-% ======================== PLOTS
-figcount=1;
-subplotrows=3;
-subplotcols=2;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-
-daystoget = [1:numdays-1]'; % will get the day plus following night.
-timeinds_edges = [daystoget*2-1 daystoget*2+1];
-
-% ========= COLLECT THINGS
-Learn_day_targ = []; % targid x daynum
-Learn_day_nontarg = [];
-Learn_night_targ = [];
-Learn_night_nontarg = [];
-
-for j=1:size(timeinds_edges,1)
-    
-    timebinsthis = timeinds_edges(j,1):timeinds_edges(j,2);
-        
-    % -- targs
-    ytarg = Yall_targ(:, timebinsthis);
-    ysame = Yall_same(:, timebinsthis);
-    
-    % =========== plot
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots hsplot];
-    xlabel('targ');
-    ylabel('same');
-    title(['timebins: ' num2str(timebinsthis)]);
-    
-    % ----- INDIVIDUAL LINES (entire monring-night-morning lines)
-    for jj=1:size(ytarg,1)
-        plot(ytarg(jj,:), ysame(jj,:), '-', 'Color', [0.7 0.7 0.7]);
     end
     
-    % --- COLOR DOTS FOR MORNING AND NIGHT
-    % - morning 1
-    indtmp = 1;
+    
+    % ======================== PLOTS
+    figcount=1;
+    subplotrows=3;
+    subplotcols=2;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+    
+    daystoget = [1:numdays-1]'; % will get the day plus following night.
+    timeinds_edges = [daystoget*2-1 daystoget*2+1];
+    
+    % ========= COLLECT THINGS
+    Learn_day_targ = []; % targid x daynum
+    Learn_day_nontarg = [];
+    Learn_night_targ = [];
+    Learn_night_nontarg = [];
+    
+    for j=1:size(timeinds_edges,1)
+        
+        timebinsthis = timeinds_edges(j,1):timeinds_edges(j,2);
+        
+        % -- targs
+        ytarg = Yall_targ(:, timebinsthis);
+        ysame = Yall_same(:, timebinsthis);
+        
+        % =========== plot
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        hsplots = [hsplots hsplot];
+        xlabel('targ');
+        ylabel('same');
+        title(['timebins: ' num2str(timebinsthis)]);
+        
+        % ----- INDIVIDUAL LINES (entire monring-night-morning lines)
+        for jj=1:size(ytarg,1)
+            plot(ytarg(jj,:), ysame(jj,:), '-', 'Color', [0.7 0.7 0.7]);
+        end
+        
+        % --- COLOR DOTS FOR MORNING AND NIGHT
+        % - morning 1
+        indtmp = 1;
+        pcol = 'b';
+        plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
+        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        % - night 1
+        indtmp = 2;
+        pcol = 'k';
+        plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
+        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        % - morning 2
+        indtmp = 3;
+        pcol = 'r';
+        plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
+        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        lt_plot_makesquare_plot45line(gca, 'k');
+        
+        
+        % ================ COLLECT FOR SUMMARY PLOT
+        Learn_day_targ = [Learn_day_targ ytarg(:,2)-ytarg(:,1)]; % targid x daynum
+        Learn_day_nontarg = [Learn_day_nontarg ysame(:,2)-ysame(:,1)];
+        Learn_night_targ = [Learn_night_targ ytarg(:,3)-ytarg(:,2)];
+        Learn_night_nontarg = [Learn_night_nontarg ysame(:,3)-ysame(:,2)];
+        
+    end
+    linkaxes(hsplots, 'xy');
+    
+    % ================== summary figures
+    lt_figure; hold on;
+    lt_subplot(2,2,1); hold on;
+    xlabel('targ')
+    ylabel('nontarg');
+    title('day(b); night(r)');
+    
+    % -- day
     pcol = 'b';
-    plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-    lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
-    % - night 1
-    indtmp = 2;
-    pcol = 'k';
-    plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-    lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
-    % - morning 2
-    indtmp = 3;
+    x = Learn_day_targ(:, numbasedays+1:end);
+    y = Learn_day_nontarg(:, numbasedays+1:end);
+    x = x(:); y = y(:);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % -- night
     pcol = 'r';
-    plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-    lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
-    lt_plot_makesquare_plot45line(gca, 'k');
+    x = Learn_night_targ(:, numbasedays+1:end);
+    y = Learn_night_nontarg(:, numbasedays+1:end);
+    x = x(:); y = y(:);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % --
+    lt_plot_makesquare_plot45line(gca, 'k')
     
     
-    % ================ COLLECT FOR SUMMARY PLOT
-    Learn_day_targ = [Learn_day_targ ytarg(:,2)-ytarg(:,1)]; % targid x daynum
-    Learn_day_nontarg = [Learn_day_nontarg ysame(:,2)-ysame(:,1)];
-    Learn_night_targ = [Learn_night_targ ytarg(:,3)-ytarg(:,2)];
-    Learn_night_nontarg = [Learn_night_nontarg ysame(:,3)-ysame(:,2)];
-
-end
-linkaxes(hsplots, 'xy');
-
-% ================== summary figures
-lt_figure; hold on;
-lt_subplot(2,2,1); hold on;
-xlabel('targ')
-ylabel('nontarg');
-title('day(b); night(r)');
-
-% -- day
-pcol = 'b';
-x = Learn_day_targ(:, numbasedays+1:end);
-y = Learn_day_nontarg(:, numbasedays+1:end);
-x = x(:); y = y(:);
-plot(x,y, 'x', 'Color', pcol);
-
-% -- night
-pcol = 'r';
-x = Learn_night_targ(:, numbasedays+1:end);
-y = Learn_night_nontarg(:, numbasedays+1:end);
-x = x(:); y = y(:);
-plot(x,y, 'x', 'Color', pcol);
-
-% --
-lt_plot_makesquare_plot45line(gca, 'k')
-
-
-% ===============================
-lt_subplot(2,2,2); hold on;
-xlabel('targ')
-ylabel('nontarg');
-title('day(b); night(r) [each expt one point');
-
-% -- day
-pcol = 'b';
-x = Learn_day_targ(:, numbasedays+1:end);
-y = Learn_day_nontarg(:, numbasedays+1:end);
-x = mean(x,2); y = mean(y,2);
-plot(x,y, 'x', 'Color', pcol);
-
-% -- night
-pcol = 'r';
-x = Learn_night_targ(:, numbasedays+1:end);
-y = Learn_night_nontarg(:, numbasedays+1:end);
-x = mean(x,2); y = mean(y,2);
-plot(x,y, 'x', 'Color', pcol);
-
-% --
-lt_plot_makesquare_plot45line(gca, 'k')
-
-
-% =========
-lt_subplot(2,2,3); hold on;
-xlabel('day');
-ylabel('night');
-title('targ(k), nontarg(m)');
-
-% -- targ
-pcol = 'k';
-x = Learn_day_targ(:, numbasedays+1:end);
-y = Learn_night_targ(:, numbasedays+1:end);
-x = x(:); y = y(:);
-plot(x,y, 'x', 'Color', pcol);
-
-% -- nontarg
-pcol = 'm';
-x = Learn_day_nontarg(:, numbasedays+1:end);
-y = Learn_night_nontarg(:, numbasedays+1:end);
-x = x(:); y = y(:);
-plot(x,y, 'x', 'Color', pcol);
-
-% --
-lt_plot_makesquare_plot45line(gca, 'k')
-
-
-% =========
-lt_subplot(2,2,4); hold on;
-xlabel('day');
-ylabel('night');
-title('targ(k), nontarg(m) [N=expts]');
-
-% -- targ
-pcol = 'k';
-x = Learn_day_targ(:, numbasedays+1:end);
-y = Learn_night_targ(:, numbasedays+1:end);
-x = mean(x,2);
-y = mean(y,2);
-plot(x,y, 'x', 'Color', pcol);
-
-% -- nontarg
-pcol = 'm';
-x = Learn_day_nontarg(:, numbasedays+1:end);
-y = Learn_night_nontarg(:, numbasedays+1:end);
-x = mean(x,2);
-y = mean(y,2);
-plot(x,y, 'x', 'Color', pcol);
-
-% --
-lt_plot_makesquare_plot45line(gca, 'k')
+    % ===============================
+    lt_subplot(2,2,2); hold on;
+    xlabel('targ')
+    ylabel('nontarg');
+    title('day(b); night(r) [each expt one point');
+    
+    % -- day
+    pcol = 'b';
+    x = Learn_day_targ(:, numbasedays+1:end);
+    y = Learn_day_nontarg(:, numbasedays+1:end);
+    x = mean(x,2); y = mean(y,2);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % -- night
+    pcol = 'r';
+    x = Learn_night_targ(:, numbasedays+1:end);
+    y = Learn_night_nontarg(:, numbasedays+1:end);
+    x = mean(x,2); y = mean(y,2);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % --
+    lt_plot_makesquare_plot45line(gca, 'k')
+    
+    
+    % =========
+    lt_subplot(2,2,3); hold on;
+    xlabel('day');
+    ylabel('night');
+    title('targ(k), nontarg(m)');
+    
+    % -- targ
+    pcol = 'k';
+    x = Learn_day_targ(:, numbasedays+1:end);
+    y = Learn_night_targ(:, numbasedays+1:end);
+    x = x(:); y = y(:);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % -- nontarg
+    pcol = 'm';
+    x = Learn_day_nontarg(:, numbasedays+1:end);
+    y = Learn_night_nontarg(:, numbasedays+1:end);
+    x = x(:); y = y(:);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % --
+    lt_plot_makesquare_plot45line(gca, 'k')
+    
+    
+    % =========
+    lt_subplot(2,2,4); hold on;
+    xlabel('day');
+    ylabel('night');
+    title('targ(k), nontarg(m) [N=expts]');
+    
+    % -- targ
+    pcol = 'k';
+    x = Learn_day_targ(:, numbasedays+1:end);
+    y = Learn_night_targ(:, numbasedays+1:end);
+    x = mean(x,2);
+    y = mean(y,2);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % -- nontarg
+    pcol = 'm';
+    x = Learn_day_nontarg(:, numbasedays+1:end);
+    y = Learn_night_nontarg(:, numbasedays+1:end);
+    x = mean(x,2);
+    y = mean(y,2);
+    plot(x,y, 'x', 'Color', pcol);
+    
+    % --
+    lt_plot_makesquare_plot45line(gca, 'k')
 end
 %% =============== [PLOT] OVERDAY AND OVERNIGHT, ONE VALUE FOR EACH SYL
 % ==== FIGURE OUT INDS FOR DURING WN ONLY
@@ -2119,11 +2119,11 @@ y_night = [];
 for j=1:nsyls
     
     % ---- skip if not positive learning at nontarg (i.e generalization)
-%     if TMPSTRUCT.(fieldthis).learnTot(j)<=0
-%         disp('/adadasdd')
-%         continue
-%     end
-   
+    %     if TMPSTRUCT.(fieldthis).learnTot(j)<=0
+    %         disp('/adadasdd')
+    %         continue
+    %     end
+    
     % ---------------------- find corresponding target data
     bnumthis = TMPSTRUCT.(fieldthis).bnums(j);
     enumthis = TMPSTRUCT.(fieldthis).enums(j);
@@ -2148,7 +2148,7 @@ lt_plot_makesquare_plot45line(gca, 'k')
 
 % ---------
 lt_subplot(2,2,2); hold on;
-xlabel('day-night(bars), LOWTARG LEARN[SETS OF BARS]');
+xlabel('day-night(bars), LOW-HIGH TARG LEARN[SETS OF BARS]');
 ylabel('hz(total over days)');
 title('effect of total learn at target on day/night for nontarg (each syl one dat');
 % --- low targ learning
@@ -2205,11 +2205,11 @@ ndays = size(TMPSTRUCT.(fieldthis).learnDay_allday,2); % i.e. num indiv days.
 for j=1:nsyls
     
     % ---- skip if not positive learning at nontarg (i.e generalization)
-%     if TMPSTRUCT.(fieldthis).learnTot(j)<=0
-%         disp('/adadasdd')
-%         continue
-%     end
-   
+    %     if TMPSTRUCT.(fieldthis).learnTot(j)<=0
+    %         disp('/adadasdd')
+    %         continue
+    %     end
+    
     % ---------------------- find corresponding target data
     bnumthis = TMPSTRUCT.(fieldthis).bnums(j);
     enumthis = TMPSTRUCT.(fieldthis).enums(j);

@@ -17,7 +17,7 @@ rec_files.batch=batch;
 % Initiate files
 frec_FB=fopen([batch '.rec_FB'],'w'); % only those with feedback give (i.e. template match)
 frec_noFB=fopen([batch '.rec_noFB'],'w'); % only those with no feedback
-% frec_FB_MoreThanOne=fopen([batch '.rec_FB_MoreThanOne'],'w');
+frec_FB_MoreThanOne=fopen([batch '.rec_FB_MoreThanOne'],'w');
 % frec_FB_OnlyOne=fopen([batch '.rec_FB_OnlyOne'],'w');
 frec_FB_catch=fopen([batch '.rec_FB.catch'],'w'); % only those with feedback give (i.e. template match)
 frec_FB_notcatch=fopen([batch '.rec_FB.notcatch'],'w'); % only those with feedback give (i.e. template match)
@@ -94,10 +94,14 @@ for i=1:length(rec_files_list);
             fprintf(frec_FB_notcatch,'%s\n',rec_name_converted_cbin);
         end
     end
-%     if length (FB_indices{i})>1;
-%         fprintf(frec_FB_MoreThanOne,'%s\n',rec_name_converted_cbin);
-%         rec_files.DateNum_songs_with_FB_MoreThanOne=[rec_files.DateNum_songs_with_FB_MoreThanOne; rec_files_list(i).datenum];
+    
+%     if length(FB_indices{i})>1
+%         fprintf(frec_multFB,'%s\n',rec_name_converted_cbin);
 %     end
+    if length (FB_indices{i})>1;
+        fprintf(frec_FB_MoreThanOne,'%s\n',rec_name_converted_cbin);
+%         rec_files.DateNum_songs_with_FB_MoreThanOne=[rec_files.DateNum_songs_with_FB_MoreThanOne; rec_files_list(i).datenum];
+    end
     if length(FB_indices{i})==0;
         fprintf(frec_noFB,'%s\n',rec_name_converted_cbin);
         rec_files.DateNum_songs_without_FB=[rec_files.DateNum_songs_without_FB; rec_files_list(i).datenum];
@@ -119,7 +123,7 @@ rec_files.FB_indices=FB_indices;
 
 fclose(frec_FB);
 fclose(frec_noFB);
-% fclose(frec_FB_MoreThanOne);
+fclose(frec_FB_MoreThanOne);
 % fclose(frec_FB_OnlyOne);
 
 disp(['Num songs with FB: ' num2str(length(rec_files.DateNum_songs_with_FB))]);

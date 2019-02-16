@@ -1,8 +1,9 @@
-function lt_neural_Coher_PitchLearnCoh(OUTSTRUCT, PARAMS, SwitchCohStruct, SwitchStruct)
+function lt_neural_Coher_PitchLearnCoh(OUTSTRUCT, PARAMS, SwitchCohStruct, ...
+    SwitchStruct, nsegs)
 %% lt 1/21/19 - plots learning trajectories. Both pitch and cohscalar
 
 
-nsegs = 2; % quartiles, then 4... (for both coh and learning)
+% nsegs = 2; % quartiles, then 4... (for both coh and learning)
 disp('NOTE: assumes that, if multiple targets, then both train same direction... (not asserted in code)');
 Nmin = 6; % min trials per bin
 combineMultTarg = 1; % dedualt 1, takes average. (diff motifs for given switch)
@@ -11,11 +12,11 @@ combineMultTarg = 1; % dedualt 1, takes average. (diff motifs for given switch)
 OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 
 %%
-% 
+%
 % [indsgrp, indsgrpU] = lt_tools_grp2idx({OUTSTRUCT.bnum, OUTSTRUCT.enum, OUTSTRUCT.switch, OUTSTRUCT.motifID_unique});
 % % [indsgrp, indsgrpU] = lt_tools_grp2idx({OUTSTRUCT.bnum, OUTSTRUCT.enum, OUTSTRUCT.switch, OUTSTRUCT.motifID_unique});
-% 
-% 
+%
+%
 % % ----- get timecourse of learning (into quartiles)
 % all_learndir = [];
 % all_ffbinned = [];
@@ -24,21 +25,21 @@ OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 % all_cohstd = [];
 % all_learnslope_byhour = []; % slope, [Ci]
 % for i=1:length(indsgrpU)
-%     
+%
 %     % ===== Target
 %     indsthis = find(indsgrp==indsgrpU(i) & OUTSTRUCT.istarg==1);
 %     if ~any(indsthis)
 %         continue
 %     end
-%        
+%
 %     bnum = unique(OUTSTRUCT.bnum(indsthis));
 %     enum = unique(OUTSTRUCT.enum(indsthis));
 %     sw = unique(OUTSTRUCT.switch(indsthis));
-%     
+%
 %     assert(length(unique(OUTSTRUCT.motifID_unique(indsthis)))==1, 'do code for mult ta4rgets ...');
 %     indsthis_allchan = indsthis;
 %     indsthis = indsthis(1);
-%     
+%
 %     % --- things general across channels
 %     ff = OUTSTRUCT.ffvals{indsthis};
 %     tt = OUTSTRUCT.tvals{indsthis};
@@ -46,33 +47,33 @@ OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 %     indsbase_epoch = OUTSTRUCT.indsbase_epoch{indsthis};
 %     indsWN = OUTSTRUCT.indsWN{indsthis};
 %     learndir = OUTSTRUCT.learndirTarg(indsthis);
-%     
+%
 %     % --- things to get across channels
 %     cohscal = OUTSTRUCT.cohscal(indsthis_allchan);
-%     
-%     
+%
+%
 %     if (0)
 %        lt_figure; hold on;
 %        plot(tt, ff, 'ok');
 %     end
-%     
-%     
+%
+%
 %     % ====================== GET WN/BASELINE MEASURES
-%     
-%     
-%     
+%
+%
+%
 %     % ====================== GET QUARTILES OF ELARNING AND COHSCAL
 %     ntrialbin = sum(indsWN)/nsegs;
-%     
+%
 %     % --- get list of timeedges
 %     tmp = find(indsWN);
 %     trialedges = tmp(round(linspace(1, sum(indsWN), nsegs+1)));
 %     trialedges(1) = trialedges(1)-1;
-%     
+%
 %     % --- add one bin for baseline
 %     trialedges = [indsbase_epoch(1) trialedges];
 %     trialedges(1) = trialedges(1)-1;
-% 
+%
 %     ff_binned = nan(1,nsegs+1);
 %     ffstd_binned = nan(1,nsegs+1);
 %     coh_binned = nan(1,nsegs+1);
@@ -82,38 +83,38 @@ OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 %        t2 = trialedges(ii+1);
 %        time1 = tt(t1);
 %        time2 = tt(t2);
-%        
+%
 %        % === collect stuff in this bin
 %        ffthis = ff(t1:t2);
 % %        ffstd_this = std(ff(t1:t2);
 %        cohthis = cellfun(@(x)x(t1:t2), cohscal, 'UniformOutput', 0);
 %        cohthis = mean(cell2mat(cohthis),1); % take mean acros chan pairs
-%        
-%        
+%
+%
 % %        % === mean coh for other syls
 % %        indstmp = find(OUTSTRUCT.bnum==bnum & OUTSTRUCT.enum==enum & ...
-% %            OUTSTRUCT.switch==sw & OUTSTRUCT.istarg==0);       
+% %            OUTSTRUCT.switch==sw & OUTSTRUCT.istarg==0);
 % %        for iii=1:length(indstmp)
-% %           indstmp(iii) 
+% %           indstmp(iii)
 % %        end
-% %        
-%        
+% %
+%
 %        % ============================ OUTPUT
 %        ff_binned(ii) = mean(ffthis);
 %        ffstd_binned(ii) = std(ffthis);
 %        coh_binned(ii) = mean(cohthis);
 %        cohstd_binned(ii) = std(cohthis);
 %     end
-%     
-%     
+%
+%
 %     % ========================= GET SLOPE OVER WN
 %     ftmp = ff(indsWN);
 %     ttmp = tt(indsWN);
 %     ttmp = (ttmp-ttmp(1))*24; % convert to hours.
 %     [~, ~, ~, ~, ~, stats] = lt_regress(ftmp, ttmp, 0, 0, 0, 0, '');
 %     all_learnslope_byhour = [all_learnslope_byhour; [stats.slope stats.slopeCI]];
-%     
-%     
+%
+%
 %     % ################## OUTPUT, ONE PER EXPERIMENT
 %     all_learndir = [all_learndir; learndir];
 %     all_ffbinned = [all_ffbinned; ff_binned];
@@ -121,20 +122,20 @@ OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 %     all_cohbinned = [all_cohbinned; coh_binned];
 %     all_cohstd = [all_cohstd; cohstd_binned];
 % end
-% 
-% 
-% 
-% 
+%
+%
+%
+%
 % %% ================== nromalize learning
 % % == learning, hz minus base, in learn dir
 % all_fflearnrelbase = all_ffbinned;
 % all_fflearnrelbase = (all_fflearnrelbase-all_fflearnrelbase(:,1)).*all_learndir;
-% 
-% 
+%
+%
 % % == learning, zscore minsu base, learn dir
 % all_learnz_learndir = (all_ffbinned - all_ffbinned(:,1))./(all_ffstd(:,1));
 % all_learnz_learndir = all_learnz_learndir.*all_learndir;
-% 
+%
 % %% ========================================== PLOT
 % figcount=1;
 % subplotrows=3;
@@ -142,97 +143,97 @@ OUTSTRUCT = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT, SwitchStruct);
 % fignums_alreadyused=[];
 % hfigs=[];
 % hsplots = [];
-% 
-% 
+%
+%
 % % =========== 1) LEARNING TRAJECTORY
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('binned (1=bnase, 2:end=WN[by ind])');
 % ylabel('ff');
-% 
+%
 % x=1:size(all_ffbinned,2);
 % y = all_fflearnrelbase;
 % plot(x, y', '-ok');
-% 
+%
 % ymean = mean(y,1);
 % ysem = lt_sem(y);
 % lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
 % lt_plot_zeroline;
-% 
-% 
+%
+%
 % % --
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('binned (1=bnase, 2:end=WN[by ind])');
 % ylabel('learn(z)');
-% 
+%
 % x=1:size(all_ffbinned,2);
 % y = all_learnz_learndir;
 % plot(x, y', '-ok');
-% 
+%
 % ymean = mean(y,1);
 % ysem = lt_sem(y);
 % lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
 % lt_plot_zeroline;
-% 
-% 
+%
+%
 % % ====== slope during elarning
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('slope dur elarn (dir of learn)');
-% 
+%
 % y = all_learnslope_byhour(:,1).*all_learndir;
 % lt_plot_histogram(y, [], 1, 0, []);
 % lt_plot_zeroline_vert;
-% 
-% 
+%
+%
 % % ===== COHERENCE INCREASE DURING LEARNING
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('binned (1=bnase, 2:end=WN[by ind])');
 % ylabel('coh');
-% 
+%
 % x=1:size(all_ffbinned,2);
 % y = all_cohbinned;
 % plot(x, y', '-ok');
-% 
+%
 % ymean = mean(y,1);
 % ysem = lt_sem(y);
 % lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
 % lt_plot_zeroline;
-% 
-% 
+%
+%
 % % ===== COHERENCE INCREASE DURING LEARNING
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('binned (1=bnase, 2:end=WN[by ind])');
 % ylabel('coh');
-% 
+%
 % x=1:size(all_ffbinned,2);
 % y = all_cohbinned-all_cohbinned(:,1);
 % plot(x, y', '-ok');
-% 
+%
 % ymean = mean(y,1);
 % ysem = lt_sem(y);
 % lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
 % lt_plot_zeroline;
-% 
-% 
-% 
+%
+%
+%
 % % ============= OCHERENCE VERSUS LEARNING
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('learning (zscore)');
 % ylabel('coherence change (coh)');
-% 
+%
 % x = all_learnz_learndir(:,end);
 % y = all_cohbinned(:,end) - all_cohbinned(:,1);
 % plot(x,y, 'ok');
-% 
-% 
+%
+%
 % % ============= OCHERENCE VERSUS LEARNING
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('learning (zscore)');
 % ylabel('coherence change (z)');
-% 
+%
 % x = all_learnz_learndir(:,end);
 % y = (all_cohbinned(:,end) - all_cohbinned(:,1))./(all_cohstd(:,1));
 % plot(x,y, 'ok');
-% 
+%
 
 
 
@@ -266,7 +267,7 @@ for i=1:length(indsgrpU)
     istarg = unique(OUTSTRUCT.istarg(indsthis));
     issame = unique(OUTSTRUCT.issame(indsthis));
     
-%     assert(length(unique(OUTSTRUCT.motifID_unique(indsthis)))==1, 'do code for mult ta4rgets ...');
+    %     assert(length(unique(OUTSTRUCT.motifID_unique(indsthis)))==1, 'do code for mult ta4rgets ...');
     indsthis_allchan = indsthis;
     indsthis = indsthis(1);
     
@@ -280,15 +281,19 @@ for i=1:length(indsgrpU)
     
     % --- things to get across channels
     cohscal = OUTSTRUCT.cohscal(indsthis_allchan);
-    
+    if any(isnan(cohscal{1}))
+        disp('REMOIVNG EXPT - COH SCALARS ARE NAN!!');
+        pause;
+        continue
+    end
     if sum(indsWN)<Nmin*nsegs | length(indsbase_epoch)<Nmin*nsegs
         continue
     end
-        
+    
     
     if (0)
-       lt_figure; hold on;
-       plot(tt, ff, 'ok');
+        lt_figure; hold on;
+        plot(tt, ff, 'ok');
     end
     
     
@@ -305,52 +310,52 @@ for i=1:length(indsgrpU)
     % --- add one bin for baseline
     trialedges = [indsbase_epoch(1) trialedges];
     trialedges(1) = trialedges(1)-1;
-
+    
     ff_binned = nan(1,nsegs+1);
     ffstd_binned = nan(1,nsegs+1);
     coh_binned = nan(1,nsegs+1);
     cohstd_binned = nan(1,nsegs+1);
     for ii=1:length(trialedges)-1
-       t1 = trialedges(ii)+1;
-       t2 = trialedges(ii+1);
-       time1 = tt(t1);
-       time2 = tt(t2);
-       
-       % === collect stuff in this bin
-       ffthis = ff(t1:t2);
-%        ffstd_this = std(ff(t1:t2);
-       cohthis = cellfun(@(x)x(t1:t2), cohscal, 'UniformOutput', 0);
-       cohthis = mean(cell2mat(cohthis),1); % take mean acros chan pairs
-       
-       
-%        % === mean coh for other syls
-%        indstmp = find(OUTSTRUCT.bnum==bnum & OUTSTRUCT.enum==enum & ...
-%            OUTSTRUCT.switch==sw & OUTSTRUCT.istarg==0);       
-%        for iii=1:length(indstmp)
-%           indstmp(iii) 
-%        end
-%        
+        t1 = trialedges(ii)+1;
+        t2 = trialedges(ii+1);
+        time1 = tt(t1);
+        time2 = tt(t2);
+        
+        % === collect stuff in this bin
+        ffthis = ff(t1:t2);
+        %        ffstd_this = std(ff(t1:t2);
+        cohthis = cellfun(@(x)x(t1:t2), cohscal, 'UniformOutput', 0);
+        cohthis = mean(cell2mat(cohthis),1); % take mean acros chan pairs
+        
+        
+        %        % === mean coh for other syls
+        %        indstmp = find(OUTSTRUCT.bnum==bnum & OUTSTRUCT.enum==enum & ...
+        %            OUTSTRUCT.switch==sw & OUTSTRUCT.istarg==0);
+        %        for iii=1:length(indstmp)
+        %           indstmp(iii)
+        %        end
+        %
         if isnan(mean(cohthis))
             keyboard
         end
-       
-       % ============================ OUTPUT
-       ff_binned(ii) = mean(ffthis);
-       ffstd_binned(ii) = std(ffthis);
-       coh_binned(ii) = mean(cohthis);
-       cohstd_binned(ii) = std(cohthis);
+        
+        % ============================ OUTPUT
+        ff_binned(ii) = mean(ffthis);
+        ffstd_binned(ii) = std(ffthis);
+        coh_binned(ii) = mean(cohthis);
+        cohstd_binned(ii) = std(cohthis);
     end
     
     
     % ========================= GET SLOPE OVER WN
     if all(isnan(ff))
-    all_learnslope_byhour = [all_learnslope_byhour; [nan nan nan]];
+        all_learnslope_byhour = [all_learnslope_byhour; [nan nan nan]];
     else
-    ftmp = ff(indsWN);
-    ttmp = tt(indsWN);
-    ttmp = (ttmp-ttmp(1))*24; % convert to hours.
-    [~, ~, ~, ~, ~, stats] = lt_regress(ftmp, ttmp, 0, 0, 0, 0, '');
-    all_learnslope_byhour = [all_learnslope_byhour; [stats.slope stats.slopeCI]];
+        ftmp = ff(indsWN);
+        ttmp = tt(indsWN);
+        ttmp = (ttmp-ttmp(1))*24; % convert to hours.
+        [~, ~, ~, ~, ~, stats] = lt_regress(ftmp, ttmp, 0, 0, 0, 0, '');
+        all_learnslope_byhour = [all_learnslope_byhour; [stats.slope stats.slopeCI]];
     end
     
     
@@ -362,11 +367,11 @@ for i=1:length(indsgrpU)
     all_cohstd = [all_cohstd; cohstd_binned];
     all_istarg = [all_istarg; istarg];
     all_issame = [all_issame; issame];
-
+    
     all_bnum = [all_bnum; bnum];
     all_enum =[all_enum; enum];
     all_swnum =[all_swnum; sw];
-
+    
 end
 
 %% % === also, if multiple targets, then combines them (average)
@@ -386,10 +391,10 @@ if combineMultTarg==1
             indstoremove = [indstoremove; indstarg]; % rmeomve later
             
             % append to end
-%             all_learnslope_byhour
-                        all_learnslope_byhour = [all_learnslope_byhour; mean(all_learnslope_byhour(indstarg,:),1)];
-
-                        all_learndir = [all_learndir; mean(all_learndir(indstarg,:),1)];
+            %             all_learnslope_byhour
+            all_learnslope_byhour = [all_learnslope_byhour; mean(all_learnslope_byhour(indstarg,:),1)];
+            
+            all_learndir = [all_learndir; mean(all_learndir(indstarg,:),1)];
             all_ffbinned = [all_ffbinned; mean(all_ffbinned(indstarg,:),1)];
             all_ffstd = [all_ffstd; mean(all_ffstd(indstarg,:),1)];
             all_cohbinned = [all_cohbinned; mean(all_cohbinned(indstarg,:),1)];
@@ -402,16 +407,16 @@ if combineMultTarg==1
         end
     end
     all_learnslope_byhour(indstoremove,:) = [];
-            all_learndir(indstoremove,:) = [];
-            all_ffbinned(indstoremove,:) = [];
-            all_ffstd(indstoremove,:) = [];
-            all_cohbinned(indstoremove,:) = [];
-            all_cohstd(indstoremove,:) = [];
-            all_istarg(indstoremove,:) = [];
-            all_bnum(indstoremove,:) = [];
-            all_enum(indstoremove,:) = [];
-            all_swnum(indstoremove,:) = [];
-            all_issame(indstoremove,:) = [];
+    all_learndir(indstoremove,:) = [];
+    all_ffbinned(indstoremove,:) = [];
+    all_ffstd(indstoremove,:) = [];
+    all_cohbinned(indstoremove,:) = [];
+    all_cohstd(indstoremove,:) = [];
+    all_istarg(indstoremove,:) = [];
+    all_bnum(indstoremove,:) = [];
+    all_enum(indstoremove,:) = [];
+    all_swnum(indstoremove,:) = [];
+    all_issame(indstoremove,:) = [];
 end
 %% ================= FOR EACH TARGET, GET STATS RELATIVE TO ALL OTHER SYLS
 
@@ -430,7 +435,7 @@ for i=1:length(indsgrpU)
     
     all_cohbinned_minusnontarg(indstarg, :) = ...
         all_cohbinned(indstarg,:) - cohmean_nontarg;
-
+    
     all_cohbinned_zrelnontarg(indstarg,:) = ...
         (all_cohbinned(indstarg,:) - cohmean_nontarg)./cohstd_nontarg;
 end
@@ -458,7 +463,7 @@ all_learning_zscore_targdir = nan(length(indsgrpU), size(all_ffbinned,2), 3); % 
 
 for i=1:length(indsgrpU)
     
-   % targ
+    % targ
     indsthis = indsgrp==indsgrpU(i) & all_istarg==1;
     all_learning_zscore_targdir(i, :, 1) = nanmean(all_learnz_learndir(indsthis,:),1);
     
@@ -741,7 +746,7 @@ lt_plot_zeroline;
 % [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 % xlabel('learning (zscore)');
 % ylabel('coherence change (coh)');
-% 
+%
 % x = all_learnz_learndir(all_istarg==1,end);
 % y = all_cohbinned(:,end) - all_cohbinned(:,1);
 % y = y(all_istarg==1,:);

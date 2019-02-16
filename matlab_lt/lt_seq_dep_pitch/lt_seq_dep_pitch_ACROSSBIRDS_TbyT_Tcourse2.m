@@ -1106,7 +1106,11 @@ for i = 1:nbirds
     end
 end
 
+
 linkaxes(hsplots, 'xy');
+
+
+
 
 % ============== SUMMARY PLOT, OVERLAY ALL TARG, SAME, DIFF.
 lt_figure; hold on;
@@ -1114,7 +1118,7 @@ lt_figure; hold on;
 % ------- each expt
 lt_subplot(3,2,1); hold on;
 title(['means of syls']);
-xlabel('bin num');
+xlabel('bin center (time)');
 ylabel('mean FFdev');
 
 % --- targ
@@ -1157,6 +1161,7 @@ ysem = lt_sem([FFdevMeanAll.(fname)]');
 lt_plot(xmean, ymean, {'Errors', ysem, 'Color', pcol});
 
 % ---
+axis tight;
 lt_plot_zeroline;
 
 
@@ -1191,11 +1196,28 @@ x = nanmean(x,2);
 lt_plot_bar(x, ymean', {'Errors', ysem, 'FaceAlpha', 0.2})
 
 % --- significance
-p = signrank(y(1,:));
-lt_plot_text(x(1), y(1), ['p=' num2str(p)], 'r');
-
+% - for each time bin
+for j=1:size(y,1)
+    if all(isnan(y(j,:)))
+        continue
+    end
+%    [~, p]= ttest(y(j,:));
+   [p]= signrank(y(j,:));
+       lt_plot_text(x(j), max(y(j,:)), ['p(vs0)=' num2str(p)], 'm', 8);
+end
+% -- compare each bin to 1
+for j=2:size(y,1)
+    if all(isnan(y(j,:)))
+        continue
+    end
+%    [~, p]= ttest(y(j,:));
+   [p]= signrank(y(1,:), y(j,:));
+       lt_plot_text(x(j), 1.1*max(y(j,:)), ['p(vsbin1)=' num2str(p)], 'r', 8);
+end
 p = signrank(y(1,:), mean(y([2:3],:),1));
-lt_plot_text(x(2), y(2), ['(vs)p=' num2str(p)], 'r');
+lt_plot_text(x(2), y(2), ['(Bin2/3vsBin1)p=' num2str(p)], 'c', 8);
+
+
 
 % =========== COMBINE LAST 2 BINS INTO ONE
 lt_subplot(3,2,5); hold on;
@@ -1204,12 +1226,23 @@ title('each expt, mean over syls');
 xlabel('time dev');
 
 y = [FFdevMeanAll.same] - [FFdevMeanAll.targ];
-ytmp = [y(1,:); mean(y([2 3], :))];
+ytmp = [y(1,:); nanmean(y([2 3], :))];
 x = [TdevMeanAll.same];
-xtmp = [x(1,:); mean(x([2 3], :))];
+xtmp = [x(1,:); nanmean(x([2 3], :))];
 
 plot(xtmp, ytmp, '-ob');
 lt_plot_zeroline;
+% --pval = 
+for j=1:size(ytmp,1)
+    if all(isnan(ytmp(j,:)))
+        continue
+    end
+%    [~, p]= ttest(y(j,:));
+   [p]= signrank(ytmp(j,:));
+       lt_plot_text(x(j), max(ytmp(j,:)), ['p(vs0)=' num2str(p)], 'm', 8);
+end
+p = signrank(ytmp(1,:), ytmp(2,:));
+lt_plot_text(x(2), ytmp(2), ['(Bin2vsBin1)p=' num2str(p)], 'r', 8);
 
 
 % ========== FOR BOTH TARG AND SAME, SUIBNTRACT DIFF TYPE
@@ -1230,6 +1263,8 @@ xsame = [TdevMeanAll.same];
 plot(xsame, ysame, '-b');
 lt_plot(nanmean(xsame,2), nanmean(ysame, 2), {'Errors', lt_sem(ysame'), 'Color', 'b'});
 lt_plot_zeroline;
+
+
 
 % =========== ACCOUNT FOR TOTAL LEARNING -
 lt_subplot(3,2,3); hold on;
@@ -1277,6 +1312,7 @@ end
 lt_plot_makesquare_plot45line(gca, 'r');
 
 
+
 % ====================================
 lt_subplot(3,2,6); hold on;
 title('deviations, late minus early');
@@ -1311,6 +1347,8 @@ lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y)});
 xlim([0 3]);
 lt_plot_zeroline;
 
+p = signrank(Y(:,1), Y(:,2));
+lt_plot_pvalue(p, 'vs', 1);
 
 %% ====================== PLOT ALL SAME TYPE SYLS (BY SYL NOT BUT EXPT)
 
@@ -1509,7 +1547,6 @@ for ss = 1:sylmax
             continue
         end
     end
-    
     
     % ============================ PLOT RAW DAT, AND SMOOTHED RUNNING
     tthis = cell2mat(DATBYREND.Time_dev(indsthis));

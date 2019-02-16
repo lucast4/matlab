@@ -1,13 +1,12 @@
 function lt_neural_POPLEARN_XCov_PlotAll(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
-    plotNotminShuff, onlygoodexpt)
+    plotNotminShuff, onlygoodexpt, clim)
 
-clim = [-0.1 0.1];
 %%
 if onlygoodexpt==1
     OUTSTRUCT_XCOV = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT_XCOV, ...
         SwitchStruct, 'xcov_spikes');
 end
-   
+
 
 %% 1/9/19 - lt plots each expt, targ, same, diff, xcov (minus shift predictor
 
@@ -40,11 +39,11 @@ for i=1:length(indsgrpUni)
     ptit = 'TARG';
     
     if plotNotminShuff==1
-    covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);        
+        covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);
     elseif plotNotminShuff==0
-    covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
+        covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
     end
     
     % 1) BASE AND WN SEPARATE
@@ -54,7 +53,7 @@ for i=1:length(indsgrpUni)
     ylabel('xcov (k=base; rd=WN)');
     plot(PARAMS.Xcov_ccLags, covbase', '-k');
     plot(PARAMS.Xcov_ccLags, covWN', '-r');
-
+    
     % 1) BASE AND WN SEPARATE [means]
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title([bname '-' ename '-sw' num2str(swnum)]);
@@ -63,10 +62,10 @@ for i=1:length(indsgrpUni)
     y = mean(covbase,1);
     ysem = lt_sem(covbase);
     if length(ysem)>1
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
-    y = mean(covWN,1);
-    ysem = lt_sem(covWN);
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
+        y = mean(covWN,1);
+        ysem = lt_sem(covWN);
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
     end
     lt_plot_zeroline;
     lt_plot_zeroline_vert
@@ -89,13 +88,66 @@ for i=1:length(indsgrpUni)
     % ################################ SAME
     indstmp = indsgrp==indsgrpUni(i) & OUTSTRUCT_XCOV.istarg==0 & OUTSTRUCT_XCOV.issame==1;
     ptit = 'SAME';
-    if any(indstmp)
     if plotNotminShuff==1
-    covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);        
+        covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);
     elseif plotNotminShuff==0
-    covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
+        covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
+    end
+    
+    % 1) BASE AND WN SEPARATE
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title([bname '-' ename '-sw' num2str(swnum)]);
+    hsplots = [hsplots hsplot];
+    ylabel('xcov (k=base; rd=WN)');
+    if any(indstmp)
+        plot(PARAMS.Xcov_ccLags, covbase', '-k');
+        plot(PARAMS.Xcov_ccLags, covWN', '-r');
+    end
+    % 1) BASE AND WN SEPARATE [means]
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title([bname '-' ename '-sw' num2str(swnum)]);
+    hsplots = [hsplots hsplot];
+    ylabel('xcov (k=base; rd=WN)');
+    y = mean(covbase,1);
+    ysem = lt_sem(covbase);
+    if length(ysem)>1
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
+        y = mean(covWN,1);
+        ysem = lt_sem(covWN);
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
+    end
+    lt_plot_zeroline;
+    lt_plot_zeroline_vert
+    
+    % 1) WN MINUS BASE
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots hsplot];
+    title(ptit);
+    ylabel('xcov (k=base; rd=WN)');
+    y = covWN-covbase;
+    ymean = mean(y,1);
+    ysem = lt_sem(y);
+    if any(indstmp)
+        plot(PARAMS.Xcov_ccLags, y', '-b');
+    end
+    if length(ysem)>1
+        shadedErrorBar(PARAMS.Xcov_ccLags, ymean, ysem, {'Color', 'k'}, 1);
+    end
+    lt_plot_zeroline;
+    
+    
+    % ################################ DIFF
+    indstmp = indsgrp==indsgrpUni(i) & OUTSTRUCT_XCOV.istarg==0 & OUTSTRUCT_XCOV.issame==0;
+    ptit = 'DIFF';
+    
+    if plotNotminShuff==1
+        covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);
+    elseif plotNotminShuff==0
+        covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
+        covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
     end
     
     % 1) BASE AND WN SEPARATE
@@ -114,63 +166,14 @@ for i=1:length(indsgrpUni)
     y = mean(covbase,1);
     ysem = lt_sem(covbase);
     if length(ysem)>1
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
-    y = mean(covWN,1);
-    ysem = lt_sem(covWN);
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
+        y = mean(covWN,1);
+        ysem = lt_sem(covWN);
+        shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
     end
     lt_plot_zeroline;
     lt_plot_zeroline_vert
-
-    % 1) WN MINUS BASE
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    hsplots = [hsplots hsplot];
-    title(ptit);
-    ylabel('xcov (k=base; rd=WN)');
-    y = covWN-covbase;
-    ymean = mean(y,1);
-    ysem = lt_sem(y);
-    plot(PARAMS.Xcov_ccLags, y', '-b');
-    if length(ysem)>1
-        shadedErrorBar(PARAMS.Xcov_ccLags, ymean, ysem, {'Color', 'k'}, 1);
-    end
-    lt_plot_zeroline;
-    end
     
-    % ################################ DIFF
-    indstmp = indsgrp==indsgrpUni(i) & OUTSTRUCT_XCOV.istarg==0 & OUTSTRUCT_XCOV.issame==0;
-    ptit = 'DIFF';
-    
-    if plotNotminShuff==1
-    covbase = OUTSTRUCT_XCOV.XcovBase_NoMinShuff(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN_NoMinShuff(indstmp,:);        
-    elseif plotNotminShuff==0
-    covbase = OUTSTRUCT_XCOV.XcovBase(indstmp,:);
-    covWN = OUTSTRUCT_XCOV.XcovWN(indstmp,:);
-    end
-    
-    % 1) BASE AND WN SEPARATE
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    title([bname '-' ename '-sw' num2str(swnum)]);
-    hsplots = [hsplots hsplot];
-    ylabel('xcov (k=base; rd=WN)');
-    plot(PARAMS.Xcov_ccLags, covbase', '-k');
-    plot(PARAMS.Xcov_ccLags, covWN', '-r');
-    
-        % 1) BASE AND WN SEPARATE [means]
-    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-    title([bname '-' ename '-sw' num2str(swnum)]);
-    hsplots = [hsplots hsplot];
-    ylabel('xcov (k=base; rd=WN)');
-    y = mean(covbase,1);
-    ysem = lt_sem(covbase);
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'k'}, 1);
-    y = mean(covWN,1);
-    ysem = lt_sem(covWN);
-    shadedErrorBar(PARAMS.Xcov_ccLags, y, ysem, {'Color', 'r'}, 1);
-    lt_plot_zeroline;
-    lt_plot_zeroline_vert
-
     
     % 1) WN MINUS BASE
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -187,8 +190,8 @@ for i=1:length(indsgrpUni)
     lt_plot_zeroline;
     
     linkaxes(hsplots);
-        axis tight;
-
+    axis tight;
+    
     
     %% =========== XGRAM PLOTS
     % ################################ TARGET
@@ -202,7 +205,7 @@ for i=1:length(indsgrpUni)
     lt_neural_Coher_Plot(xgram, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     axis tight;
     lt_plot_zeroline;
-
+    
     % -- WN
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title([ptit '[WN]'])
@@ -212,8 +215,8 @@ for i=1:length(indsgrpUni)
     lt_plot_zeroline;
     
     % -- WN minus Base
-     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-   title([ptit '[WN-base]'])
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title([ptit '[WN-base]'])
     xgram1 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramWN(indstmp));
     xgram2 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramBase(indstmp));
     xgram = xgram1-xgram2;
@@ -235,7 +238,7 @@ for i=1:length(indsgrpUni)
     lt_neural_Coher_Plot(xgram, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     axis tight;
     lt_plot_zeroline;
-
+    
     % -- WN
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title([ptit '[WN]'])
@@ -245,16 +248,16 @@ for i=1:length(indsgrpUni)
     lt_plot_zeroline;
     
     % -- WN minus Base
-     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-   title([ptit '[WN-base]'])
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title([ptit '[WN-base]'])
     xgram1 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramWN(indstmp));
     xgram2 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramBase(indstmp));
     xgram = xgram1-xgram2;
     lt_neural_Coher_Plot(xgram, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     axis tight;
     lt_plot_zeroline;
-
-        % ################################ DIFF
+    
+    % ################################ DIFF
     indstmp = indsgrp==indsgrpUni(i) & OUTSTRUCT_XCOV.istarg==0 & OUTSTRUCT_XCOV.issame==0;
     ptit = 'DIFF';
     
@@ -265,7 +268,7 @@ for i=1:length(indsgrpUni)
     lt_neural_Coher_Plot(xgram, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     axis tight;
     lt_plot_zeroline;
-
+    
     % -- WN
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title([ptit '[WN]'])
@@ -275,15 +278,15 @@ for i=1:length(indsgrpUni)
     lt_plot_zeroline;
     
     % -- WN minus Base
-     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-   title([ptit '[WN-base]'])
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title([ptit '[WN-base]'])
     xgram1 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramWN(indstmp));
     xgram2 = lt_neural_Coher_Cell2Mat(OUTSTRUCT_XCOV.XcovgramBase(indstmp));
     xgram = xgram1-xgram2;
     lt_neural_Coher_Plot(xgram, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, [], clim);
     axis tight;
     lt_plot_zeroline;
-
+    
 end
 
 

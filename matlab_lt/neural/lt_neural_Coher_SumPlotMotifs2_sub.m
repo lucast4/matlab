@@ -1,6 +1,7 @@
 pcols = lt_make_plot_colors(length(indsunique), 0, 0);
 
 ytmp = nan(length(indsunique), length(typetoget));
+
 for i=1:length(indsunique)
     indsthis = indsgrp==indsunique(i); % a unique motif.
     

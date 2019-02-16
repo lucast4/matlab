@@ -1,1 +1,6 @@
-function lt_neural_QUICK_SmoothFR
+function SegmentsExtract = lt_neural_QUICK_SmoothFR(SegmentsExtract, clustnum, ...
+    kernelSD, binsize_spks, extractSingleTrials, segextract_for_trialdur, addtotime)
+%% ==== this is just a shortcut to lt_neural_SmoothFR
+
+% SegmentsExtract = lt_neural_SmoothFR(SegmentsExtract, clustnum, ...
+%     kernelSD, binsize_spks, extractSingleTrials, segextract_for_trialdur, addtotime)

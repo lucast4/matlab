@@ -57,6 +57,6 @@ for i=1:length(SummaryStruct.birds)
     Allbird_Fnames = [Allbird_Fnames; FnamesUnique];
     Allbird_chanlist = [Allbird_chanlist; ChanlistAll];
     Allbird_birdnum = [Allbird_birdnum; ones(size(ChanlistAll))*i];
-
+    
 end
 

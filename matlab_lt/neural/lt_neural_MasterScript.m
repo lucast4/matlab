@@ -24,7 +24,7 @@ end
 
 %% ====== plot single file dat [align neural and song]
 close all;
-filename='wh44wh39_180219_175145.rhd';
+filename='wh72pk12_181219_223406.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
@@ -38,12 +38,12 @@ ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
 ChansToPlot.AmpChans_zero=0:15;
 % ChansToPlot.AmpChans_zero=[8 10 15];
 % ChansToPlot.AmpChans_zero=[16:31];
-ChansToPlot.AmpChans_zero=[15 18 8 20];
+ChansToPlot.AmpChans_zero=[8 14 15 20];
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
 
-PlotWhat.lfp = 0;
+PlotWhat.lfp = 1;
 PlotWhat.raw=0;
 PlotWhat.filt=1;
 PlotWhat.rect_sm=0;

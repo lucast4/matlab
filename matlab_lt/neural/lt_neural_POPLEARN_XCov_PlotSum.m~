@@ -596,22 +596,22 @@ hsplots = [hsplots hsplot];
 title('[WNtarg(r)-WNdiff(k)]');
 
 % --
-ymat = squeeze(XCovWNAll(:,1,:)) - squeeze(XCovWNAll(:,3,:));
+ymat1 = squeeze(XCovWNAll(:,1,:));
+ymat2 = squeeze(XCovWNAll(:,3,:));
 ymean = nanmean(ymat,2);
 ysem = lt_sem(ymat');
 if length(ysem)>1
-    shadedErrorBar(x, ymean, ysem, {'Color', 'b'}, 1);
+    shadedErrorBar(x, ymean, ysem, {'Color', 'r'}, 1);
 end
-for j=1:size(ymat, 1)
-    p = signrank(ymat(j,:));
-    if p<0.1
-        lt_plot_text(x(j), mean(ymat(j,:)), ['p=' num2str(p)], 'r');
-    end
+% -- WN
+ymat = squeeze(XCovWNAll(:,3,:));
+ymean = nanmean(ymat,2);
+ysem = lt_sem(ymat');
+if length(ysem)>1
+    shadedErrorBar(x, ymean, ysem, {'Color', 'k'}, 1);
 end
 % -- formating
 lt_plot_zeroline;
-% ---
-
 
 
 

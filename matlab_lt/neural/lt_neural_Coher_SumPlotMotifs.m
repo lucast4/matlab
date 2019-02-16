@@ -192,14 +192,21 @@ xthis = colsthis(1):colsthis(end);
 plot(xthis, ythis', 'o-k');
 xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
-if length(colsthis)==2
     [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank', 1);
-end
+    lt_plot_pvalue(p, 'srank(1vs2)', 1);
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
    plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)}); 
 end
+% -- plot each bird
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
+for i=1:size(ymean,1)
+    lt_plot(xthis+0.6*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i))]);
+end
+xlim([0 5]);
+
 
 % ===== only those with 2 (targ diff)
 lt_subplot(3,2,2); hold on;
@@ -305,10 +312,10 @@ end
 % ======== EACH BIRD ONE DOT
 lt_subplot(3,2,5); hold on;
 title('dat = bird');
-xlabel('TARG - NONTARG');
+xlabel('TARG - DIFF');
 ylabel('coh (WN - base)');
 
-colsthis = [1 4];
+colsthis = [1 3];
 
 indsthis = all(~isnan(Yall(:,colsthis))');
 ythis = Yall(indsthis,colsthis);
@@ -322,6 +329,7 @@ for i=1:size(ymean,1)
     lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(i)]);
 end
 xlim([0 5]);
+
 
 
 %% ========= OUTPUT, FORMATED FOR SAVING

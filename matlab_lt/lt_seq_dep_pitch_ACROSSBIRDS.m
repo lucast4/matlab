@@ -798,14 +798,14 @@ lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
 % ============ [ANALYSIS PLOT] average 
 close all;
 ignoreLMANexpt=1; % usually 1, since they lack full day label
-scalemethod = '';
+scalemethod = ''; % empty for no scaling
 % lastdaymean: mean of last day becomes 1
-combineSylsInExpt=0; % if 0, datapt is syls, if 1, datapt is experiments
+combineSylsInExpt=1; % if 0, datapt is syls, if 1, datapt is experiments
 threshOnSametype = 0; % threshold is 0 for mean of mrinig and night of last day.
 onlyifhaveAllSylTypes = 1; % 1 then needs targ, same, diff...
 % onlyifhaveDataAllDays = 1;
 throwoutnan=1; % then any syl must have dat across all days...
-plotEachExptRaw=1; % then all syls, overlay ff and extracted edges.
+plotEachExptRaw=0; % then all syls, overlay ff and extracted edges.
 [BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
     onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw);

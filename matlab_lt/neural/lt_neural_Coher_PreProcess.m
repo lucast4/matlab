@@ -35,8 +35,9 @@ baseuseallinds =0 ;
 pairtoget = 'LMAN-RA';
 % pairtoget = 'LMANoutside-RA';
 % pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
+removeBadTrials = 0; % will only affect epoch inds.
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
-    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds);
+    SwitchStruct, pairtoget, LFPSTRUCT, PARAMS, baseuseallinds, removeBadTrials);
 
 
 %% ======== EXTRACT SCALARS
@@ -66,7 +67,6 @@ collectAllProcess =1; % then colelcts not just Cohmat, but all phi and spectra.
 plotON = 0;
 averagechanpairs= 0; % for each motif, average over all chan pairs [NOTE: this is not up to date]
 onlyfirstswitch = 0;
-removeBadSyls = 1; % LEAVE AT 1.
 zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 2, then doesn't zscore, instead normalizes as power proprotion
 % (separately for each time slice and trial).
@@ -74,15 +74,19 @@ zscoreLFP = 3; % default 1, z-scores each t,ff bin separately.
 % if 4, then first 1) zscores within f, and 2) normalizes to all f (i.e.
 % proportion
 collectDiffMats = 0; % if 1, then collects differences (WN minus base). redundant, so leave at 0.
+removeBadChans = 0; % default: 1
+removeBadSyls = 1; % LEAVE AT 1.
+typesToRemove = {'wn'}; % only remove syls that are bad becuase preceded by WN
+% typesToRemove = {'wn', 'noise'};
 
 if (0)
-    [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
-        plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-        collectAllProcess, zscoreLFP, collectDiffMats);
+[OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
+    plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove);
 end
 
 
 [OUTSTRUCT] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats);
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove);
 

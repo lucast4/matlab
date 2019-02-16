@@ -44,7 +44,7 @@ end
 % uses kde, gaussian.
 
 if ~exist('kernelSD', 'var')
-    kernelSD = 0.005; % ms gaussian
+    kernelSD = 0.005; % ms gaussian, as in Mehaffey LMAN stuff
 elseif isempty(kernelSD)
     kernelSD = 0.005; % ms gaussian
 end
@@ -126,8 +126,10 @@ if isfield(SegmentsExtract, 'spk_Times') % only try to smooth if there is any da
                 bincounts = zeros(size(binedges));
             end
             
-            x = -3*kernelSD:binsize_spks:3*kernelSD;
+%             x = -3*kernelSD:binsize_spks:3*kernelSD;
+            x = -2*kernelSD:binsize_spks:2*kernelSD;
             kern = (1/(sqrt(2*pi)*kernelSD)) * exp(-x.^2/(2*kernelSD^2)); % kernel
+            kern = (1/binsize_spks)*kern./(sum(kern)); % normalize kernel so ouyput is Hz.
             
             smoothFR = conv(bincounts(1:end-1), kern, 'same'); % output
             

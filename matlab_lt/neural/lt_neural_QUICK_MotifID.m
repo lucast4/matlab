@@ -46,14 +46,13 @@ if (0)
             
             motiflist = [MOTIFSTATS_Compiled.birds(i).MOTIFSTATS.neurons(ii).motif_regexpr_str];
             MotiflistAll = [MotiflistAll motiflist];
-            
         end
         MotiflistAll = unique(MotiflistAll);
         disp(['BIRD: ' bname]);
         disp(MotiflistAll);
     end
-    
 end
+
 
 %% ========================= PARAMS, hand enter these. they are in order of singing.
 MotifDatabase = struct;
