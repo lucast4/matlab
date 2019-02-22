@@ -64,18 +64,22 @@ for i=1:length(indsgrp_unique)
         else
             datthis= nanmean(OUTSTRUCT.(fieldtoget)(indsthis,:),1);
         end
-        allDat(:,:,3,i) = datthis;
-        allNmotifs(1,3,i) = sum(indsthis);
+        if ~isempty(datthis)
+            allDat(:,:,3,i) = datthis;
+            allNmotifs(1,3,i) = sum(indsthis);
+        else
+            allNmotifs(1,3,i) = 0;
+        end
     else
         allNmotifs(1,3,i) = 0;
     end
     
 end
-
-if nanmean(allDat(:))>1
-    keyboard
-end
-
+% 
+% if nanmean(allDat(:))>1
+%     keyboard
+% end
+% 
 %% ============ further group by switch? (i.e. average over all chanel pairs)
 % ==================== PLOT, ONE FOR EACH BIRD (overlay all switches)0
 indsgrp_switch = lt_tools_grp2idx({allbnum, allenum, allswnum});
@@ -116,7 +120,7 @@ for i=1:length(indsgrp_switch_unique)
         assert(length(unique(squeeze(allNmotifs(1,sylind,indsthis))))==1);
     end
     
-    % ================= target
+    % ================= diff
     sylind = 3;
     %     cohmat = nanmean(squeeze(allDat(:,:,sylind,indsthis)), 3);
     cohmat = squeeze(nanmean(allDat(:,:,sylind,indsthis), 4));

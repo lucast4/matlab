@@ -33,7 +33,7 @@ SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
 % --- doesn't extract cohmat, just saves path to cohmat.
 baseuseallinds =0 ;
 pairtoget = 'LMAN-RA';
-% pairtoget = 'LMANoutside-RA';
+% pairtoget = 'LMANoutside-RAoutside';
 % pairtoget = {'LMANoutside-RA', 'LMAN-RAoutside', 'LMANoutside-RAoutside'};
 removeBadTrials = 0; % will only affect epoch inds.
 SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, ...
@@ -47,7 +47,7 @@ twind = [-0.07 -0.03]; % all combined
 fwind = [22 32];
 
 % ============= EXTRACT RELATIVE TO WN ONSET?
-useWNtiming=1;
+useWNtiming=0;
 WNprctile = 2.5;
 prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
 

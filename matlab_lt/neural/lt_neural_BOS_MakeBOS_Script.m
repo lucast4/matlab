@@ -112,6 +112,15 @@ songfname = '/bluejay0/bluejay2/lucas/birds/wh72pk12/112518_TetheredCMOS/wh72pk1
 % songfname = '/bluejay0/bluejay2/lucas/birds/wh72pk12/112818_RALMANLearn2/wh72pk12_281118_132419.445.cbin'; % this is longer though./..
 OutDir = '/bluejay5/lucas/analyses/BOS/Songs/BOS/wh72pk12';
 
+% ================= gr48
+songfname = '/bluejay0/bluejay2/lucas/birds/gr48bu5/021019_RALMANLearn7/gr48bu5_100219_110611.165.cbin'; % use this as is better quality (louder)
+OutDir = '/bluejay5/lucas/analyses/BOS/Songs/BOS/gr48bu5';
+
+
+% ##################
+if ~exist(OutDir, 'dir')
+    mkdir(OutDir);
+end
 
 % ######################## convert to wavfile
 % -- chan 1 (song)

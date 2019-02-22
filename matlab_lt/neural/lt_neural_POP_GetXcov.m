@@ -75,12 +75,12 @@ for t = 1:ntrials
     % ------------------- calculate
     %                                 [cc, lags] = xcov(fr1_short, fr2_short, xcovwindmax/0.001, 'coeff');
     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, normmethod);
-%     if all(spkbin1==0) | all(spkbin2==0)
-%         cc = zeros(size(cc)); % i.e. will give nans is using coeff.
-%     end
-%     %     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, ');
-%     %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
-%     assert(~any(isnan(cc)))
+    %     if all(spkbin1==0) | all(spkbin2==0)
+    %         cc = zeros(size(cc)); % i.e. will give nans is using coeff.
+    %     end
+    %     %     [cc, lags] = xcorr(spkbin1, spkbin2, xcovwindmax/binsize_spk, ');
+    %     %                                 [cc, lags] = xcov(spkbin1, spkbin2, xcovwindmax/binsize_spk);
+    %     assert(~any(isnan(cc)))
     
     ccRealAll = [ccRealAll; cc'];
     
@@ -116,13 +116,14 @@ for t = 1:ntrials
         
         % ------------------------------ calculate
         [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-%         if all(spkbin1==0) | all(spkbin2shift==0)
-%             cc = zeros(size(cc));
-%         end
-%         %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-%         assert(~any(isnan(cc)))
+        %         if all(spkbin1==0) | all(spkbin2shift==0)
+        %             cc = zeros(size(cc));
+        %         end
+        %         %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+        %         assert(~any(isnan(cc)))
         
-        % ==================== OUTPUT
+        
+        %%  ==================== OUTPUT
         ccShiftAll = [ccShiftAll; cc'];
         
     else % ========== NEW METHOD, DO BOTH DIRECTIONS AND COMBINE (SO OUTPUT SAMPLE SIZE OF SHUFFLE TRIALS WILL BE (N-1)*2)
@@ -144,11 +145,11 @@ for t = 1:ntrials
             
             % ------------------------------ calculate
             [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-%             if all(spkbin1==0) | all(spkbin2shift==0)
-%                 cc = zeros(size(cc));
-%             end
-%             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-%             assert(~any(isnan(cc)))
+            %             if all(spkbin1==0) | all(spkbin2shift==0)
+            %                 cc = zeros(size(cc));
+            %             end
+            %             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+            %             assert(~any(isnan(cc)))
             
             % ==================== OUTPUT
             ccShiftAll = [ccShiftAll; cc'];
@@ -173,11 +174,11 @@ for t = 1:ntrials
             
             % ------------------------------ calculate
             [cc, ~] = xcorr(spkbin1, spkbin2shift, xcovwindmax/binsize_spk, normmethod);
-%             if all(spkbin1==0) | all(spkbin2shift==0)
-%                 cc = zeros(size(cc));
-%             end
-%             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
-%             assert(~any(isnan(cc)))
+            %             if all(spkbin1==0) | all(spkbin2shift==0)
+            %                 cc = zeros(size(cc));
+            %             end
+            %             %                                 [cc, lags] = xcov(spkbin1, spkbin2shift, xcovwindmax/binsize_spk);
+            %             assert(~any(isnan(cc)))
             
             % ==================== OUTPUT
             ccShiftAll = [ccShiftAll; cc'];

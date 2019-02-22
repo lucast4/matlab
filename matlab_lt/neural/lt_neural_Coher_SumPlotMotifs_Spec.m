@@ -1,4 +1,7 @@
-function lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct,MOTIFSTATS_Compiled,PARAMS, indtoget_b_e_s)
+function lt_neural_Coher_SumPlotMotifs_Spec(OUTSTRUCT, SwitchStruct,MOTIFSTATS_Compiled,PARAMS, ...
+    indtoget_b_e_s, fieldtoplot)
+%%  lt 2/21/19 - scalar plots for spectral power. Need to first extract using lt_neural_Coher_RecalcMat
+
 
 %% lt 12/17/18 - plots cioherence scalar change during laerning, relative to posotion of motif
 % i.e. for all motifs plot change in coh scalar.
@@ -64,7 +67,7 @@ for i=1:length(indsgrp_switch_unique)
         motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
         chnums = OUTSTRUCT.chanpair(indsthis,:);
         chnums = unique(chnums)'; assert(length(chnums)==2);
-        cohscal = OUTSTRUCT.cohscal_diff(indsthis);
+        cohscal = OUTSTRUCT.(fieldtoplot)(indsthis);
         %         cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
         
         assert(length(unique(motifID)) == length(motifID), 'each motif shoudl have at most 1 datapoint');
@@ -85,7 +88,7 @@ for i=1:length(indsgrp_switch_unique)
     motifs = OUTSTRUCT.motifname(indsthis);
     motifID = lt_neural_QUICK_MotifID(bname, motifs); % ---- get positions within global motif
     %     cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
-    cohscal = OUTSTRUCT.cohscal_diff(indsthis);
+    cohscal = OUTSTRUCT.(fieldtoplot)(indsthis);
     learndir = unique(OUTSTRUCT.learndirTarg(indsthis));
     assert(length(learndir)==1);
     
@@ -97,6 +100,7 @@ for i=1:length(indsgrp_switch_unique)
     x = unique(motifID);
     lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
     
+    clim = [min(cohscal) max(cohscal)];
     % -------- NOTE DOWN POSITION OF TARGET SYSL
     indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==1;
     xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
@@ -110,13 +114,18 @@ for i=1:length(indsgrp_switch_unique)
     end
     
     
+    % --- line for mean of diff types
+    ydiff = mean(ymean(istarg==0 & issame==0));
+    line(xlim, [ydiff ydiff], 'Color', 'r');
     
     % ----- labels
     [~, motiflabels] = lt_neural_QUICK_MotifID(bname);
     set(gca, 'XTick', 1:length(motiflabels));
     set(gca, 'XTickLabel', motiflabels);
     rotateXLabels(gca, 90);
+    if ~any(isnan(clim))
     ylim(clim);
+    end
     
     
     % ========= NOTE DOWN IF THIS IS AN EXPERIMENT TO GET
@@ -192,8 +201,8 @@ xthis = colsthis(1):colsthis(end);
 plot(xthis, ythis', 'o-k');
 xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank(1vs2)', 1);
+    [~, p] = ttest(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 't(1vs2)', 1);
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
    plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)}); 
@@ -207,6 +216,14 @@ for i=1:size(ymean,1)
 end
 xlim([0 5]);
 
+
+% ==== LME MODEL
+bnumthis = categorical(bnumthis);
+dattbl = table(ythis(:,1)-ythis(:,2), ythis(:,1), ythis(:,2), bnumthis, 'Variable', {'targMinSame', 'targ', 'same', 'bird'});
+mdl = 'targMinSame ~ 1 + (1|bird)';
+lme = fitlme(dattbl, mdl)
+
+%%
 
 % ===== only those with 2 (targ diff)
 lt_subplot(3,2,2); hold on;
@@ -222,15 +239,23 @@ plot(xthis, ythis', 'o-k');
 xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
 if length(colsthis)==2
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank', 1);
+    [~, p] = ttest(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 't', 1);
 end
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
    plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)}); 
 end
 
+% ==== LME MODEL
+bnumthis = categorical(bnumthis);
+dattbl = table(ythis(:,1)-ythis(:,2), ythis(:,1), ythis(:,2), bnumthis, ...
+    'Variable', {'targMinDiff', 'targ', 'diff', 'bird'});
+mdl = 'targMinDiff ~ 1 + (1|bird)';
+% mdl = 'targMinDiff ~ 1';
+lme = fitlme(dattbl, mdl)
 
+%%
 % ===== 
 lt_subplot(3,2,3); hold on;
 xlabel('TARG - NONTARG');
@@ -246,8 +271,8 @@ xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
 if length(colsthis)==2
 %     [~, p] = ttest(ythis(:,1), ythis(:,2));
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank', 1);
+    [~, p] = ttest(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 't', 1);
 end
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
@@ -276,8 +301,8 @@ lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
 end
 if length(colsthis)==2
 %     [~, p] = ttest(ythis(:,1), ythis(:,2));
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank', 1);
+    [~, p] = ttest(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 't', 1);
 end
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)
@@ -300,8 +325,8 @@ lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
 end
 if length(colsthis)==2
 %     [~, p] = ttest(ythis(:,1), ythis(:,2));
-    [p] = signrank(ythis(:,1), ythis(:,2));
-    lt_plot_pvalue(p, 'srank', 1);
+    [~, p] = ttest(ythis(:,1), ythis(:,2));
+    lt_plot_pvalue(p, 't', 1);
 end
 bnumthis = All_bnum(indsthis);
 for i=1:size(ythis,1)

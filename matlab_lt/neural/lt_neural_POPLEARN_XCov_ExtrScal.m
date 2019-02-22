@@ -3,6 +3,8 @@ function [OUTSTRUCT_XCOV, PARAMS] = lt_neural_POPLEARN_XCov_ExtrScal(OUTSTRUCT_X
 %% lt 2/1/19 - extracts scalars from desired t/f window
 % CAN choose to be window relative to WN onset or to syl onset.
 
+assert(length(PARAMS.xcenters_gram) == size(OUTSTRUCT_XCOV.XcovgramBase{1},1));
+assert(length(PARAMS.Xcov_ccLags) == size(OUTSTRUCT_XCOV.XcovgramBase{1},2));
 
 %% Go thru each case, and extract
 tmp = cell(length(OUTSTRUCT_XCOV.bnum),1);

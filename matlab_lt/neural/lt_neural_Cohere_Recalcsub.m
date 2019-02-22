@@ -1,5 +1,5 @@
-function [C, t, f] = lt_neural_Cohere_Recalcsub(thingstodo, lfp1_tmp, ...
-    lfp2_tmp, cohversion, ntapers, movingwin, tw, t_LFP)
+function [C, t, f, Ctrials, Cshuff] = lt_neural_Cohere_Recalcsub(thingstodo, lfp1_tmp, ...
+    lfp2_tmp, cohversion, ntapers, movingwin, tw, t_LFP, normtype)
 %% gets one mean for coh across trials
 C = [];
 t = [];
@@ -7,8 +7,8 @@ f = [];
 
 % ====== COHERENCE
 if any(strcmp(thingstodo, 'cohere'))
-    [C, t, f, phi,S12,S1,S2] = lt_neural_Coher_BatchCoher(lfp1_tmp, lfp2_tmp, cohversion, ...
-        t_LFP, ntapers, movingwin, tw);    
+    [C, t, f, phi,S12,S1,S2, Ctrials, Cshuff] = lt_neural_Coher_BatchCoher(lfp1_tmp, lfp2_tmp, cohversion, ...
+        t_LFP, ntapers, movingwin, tw, [], normtype);    
 end
 
 % ===== LFP XCORR

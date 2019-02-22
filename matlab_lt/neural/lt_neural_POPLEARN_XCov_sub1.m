@@ -1,6 +1,8 @@
 function [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount] = ...
     lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
-    dosmooth_sigma, inds_base, inds_WN, xbins, plotraw, xcovver)
+    dosmooth_sigma, inds_base, inds_WN, xbins, plotraw, xcovver, datcell_auto_real,...
+    datcell_auto_shift)
+
 if ~exist('plotraw', 'var')
     plotraw = 0;
 end
@@ -33,6 +35,8 @@ if dosmooth==1
     for kkk=1:size(datmat_shuff,1)
         datmat_shuff(kkk,:) = conv(datmat_shuff(kkk, :), win, 'same');
     end
+    
+    
 else
     Xq = [];
 end
@@ -92,7 +96,98 @@ datWN_notminshuff = nanmean(datmat_real(inds_WN,:));
 datbase_notminshuff = nanmean(datmat_real(inds_base,:));
 
 
-% ################## OTHER VERSIONS
+%% ################ coherency, using fourier transform
+if strcmp(xcovver, 'coherency')
+    % ==== BASELINE
+    indsthis_dat = inds_base;
+    indsthis_shuff = inds_base_shuff;
+    
+    datauto_real = cellfun(@(x)mean(x(indsthis_dat, :),1), datcell_auto_real, 'UniformOutput', 0);
+    datauto_shift = cellfun(@(x)mean(x(indsthis_shuff, :),1), datcell_auto_shift, 'UniformOutput', 0);
+    datauto_real = squeeze(lt_neural_Coher_Cell2Mat(datauto_real));
+    datauto_shift = squeeze(lt_neural_Coher_Cell2Mat(datauto_shift));
+    % -- subtract shift predictor
+    datbase_auto = datauto_real - datauto_shift;
+    
+    
+    % ==== WN
+    indsthis_dat = inds_WN;
+    indsthis_shuff = inds_WN_shuff;
+    
+    datauto_real = cellfun(@(x)mean(x(indsthis_dat, :),1), datcell_auto_real, 'UniformOutput', 0);
+    datauto_shift = cellfun(@(x)mean(x(indsthis_shuff, :),1), datcell_auto_shift, 'UniformOutput', 0);
+    datauto_real = squeeze(lt_neural_Coher_Cell2Mat(datauto_real));
+    datauto_shift = squeeze(lt_neural_Coher_Cell2Mat(datauto_shift));
+    % -- subtract shift predictor
+    datWN_auto = datauto_real - datauto_shift;
+    
+    
+    
+    % ################################# GET FFT
+    % ================== BASELINE
+    indsthis_dat = inds_base;
+    indsthis_shuff = inds_base_shuff;
+    
+    % - 1) CROSS COVARIANCE
+    dat_cross = nanmean(datmat_real(indsthis_dat,:)) ...
+        - nanmean(datmat_shuff(indsthis_shuff,:));
+    
+    % - 2) AUTOCOVARIANCE
+    datauto_real = cellfun(@(x)mean(x(indsthis_dat, :),1), datcell_auto_real, 'UniformOutput', 0);
+    datauto_shift = cellfun(@(x)mean(x(indsthis_shuff, :),1), datcell_auto_shift, 'UniformOutput', 0);
+    datauto_real = squeeze(lt_neural_Coher_Cell2Mat(datauto_real));
+    datauto_shift = squeeze(lt_neural_Coher_Cell2Mat(datauto_shift));
+    % -- subtract shift predictor
+    dat_auto = datauto_real - datauto_shift;
+    
+    % ----- FFT
+    % N = 2^(nextpow2(size(dat_cross,2)));
+    % dat_fft = fft([dat_cross' dat_auto], N);
+    dat_fft = fft([dat_cross' dat_auto]);
+    
+    coh = dat_fft(:,1)./sqrt((dat_fft(:,2).*dat_fft(:,3)));
+    coh = ifft(coh, 'symmetric');
+    
+    datbase = coh';
+    
+    % ================== BASELINE
+    indsthis_dat = inds_WN;
+    indsthis_shuff = inds_WN_shuff;
+    
+    % - 1) CROSS COVARIANCE
+    dat_cross = nanmean(datmat_real(indsthis_dat,:)) ...
+        - nanmean(datmat_shuff(indsthis_shuff,:));
+    
+    % - 2) AUTOCOVARIANCE
+    datauto_real = cellfun(@(x)mean(x(indsthis_dat, :),1), datcell_auto_real, 'UniformOutput', 0);
+    datauto_shift = cellfun(@(x)mean(x(indsthis_shuff, :),1), datcell_auto_shift, 'UniformOutput', 0);
+    datauto_real = squeeze(lt_neural_Coher_Cell2Mat(datauto_real));
+    datauto_shift = squeeze(lt_neural_Coher_Cell2Mat(datauto_shift));
+    % -- subtract shift predictor
+    dat_auto = datauto_real - datauto_shift;
+    
+    % ----- FFT
+    % N = 2^(nextpow2(size(dat_cross,2)));
+    % dat_fft = fft([dat_cross' dat_auto], N);
+    dat_fft = fft([dat_cross' dat_auto]);
+    
+    coh = dat_fft(:,1)./sqrt((dat_fft(:,2).*dat_fft(:,3)));
+    coh = ifft(coh, 'symmetric');
+    
+    datWN = coh';
+    
+    
+    % ================
+    if (0)
+        lt_figure; hold on;
+        plot(dat_cross, '-k');
+        plot(dat_auto(:,1), 'b');
+        plot(dat_auto(:,2), 'm');
+        plot(coh, '--r');
+    end
+end
+
+%% ################## OTHER VERSIONS
 % ====== 1) Z-SCORE
 % for each lag, get distribution of values over trials. use that to
 % z-transform actual data
@@ -115,11 +210,17 @@ if strcmp(xcovver, 'zscore')
     datWN = nanmean(yz_WN);
 elseif strcmp(xcovver, 'scale')
     % ======== 2) MATCH THE MAGNITUDE OF SHUFFLES DURING WN VS. BASELINE
-%     multfact = nanmean(nanmean(datmat_shuff(inds_base_shuff,:)))/nanmean(nanmean(datmat_shuff(inds_WN_shuff,:))); % one mult for all lags
+    %     multfact = nanmean(nanmean(datmat_shuff(inds_base_shuff,:)))/nanmean(nanmean(datmat_shuff(inds_WN_shuff,:))); % one mult for all lags
     multfact = nanmean(datmat_shuff(inds_base_shuff,:))./nanmean(datmat_shuff(inds_WN_shuff,:)); % one for each lag
     datWN_scaled = multfact.*datWN;
 end
 
+
+
+
+
+
+%%
 if plotraw==1
     %% =========== sanity check, plotting raw xcov.
     

@@ -2,26 +2,33 @@
 
 %% ------------- spectrograms
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat1_base,3)', clim);
+lt_neural_Coher_Plot(dat1_base, tbins, ffbins, 1, '', clim);
 title('chan1, base');
 ylabel(ylabthis);
 axis tight;
+xlim(XLIM);
+ylim(YLIM);
 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat1_wn,3)', clim);
+lt_neural_Coher_Plot(dat1_wn, tbins, ffbins, 1, '', clim);
 title('chan1, WN');
 axis tight;
+xlim(XLIM);
+ylim(YLIM);
 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat2_base,3)', clim);
+lt_neural_Coher_Plot(dat2_base, tbins, ffbins, 1, '', clim);
 title('chan2, base');
 axis tight;
+xlim(XLIM);
+ylim(YLIM);
 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat2_wn,3)', clim);
+lt_neural_Coher_Plot(dat2_wn, tbins, ffbins, 1, '', clim);
 title('chan2, WN');
 axis tight;
-colorbar('East')
+xlim(XLIM);
+ylim(YLIM);
 
 
 %% ==================== WN MINUS BASE
@@ -30,16 +37,36 @@ dat1_wnminusbase = dat1_wn-dat1_base;
 dat2_wnminusbase = dat2_wn-dat2_base;
 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat1_wnminusbase,3)', clim);
+lt_neural_Coher_Plot(dat1_wnminusbase, tbins, ffbins, 1, '', clim);
 title('chan1, WN-base');
 ylabel(ylabthis);
 axis tight;
+xlim(XLIM);
+ylim(YLIM);
 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-imagesc(tbins, ffbins, nanmean(dat2_wnminusbase,3)', clim);
-title('chan2, WN-base');
+lt_neural_Coher_Plot(dat1_wnminusbase, tbins, ffbins, 3, '', clim);
+title('chan1, WN-base');
 ylabel(ylabthis);
 axis tight;
+colorbar('EastOutside')
+xlim(XLIM);
+ylim(YLIM);
+
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+lt_neural_Coher_Plot(dat2_wnminusbase, tbins, ffbins, 1, '', clim);
+title('chan2, WN-base');
+ylabel(ylabthis);
+xlim(XLIM);
+ylim(YLIM);
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+lt_neural_Coher_Plot(dat2_wnminusbase, tbins, ffbins, 3, '', clim);
+title('chan2, WN-base');
+ylabel(ylabthis);
+xlim(XLIM);
+ylim(YLIM);
+
 
 %% ------------ PLOT SPECTRA (PICK A TIMEPOINT FOR TBIN)
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);

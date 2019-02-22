@@ -6,10 +6,11 @@ function [OUTSTRUCT_XCOV, PARAMS] = lt_neural_POPLEARN_XCov_ExtrSlice(OUTSTRUCT_
 % ===== inds for time
 t = PARAMS.xcenters_gram;
 indst = t>=twindow(1) & t<=twindow(2);
+assert(length(t)==size(OUTSTRUCT_XCOV.XcovgramBase{1},1), 'times are not matched to the data...');
 
 %% Go thru each case, and extract
-tmpBase = nan(size(OUTSTRUCT_XCOV.XcovBase));
-tmpWn = nan(size(OUTSTRUCT_XCOV.XcovBase));
+tmpBase = nan(size(OUTSTRUCT_XCOV.XcovgramBase{1}));
+tmpWn = nan(size(OUTSTRUCT_XCOV.XcovgramBase{1}));
 for i=1:length(OUTSTRUCT_XCOV.bnum)
     
     covgram_base = OUTSTRUCT_XCOV.XcovgramBase{i};
@@ -28,8 +29,9 @@ for i=1:length(OUTSTRUCT_XCOV.bnum)
         
         twindtmp = twindow+wntime;
         indst = t>=twindtmp(1) & t<=twindtmp(2);
-    else
-        sadfasdf;
+        assert(min(t)<=twindtmp(1) & max(t)>=twindtmp(2), 'not enough data to do this...');
+    elseif strcmp(alignto, 'sylonset')
+        % doi nothing, is default
     end
     
     % === collect slice

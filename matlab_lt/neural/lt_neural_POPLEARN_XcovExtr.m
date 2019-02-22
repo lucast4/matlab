@@ -160,7 +160,7 @@ for i=1:length(SwitchXCovStruct.bird)
                     datmat_real = datthis.ccRealAllPair{np};
                     datmat_shuff = datthis.ccShiftAllPair{np};
                     neurpair = datthis.neurPair(np, :);
-                    
+                                        
                     if removebadchans==1
                         chanbad = lt_neural_QUICK_RemoveBadChans(bname, ename, iii, datthis.chanPair(np,:));
                         if chanbad==1
@@ -177,12 +177,16 @@ for i=1:length(SwitchXCovStruct.bird)
                         plotraw=0;
                     end
                     
+                    % ===== get autocovariance too
+                    datcell_auto_real = datthis.ccRealAuto(np,:);
+                    datcell_auto_shift = datthis.ccShiftAuto(np,:);
+                    
                     % ==== process (e.g. smooth) and get xcov output
                     [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount] = ...
                         lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
                         dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags, plotraw, ...
-                        xcovver);
-                    
+                        xcovver, datcell_auto_real, datcell_auto_shift);
+
                     % ===== get xcov-gram...
                     nwinds = size(datthis.ccRealAllPair_allwind,2);
                     xcovgram_base = nan(nwinds, length(datbase)); % win x lags
@@ -194,20 +198,34 @@ for i=1:length(SwitchXCovStruct.bird)
                             datmat_real = datthis.ccRealAllPair_allwind{np, ww};
                             datmat_shuff = datthis.ccShiftAllPair_allwind{np, ww};
                             
+                            % ---- autocovariance
+                            datmat_auto1 = datthis.ccRealAllPair_Auto1_allwind{np, ww};
+                            datmat_auto2 = datthis.ccRealAllPair_Auto2_allwind{np, ww};
+                            datcell_auto_real = {datmat_auto1, datmat_auto2};
+                            
+                            % --- autocovariance (SHIFTED)
+                            datmat_auto1 = datthis.ccShiftAllPair_Auto1_allwind{np, ww};
+                            datmat_auto2 = datthis.ccShiftAllPair_Auto2_allwind{np, ww};
+                            datcell_auto_shift = {datmat_auto1, datmat_auto2};
+                            
                             [db, dw] = ...
                                 lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
                                 dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags, 0, ...
-                                xcovver);
+                                xcovver, datcell_auto_real, datcell_auto_shift);
                             
                             xcovgram_base(ww, :) = db;
                             xcovgram_wn(ww, :) = dw;
+                            
+                            if any(imag(db)~=0)
+                                keyboard
+                            end
                         end
                     end
                     % ============= COUNT How many trials had nan - i
                     NanCountAll = [NanCountAll; NanCount];
                     
                     %%
-                    
+                                        
                     OUTSTRUCT_XCOV.XcovgramBase = [OUTSTRUCT_XCOV.XcovgramBase; xcovgram_base];
                     OUTSTRUCT_XCOV.XcovgramWN = [OUTSTRUCT_XCOV.XcovgramWN; xcovgram_wn];
                     

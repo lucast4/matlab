@@ -31,4 +31,5 @@ OUTSTRUCT.(fieldtoget) = ytmp;
 
 PARAMS.tbins_BeforeAlignWN = PARAMS.tbins;
 PARAMS.tbins = xtmp;
+assert(all(diff(xtmp)<0.015), 'make sure no error due to code above [assertion assumes that binsize <0.015]');
 PARAMS.didRealignToWN=1;

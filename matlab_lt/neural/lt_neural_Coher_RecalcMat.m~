@@ -1,13 +1,9 @@
 function [OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(SwitchStruct, OUTSTRUCT, OUTSTRUCT_CohMatOnly, ...
     SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
-    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials,extractLFP, lfpUseMedian, cohUseMedian, ...
-    removebadsyl, normtoshuff, normtype, OUTSTRUCT_CohMatOnly_shift)
+    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials,extractLFP,  removebadsyl, normtoshuff, ...
+    normtype, OUTSTRUCT_CohMatOnly_shift)
 %% lt 2/21/19 - also extract mean LFP power...
 disp('NOTE: normalization doesnt apply for LFP (i.e. normn to shuffle.)');
-
-
-% disp('NOTE: !!! check line 319 - using median');
-% pause;
 
 %% lt 2/15/19 - uses new set of inds to recalcalate coherence matrices
 % NOTE: saves old version as backup
@@ -22,18 +18,18 @@ onlyusegoodtargsyls = 1; % default = 1, i.e. gets timing only from that that wil
 
 %% === if extract LFP, have to first load lfp data
 if extractLFP==1
-    disp('LOADING LFP DATA');
-    sdir = ['/bluejay0/bluejay2/lucas/analyses/neural/COHERENCE/Learn_Extr/' PARAMS.savemarker];
-    load([sdir '/OUTSTRUCT_S1MatOnly.mat']);
-    load([sdir '/OUTSTRUCT_S2MatOnly.mat']);
-    
-    assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S1MatOnly,1));
-    assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S2MatOnly,1));
-    
-    assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
-    assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
-    assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
-    assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
+   disp('LOADING LFP DATA');
+      sdir = ['/bluejay0/bluejay2/lucas/analyses/neural/COHERENCE/Learn_Extr/' PARAMS.savemarker];
+      load([sdir '/OUTSTRUCT_S1MatOnly.mat']);
+      load([sdir '/OUTSTRUCT_S2MatOnly.mat']);
+
+assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S1MatOnly,1));
+assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S2MatOnly,1));
+
+assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
+assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
+assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
+assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
 end
 
 
@@ -116,10 +112,10 @@ for i=1:length(OUTSTRUCT.bnum)
             Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
             cohscal_all = [cohscal_all; nan(1,ntrial)];
             cohscal_diff_all = [cohscal_diff_all; nan];
-            specscal_chan1_all = [specscal_chan1_all; nan];
-            specdiff_chan1_all = [specdiff_chan1_all; nan];
-            specscal_chan2_all = [specscal_chan2_all; nan];
-            specdiff_chan2_all = [specdiff_chan2_all; nan];
+specscal_chan1_all = specscal_chan1_all;
+specscal_chan2_all = specscal_chan2_all;
+specdiff_chan1_all = specdiff_chan1_all;
+OUTSTRUCT.specdiff_chan2_all = specdiff_chan2_all;
             continue
         end
     end
@@ -131,10 +127,6 @@ for i=1:length(OUTSTRUCT.bnum)
             Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
             cohscal_all = [cohscal_all; nan(1,ntrial)];
             cohscal_diff_all = [cohscal_diff_all; nan];
-            specscal_chan1_all = [specscal_chan1_all; nan];
-            specdiff_chan1_all = [specdiff_chan1_all; nan];
-            specscal_chan2_all = [specscal_chan2_all; nan];
-            specdiff_chan2_all = [specdiff_chan2_all; nan];
             continue
         end
     end
@@ -151,11 +143,7 @@ for i=1:length(OUTSTRUCT.bnum)
         % -- 1) extract trial vector of power scalar
         specscal = squeeze(mean(mean(specmat(indT, indF, :), 1),2));
         % -- 2) scalar difference (train minus base)
-        if lfpUseMedian==1
-        specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));    
-        else
         specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
-        end
         specscal_chan1_all = [specscal_chan1_all; specscal];
         specdiff_chan1_all = [specdiff_chan1_all; specdiff];
         
@@ -168,17 +156,13 @@ for i=1:length(OUTSTRUCT.bnum)
         % -- 1) extract trial vector of power scalar
         specscal = squeeze(mean(mean(specmat(indT, indF, :), 1),2));
         % -- 2) scalar difference (train minus base)
-        if lfpUseMedian==1
-        specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));    
-        else
         specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
-        end
         specscal_chan2_all = [specscal_chan2_all; specscal];
         specdiff_chan2_all = [specdiff_chan2_all; specdiff];
     end
     
-    
-    
+
+
     %% =============== recalc coherence mat
     % ================== GET RAW COHMAT
     if (1)
@@ -202,10 +186,6 @@ for i=1:length(OUTSTRUCT.bnum)
         Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
         cohscal_all = [cohscal_all; nan(1,ntrial)];
         cohscal_diff_all = [cohscal_diff_all; nan];
-        specscal_chan1_all = [specscal_chan1_all; nan];
-        specdiff_chan1_all = [specdiff_chan1_all; nan];
-        specscal_chan2_all = [specscal_chan2_all; nan];
-        specdiff_chan2_all = [specdiff_chan2_all; nan];
         continue
     end
     
@@ -318,8 +298,6 @@ for i=1:length(OUTSTRUCT.bnum)
         % --- then can get scalars from timecourse of cohscalars
         cohscal_base = mean(cohscal(indsbase_epoch));
         cohscal_wn = mean(cohscal(indswn_epoch));
-%         cohscal_base = median(cohscal(indsbase_epoch));
-%         cohscal_wn = median(cohscal(indswn_epoch));
     end
     cohscal_diff = cohscal_wn - cohscal_base;
     

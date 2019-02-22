@@ -1,5 +1,5 @@
 function lt_neural_POPLEARN_XCov_PlotSum(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
-    indtoget_b_e_s, datlevel, fracchange, plotNotminShuff, clim)
+    indtoget_b_e_s, datlevel, fracchange, plotNotminShuff, clim, alignto)
 %% lt 1/9/19 - plot summary of xcov during learning.
 
 if ~exist('clim', 'var')
@@ -12,6 +12,15 @@ if ~isempty(indtoget_b_e_s)
     OUTSTRUCT_XCOV = lt_structure_RmvEmptyField(OUTSTRUCT_XCOV);
     indstokeep = ismember([OUTSTRUCT_XCOV.bnum OUTSTRUCT_XCOV.enum OUTSTRUCT_XCOV.swnum], indtoget_b_e_s, 'rows');
     OUTSTRUCT_XCOV = lt_structure_subsample_all_fields(OUTSTRUCT_XCOV, indstokeep, 1);
+end
+
+%% ==== ALIGN TO SYL OR WN?
+if strcmp(alignto, 'syl')
+    % -- do nothing, deault
+elseif strcmp(alignto, 'wn')
+   OUTSTRUCT_XCOV.XcovgramBase =  OUTSTRUCT_XCOV.XcovgramBase_alignWN;
+   OUTSTRUCT_XCOV.XcovgramWN =  OUTSTRUCT_XCOV.XcovgramWN_alignWN;
+   PARAMS.xcenters_gram = PARAMS.xcenters_gram_alignWN;
 end
 
 %% COLLECT DATA ACROSS EXPTS

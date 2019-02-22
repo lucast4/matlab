@@ -632,26 +632,15 @@ plot(x,y, 'ok');
 lt_regress(y, x, 1, 0, 1, 1, 'k');
 
 
-%% ======== COHERENCE CHANGE (scalar difference measure) VS. LEARNING RATE\
+%% ======== COEHRENCE VS. LEARNING RATE
 % ============= OCHERENCE VERSUS LEARNING
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 xlabel('learning (zscore/hr, during train)');
-ylabel('coherence change (cohscal measure)');
+ylabel('coherence change (z)');
 x = all_learnrate_zVshr_durtrain(all_istarg==1);
-y = all_cohdiffscalar(all_istarg==1);
-% y = (all_cohbinned(:,end) - all_cohbinned(:,1))./(all_cohstd(:,1));
-% y = y(all_istarg==1,:);
+y = (all_cohbinned(:,end) - all_cohbinned(:,1))./(all_cohstd(:,1));
+y = y(all_istarg==1,:);
 plot(x,y, 'ok');
 lt_regress(y, x, 1, 0, 1, 1, 'k');
 
-% ============= OCHERENCE VERSUS LEARNING
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-xlabel('learning (zscore)');
-ylabel('coherence change (cohscal measure)');
-x = all_learnz_learndir(all_istarg==1);
-y = all_cohdiffscalar(all_istarg==1);
-% y = (all_cohbinned(:,end) - all_cohbinned(:,1))./(all_cohstd(:,1));
-% y = y(all_istarg==1,:);
-plot(x,y, 'ok');
-lt_regress(y, x, 1, 0, 1, 1, 'k');
 

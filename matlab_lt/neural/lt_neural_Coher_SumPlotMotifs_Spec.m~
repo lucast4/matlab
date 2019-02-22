@@ -1,4 +1,7 @@
-function lt_neural_Coher_SumPlotMotifs(OUTSTRUCT, SwitchStruct,MOTIFSTATS_Compiled,PARAMS, indtoget_b_e_s)
+function lt_neural_Coher_SumPlotMotifs_Spec(OUTSTRUCT, SwitchStruct,MOTIFSTATS_Compiled,PARAMS, ...
+    indtoget_b_e_s, fieldtoplot)
+%%  lt 2/21/19 - scalar plots for spectral power. Need to first extract using lt_neural_Coher_RecalcMat
+
 
 %% lt 12/17/18 - plots cioherence scalar change during laerning, relative to posotion of motif
 % i.e. for all motifs plot change in coh scalar.
@@ -64,7 +67,7 @@ for i=1:length(indsgrp_switch_unique)
         motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
         chnums = OUTSTRUCT.chanpair(indsthis,:);
         chnums = unique(chnums)'; assert(length(chnums)==2);
-        cohscal = OUTSTRUCT.cohscal_diff(indsthis);
+        cohscal = OUTSTRUCT.specdiff_chan1_all(indsthis);
         %         cohscal = OUTSTRUCT.CohMean_WNminusBase_scalar(indsthis);
         
         assert(length(unique(motifID)) == length(motifID), 'each motif shoudl have at most 1 datapoint');

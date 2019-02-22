@@ -1,6 +1,12 @@
-function [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
+function [OUTSTRUCT, OUTSTRUCT_CohMatOnly, OUTSTRUCT_LFPOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
     plotON, averagechanpairs, PARAMS, onlyfirstswitch, removeBadSyls, ...
-    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove)
+    collectAllProcess, zscoreLFP, collectDiffMats, removeBadChans, typesToRemove, ...
+    saveSpec)
+%%
+
+if ~exist('saveSpec', 'var')
+    saveSpec = 0;
+end
 %% lt 11/1/18 - added option to collect also phi and psds
 
 if collectAllProcess==1
@@ -26,7 +32,8 @@ numbirds = length(SwitchCohStruct.bird);
 
 %%
 % =============== INITIATE
-
+OUTSTRUCT.S1Mat = {};
+OUTSTRUCT.S2Mat = {};
 OUTSTRUCT.CohMat = {};
 OUTSTRUCT.PhiMat = {};
 OUTSTRUCT.bnum = [];
@@ -176,7 +183,6 @@ for i=1:numbirds
                     bregionpairs = bregionpairs(~chanbad_all);
                     bregionpairs_originalorder = bregionpairs_originalorder(~chanbad_all);
                     cohmat = cohmat(:,:,:,~chanbad_all);
-                    
                     phimat = phimat(:,:,:,~chanbad_all);
                     S1mat = S1mat(:,:,:,~chanbad_all);
                     S2mat = S2mat(:,:,:,~chanbad_all);
@@ -185,6 +191,8 @@ for i=1:numbirds
                 %% ############### take mean across all channels paiors
                 if averagechanpairs ==1
                     cohmat = nanmean(cohmat, 4);
+                    S1mat = nanmean(S1mat, 4);
+                    S2mat = nanmean(S2mat, 4);
                 end
                 
                 
@@ -376,6 +384,8 @@ for i=1:numbirds
                     % then there is one series of cohmat, averaged over
                     % chanel p[airs
                     OUTSTRUCT.CohMat = [OUTSTRUCT.CohMat; cohmat];
+                    OUTSTRUCT.S1Mat = [OUTSTRUCT.S1Mat; S1mat];
+                    OUTSTRUCT.S2Mat = [OUTSTRUCT.S2Mat; S2mat];
                     OUTSTRUCT.bnum = [OUTSTRUCT.bnum; i];
                     OUTSTRUCT.enum = [OUTSTRUCT.enum; ii];
                     OUTSTRUCT.switch = [OUTSTRUCT.switch; ss];
@@ -392,6 +402,10 @@ for i=1:numbirds
                     for k=1:numpairs
                         % -- save for this pair
                         OUTSTRUCT.CohMat = [OUTSTRUCT.CohMat; single(cohmat(:,:,:,k))];
+
+                        OUTSTRUCT.S1Mat = [OUTSTRUCT.S1Mat; single(S1mat(:,:,:,k))];
+                        OUTSTRUCT.S2Mat = [OUTSTRUCT.S2Mat; single(S2mat(:,:,:,k))];
+                        
                         OUTSTRUCT.PhiMat = [OUTSTRUCT.PhiMat; single(phimat(:,:,:,k))];
                         
                         OUTSTRUCT.bnum = [OUTSTRUCT.bnum; i];
@@ -498,6 +512,20 @@ if collectonlyMeans==1
     OUTSTRUCT = rmfield(OUTSTRUCT, 'CohMat');
 end
 
+%% ============ SAVE SPECTROGRAMS
+OUTSTRUCT_S1MatOnly = OUTSTRUCT.S1Mat;
+OUTSTRUCT_S2MatOnly = OUTSTRUCT.S2Mat;
+OUTSTRUCT = rmfield(OUTSTRUCT, 'S1Mat');
+OUTSTRUCT = rmfield(OUTSTRUCT, 'S2Mat');
+
+if saveSpec==1
+    sdir = '/bluejay0/bluejay2/lucas/analyses/neural/COHERENCE/Learn_Extr';
+    if ~exist([sdir '/' PARAMS.savemarker], 'dir')
+        mkdir([sdir '/' PARAMS.savemarker]);
+    end
+    save([sdir '/' PARAMS.savemarker '/OUTSTRUCT_S1MatOnly.mat'], 'OUTSTRUCT_S1MatOnly');
+    save([sdir '/' PARAMS.savemarker '/OUTSTRUCT_S2MatOnly.mat'], 'OUTSTRUCT_S2MatOnly');
+end
 
 %% for each case get wn minus base, mean coh scalar
 cohscal_diff = [];

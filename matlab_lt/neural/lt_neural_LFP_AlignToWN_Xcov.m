@@ -1,5 +1,5 @@
 function lt_neural_LFP_AlignToWN_Xcov(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchStruct, ...
-    PARAMS, dozscore, prewind_relWN)
+    PARAMS, prewind_relWN, prewind_relSyl)
 %% lt 1/4/19 - coherence change better aligned to WN onset of syl onset?
 
 % prctiletouse = 50;
@@ -10,6 +10,7 @@ clim = [-0.15 0.15];
 % dozscore = 0; % 0=no, 1=yes, 2=center onoy
 % prctiletouse = 2.5;
 xlimplot = [-0.09 0.055];
+
 %%
 
 %% ======= 2) FILTER DATA
@@ -76,7 +77,7 @@ allDatDiff = allDatDiff(:,:,:, indsort);
 %% ############################ [PLOTS]
 %% ================ 1) plot all xcovgrams, sorted by WN onset
 figcount=1;
-subplotrows=2;
+subplotrows=3;
 subplotcols=4;
 fignums_alreadyused=[];
 hfigs=[];
@@ -94,18 +95,27 @@ for i=1:length(allbnum)
     % ==== target minus diff
     cohdiff = allDatDiff(:,:,:,i);
     Y = cohdiff(:,:,1) - cohdiff(:,:,3);
-    lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', clim);
+    climthis = [-max(abs(Y(:))) max(abs(Y(:)))];
+    lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', climthis);
     %     ylim([20 100]);
     xlim(xlimplot);
     
     % === note down time of min WN
     line([allwntimes(i) allwntimes(i)], ylim, 'Color', [0.2 0.8 0.5], 'LineWidth', 2);
     lt_plot_zeroline;
+    
+    % === lines indicating premotor window (both rel syl and rel WN)
+    line([prewind_relSyl(1) prewind_relSyl(1)], ylim, 'Color', 'k', 'LineStyle', '--');
+    line([prewind_relSyl(2) prewind_relSyl(2)], ylim, 'Color', 'k', 'LineStyle', '--');
+    
+    windtmp = allwntimes(i)+prewind_relWN;
+    line([windtmp(1) windtmp(1)], ylim, 'Color', 'g');
+    line([windtmp(2) windtmp(2)], ylim, 'Color', 'g');
 end
 
 %% ================ 1) plot all xcovgrams, sorted by WN onset
 figcount=1;
-subplotrows=2;
+subplotrows=3;
 subplotcols=4;
 fignums_alreadyused=[];
 hfigs=[];
@@ -123,13 +133,22 @@ for i=1:length(allbnum)
     % ==== target minus diff
     cohdiff = allDatDiff(:,:,:,i);
     Y = cohdiff(:,:,1);
-    lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', clim);
+    climthis = [-max(abs(Y(:))) max(abs(Y(:)))];
+    lt_neural_Coher_Plot(Y, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '', climthis);
     %     ylim([20 100]);
     xlim(xlimplot);
     
     % === note down time of min WN
     line([allwntimes(i) allwntimes(i)], ylim, 'Color', [0.2 0.8 0.5], 'LineWidth', 2);
     lt_plot_zeroline;
+    
+    % === lines indicating premotor window (both rel syl and rel WN)
+    line([prewind_relSyl(1) prewind_relSyl(1)], ylim, 'Color', 'k', 'LineStyle', '--');
+    line([prewind_relSyl(2) prewind_relSyl(2)], ylim, 'Color', 'k', 'LineStyle', '--');
+    
+    windtmp = allwntimes(i)+prewind_relWN;
+    line([windtmp(1) windtmp(1)], ylim, 'Color', 'g');
+    line([windtmp(2) windtmp(2)], ylim, 'Color', 'g');
 end
 
 
@@ -150,6 +169,7 @@ title('short latency (median split)');
 cohmat = squeeze(allDatDiff(:,:,1,indtmp) - allDatDiff(:,:,3, indtmp));
 ylabel('TARG - DIFF (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '-', clim, 1, 0);
+xlim(xlimplot);
 YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
@@ -163,6 +183,7 @@ cohmat = squeeze(allDatDiff(:,:,1,indtmp) - allDatDiff(:,:,3, indtmp));
 ylabel('TARG - DIFF (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 3, '-', clim, 1, 0);
 YLIM = ylim;
+xlim(xlimplot);
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
@@ -174,6 +195,7 @@ title('short latency (median split)');
 cohmat = squeeze(allDatDiff(:,:,1,indtmp));
 ylabel('TARG (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '-', clim, 1, 0);
+xlim(xlimplot);
 YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
@@ -194,11 +216,11 @@ title('long latency (median split)');
 cohmat = squeeze(allDatDiff(:,:,1,indtmp) - allDatDiff(:,:,3, indtmp));
 ylabel('TARG - DIFF (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '-', clim, 1, 0);
+xlim(xlimplot);
 YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
-xlim(xlimplot);
 lt_plot_zeroline;
 
 % --- TARG - DIFF
@@ -207,11 +229,11 @@ title('long latency (median split)');
 cohmat = squeeze(allDatDiff(:,:,1,indtmp) - allDatDiff(:,:,3, indtmp));
 ylabel('TARG - DIFF (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 3, '-', clim, 1, 0);
+xlim(xlimplot);
 YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
-xlim(xlimplot);
 lt_plot_zeroline;
 
 % --- TARG
@@ -220,9 +242,9 @@ title('long latency (median split)');
 cohmat = squeeze(allDatDiff(:,:,1,indtmp));
 ylabel('TARG (WN - base)');
 lt_neural_Coher_Plot(cohmat, PARAMS.xcenters_gram, PARAMS.Xcov_ccLags, 1, '-', clim, 1, 0);
+xlim(xlimplot);
 YLIM = ylim;
 line([tmin tmin], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmax tmax], YLIM, 'LineWidth', 1, 'Color', 'm');
 line([tmed tmed], YLIM, 'LineWidth', 2, 'Color', 'm');
-xlim(xlimplot);
 lt_plot_zeroline;
