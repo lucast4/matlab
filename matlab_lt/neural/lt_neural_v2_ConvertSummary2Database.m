@@ -14,12 +14,13 @@ pause
 % For all birds did not enter what cell type it is, except following
 % situation:
 % wh72
-%     - empty ==> LFP
-%     - "LF" ==> LFP
-%     - "MU"/"SU" ==> spikes.
+%     - empty ==> is LFP
+%     - "LF" ==> is LFP
+%     - "MU"/"SU" ==> is spikes.
 %     Note that there are some cases where same data extracted both spikes and LFP (e.g. spikes fewer trials).
 %     To get only LFP in these cases, use onlySpikes=2;
 % gr48 and after, explicitly noted down either LF, MU, or SU.
+%     except RALMANLearn2 [is spikes, but forgot to note down MU or SU]...
 
     
 %% lt 12/1/17 - for RA, added this, so extracts both SAm/Mel and my RA dat
@@ -231,9 +232,11 @@ for i=1:numbirds
                     continue
                 elseif ismember(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType, {'MU', 'SU'})
                     disp('is spikes, keeping');
+                elseif isempty(SummaryStruct.birds(i).neurons(ii).NOTE_PutativeCellType)
+                    assert(strcmp(SummaryStruct.birds(i).neurons(ii).exptID, 'RALMANLearn2'));
                 else
                     disp('PROBLEM - what cell type is this?')
-                    pause;
+                    asdfasdfasdfasdf;
                 end
             else
                 % ---- if is any bird other than wh72, then they are

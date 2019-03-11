@@ -239,7 +239,8 @@ plot(xthis, ythis', 'o-k');
 xlim([0 5]);
 lt_plot(colsthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
 if length(colsthis)==2
-    [~, p] = ttest(ythis(:,1), ythis(:,2));
+%     [~, p] = ttest(ythis(:,1), ythis(:,2));
+    [p] = signrank(ythis(:,1), ythis(:,2));
     lt_plot_pvalue(p, 't', 1);
 end
 bnumthis = All_bnum(indsthis);

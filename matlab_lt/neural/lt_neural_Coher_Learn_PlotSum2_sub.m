@@ -62,6 +62,7 @@ xlim(XLIM);
 ylim(YLIM);
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 lt_neural_Coher_Plot(dat2_wnminusbase, tbins, ffbins, 3, '', clim);
+colorbar('EastOutside')
 title('chan2, WN-base');
 ylabel(ylabthis);
 xlim(XLIM);

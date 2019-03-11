@@ -71,6 +71,7 @@ for i=1:numbirds
     
     for ii=1:numneurons
         
+        
         % ============== extract metadat
         [SongDat, NeurDat, Prmstmp] = lt_neural_ExtractDat2(SummaryStruct, i, ii);
         clustnum = SummaryStruct.birds(i).neurons(ii).clustnum;

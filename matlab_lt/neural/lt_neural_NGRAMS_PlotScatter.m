@@ -1,7 +1,7 @@
 function [AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
     lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
     PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
-    removeBadSyls)
+    removeBadSyls, minPairs, zscoreMin)
 %%
 assert(sum([plotRawGood plotON])<2, 'cannot do both types of raw plots ...');
 
@@ -40,6 +40,7 @@ end
 
 %%
 numpairtypes = length(PairtypesToplot);
+assert(numpairtypes == 2, 'assumes 2, otherwise code below doesnt work (e.g. assumes that YplotAll{3} is negative control');
 maxbirds = max(All_birdnum);
 maxneur = max(All_neurnum);
 
@@ -71,8 +72,9 @@ for i=1:maxbirds
         % -- brainregion
         bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;
         allmeans = nan(1,numpairtypes);
-        
+        Neach = nan(1,numpairtypes);
         if strcmp(plottype, 'oneminusrho')
+            disp('NOT IMPLEMENTTING NMIN YET (for oneminusrho) !! easy to modify code./..');
             % ========= plot
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
             title([birdname '-n' num2str(ii) '[' bregion ']']);
@@ -205,6 +207,17 @@ for i=1:maxbirds
                     ymean = mean(y);
                 end
                 allmeans(k) = ymean;
+                Neach(k) = length(y);
+            end
+            
+            if any(Neach<minPairs)
+                disp('SKIPPING - too few pairs...');
+                continue
+            end
+            
+            if allmeans(zscoreMin(1))<zscoreMin(2)
+                disp('SKIP, signal lower than zscoreMin');
+                continue
             end
             
             % ======== collect each neuron
@@ -504,7 +517,7 @@ for j=1:maxbirds
     lt_plot_makesquare_plot45line(gca, 'k', -2);
 end
 
-%% ================= GET RATIO OF MEANS FOR EACH BIRD, 
+%% ================= GET RATIO OF MEANS FOR EACH BIRD,
 maxbirds = max(AllPairs_Birdnum);
 
 Y = nan(maxbirds,2);
@@ -518,8 +531,8 @@ for i=1:maxbirds
     % ---- get ratio of means
     y = mean(AllPairs_Means(inds,:), 1);
     Y(i, x) = y(2)/y(1);
-  
-   
+    
+    
     % ========= RA
     x = 2;
     inds = AllPairs_Birdnum==i & strcmp(AllPairs_Bregions, 'RA');
@@ -527,7 +540,7 @@ for i=1:maxbirds
     % ---- get ratio of means
     y = mean(AllPairs_Means(inds,:), 1);
     Y(i, x) = y(2)/y(1);
-
+    
 end
 
 lt_figure; hold on;
@@ -713,56 +726,210 @@ p = ranksum(Ypoints{1}, Ypoints{2});
 lt_plot_pvalue(p, 'rank sum', 1);
 
 
+%% ============= PLOT ALL DATA AND OVERLAY BIRDS
+
+% ########################### PLOT ALL ON ONE PLOT
+lt_figure; hold on;
+
+
+lt_subplot(3,2,1); hold on;
+% === all datapoints
+xlabel('LMAN -- RA');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}]);
+
+Ypoints  = {};
+Ypoints{1} = cell2mat(Yall(:,1));
+Ypoints{2} = cell2mat(Yall(:,2));
+
+% lt_plot_MultDist(Ypoints, [1 3], 0, 'k');
+% lt_plot_MultDist(Ypoints, [1 3], 0, 'k', 0, 1);
+lt_plot_MultDist(Ypoints, [1 3], 1, 'b', 0, 0, 1);
+% lt_plot_MultDist(Ypoints, [1 3], 1, 'b', 1, 0)
+lt_plot_zeroline;
+
+% --- pvalue
+p = ranksum(Ypoints{1}, Ypoints{2});
+lt_plot_pvalue(p, 'rank sum', 1);
+
+% === bird by bird
+for j=1:size(Yall,1)
+    
+    xplot = [1 3] + 0.5*rand-0.25;
+    
+    % --lman
+    x = 1;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    % -- ra
+    x = 2;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    if all(~cellfun(@isempty, Yall(j,:)))
+        
+        % -- plot line between
+        ymeans = cellfun(@mean, Yall(j,:));
+        plot(xplot, ymeans, '-or');
+    end
+end
+xlim([0 4]);
+lt_plot_zeroline;
+y1 = cellfun(@mean, Yall(:,1));
+y2 = cellfun(@mean, Yall(:,2));
+
+y1 = y1(~isnan(y1));
+y2 = y2(~isnan(y2));
+
+p = ranksum(y1, y2);
+lt_plot_pvalue(p, 'rank sum', 1);
+
+
+
+lt_subplot(3,2,2); hold on;
+% === all datapoints
+xlabel('LMAN -- RA');
+ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}]);
+
+Ypoints  = {};
+Ypoints{1} = cell2mat(Yall(:,1));
+Ypoints{2} = cell2mat(Yall(:,2));
+
+% lt_plot_MultDist(Ypoints, [1 3], 0, 'k');
+% lt_plot_MultDist(Ypoints, [1 3], 0, 'k', 0, 1);
+% lt_plot_MultDist(Ypoints, [1 3], 1, 'b', 0, 0, 1);
+% lt_plot_MultDist(Ypoints, [1 3], 1, 'b', 1, 0)
+lt_plot_bar([1 3], cellfun(@mean, Ypoints), {'Errors', cellfun(@lt_sem, Ypoints)});
+lt_plot_zeroline;
+
+% --- pvalue
+p = ranksum(Ypoints{1}, Ypoints{2});
+lt_plot_pvalue(p, 'rank sum', 1);
+
+% === bird by bird
+for j=1:size(Yall,1)
+    
+    xplot = [1 3] + 0.5*rand-0.25;
+    
+    % --lman
+    x = 1;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    % -- ra
+    x = 2;
+    ymean = mean(Yall{j,x});
+    ystd = std(Yall{j,x});
+    lt_plot(xplot(x), ymean, {'Errors', ystd});
+    
+    if all(~cellfun(@isempty, Yall(j,:)))
+        
+        % -- plot line between
+        ymeans = cellfun(@mean, Yall(j,:));
+        plot(xplot, ymeans, '-or');
+    end
+end
+xlim([0 4]);
+lt_plot_zeroline;
+y1 = cellfun(@mean, Yall(:,1));
+y2 = cellfun(@mean, Yall(:,2));
+
+y1 = y1(~isnan(y1));
+y2 = y2(~isnan(y2));
+
+p = ranksum(y1, y2);
+lt_plot_pvalue(p, 'rank sum', 1);
+
+
+
+%% ======================= mixed effects model
+
+Yall; % row is bird, column is brain region
+
+% -- expand
+bnum = [];
+bregion = [];
+cmi = [];
+for i=1:size(Yall,1)
+    
+    for ii=1:size(Yall,2)
+        
+        ythis = Yall{i, ii};
+        
+        cmi = [cmi; ythis];
+        bnum = [bnum; i*ones(size(ythis))];
+        bregion = [bregion; ii*ones(size(ythis))];
+    end
+    
+end
+
+% ---- make categorical
+bnum = categorical(bnum);
+% bnum = flipud(bnum);
+bregion = categorical(bregion);
+
+lt_figure; hold on;
+plot(bregion, cmi, 'ok');
+
+dat = table(cmi, bnum, bregion);
+% formula = 'cmi ~ bregion';
+formula = 'cmi ~ bregion + (bregion|bnum)';
+% formula = 'cmi ~ bnum';
+lme = fitlme(dat, formula)
+
 %% ======================== PLOT EACH CLASS SEPARATELY ACROSS BIRDS
 
 Ymeans = nan(maxbirds,4); % bird x [4 classes below]
 Ystd = nan(maxbirds, 4);
 
 for i=1:maxbirds
-% ------ LMAN, TYPE 1
-inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
-indtype = 1;
-% get
-Ymeans(i, 1) = mean(AllPairs_Means(inds, indtype));
-Ystd(i, 1) = std(AllPairs_Means(inds, indtype));
-
-% ------ LMAN TYPE 2
-inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
-indtype = 2;
-% get
-Ymeans(i, 2) =mean(AllPairs_Means(inds, indtype));
-Ystd(i, 2) = std(AllPairs_Means(inds, indtype));
-
-% ----- RA, TYPE 1
-inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
-indtype = 1;
-% get
-Ymeans(i, 3) = mean(AllPairs_Means(inds, indtype));
-Ystd(i, 3) = std(AllPairs_Means(inds, indtype));
-
-% ----- RA, TYPE 2
-inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
-indtype = 2;
-% get
-Ymeans(i, 4) = mean(AllPairs_Means(inds, indtype));
-Ystd(i, 4) = std(AllPairs_Means(inds, indtype));
+    % ------ LMAN, TYPE 1
+    inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
+    indtype = 1;
+    % get
+    Ymeans(i, 1) = mean(AllPairs_Means(inds, indtype));
+    Ystd(i, 1) = std(AllPairs_Means(inds, indtype));
+    
+    % ------ LMAN TYPE 2
+    inds = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==i;
+    indtype = 2;
+    % get
+    Ymeans(i, 2) =mean(AllPairs_Means(inds, indtype));
+    Ystd(i, 2) = std(AllPairs_Means(inds, indtype));
+    
+    % ----- RA, TYPE 1
+    inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
+    indtype = 1;
+    % get
+    Ymeans(i, 3) = mean(AllPairs_Means(inds, indtype));
+    Ystd(i, 3) = std(AllPairs_Means(inds, indtype));
+    
+    % ----- RA, TYPE 2
+    inds = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==i;
+    indtype = 2;
+    % get
+    Ymeans(i, 4) = mean(AllPairs_Means(inds, indtype));
+    Ystd(i, 4) = std(AllPairs_Means(inds, indtype));
 end
 
 % ======== plot
 lt_figure; hold on;
 title('each bird mean,std');
 for i = 1:maxbirds
-   
-     x = [1:2:7] + 0.8*rand-0.4;
-     y = Ymeans(i,:);
-     ystd = Ystd(i,:);
-     
-     lt_plot(x, y, {'Errors', ystd});    
-     if all(~isnan(Ymeans(i,:)))
-     plot(x,y, '-', 'Color', [0.2 0.2 0.8]);    
-     else
-     plot(x,y, '-', 'Color', [0.7 0.7 0.7]);
-     end
+    
+    x = [1:2:7] + 0.8*rand-0.4;
+    y = Ymeans(i,:);
+    ystd = Ystd(i,:);
+    
+    lt_plot(x, y, {'Errors', ystd});
+    if all(~isnan(Ymeans(i,:)))
+        plot(x,y, '-', 'Color', [0.2 0.2 0.8]);
+    else
+        plot(x,y, '-', 'Color', [0.7 0.7 0.7]);
+    end
 end
 lt_plot([1:2:7]+0.5, nanmean(Ymeans,1), {'Errors', lt_sem(Ymeans), 'Color', 'r'});
 

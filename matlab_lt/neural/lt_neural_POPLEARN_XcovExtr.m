@@ -1,7 +1,8 @@
 function [OUTSTRUCT_XCOV, PARAMS, NanCountAll] = lt_neural_POPLEARN_XcovExtr(SwitchXCovStruct, ...
     SwitchStruct, PARAMS, SwitchCohStruct, OUTSTRUCT, usealltrials, ...
     useallbase, dosmooth, dosmooth_sigma, removebadsyl, ...
-    windlist, plotrawtrials, xcovver, wntouse, removebadtrials, getxgram, removebadchans)
+    windlist, plotrawtrials, xcovver, wntouse, removebadtrials, getxgram, removebadchans, ...
+    getxgram_epochbins)
 %% NOTE: if any trials have nan, then just ignroes in calcualting dat minus shuff
 % i.e. uses nanmean. I do not expect there to be any nan for xcorr
 % ("unbiased");
@@ -15,6 +16,8 @@ OUTSTRUCT_XCOV.XcovWN = [];
 
 OUTSTRUCT_XCOV.XcovgramBase = {};
 OUTSTRUCT_XCOV.XcovgramWN = {};
+
+OUTSTRUCT_XCOV.XcovgramWN_epochs = {};
 
 OUTSTRUCT_XCOV.neurpairnum = [];
 OUTSTRUCT_XCOV.neurpair = [];
@@ -35,7 +38,7 @@ OUTSTRUCT_XCOV.inds_base_epoch = {}; % used for analysis
 OUTSTRUCT_XCOV.inds_WN_epoch = {}; % used for analysis
 OUTSTRUCT_XCOV.inds_base_allgood = {}; % all, after remove bad trials
 OUTSTRUCT_XCOV.inds_WN_allgood = {}; % all, after remove bad trials
-
+OUTSTRUCT_XCOV.trialedges_epoch = {};
 
 NanCountAll = []; % if Nan then means: (1) if "unbiased" normalikzation, then should not ever be nan.
 % (2) if using "coeff" then means that one of the trials had variance of 0.
@@ -136,8 +139,8 @@ for i=1:length(SwitchXCovStruct.bird)
                         & iii==1
                     inds_WN = inds_WN_all;
                 end
-                    
-                    
+                
+                
                 
                 %% ================== things about this syl
                 %                 motifname = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm);
@@ -160,7 +163,7 @@ for i=1:length(SwitchXCovStruct.bird)
                     datmat_real = datthis.ccRealAllPair{np};
                     datmat_shuff = datthis.ccShiftAllPair{np};
                     neurpair = datthis.neurPair(np, :);
-                                        
+                    
                     if removebadchans==1
                         chanbad = lt_neural_QUICK_RemoveBadChans(bname, ename, iii, datthis.chanPair(np,:));
                         if chanbad==1
@@ -178,56 +181,69 @@ for i=1:length(SwitchXCovStruct.bird)
                     end
                     
                     % ===== get autocovariance too
-                    datcell_auto_real = datthis.ccRealAuto(np,:);
-                    datcell_auto_shift = datthis.ccShiftAuto(np,:);
+                    if strcmp(xcovver, 'coherency')
+                        datcell_auto_real = datthis.ccRealAuto(np,:);
+                        datcell_auto_shift = datthis.ccShiftAuto(np,:);
+                    else
+                        datcell_auto_real = {};
+                        datcell_auto_shift = {};
+                    end
+                    
                     
                     % ==== process (e.g. smooth) and get xcov output
                     [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount] = ...
                         lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
                         dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags, plotraw, ...
                         xcovver, datcell_auto_real, datcell_auto_shift);
-
+                    
                     % ===== get xcov-gram...
-                    nwinds = size(datthis.ccRealAllPair_allwind,2);
-                    xcovgram_base = nan(nwinds, length(datbase)); % win x lags
-                    xcovgram_wn= nan(nwinds, length(datbase));
-                    xcenters = mean(windlist,2);
                     if getxgram==1
-                        for ww=1:nwinds
-                            
-                            datmat_real = datthis.ccRealAllPair_allwind{np, ww};
-                            datmat_shuff = datthis.ccShiftAllPair_allwind{np, ww};
-                            
-                            % ---- autocovariance
-                            datmat_auto1 = datthis.ccRealAllPair_Auto1_allwind{np, ww};
-                            datmat_auto2 = datthis.ccRealAllPair_Auto2_allwind{np, ww};
-                            datcell_auto_real = {datmat_auto1, datmat_auto2};
-                            
-                            % --- autocovariance (SHIFTED)
-                            datmat_auto1 = datthis.ccShiftAllPair_Auto1_allwind{np, ww};
-                            datmat_auto2 = datthis.ccShiftAllPair_Auto2_allwind{np, ww};
-                            datcell_auto_shift = {datmat_auto1, datmat_auto2};
-                            
-                            [db, dw] = ...
-                                lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
-                                dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags, 0, ...
-                                xcovver, datcell_auto_real, datcell_auto_shift);
-                            
-                            xcovgram_base(ww, :) = db;
-                            xcovgram_wn(ww, :) = dw;
-                            
-                            if any(imag(db)~=0)
-                                keyboard
-                            end
-                        end
+                        [xcovgram_base, xcovgram_wn] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
+                            dosmooth, dosmooth_sigma, inds_base, inds_WN, PARAMS, xcovver, datbase, ...
+                            np);
+                    else
+                        nwinds = size(datthis.ccRealAllPair_allwind,2);
+                        xcovgram_base = nan(nwinds, length(datbase)); % win x lags
+                        xcovgram_wn= nan(nwinds, length(datbase));
                     end
+                    
+                    
+                    xcenters = mean(windlist,2);
                     % ============= COUNT How many trials had nan - i
                     NanCountAll = [NanCountAll; NanCount];
                     
+                    
+                    %% ======= get xcov in different time bins during learning
+                    if ~isempty(getxgram_epochbins)
+                        N = getxgram_epochbins;
+                        XcovgramWN_epochs = nan([size(xcovgram_base) N]);
+                        
+                        % ============== divide up WN into different bins
+                        binsize = length(inds_WN_all)/N;
+                        
+                        trialedges = round(linspace(1, length(inds_WN_all), N+1));
+                        trialedges = inds_WN_all(trialedges);
+                        trialedges(end)=trialedges(end)+1;
+                        
+                        % ====== go thru all bins
+                        for bb=1:N
+                            
+                            trialsthis = trialedges(bb):(trialedges(bb+1)-1);
+                            
+                            [~, xcovgram_wn] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
+                                dosmooth, dosmooth_sigma, inds_base, trialsthis, PARAMS, xcovver, datbase, ...
+                                np);
+                            
+                            XcovgramWN_epochs(:,:, bb) = xcovgram_wn;
+                        end
+                        
+                        
+                    end
+                    
                     %%
-                                        
-                    OUTSTRUCT_XCOV.XcovgramBase = [OUTSTRUCT_XCOV.XcovgramBase; xcovgram_base];
-                    OUTSTRUCT_XCOV.XcovgramWN = [OUTSTRUCT_XCOV.XcovgramWN; xcovgram_wn];
+                    
+                    OUTSTRUCT_XCOV.XcovgramBase = [OUTSTRUCT_XCOV.XcovgramBase; single(xcovgram_base)];
+                    OUTSTRUCT_XCOV.XcovgramWN = [OUTSTRUCT_XCOV.XcovgramWN; single(xcovgram_wn)];
                     
                     OUTSTRUCT_XCOV.XcovBase = [OUTSTRUCT_XCOV.XcovBase; datbase];
                     OUTSTRUCT_XCOV.XcovWN = [OUTSTRUCT_XCOV.XcovWN; datWN];
@@ -236,6 +252,8 @@ for i=1:length(SwitchXCovStruct.bird)
                         [OUTSTRUCT_XCOV.XcovBase_NoMinShuff; datbase_notminshuff];
                     OUTSTRUCT_XCOV.XcovWN_NoMinShuff = ...
                         [OUTSTRUCT_XCOV.XcovWN_NoMinShuff; datWN_notminshuff];
+                    
+                    OUTSTRUCT_XCOV.XcovgramWN_epochs = [OUTSTRUCT_XCOV.XcovgramWN_epochs; single(XcovgramWN_epochs)];
                     
                     OUTSTRUCT_XCOV.neurpairnum = [OUTSTRUCT_XCOV.neurpairnum; np];
                     OUTSTRUCT_XCOV.neurpair = [OUTSTRUCT_XCOV.neurpair; neurpair];
@@ -251,6 +269,7 @@ for i=1:length(SwitchXCovStruct.bird)
                     OUTSTRUCT_XCOV.inds_WN_epoch = [OUTSTRUCT_XCOV.inds_WN_epoch; inds_WN]; % used for analysis
                     OUTSTRUCT_XCOV.inds_base_allgood = [OUTSTRUCT_XCOV.inds_base_allgood; inds_base_all]; % all, after remove bad trials
                     OUTSTRUCT_XCOV.inds_WN_allgood = [OUTSTRUCT_XCOV.inds_WN_allgood; inds_WN_all]; % all, after remove bad trials
+                    OUTSTRUCT_XCOV.trialedges_epoch = [OUTSTRUCT_XCOV.trialedges_epoch; trialedges]; % all, after remove bad trials
                     
                 end
             end

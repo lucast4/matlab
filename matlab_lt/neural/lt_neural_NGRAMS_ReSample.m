@@ -1,4 +1,4 @@
-function OUTSTRUCT = lt_neural_NGRAMS_ReSample(OUTSTRUCT, SummaryStruct, Params, ...
+function [OUTSTRUCT, Params] = lt_neural_NGRAMS_ReSample(OUTSTRUCT, SummaryStruct, Params, ...
     measure_to_recalc, PairTypesToCompare, nshufftmp, DoDecode)
 % nshufftmp = 10; % 50-100 is optimal, see DIAG below.
 % NOTE: usually 100, but only matters for data in which
@@ -31,6 +31,11 @@ strtype = Params.strtype;
 %% ===========
 savedir = '/bluejay5/lucas/analyses/neural/NGRAMS';
 savedir = [savedir '/' Params.dirname];
+
+
+%% ========= note down in params
+
+Params.DidResample=1;
 
 %% ========== go thru all birds and extract
 

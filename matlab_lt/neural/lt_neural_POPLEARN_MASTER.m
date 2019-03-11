@@ -337,6 +337,130 @@ end
 lt_neural_LFP_SingleExptCheck;
 
 
+%% #################  [GOOD] [PLOT EXAMPLE RAW TRIALS]
+
+birdplot = 'pu69wh78';
+exptplot = 'RALMANlearn1';
+swplot = 1;
+motifplot = []; % [string] leave blank for target
+
+
+% #####################################################
+i = find(strcmp({SummaryStruct.birds.birdname}, birdplot));
+ii = find(strcmp({SummaryStruct.birds(i).exptnum_pop.exptname}, exptplot));
+ss = swplot;
+
+indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+    OUTSTRUCT.istarg==1);
+
+% --- target syl motif number?
+mm = unique(OUTSTRUCT.motifnum(indsthis));
+motifplot = OUTSTRUCT.motifname{indsthis(1)};
+if length(mm)>1
+    disp('MULTIPLE TARGS, taking first one');
+    mm = mm(1);
+    indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+        OUTSTRUCT.istarg==1 & OUTSTRUCT.motifnum==mm);
+    motifplot = OUTSTRUCT.motifname{indsthis(1)};
+end
+% assert(length(mm)==1, 'multipel targets?');
+
+
+% ======== 1) EXTRACT RAW DATA (NOT JUST LFP)
+%     close all;
+
+%     birdplot = 'pu69wh78';
+%     exptplot = 'RALMANlearn1';
+%     swplot = 1;
+%     motifplot = []; % [string] leave blank for target
+extrapad = 0.05; % seconds, pre and post...
+[DatAll, t_onoff, fs, bregionlist, chanlist_toget, i, ii, mm] = ...
+    lt_neural_LFP_PlotEgRaw_Extract(PARAMS, SwitchStruct, MOTIFSTATS_pop, ...
+    SummaryStruct, SwitchCohStruct, birdplot, exptplot, swplot, motifplot, ...
+    extrapad);
+
+
+% ######################3 EXTRACT DATA AND PLOT
+% chanpairs = OUTSTRUCT.chanpair(indsthis, :);
+% 
+% tvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).tvals;
+% ffvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).ffvals;
+% cohscal_allpairs = OUTSTRUCT.cohscal(indsthis);
+% indsbase = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsbase_epoch;
+% indsWN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(ss).motifnum(mm).indsWN_epoch;
+% indsbase_all = OUTSTRUCT.indsbase{indsthis(1)};
+% indsWN_all = OUTSTRUCT.indsWN{indsthis(1)};
+
+
+
+% ================== FIND TRIAL TO PLOT
+% trialmode = 'random';
+trialmode = 'highcoh';
+% trialmode = 'lowcoh';
+N = 5;
+
+ntrials = size(DatAll{1},2);
+
+% ---- list of all possible trials
+indsthis = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==ss & ...
+    OUTSTRUCT.istarg==1);
+triallist = [find(OUTSTRUCT.indsbase{indsthis(1)}) find(OUTSTRUCT.indsWN{indsthis(1)})];
+
+% ---- what is vector of coherence
+cohscal = OUTSTRUCT.cohscal(indsthis);
+cohscal = mean(cell2mat(cohscal),1); % take average over all chan pairs
+
+[~, indsort] = sort(cohscal);
+indsort = indsort(ismember(indsort, triallist));
+indslow = indsort(1:N);
+indshi = indsort(end-N+1:end);
+    
+    
+if strcmp(trialmode, 'random')
+    trialstoget = triallist(randperm(length(triallist), N));
+elseif strcmp(trialmode, 'highcoh')
+    trialstoget = indshi;
+elseif strcmp(trialmode, 'lowcoh')
+    trialstoget = indslow;
+end
+
+% ======================================= PLOT ALL THINGS COMBINED
+% _------------ MAKE SURE TO FIRST HAVE COHEROGRAMS...
+close all;
+filt_low = 20;
+filt_hi = 35;
+% filt_low = 3200;
+% filt_hi = 3300;
+% trialtoplot = 100;
+plotUnfiltered = 0; % defualt 0, plots high and low pass. if 1, then plots unfiltered instead of high pass.
+lt_neural_LFP_PlotEgRaw_v2(DatAll, t_onoff, fs, bregionlist, chanlist_toget, ...
+    i, ii, swplot, mm, trialstoget, filt_low, filt_hi, SwitchCohStruct, ...
+    SwitchStruct, OUTSTRUCT, MOTIFSTATS_pop, PARAMS, ...
+    SummaryStruct, OUTSTRUCT_CohMatOnly, plotUnfiltered);
+
+
+% ================================= PLOT HEAT MAP OF ALL TRIALS
+% _------------ MAKE SURE TO FIRST HAVE COHEROGRAMS...
+close all;
+filt_low = 20;
+filt_hi = 35;
+noiseband = [3100 3400];
+plotUnfiltered = 0; % defualt 0, plots high and low pass. if 1, then plots unfiltered instead of high pass.
+trialOrder = 'coh';
+% trialOrder = 'trials'; % in order of actual trials
+cohwind_f = PARAMS.cohscal_fwind;
+
+lt_neural_LFP_PlotRawHeatmap(DatAll, t_onoff, fs, bregionlist, chanlist_toget, ...
+    i, ii, swplot, mm, filt_low, filt_hi, SwitchCohStruct, ...
+    SwitchStruct, OUTSTRUCT, MOTIFSTATS_pop, PARAMS, ...
+    SummaryStruct, OUTSTRUCT_CohMatOnly, plotUnfiltered, trialOrder, ...
+    noiseband, cohwind_f);
+
+
+%% =========== [do above] but iterate over all expts (i.e. all targ syls)
+
+lt_neural_LFP_PlotEgRaw_v2_allbirds;
+
 %% ################## [GOOD, RAW PLOTS]
 lt_neural_Coher_AllRaw;
 
@@ -683,7 +807,6 @@ interpol =0; % across time  [NOT YET DONE].
 
 onlyusegoodtargsyls = 1; % default = 1, i.e. gets timing only from that that will actually analyze.
 
-
 [SwitchCohStruct, PARAMS] = lt_neural_LFP_PitchCorr(COHSTRUCT, SwitchCohStruct,...
     SwitchStruct, PARAMS, twind, fwind, useWNtiming, WNprctile, prewind_relWN, ...
     interpol, onlyusegoodtargsyls);
@@ -840,7 +963,7 @@ removeBadChans = 1; % default: 1
 removeBadSyls = 1; % LEAVE AT 1.
 typesToRemove = {'wn'}; % only remove syls that are bad becuase preceded by WN
 % typesToRemove = {'wn', 'noise'};
-saveSpec = 1; % saves spectrograms ...
+saveSpec = 0; % saves spectrograms ...
 
 if (0)
 [OUTSTRUCT, OUTSTRUCT_CohMatOnly] = lt_neural_LFP_Learn_Extr(SwitchStruct, SwitchCohStruct, ...
@@ -906,7 +1029,7 @@ thingstodo = {'cohere'};
 
 % == ssave to disk?
 saveON =1;
-savename = 'cohere_PlusShuff'; % will save specifically for this PARAMS.savemarker
+savename = 'cohere_150ms'; % will save specifically for this PARAMS.savemarker
 
 % === overwrite OUTSTRUCT?
 overwriteOUT = 0; 
@@ -928,6 +1051,7 @@ onlygoodexpt = 1;
 cd(['/bluejay0/bluejay2/lucas/analyses/neural/COHERENCE/RecalcCoh/' PARAMS.savemarker])
 
 tmp = load('savestruct_cohere_PlusShuff.mat');
+% tmp = load('savestruct_cohere_150ms.mat');
 
 OUTSTRUCT.CohMean_Base = tmp.savestruct.dat.CohMean_Base;
 OUTSTRUCT.CohMean_WN = tmp.savestruct.dat.CohMean_WN;
@@ -1025,14 +1149,20 @@ useallwn = 1; % default is 0 (just epoch) but for some experiments not enough da
 
 twind = [-0.07 -0.03]; % all combined
 fwind = [22 36];
-% fwind = [25 35];
 
-extractLFP = 1;
+% twind = [-0.05 -0.03]; % all combined
+% fwind = [22 32];
+twind = [-0.07 -0.03]; % all combined
+fwind = [22 60];
+
+extractLFP = 0;
 % need to have previously run Learn_Extr with extraction of LFP
 lfpUseMedian = 1;
+% specScaleType = 3; % see zscore above.
+specScaleType = 1; % see zscore above.
 
 % - EXTRACT RELATIVE TO WN ONSET?
-useWNtiming=0;
+useWNtiming=1;
 WNprctile = 2.5;
 prewind_relWN = [-0.1 -0.05]; % rel the percentiel you want to use.
 
@@ -1042,10 +1172,16 @@ wntouse = 'quarter';
 % wntouse = 'firsthalf';
 % wntouse = 'half';
 
-RemoveIfTooFewTrials =1;
+% RemoveIfTooFewTrials =1; % default
+RemoveIfTooFewTrials = 1;
 
 % ========= remove bad syl
+% removebadsyl=1; % default
 removebadsyl=1;
+removebadtrialtype = 'lfp'; % remove cases which by eye looked like large shared noise fluctuations...
+% removebadtrialtype = 'all';
+% removebadtrialtype = 'spikes';
+% removebadtrialtype = '';
 
 % --- norm to shift?
 normtoshuff = 0;
@@ -1056,17 +1192,32 @@ normtype = 'minus';
 % normtype = ''; % if this, then must set normtoshuff to 0 [also, will only do this for scalar]
 
 % == coherence use median? (across trials)
-cohUseMedian =1; % NOT READY - doesn't do anything.
+cohUseMedian =0; % NOT READY - doesn't do anything.
 
 if normtoshuff==1
 [OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(SwitchStruct, OUTSTRUCT, OUTSTRUCT_CohMatOnly, ...
     SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
-    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, extractLFP, lfpUseMedian, cohUseMedian, removebadsyl, normtoshuff, normtype, OUTSTRUCT_CohMatOnly_shift);
+    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, removebadtrialtype, extractLFP, lfpUseMedian, specScaleType, ...
+    cohUseMedian, removebadsyl, normtoshuff, normtype, OUTSTRUCT_CohMatOnly_shift);
 else    
 [OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(SwitchStruct, OUTSTRUCT, OUTSTRUCT_CohMatOnly, ...
     SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
-    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, extractLFP, lfpUseMedian, cohUseMedian, removebadsyl, normtoshuff, normtype);
+    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, removebadtrialtype, extractLFP, lfpUseMedian, ...
+    specScaleType, cohUseMedian, removebadsyl, normtoshuff, normtype);
 end
+
+
+% ===== USE THIS VERSION IF ONLY GETTING LFP
+if (0)
+[OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(SwitchStruct, OUTSTRUCT, '', ...
+    SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
+    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, removebadtrialtype, extractLFP, lfpUseMedian, specScaleType, ...
+    cohUseMedian, removebadsyl, normtoshuff, normtype);
+end
+
+%% ====== EXTRACT SCALARS FOR LFP POWER CHANGE
+
+
 
 
 %% ====== SUMMARY PLOT OF COHERENCE LARNING
@@ -1090,7 +1241,7 @@ lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
 
 % ============== THIS IS BETTER - subsumes the above, more compacta ndf
 % flexible.
-fieldtoplot = 'coher';
+fieldtoplot = 'spec';
 % 'coher'
 % 'spec'
 birdstoplot = [];
@@ -1110,8 +1261,9 @@ firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets
 % firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets 
 % for a given switch did not have a previous switch on the same day
 firstswitchofday=1;
+handRemoveLFP = 1;
 indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday, firstswitchofday);
+    firstswitchfortarget_withinday, firstswitchofday, [], handRemoveLFP);
 
 % NOTE: to get raw cohgram (before subtract) cd /blucurrently need to do
 % breakpoint using spec and evaluate cohgram version instead. Should
@@ -1132,9 +1284,9 @@ fieldtoplot = 'coher';
 % breakpoint using spec and evaluate cohgram version instead. Should
 % modify to plot cohgram.
 timewindowtoplot = [-0.08 0]; % for spectra.
-birdstoplotTMP = [2];
-expttoplotTMP = [4];
-swtoplotTMP = [1];
+birdstoplotTMP = [4];
+expttoplotTMP = [];
+swtoplotTMP = [];
 for i=1:max(OUTSTRUCT.bnum)
     if ~isempty(birdstoplotTMP)
         if ~any(birdstoplotTMP==i)
@@ -1215,13 +1367,20 @@ swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
 firstswitchfortarget_withinday =1; % if 1, then onlky keeps if all targets 
 % for a given switch did not have a previous switch on the same day
 firstswitchofday =1;
+handRemoveLFP = 1;
 indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday, firstswitchofday);
+    firstswitchfortarget_withinday, firstswitchofday, [], handRemoveLFP);
 % indtoget_b_e_s = [];
 
-fieldtoplot = 'specdiff_chan2_all';
+fieldtoplot = 'specdiff_chan1_all';
 lt_neural_Coher_SumPlotMotifs_Spec(OUTSTRUCT, SwitchStruct, MOTIFSTATS_Compiled, PARAMS, ...
     indtoget_b_e_s, fieldtoplot);
+
+
+%% ===================== [COMPARE RA AND LMAN FOR CHANGE IN LFP POWER]
+
+
+
 
 %% ################## [GOOD] [SCALAR & PITCH LERANING- COMPARE TO LEARNING RATE]
 close all;
@@ -2006,7 +2165,7 @@ binsize_spk = 0.0025; % default, 5ms bins for cross corr
 xcov_dattotake = [-0.1 0]; % rel syl onset. [BEST WINDOW]
 % xcov_dattotake = [-0.08 0.02]; % rel syl onset.
 % xcovwindmax = 0.06; % seconds
-xcovwindmax = 0.06; % seconds
+xcovwindmax = 0.03; % seconds
 normmethod = 'unbiased';
 % normmethod = 'coeff';
 
@@ -2014,15 +2173,15 @@ normmethod = 'unbiased';
 normspiketoprob = 0; % if 0, then uses spike count
 
 % ======= bregionpairtoget
-bregionpairtoget = 'LMAN-LMAN';
+bregionpairtoget = 'LMAN-RA';
 % bregionpairtoget = 'LMANoutside-RAoutside';
 
 % ======== to remove units that were extracted only for LFP
 removeIfLFPOnly = 1;
 
 % ====== FOR GETTING RUNNING XCOV
-getXgram=0;
-windsize = 0.1;
+getXgram=1;
+windsize = 0.06;
 windshift = 0.005;
 % windsize = 0.08;
 % windshift = 0 = {};.005;
@@ -2059,13 +2218,14 @@ dosmooth = 1; % interpolate, then smooth
 dosmooth_sigma = 2*PARAMS.Xcov.binsize_spk; % sec
 
 % ===== what version of xcov?
-% xcovver = 'zscore'; % i.e. each lag bin, zscore relative to shuffle.
+xcovver = 'zscore'; % i.e. each lag bin, zscore relative to shuffle.
 % xcovver = 'scale'; % % NOT DONE YET! scales by relative magnitude of shuffle functions.
 % xcovver = ''; % empty means difference of means.
-xcovver= 'coherency';
+% xcovver= 'coherency';
 
 % ===== get xcovgram?
 getxgram = 1;
+getxgram_epochbins = 5; % if empty, then ignore. otherwise divides training into this many even bins
 
 % ====== removebad syl?
 removebadsyl = 1;
@@ -2078,11 +2238,12 @@ if strcmp(xcovver, 'coherency')
     dosmooth = 0; % have not coded this yet, should take smoothing AFTER get coherency.
 end
     
+
 [OUTSTRUCT_XCOV, PARAMS, NanCountAll] = lt_neural_POPLEARN_XcovExtr(SwitchXCovStruct, ...
     SwitchStruct, PARAMS, SwitchCohStruct, OUTSTRUCT, usealltrials, ...
     useallbase, dosmooth, dosmooth_sigma, removebadsyl, ...
     PARAMS.Xcov.Xgram.windlist, plotraw, xcovver, wntouse, removebadtrials, ...
-    getxgram, removebadchans);
+    getxgram, removebadchans, getxgram_epochbins);
 
 assert(all(PARAMS.xcenters_gram == mean(PARAMS.Xcov.Xgram.windlist,2)))
 
@@ -2218,12 +2379,61 @@ save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
 save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
 
+
+savemarker = '100mswind_zscore_smooth_030519'; % latest, and 4 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+
+savemarker = '100mswind_zscore_smooth_030519_3bins'; % latest, and 3 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = '100mswind_zscore_smooth_030519_5bins'; % latest, and 5 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = '100mswind_zscore_smooth_030519_6bins'; % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
+
+savemarker = '100mswind_zscore_smooth_030519_2bins'; % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3'
+
+% =============== [60 m s bins] [3 epochs]
+savemarker = '60mswind_zscore_smooth_031019_3bins'; % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
+savemarker = '60mswind_zscore_smooth_031019_5bins'; % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+% save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
 %% [LOAD] --- 
+% NOTE: the same switchxcov struct could apply for adifferent outstructs.
 if (0)
 savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/POPLEARN/OUTSTRUCT_XCOV/' PARAMS.savemarker];
 load([savedir '/OUTSTRUCT_XCOV.mat']);
 load([savedir '/SwitchXCovStruct.mat']);
 load([savedir '/PARAMS.mat']);
+end
+
+
+if (0)
+    
+savemarker = '40mswind_zscore_smooth';
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
 end
 
 if (0)
@@ -2236,10 +2446,36 @@ savemarker = '100mswind_zscore_smooth_021619';
 load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
+
+savemarker = '100mswind_zscore_smooth_030519'; % latest, and 4 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
+savemarker = '100mswind_zscore_smooth_030519_3bins'; % latest, and 3 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
+savemarker = '100mswind_zscore_smooth_030519_5bins'; % latest, and 5 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
+savemarker = '100mswind_zscore_smooth_030519_6bins'; % latest, and 5 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
+savemarker = '100mswind_zscore_smooth_030519_2bins'; % latest, and 5 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
 end
 
-%% ========== [REALIGN XCOVGRAMS TO WN ONSET]
 
+%% ========== [REALIGN XCOVGRAMS TO WN ONSET]
 
 
 
@@ -2281,10 +2517,25 @@ lagwindows = {[-0.014 0.006], [0.03 0.045]}; % OK
 % lagwindows = {[-0.015 0.005], [0.026 0.048]};
 % twindows = {[-0.06 -0.03], [-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
 
-% ========= GOOD:
+% ========= GOOD: [100ms window]
 alignto = 'sylonset'; 
 twindows = {[-0.07 -0.03], [-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
 lagwindows = {[-0.014 0.006], [0.03 0.045]}; % OK
+
+% ========= GOOD: [40ms window]
+alignto = 'sylonset'; 
+twindows = {[-0.08 -0.02], [-0.1 -0.01]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.01 0.005], [-0.014 0.006]}; % OK
+
+% ========= GOOD: [60ms window]
+alignto = 'sylonset'; 
+twindows = {[-0.07 -0.03], [-0.1 -0.01]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.01 0.005], [-0.014 0.006]}; % OK
+% ========= GOOD: [60ms window]
+alignto = 'sylonset'; 
+twindows = {[-0.09 -0.02], [-0.1 -0.01]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.014 0.006], [-0.014 0.006]}; % OK
+
 % 
 % alignto = 'wnonset'; % not good.
 % twindows = {[-0.09 -0.06], [-0.09 -0.06]}; % one array for each window [x centers...] [inclusive]
@@ -2303,6 +2554,9 @@ OUTSTRUCT_XCOV = lt_neural_POPLEARN_XCov_ExtrScal(OUTSTRUCT_XCOV, OUTSTRUCT, ...
 
 
 %% ========= 2) EXTRACT TIME SLICE (OVERWRITE ORIGINAL TIME SLICE...)
+% NOTE: THIS IS THE ONLY THING CURRENTLY MODIFIED TO ALSO DO FOR EPOCH
+% ANALYSES.
+
 twindow = [-0.085 -0.04]; % DEFAULT, 80ms, smoothed... one array for each window [x centers...] [inclusive]
 % twindow = [-0.08 -0.04]; % one array for each window [x centers...] [inclusive]
 twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
@@ -2317,8 +2571,18 @@ twindow = [-0.07 0.005]; % one array for each window [x centers...] [inclusive]
 alignto = 'sylonset'; 
 
 
-% ======= GOOD;
+% ======= GOOD [100ms]
 twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
+alignto = 'sylonset'; 
+
+% ======= GOOD [40ms window]
+twindow = [-0.1 -0.01]; % one array for each window [x centers...] [inclusive]
+alignto = 'sylonset'; 
+
+% ======= GOOD [60ms window]
+twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
+alignto = 'sylonset'; 
+twindow = [-0.09 -0.02]; % one array for each window [x centers...] [inclusive]
 alignto = 'sylonset'; 
 
 
@@ -2345,12 +2609,6 @@ lt_neural_POPLEARN_XCov_PlotAll(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
     plotNotminShuff, onlygoodexpt, clim);
 
 
-%%
-for i=1:length(OUTSTRUCT_XCOV.bnum)
-    OUTSTRUCT_XCOV.XcovgramBase{i} = real(OUTSTRUCT_XCOV.XcovgramBase{i});
-    OUTSTRUCT_XCOV.XcovgramWN{i} = real(OUTSTRUCT_XCOV.XcovgramWN{i});
-end
-
 
 %% =========== [XCOV] sUMMARIZE LEARNING
 
@@ -2360,10 +2618,65 @@ lt_neural_POPLEARN_Xcov_PitchLearn(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     PARAMS, onlygoodexpt);
 
 
+%% ############################ [EPOCHS ANALYSIS - I.E. TRAINIGN BINS]
+%% =========== [EXTRACTION] GET LEARNING INTO BINS
+% === ALSO PLOTS SAMPLE SIZES...
+onlygoodexpt = 1;
+
+OUTSTRUCT_XCOV = lt_neural_POPLEARN_Xcov_ExtrLearn(OUTSTRUCT, OUTSTRUCT_XCOV,...
+    SwitchStruct, PARAMS, onlygoodexpt);
+
+
+%% =========== [XCOV SLICE EPOCHS] - change over epohcs
+% must have exctracted epoch data above.
+close all;
+dattype = 'chan';
+lt_neural_POPLEARN_Xcov_Epochs(OUTSTRUCT, OUTSTRUCT_XCOV, PARAMS, ...
+    onlygoodexpt, SwitchStruct, dattype)
+
+%% ============ [XCOV EPOCHS] - SCALAR, COMAPARE TO LEARNING (Z)
+close all;
+dattype = 'chan';
+% dattype = 'switch';
+scalwind = 1; % t/f window for scalar. (i.e which peak)
+syltype = 1; %, 1,2,3 = targ, same, diff.
+
+% casestokeep = 'goodlearn';
+% casestokeep = 'goodneural';
+% casestokeep = 'goodlearnneural';
+% casestokeep = 'badlearn';
+casestokeep = 'all';
+
+
+% ========== TO LOOK AT OVERALL LEARNING/LEARNING RATE
+% mintraindur = 0; % hours. (have to have data)
+% mintotaltrain = 0; %q hours (end of data minus base) (doesn't have to actually have data throughotu)
+
+
+% ========== TO LOOK AT WITHIN EXPT CHANGES
+% mintraindur = 2.5; % hours. (have to have data)
+% mintotaltrain = 2; % hours (end of data minus base) (doesn't have to actually have data throughotu)
+mintraindur = 1; % hours. (have to have data)
+mintotaltrain = 1; % hours (end of data minus base) (doesn't have to actually have data throughotu)
+
+
+% === to look at within changes, scaled bin-to-bin increments
+% mintraindur = 2.5; % hours. (have to have data)
+% mintotaltrain = 2; % hours (end of data minus base) (doesn't have to actually have data throughotu)
+% casestokeep = 'goodlearnneural';
+
+% doshift =0; % if 1, then asks whetehr neural in bin n predicts learn in bin n+1;
+adhoc_replacelearnwithWind2 = 0;
+lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
+    onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
+    mintraindur, mintotaltrain, adhoc_replacelearnwithWind2)
+
+
+%% #####################################################################
 %% ============ [XCOV] PLOT SUMMARY ACROSS EXPERIMENTS
 close all;
-% datlevel = 'switch';
-datlevel = 'neurpair';
+datlevel = 'switch';
+% datlevel = 'neurpair';
 fracchange = 0; % if 1, then frac change in xcov. if 0, then difference
 plotNotminShuff=0;
 
@@ -2403,12 +2716,15 @@ lt_subtitle(['[' normmethod '], alltrials=' num2str(usealltrials)]);
 
 close all;
 onlygoodexpt = 1;
-lagwindows = [-0.011 -0.001 0.029 0.056]; % exclusive... , will take all intervals.
-lagwindows = [-0.011 -0.001 0.029 0.046]; % exclusive... , will take all intervals.
-lagwindows = [-0.0126 0.001 0.029 0.046]; % 2.5ms windows
-lagwindows = [-0.011 0.001 0.027 0.045]; % 2.5ms, smoothed DEFAULT
-lagwindows = [-0.015 0.007 0.029 0.046]; % OK
+% lagwindows = [-0.011 -0.001 0.029 0.056]; % exclusive... , will take all intervals.
+% lagwindows = [-0.011 -0.001 0.029 0.046]; % exclusive... , will take all intervals.
+% lagwindows = [-0.0126 0.001 0.029 0.046]; % 2.5ms windows
+% lagwindows = [-0.011 0.001 0.027 0.045]; % 2.5ms, smoothed DEFAULT
+lagwindows = [-0.015 0.007 0.029 0.046]; % OK % 100ms window
 ffbinsedges_indstoplot = [1 3]; % which ones of lagwindow intervals to p[lot?
+
+lagwindows = [-0.016 0.006]; % OK % 60ms window
+ffbinsedges_indstoplot = [1]; % which ones of lagwindow intervals to p[lot?
 dattype = 'chan';
 % dattype = 'switch';
 % clim = [-0.015 0.015];
@@ -2417,7 +2733,7 @@ plotindivswitch=0;
 clim = [-0.1 0.1];
 XLIM = [-0.1 -0.04];
 YLIMGRAM = [-0.05 0.05];
-clim = [-0.1 0.1];
+clim = [-0.2 0.2];
 XLIM = [-0.1 -0.01];
 YLIMGRAM = [-0.05 0.05];
 lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
@@ -2510,17 +2826,22 @@ end
 
 %% =========== [XCOV SCALAR] - plot each experiment [MOTIFS]
 close all;
-windthis =2;
+windthis =1;
 Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
 % clim = [-0.2 0.2];
 clim = [-0.2 0.2];
 % clim = [-1.5e-4 1.5e-4];
 onlygoodexpt = 1;
 expttype = 'xcov_spikes';
-% plotlevel = 'switch';
-plotlevel = 'chanpair';
+plotlevel = 'switch';
+% plotlevel = 'chanpair';
+
+useoldInds = 1; % default 0. only use 1 if you haven't extracted inds_base_epoch to OUTSTRUCT_XCOV yet...
+% there will be error if you need to switch to 1.
+
 lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
-    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, OUTSTRUCT);
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, ...
+    OUTSTRUCT, useoldInds);
 
 
 
@@ -2540,7 +2861,7 @@ lt_neural_POPLEARN_Xcov_Sumcorr(OUTSTRUCT_XCOV, SummaryStruct, ...
     PARAMS, SwitchStruct);
 
 
-%% ========= [RAW, RASTERS]
+%% ========= [RAW, RASTERS] FOR A SINGLE CASE, PLOT RANDOM SUBSET OF TRIALS
 
 close all;
 % ======================== PLOT PAIRED RASTERS, ALIGNED TO SYL
@@ -2559,6 +2880,8 @@ lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
     PARAMS, xgramxlim, xgramylim, clim);
 
+
+%% ========== [RAW, PLOT SINGLE TRIAL ALL MEASURES...]
 
 
 
@@ -2646,6 +2969,12 @@ lt_neural_POPLEARN_Cons_PlotOverSum_LFP(OUTSTRUCT_lfp, OUTSTRUCT, ...
 
 %% ##############################################################
 %% ################## [COMPARE SYL-LOCKED ACTIVITY] 
+% --- clear things that take up memory but not needed for following
+% analyses.
+clear SwitchXCovStruct
+clear LFPSTRUCT
+
+%% ============ [PLOTS] - trial-mean LFP and MU, and their relations
 % ============== WILL ALWAYS USE TRIALS IN OUTSTRUCT_XCOV (THOSE ARE GOOD)
 
 % =============== 1) FOR EACH TARGET SYL PLOT ALL LFP AND NEURONS (IN RA
@@ -2654,18 +2983,89 @@ close all;
 onlygoodexpt = 1;
 xtoplot = [-0.12 0.02];
 xtoplot = [-0.1 0.01];
+% xtoplot = [-0.15 0.01];
 plotraw = 0; % 1: plots each syl/expt, chan etc...
 disp('NOTE: remember to include wh72 in this analysis');
 plotAlsoWN = 1; % matters even if plotraw==0. assumes that normal plot is for baseline.
+fpass = [12 150]; % for bandpass filtering LFP.
+% fpass = [20 35]; % for bandpass filtering LFP.
 lt_neural_POPLEARN_SylLocked_Over(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-    PARAMS, onlygoodexpt, xtoplot, plotraw, plotAlsoWN);
+    PARAMS, onlygoodexpt, xtoplot, plotraw, plotAlsoWN, fpass);
+
+
+%% ============ [PLOT] individual trials, LFP, SPIKING
+
+close all;
+onlygoodexpt = 1;
+% xtoplot = [-0.12 0.02];
+% xtoplot = [-0.14 0.01];
+xtoplot = [-0.1 0.0];
+xtoplot = [-0.1 0.0];
+plotraw = 0; % 1: plots each trial (examples...)
+disp('NOTE: remember to include wh72 in this analysis');
+zscore_lfp = 0; % if 1, then z-scores concatenating all trials (a given chan) within time segment (after filtering)
+% fpass = [40 100]; % for bandpass filtering LFP.
+% fpass = [20 35]; % for bandpass filtering LFP.
+% fpass = [5 350]; % for bandpass filtering LFP.
+fpass = [25 60]; % for bandpass filtering LFP.
+% sta_wind = [-0.05 0.05]; % relative to spike, in sec % will only get spikes that are within data...
+sta_wind = [-0.03 0.03]; % relative to spike, in sec % will only get spikes that are within data...
+% kernelSD = 0.015; % empyt for default (for spike smoothgin)
+kernelSD = 0.005; % empyt for default (for spike smoothgin)
+removeBadLFP = 1; % then things that look like large fluctuations..
+[DATSTRUCT_SPK, DATSTRUCT_LFP, PARAMS] = lt_neural_POPLEARN_SylLocked_PlotTrials(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+    SwitchCohStruct, MOTIFSTATS_pop, SummaryStruct, ...
+    PARAMS, onlygoodexpt, xtoplot, plotraw, zscore_lfp, fpass, sta_wind, ...
+    kernelSD, removeBadLFP);
+
+
+% ============ [ANALYSIS] NEURAL CORRELATION PREDICTS STRONGER LFP POPWER?
+close all;
+plotRawRand = 0;
+lt_neural_POPLEARN_SylLocked_Coord(DATSTRUCT_SPK, DATSTRUCT_LFP, PARAMS, ...
+    plotRawRand)
+
+
+% =========== [ANALYSIS] TRIAL-BY-TRIAL CROSS CORRELATIONS [LFP AND
+% SPIKING]
+close all;
+plotRawRand = 0;
+lt_neural_POPLEARN_SylLocked_Timing(DATSTRUCT_SPK, DATSTRUCT_LFP, PARAMS, ...
+    plotRawRand)
+
+
+% =========== [LFP AND SPIKING SPECTRA - AND COHERENCE]
+close all;
+xtoplot;
+lt_neural_POPLEARN_SylLocked_Spectra(DATSTRUCT_SPK, DATSTRUCT_LFP, PARAMS, ...
+    xtoplot, SwitchCohStruct, SwitchStruct);
 
 
 
-%% ###################################################################
-%% ###################################################################
-%% WITHIN REGION CORRELATIONS CHANGE?
+
+%% ============ [ANALYSIS] FR CORR CHANGE DURING LEARNIGN?
+close all;
+lt_neural_POPLEARN_SylLocked_CoorLearn(DATSTRUCT_SPK, DATSTRUCT_LFP, ...
+    PARAMS, OUTSTRUCT_XCOV, SwitchStruct);
+
+%% =========== [PLOT ALL CROSS CORRELATIONS - USING BINNED SPIKES]
+% datapoint = combination of syllablwe and neuron pair.
+close all;
+onlygoodexpt = 1;
+lt_neural_POPLEARN_XCov_BaseCorr(OUTSTRUCT_XCOV, PARAMS, onlygoodexpt, SwitchStruct)
+
+%% ============= RAW cross correlation (actually sliding dot product)
+
+y = mean(OUTSTRUCT_XCOV.XcovBase_NoMinShuff,1);
+ysem = lt_sem(OUTSTRUCT_XCOV.XcovBase_NoMinShuff);
+x = PARAMS.Xcov_ccLags;
+lt_figure;  hold on;
+xlabel('LMAN -- RA');
+ylabel('sliding dot product');
+shadedErrorBar(x, y, ysem, {'Color', 'k'},1);
+xlim([-0.04 0.04]);
+lt_plot_zeroline_vert;
 
 
 

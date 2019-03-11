@@ -52,6 +52,19 @@ elseif strcmp(dataset, 'xcov_spikes')
     firstswitchofday=1;
     indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
         firstswitchfortarget_withinday, firstswitchofday, birdtoget);
+elseif strcmp(dataset, 'lfp_good_and_spikes') % this removes experiments that by eye look like have strong shared fluctuation between LMAN and RA
+    birdtoget = [1 2 4];
+    swtoget = {[0 1], [0 -1]}; % passes if matches ANY of these
+    firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets
+    % for a given switch did not have a previous switch on the same day
+    % swtoget = {[1 0], [-1 0]}; % passes if matches ANY of these
+    % firstswitchfortarget_withinday = 1; % if 1, then onlky keeps if all targets
+    % for a given switch did not have a previous switch on the same day
+    firstswitchofday=1;
+    handRemoveLFP = 1;
+    indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
+        firstswitchfortarget_withinday, firstswitchofday, birdtoget, ...
+        handRemoveLFP);
 end
 
 %%

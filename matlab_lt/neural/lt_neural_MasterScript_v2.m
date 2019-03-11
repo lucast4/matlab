@@ -3,20 +3,21 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'pu69wh78', 'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
-BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
-% BrainArea = {'LMAN', 'RA'}; % 
+% BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
+BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
 ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 1;
+LearningOnly = 0;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
-onlySpikes = 2; % [default =0]if 1, then only keeps if have spiking data; if 0, then gets anything.
+onlySpikes = 1; % [default =1]if 1, then only keeps if have spiking data; if 0, then gets anything.
 % if 2, then is for LFP analysis - i.e. for wh72 gets only if not SU or MU
 % set to 2 if want to get data for cohere/xcov.
+% NOTE: use 1 if want to look at spiking experiments across birds...
 [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database(BirdsToKeep, ...
     BrainArea, ExptToKeep, RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
     extractpreDatenums, onlySpikes);
@@ -38,7 +39,7 @@ end
 
 
 %% ========= [NEGATIVE CONTROLS] CHANNELS OUTSIDE OF SONG SYSTEM
-% RUN THIS AFTER EXTRACTING.
+% RUN THIS AFTER EXTRACTING. % USE ESPECIALYL FOR POPLEARN ANALYSIS.
 
 SummaryStruct = lt_neural_CONTROL_Extract(SummaryStruct);
 
@@ -158,6 +159,9 @@ lt_batchsong_extractWNhit([], [], Allbird_Fnames);
 %% ***************************************** METADATA CODE
 %% ======== SAVE META INFO FOR LEARNING EXPT HERE
 % edit this by hand
+% NOTE: make sure that the first switch for every syllable starts with Of
+% [if it is true that there is period withouit WN that you would want to
+% analyze]
 
 % 1) --- LOAD
 LearningMetaDat = lt_neural_v2_LoadLearnMetadat;

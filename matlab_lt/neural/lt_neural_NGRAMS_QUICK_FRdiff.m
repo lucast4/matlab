@@ -21,6 +21,8 @@ function [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds, ...
 
 % ---------------
 % DoDecode = 1, then does logistic regression
+
+    
 %% ============
 % since will get zscore, shuff should be at least 2
 nshufftmp = max([2 nshufftmp]);
@@ -167,7 +169,10 @@ if DoDecode==1
     FRdiffDAT = DecodeDAT;
     FRdiffShuff = DecodeShuff;
     FRdiff_Z = Decode_Z;
-    
+else
+    DecodeDAT = [];
+    DecodeShuff = [];
+    Decode_Z = [];
 end
 
 

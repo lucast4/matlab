@@ -1,6 +1,7 @@
 function [OUTSTRUCT, PARAMS] = lt_neural_Coher_RecalcMat(SwitchStruct, OUTSTRUCT, OUTSTRUCT_CohMatOnly, ...
     SwitchCohStruct, PARAMS, twind, fwind, wntouse, useWNtiming, ...
-    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials,extractLFP, lfpUseMedian, cohUseMedian, ...
+    prewind_relWN, COHSTRUCT, RemoveIfTooFewTrials, removebadtrialtype, extractLFP, lfpUseMedian, ...
+    specScaleType, cohUseMedian, ...
     removebadsyl, normtoshuff, normtype, OUTSTRUCT_CohMatOnly_shift)
 %% lt 2/21/19 - also extract mean LFP power...
 disp('NOTE: normalization doesnt apply for LFP (i.e. normn to shuffle.)');
@@ -20,6 +21,12 @@ interpol =0; % across time  [NOT YET DONE].
 onlyusegoodtargsyls = 1; % default = 1, i.e. gets timing only from that that will actually analyze.
 
 
+%% ==== make sure datasets match up
+if length(OUTSTRUCT.bnum) ~= size(OUTSTRUCT_CohMatOnly,1)
+    disp('NOTE!!!! coh stuff will be incorrect - datasets are not matched...');
+    pause;
+end
+
 %% === if extract LFP, have to first load lfp data
 if extractLFP==1
     disp('LOADING LFP DATA');
@@ -30,20 +37,60 @@ if extractLFP==1
     assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S1MatOnly,1));
     assert(length(OUTSTRUCT.bnum) == size(OUTSTRUCT_S2MatOnly,1));
     
-    assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
-    assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
-    assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
-    assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
+    % =========== VARIOUS SANITY CHECKS
+    
+    try
+        assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
+        assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
+        assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
+        assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
+    catch err
+        try
+            % ================
+            settmp = 1;
+            if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
+                settmp=2;
+                assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif));
+            end
+            PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
+            
+            assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
+            assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
+            assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
+            assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
+        catch err
+            PARAMS.tbins = PARAMS.tbins_old;
+            PARAMS.ffbins = PARAMS.ffbins_old;
+            
+            assert(length(PARAMS.tbins) == size(OUTSTRUCT_S2MatOnly{1},1));
+            assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S2MatOnly{1},2));
+            assert(length(PARAMS.tbins) == size(OUTSTRUCT_S1MatOnly{1},1));
+            assert(length(PARAMS.ffbins) == size(OUTSTRUCT_S1MatOnly{1},2));
+        end
+    end
 end
 
 
 %% ==== make sure datasets match up
-if length(OUTSTRUCT.bnum) ~= size(OUTSTRUCT_CohMatOnly,1)
-    disp('NOTE!!!! coh stuff will be incorrect - datasets are not matched...');
-    pause;
+if length(OUTSTRUCT.bnum) == size(OUTSTRUCT_CohMatOnly,1)
+    try
+    assert(length(PARAMS.tbins)==size(OUTSTRUCT_CohMatOnly{1},1), 'tbins not corrent unsure why..');
+    assert(length(PARAMS.ffbins)==size(OUTSTRUCT_CohMatOnly{1},2), 'fbins not corrent unsure why..');
+    catch err
+                    settmp = 1;
+            if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
+                settmp=2;
+                assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif));
+            end
+            
+            PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
+            PARAMS.ffbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).ffbins;
+    
+            
+            assert(length(PARAMS.tbins)==size(OUTSTRUCT_CohMatOnly{1},1), 'tbins not corrent unsure why..');
+    assert(length(PARAMS.ffbins)==size(OUTSTRUCT_CohMatOnly{1},2), 'fbins not corrent unsure why..');
+    end
 end
-
-
 
 %%
 
@@ -59,24 +106,28 @@ specdiff_chan1_all = [];
 specscal_chan2_all = {};
 specdiff_chan2_all = [];
 
+SpecMean_Base_Chan1 = {};
+SpecMean_WN_Chan1 = {};
+
+SpecMean_Base_Chan2 = {};
+SpecMean_WN_Chan2 = {};
+
 % ========= params for scalars
 indT = PARAMS.tbins>=twind(1) & PARAMS.tbins<=twind(2);
 indF = PARAMS.ffbins>=fwind(1) & PARAMS.ffbins<=fwind(2);
 
-if length(PARAMS.tbins)~=size(OUTSTRUCT_CohMatOnly{1},1)
-    disp('REEXTRACTING tbine: been overwritten with wrong one (wn realign...)');
-    % reextract correct tbins
-    % ================
-    settmp = 1;
-    if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
-        settmp=2;
-        assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif));
-    end
-    PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
-end
-
-assert(length(PARAMS.tbins)==size(OUTSTRUCT_CohMatOnly{1},1), 'tbins not corrent unsure why..');
-assert(length(PARAMS.ffbins)==size(OUTSTRUCT_CohMatOnly{1},2), 'fbins not corrent unsure why..');
+% if length(PARAMS.tbins)~=size(OUTSTRUCT_CohMatOnly{1},1)
+%     disp('REEXTRACTING tbine: been overwritten with wrong one (wn realign...)');
+%     % reextract correct tbins
+%     % ================
+%     settmp = 1;
+%     if isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif)
+%         settmp=2;
+%         assert(~isempty(COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif));
+%     end
+%     PARAMS.tbins = COHSTRUCT.bird(1).experiment(1).setnum(settmp).motif(1).t_relons;
+% end
+%
 
 % ===============
 for i=1:length(OUTSTRUCT.bnum)
@@ -85,6 +136,34 @@ for i=1:length(OUTSTRUCT.bnum)
     indsbase = find(OUTSTRUCT.indsbase{i});
     indswn = find(OUTSTRUCT.indsWN{i});
     ntrial = length(OUTSTRUCT.ffvals);
+    
+    
+    % ====================== GET COHERENCE DATA
+    bnum = OUTSTRUCT.bnum(i);
+    enum = OUTSTRUCT.enum(i);
+    sw = OUTSTRUCT.switch(i);
+    mm = OUTSTRUCT.motifnum(i);
+    mID = OUTSTRUCT.motifID_unique(i);
+    mname = OUTSTRUCT.motifname{i};
+    bname = SwitchStruct.bird(bnum).birdname;
+    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
+
+    
+    % =============== REMOVE BAD TRIALS IF DESIRED.
+    tvals = OUTSTRUCT.tvals{i};
+    if ~isempty(removebadtrialtype)
+        badtrials = lt_neural_QUICK_RemoveTrials(bname, ename, sw, tvals, ...
+            removebadtrialtype);
+        
+        badtrials=find(badtrials);
+        
+        % -- remove bad trials
+        indsbase(ismember(indsbase, badtrials)) = [];
+        indswn(ismember(indswn, badtrials)) = [];
+    end
+    
+   
+    
     % ======================
     indsbase_epoch = indsbase(end-round(length(indsbase)/2):end);
     
@@ -98,22 +177,22 @@ for i=1:length(OUTSTRUCT.bnum)
         indswn_epoch = indswn(1:round(length(indswn)/2));
     end
     
-    % ====================== GET COHERENCE DATA
-    bnum = OUTSTRUCT.bnum(i);
-    enum = OUTSTRUCT.enum(i);
-    sw = OUTSTRUCT.switch(i);
-    mm = OUTSTRUCT.motifnum(i);
-    mID = OUTSTRUCT.motifID_unique(i);
-    mname = OUTSTRUCT.motifname{i};
-    bname = SwitchStruct.bird(bnum).birdname;
-    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
     
-    if removebadsyl==1
+    
+    
+    
+   if removebadsyl==1
         sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, sw, mname, ...
             {'wn'});
         if sylbad==1
             Cohmean_base = [Cohmean_base; nan(length(indT), length(indF))];
             Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
+            
+            SpecMean_Base_Chan1 = [SpecMean_Base_Chan1; nan(length(indT), length(indF))];
+            SpecMean_WN_Chan1 = [SpecMean_WN_Chan1; nan(length(indT), length(indF))];
+            SpecMean_Base_Chan2 = [SpecMean_Base_Chan2; nan(length(indT), length(indF))];
+            SpecMean_WN_Chan2 = [SpecMean_WN_Chan2; nan(length(indT), length(indF))];
+            
             cohscal_all = [cohscal_all; nan(1,ntrial)];
             cohscal_diff_all = [cohscal_diff_all; nan];
             specscal_chan1_all = [specscal_chan1_all; nan];
@@ -124,11 +203,19 @@ for i=1:length(OUTSTRUCT.bnum)
         end
     end
     
+    
+   
+    
     if RemoveIfTooFewTrials==1
         if length(indsbase_epoch)<Nmin | length(indswn_epoch)<Nmin
             disp(['SKIP SYL (N too low): '  num2str(length(indsbase_epoch)) '-' num2str(length(indswn_epoch))]);
             Cohmean_base = [Cohmean_base; nan(length(indT), length(indF))];
             Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
+            SpecMean_Base_Chan1 = [SpecMean_Base_Chan1; nan(length(indT), length(indF))];
+            SpecMean_WN_Chan1 = [SpecMean_WN_Chan1; nan(length(indT), length(indF))];
+            SpecMean_Base_Chan2 = [SpecMean_Base_Chan2; nan(length(indT), length(indF))];
+            SpecMean_WN_Chan2 = [SpecMean_WN_Chan2; nan(length(indT), length(indF))];
+            
             cohscal_all = [cohscal_all; nan(1,ntrial)];
             cohscal_diff_all = [cohscal_diff_all; nan];
             specscal_chan1_all = [specscal_chan1_all; nan];
@@ -148,16 +235,32 @@ for i=1:length(OUTSTRUCT.bnum)
         
         % --- run
         specmat = SmatThis{i};
+        % --- 1) RESCALE SPECMAT
+        [~, specmat] = lt_neural_LFP_ScaleSpecgram(specmat(:,:, indsbase_epoch), ...
+            specmat, specScaleType);
+        
         % -- 1) extract trial vector of power scalar
         specscal = squeeze(mean(mean(specmat(indT, indF, :), 1),2));
         % -- 2) scalar difference (train minus base)
         if lfpUseMedian==1
-        specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));    
+            specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));
         else
-        specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
+            specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
         end
         specscal_chan1_all = [specscal_chan1_all; specscal];
         specdiff_chan1_all = [specdiff_chan1_all; specdiff];
+        
+        % --------------- EXTRACT BASELINE AND WN MEAN SPECTROGRAM
+        if lfpUseMedian==1
+            sgram_base = median(specmat(:,:, indsbase_epoch),3);
+            sgram_WN = median(specmat(:,:, indswn_epoch),3);
+        else
+            sgram_base = mean(specmat(:,:, indsbase_epoch),3);
+            sgram_WN = mean(specmat(:,:, indswn_epoch),3);
+        end
+        % -- save
+        SpecMean_Base_Chan1 = [SpecMean_Base_Chan1; sgram_base];
+        SpecMean_WN_Chan1 = [SpecMean_WN_Chan1; sgram_WN];
         
         
         % =============== SITE 2
@@ -165,21 +268,45 @@ for i=1:length(OUTSTRUCT.bnum)
         
         % --- run
         specmat = SmatThis{i};
+        % --- 1) RESCALE SPECMAT
+        [~, specmat] = lt_neural_LFP_ScaleSpecgram(specmat(:,:, indsbase_epoch), ...
+            specmat, specScaleType);
         % -- 1) extract trial vector of power scalar
         specscal = squeeze(mean(mean(specmat(indT, indF, :), 1),2));
         % -- 2) scalar difference (train minus base)
         if lfpUseMedian==1
-        specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));    
+            specdiff = median(specscal(indswn_epoch)) - median(specscal(indsbase_epoch));
         else
-        specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
+            specdiff = mean(specscal(indswn_epoch)) - mean(specscal(indsbase_epoch));
         end
         specscal_chan2_all = [specscal_chan2_all; specscal];
         specdiff_chan2_all = [specdiff_chan2_all; specdiff];
+        
+        % --------------- EXTRACT BASELINE AND WN MEAN SPECTROGRAM
+        if lfpUseMedian==1
+            sgram_base = median(specmat(:,:, indsbase_epoch),3);
+            sgram_WN = median(specmat(:,:, indswn_epoch),3);
+        else
+            sgram_base = mean(specmat(:,:, indsbase_epoch),3);
+            sgram_WN = mean(specmat(:,:, indswn_epoch),3);
+        end
+        
+        % -- save
+        SpecMean_Base_Chan2 = [SpecMean_Base_Chan2; sgram_base];
+        SpecMean_WN_Chan2 = [SpecMean_WN_Chan2; sgram_WN];
     end
     
     
     
     %% =============== recalc coherence mat
+    if isempty(OUTSTRUCT_CohMatOnly)
+        Cohmean_base = [Cohmean_base; nan(length(indT), length(indF))];
+        Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
+        cohscal_all = [cohscal_all; nan(1,ntrial)];
+        cohscal_diff_all = [cohscal_diff_all; nan];
+        continue
+    end
+    
     % ================== GET RAW COHMAT
     if (1)
         cohmat = OUTSTRUCT_CohMatOnly{i};
@@ -202,10 +329,10 @@ for i=1:length(OUTSTRUCT.bnum)
         Cohmean_wn = [Cohmean_wn; nan(length(indT), length(indF))];
         cohscal_all = [cohscal_all; nan(1,ntrial)];
         cohscal_diff_all = [cohscal_diff_all; nan];
-        specscal_chan1_all = [specscal_chan1_all; nan];
-        specdiff_chan1_all = [specdiff_chan1_all; nan];
-        specscal_chan2_all = [specscal_chan2_all; nan];
-        specdiff_chan2_all = [specdiff_chan2_all; nan];
+        %         specscal_chan1_all = [specscal_chan1_all; nan];
+        %         specdiff_chan1_all = [specdiff_chan1_all; nan];
+        %         specscal_chan2_all = [specscal_chan2_all; nan];
+        %         specdiff_chan2_all = [specdiff_chan2_all; nan];
         continue
     end
     
@@ -318,8 +445,8 @@ for i=1:length(OUTSTRUCT.bnum)
         % --- then can get scalars from timecourse of cohscalars
         cohscal_base = mean(cohscal(indsbase_epoch));
         cohscal_wn = mean(cohscal(indswn_epoch));
-%         cohscal_base = median(cohscal(indsbase_epoch));
-%         cohscal_wn = median(cohscal(indswn_epoch));
+        %         cohscal_base = median(cohscal(indsbase_epoch));
+        %         cohscal_wn = median(cohscal(indswn_epoch));
     end
     cohscal_diff = cohscal_wn - cohscal_base;
     
@@ -345,11 +472,20 @@ OUTSTRUCT.CohMean_WN = Cohmean_wn;
 OUTSTRUCT.cohscal = cohscal_all;
 OUTSTRUCT.cohscal_diff = cohscal_diff_all;
 
-% =======
-OUTSTRUCT.specscal_chan1_all = specscal_chan1_all;
-OUTSTRUCT.specscal_chan2_all = specscal_chan2_all;
-OUTSTRUCT.specdiff_chan1_all = specdiff_chan1_all;
-OUTSTRUCT.specdiff_chan2_all = specdiff_chan2_all;
 
+if extractLFP==1
+    OUTSTRUCT.Spec1Mean_Base = SpecMean_Base_Chan1;
+    OUTSTRUCT.Spec1Mean_WN = SpecMean_WN_Chan1;
+    
+    OUTSTRUCT.Spec2Mean_Base = SpecMean_Base_Chan2;
+    OUTSTRUCT.Spec2Mean_WN = SpecMean_WN_Chan2;
+    
+    % =======
+    OUTSTRUCT.specscal_chan1_all = specscal_chan1_all;
+    OUTSTRUCT.specscal_chan2_all = specscal_chan2_all;
+    
+    OUTSTRUCT.specdiff_chan1_all = specdiff_chan1_all;
+    OUTSTRUCT.specdiff_chan2_all = specdiff_chan2_all;
+end
 
 

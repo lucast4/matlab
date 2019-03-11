@@ -56,7 +56,8 @@ trialstouse = 'default'; % then inds_epoch as in origianl analysis
 % trialstouse = 'all'; % entire wn vs. base
 % (takes entire train and base).
 ntapers = []; % leave [] to set as default.
-movingwin = [0.1 0.01]; % leave exmpty for default. [applies for both welches and multiutaper]
+% movingwin = [0.1 0.01]; % leave exmpty for default. [applies for both welches and multiutaper]
+movingwin = [0.150 0.01]; % leave exmpty for default. [applies for both welches and multiutaper]
 tw = [];
 
 CohMean_Base = cell(size(OUTSTRUCT.bnum,1),1);

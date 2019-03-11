@@ -656,7 +656,12 @@ if strcmp(fieldtoplot, 'spec')
     ylabel('(wn-base) - (wn-base)]');
     xlim(XLIM);
     ylim(YLIM);
-    
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    lt_neural_Coher_Plot(dat3, tbins, ffbins, 3, '', clim);
+    title('chan2');
+    ylabel('(wn-base) - (wn-base)]');
+    xlim(XLIM);
+    ylim(YLIM);
     %     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     %     lt_neural_Coher_Plot(dat3, tbins, ffbins, 2, '-', clim+[-addval addval], 1, 1);
     %     title('(wn-base) - (wn-base)]');
@@ -701,7 +706,7 @@ if strcmp(fieldtoplot, 'spec')
     title('chan2');
     xlim(XLIM);
     ylim(YLIM);
-    colorbar('East');
+%     colorbar('East');
     
     % ------------ PLOT TIMECOURSE IN A FEW FREQUENCY BINS
     if plotEachTrial==1

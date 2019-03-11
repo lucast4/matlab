@@ -51,6 +51,7 @@ for i=1:length(OUTSTRUCT.bnum)
 end
 
 OUTSTRUCT.indsXcov_all = indsXcov_all;
+
 % ===================== EXTRACT INDS THAT WANT TO KEEP
 OUTSTRUCT = lt_structure_RmvEmptyField(OUTSTRUCT);
 OUTSTRUCT = lt_structure_subsample_all_fields(OUTSTRUCT, indstokeep, 1);

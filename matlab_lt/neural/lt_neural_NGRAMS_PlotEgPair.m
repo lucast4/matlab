@@ -1,5 +1,5 @@
 function lt_neural_NGRAMS_PlotEgPair(OUTSTRUCT, SummaryStruct, Params, ...
-    birdtoplot, neurtoplot, ngramstoplot, pairtypetoplot)
+    birdtoplot, neurtoplot, pairtypes, plotsqrt)
 
 %%
 savedir = '/bluejay5/lucas/analyses/neural/NGRAMS';
@@ -10,59 +10,73 @@ motifpredur = Params.regexpr.motifpredur;
 windowx = motifpredur+Params.window_prem;
 
 %% ========== go thru all birds and extract
-numbirds = length(SummaryStruct.birds);
-for i=1:numbirds
+% numbirds = length(SummaryStruct.birds);
+
+birdname = birdtoplot;
+i = find(strcmp({SummaryStruct.birds.birdname}, birdname));
+nn = neurtoplot;
+
+tmp = load([savedir '/bird' num2str(i) '.mat']);
+birdstruct = tmp.birdstruct;
+
+
+% ============================== calculate things across all neurons
+disp(' ############################################################### ');
+disp([birdname ', ' num2str(i) '-' num2str(nn)]);
+ngramlist = birdstruct.neuron(nn).ngramlist;
+
+
+%% ====================
+bnum =  find(strcmp({SummaryStruct.birds.birdname}, birdname));
+neur = nn;
+bregion = SummaryStruct.birds(bnum).neurons(nn).NOTE_Location;
+%% what pair types to plot?
+
+for i=1:length(pairtypes)
     
-    birdname = SummaryStruct.birds(i).birdname;
-    if ~strcmp(birdname, birdtoplot)
-        continue
+    figcount=1;
+    subplotrows=8;
+    subplotcols=4;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+    
+    ptypeind = find(strcmp(OUTSTRUCT.PairTypesInOrder, pairtypes{i}));
+    
+    indtmp = find(OUTSTRUCT.All_birdnum==bnum & OUTSTRUCT.All_neurnum==nn ...
+        & OUTSTRUCT.All_diffsyl_PairType==ptypeind);
+    
+    
+    ngrampairs = OUTSTRUCT.All_ngrampair_inorder(indtmp, :);
+    ngrampairs_str = OUTSTRUCT.All_ngramstring_inorder(indtmp, :);
+    
+    
+    % ================ plot random subset if too many
+    if size(ngrampairs,1)>32
+        indstmp = randperm(size(ngrampairs, 1), 32);
+        ngrampairs = ngrampairs(indstmp,:);
+        ngrampairs_str = ngrampairs_str(indstmp, :);
     end
     
-    tmp = load([savedir '/bird' num2str(i) '.mat']);
-    birdstruct = tmp.birdstruct;
-    % ============================== calculate things across all neurons
-    numneurons = length(birdstruct.neuron);
-    
-    for nn=1:numneurons
-        if nn ~= neurtoplot
-            continue
-        end
+    for ii=1:size(ngrampairs,1)
         
-        disp(' ############################################################### ');
-        disp([birdname ', ' num2str(i) '-' num2str(nn)]);
-        ngramlist = birdstruct.neuron(nn).ngramlist;
+        % -- 
+        j = ngrampairs(ii,1); % first motif
+        jj = ngrampairs(ii,2); % second motif
         
-        % -----------
-        if isempty(ngramstoplot)
-            
-            if ~isempty(pairtypetoplot)
-                ptypeind = find(strcmp(OUTSTRUCT.PairTypesInOrder, pairtypetoplot));
-                indtmp = find(OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==nn ...
-                    & OUTSTRUCT.All_diffsyl_PairType==ptypeind);
-            else
-                indtmp = find(OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==nn);
-            end
-            % -- pikc a random pair
-            indOutStr = indtmp(randperm(length(indtmp), 1));
-            tmp = OUTSTRUCT.All_ngrampair_inorder(indOutStr, :);
-            j = tmp(1);
-            jj = tmp(2);
-        else
-            asdfasdfasdf;
-        end
-        % ----------- all pairwise ngrams
         
         % =================== 1) FOR EACH PAIR TY
-        % ---- syl 1
         motif1 = birdstruct.neuron(nn).ngramnum(j).regexprstr;
         motif2 = birdstruct.neuron(nn).ngramnum(jj).regexprstr;
+        assert(strcmp(motif1(regexp(motif1, '[a-z]')), ngrampairs_str{ii, 1}));
+        assert(strcmp(motif2(regexp(motif2, '[a-z]')), ngrampairs_str{ii, 2}));
         
         % ---- sample size
-        N1 = size(birdstruct.neuron(nn).ngramnum(j).DAT.frmat, 2);
-        N2 = size(birdstruct.neuron(nn).ngramnum(jj).DAT.frmat, 2);
+        %     N1 = size(birdstruct.neuron(nn).ngramnum(j).DAT.frmat, 2);
+        %     N2 = size(birdstruct.neuron(nn).ngramnum(jj).DAT.frmat, 2);
         
         % ---- pairtypes
-        pairtype = OUTSTRUCT.All_diffsyl_PairType(indOutStr);
+        %     pairtype = OUTSTRUCT.All_diffsyl_PairType(indOutStr);
         
         % ---- osnets and offests
         sylon1 = median(birdstruct.neuron(nn).ngramnum(j).DAT.motifsylOn,1);
@@ -82,333 +96,92 @@ for i=1:numbirds
         %         syloff2 = min(syloff2(syloff2>motifpredur)) - motifpredur;
         
         
-        % ==================
         
-        %% ################################## PLOT
-        lt_figure; hold on;
+        % ############################ PLOT THIS PAIR
+        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+        hsplots = [hsplots hsplot];
+        title(['[' motif1 '-' motif2 ']']);
+        ylabel(pairtypes{i});
+        if ii==1
+            xlabel([birdname '-neur' num2str(neur) '-' bregion]);
+        end
         pcolors = lt_make_plot_colors(3,0, 1);
-        hsplots = [];
         
         % ================ FR STUFF
         frmat1 = birdstruct.neuron(nn).ngramnum(j).DAT.frmat;
         frmat2 = birdstruct.neuron(nn).ngramnum(jj).DAT.frmat;
-        
         x = lt_neural_QUICK_XfromFRmat(frmat1);
         x = x-motifpredur-Params.window_prem(1);
         
-        % ========================= ACTUAL DAT
-        hsplot = lt_subplot(2,2,1); hold on;
-        hsplots = [hsplots hsplot];
-        title(['[' motif1 '-' motif2 '] actual dat']);
-        plot(x, mean(sqrt(frmat1),2), '-', 'Color', pcolors{1});
-        plot(x, mean(sqrt(frmat2),2), '-', 'Color', pcolors{2});
         
-        % -------------- line for syl onset and offsets
-        YLIM = ylim;
-        for k=1:length(sylon1)
-            on = sylon1(k);
-            off = syloff1(k);
-            pcol = pcolors{1};
-            h = patch([on off off on], [YLIM(1) YLIM(1) YLIM(2) YLIM(2)], pcol);
-            set(h, 'FaceAlpha', 0.1);
-            set(h, 'EdgeColor', 'none');
-            
-            on = sylon2(k);
-            off = syloff2(k);
-            pcol = pcolors{2};
-            h = patch([on off off on], [YLIM(1) YLIM(1) YLIM(2) YLIM(2)], pcol);
-            set(h, 'FaceAlpha', 0.1);
-            set(h, 'EdgeColor', 'none');
+        % ######################## ACTUAL DAT
+        if plotsqrt==1
+        shadedErrorBar(x, mean(sqrt(frmat1),2), lt_sem(sqrt(frmat1)'), {'Color', pcolors{1}, ...
+            'LineWidth', 2}, 1)
+        shadedErrorBar(x, mean(sqrt(frmat2),2), lt_sem(sqrt(frmat2)'), {'Color', pcolors{2}, ...
+            'LineWidth', 2}, 1)
+        else
+        shadedErrorBar(x, mean(frmat1,2), lt_sem(frmat1'), {'Color', pcolors{1}, ...
+            'LineWidth', 2}, 1)
+        shadedErrorBar(x, mean(frmat2,2), lt_sem(frmat2'), {'Color', pcolors{2}, ...
+            'LineWidth', 2}, 1)
         end
-        
-        
-        % ============================ FR window
-        nshufftmp=2;
-        Nmin = Params.Nmin;
-        downfactor= 1;
-        [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds] = ...
-            lt_neural_NGRAMS_QUICK_FRdiff(frmat1, frmat2, downfactor, windowx, ...
-            Nmin, nshufftmp);
-        
-        
-        % --------------- plot
-        x = lt_neural_QUICK_XfromFRmat(FRmat) + 0.001;
-        
-        % ============================= SUBPLOT 1 - ACTUAL DAT
-        
-        Yall = {};
-        % --- motif 1
-        indmotif = 1;
-        plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-        Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-        
-        % --- motif 2
-        indmotif = 2;
-        plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-        Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-        
-        yabsdiff = abs(Yall{2} - Yall{1});
-        ylower = min([Yall{1} Yall{2}]');
-        
-        for k = 1:length(x)
-            xx = x(k);
-            line([xx xx], [ylower(k) ylower(k)+yabsdiff(k)], 'Color', [0.6 0.6 0.6]);
-        end
-        lt_plot_text(0, min(min(cell2mat(Yall)))+1, ['FRdiff=' num2str(FRdiffDAT)], 'r');
-        assert(FRdiffDAT == mean(abs(Yall{2} - Yall{1})), 'asfasd');
-        
-        
-        %% =================== same thing, but shuffle frmats first
-        frmat1 = birdstruct.neuron(nn).ngramnum(j).DAT.frmat;
-        frmat2 = birdstruct.neuron(nn).ngramnum(jj).DAT.frmat;
-        
+
+
+        % ################################### OVERLAY SHUFFLE
+        % ---------- LINE FOR PREMOTOR WINDOW
+        [~, ~, ~, ~, ~, TrialInds] = ...
+            lt_neural_NGRAMS_QUICK_FRdiff(frmat1, frmat2, 1, windowx, ...
+            Params.Nmin, 2, Params, Params.dodecode);
+
         FRmat = [frmat1 frmat2];
         FRmat = FRmat(:, randperm(size(FRmat,2)));
         frmat1 = FRmat(:, TrialInds{1});
         frmat2 = FRmat(:, TrialInds{2});
         
-        x = lt_neural_QUICK_XfromFRmat(frmat1);
-        x = x-motifpredur-Params.window_prem(1);
         
-        % ========================= ACTUAL DAT
-        hsplot = lt_subplot(2,2,2); hold on;
-        hsplots = [hsplots hsplot];
+        if plotsqrt==1
+%         shadedErrorBar(x, mean(sqrt(frmat1),2), lt_sem(sqrt(frmat1)'), {'Color', pcolors{1}}, 1)
+%         shadedErrorBar(x, mean(sqrt(frmat2),2), lt_sem(sqrt(frmat2)'), {'Color', pcolors{2}}, 1)
+        plot(x, mean(sqrt(frmat1),2), '-', 'Color', pcolors{1})
+        plot(x, mean(sqrt(frmat2),2), '-', 'Color', pcolors{2})
+        else
+        plot(x, mean(frmat1),2, '-', 'Color', pcolors{1})
+        plot(x, mean(frmat2),2, '-', 'Color', pcolors{2})
+        end
+
         
-        title(['[' motif1 '-' motif2 '] shuffle']);
-        plot(x, mean(sqrt(frmat1),2), '-', 'Color', pcolors{1});
-        plot(x, mean(sqrt(frmat2),2), '-', 'Color', pcolors{2});
         
+        xlim([-0.05 0.1]);
+        if plotsqrt==1
+        ylim([0 30]);
+        else
+            ylim([0 500]);
+        end
         % -------------- line for syl onset and offsets
         YLIM = ylim;
-        for k=1:length(sylon1)
-            on = sylon1(k);
-            off = syloff1(k);
-            pcol = pcolors{1};
-            h = patch([on off off on], [YLIM(1) YLIM(1) YLIM(2) YLIM(2)], pcol);
-            set(h, 'FaceAlpha', 0.1);
-            set(h, 'EdgeColor', 'none');
-            
-            on = sylon2(k);
-            off = syloff2(k);
-            pcol = pcolors{2};
-            h = patch([on off off on], [YLIM(1) YLIM(1) YLIM(2) YLIM(2)], pcol);
-            set(h, 'FaceAlpha', 0.1);
-            set(h, 'EdgeColor', 'none');
-        end
+        %         lt_neural_QUICK_PlotSylPatches(sylon1, syloff1, YLIM, 0, pcolors{1})
+        lt_neural_QUICK_PlotSylPatches(sylon1, syloff1, YLIM(2), 1, pcolors{1})
+        lt_neural_QUICK_PlotSylPatches(sylon2, syloff2, 0.9*YLIM(2), 1, pcolors{2})
         
-        
-        % ============================ FR window
-        nshufftmp=2;
-        Nmin = Params.Nmin;
-        downfactor= 1;
+
+        % ---------- LINE FOR PREMOTOR WINDOW
         [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds] = ...
-            lt_neural_NGRAMS_QUICK_FRdiff(frmat1, frmat2, downfactor, windowx, ...
-            Nmin, nshufftmp);
-        
+            lt_neural_NGRAMS_QUICK_FRdiff(frmat1, frmat2, 1, windowx, ...
+            Params.Nmin, 2, Params, Params.dodecode);
         
         % --------------- plot
         x = lt_neural_QUICK_XfromFRmat(FRmat) + 0.001;
-        
-        % ============================= SUBPLOT 1 - ACTUAL DAT
-        
-        Yall = {};
-        % --- motif 1
-        indmotif = 1;
-        plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-        Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-        
-        % --- motif 2
-        indmotif = 2;
-        plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-        Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-        
-        yabsdiff = abs(Yall{2} - Yall{1});
-        ylower = min([Yall{1} Yall{2}]');
-        
-        for k = 1:length(x)
-            xx = x(k);
-            line([xx xx], [ylower(k) ylower(k)+yabsdiff(k)], 'Color', [0.6 0.6 0.6]);
-        end
-        lt_plot_text(0, min(min(cell2mat(Yall)))+1, ['FRdiff=' num2str(FRdiffDAT)], 'r');
-        assert(FRdiffDAT == mean(abs(Yall{2} - Yall{1})), 'asfasd');
+        line([x(1) x(1)], ylim, 'Color', 'k');
+        line([x(end) x(end)], ylim, 'Color', 'k');
         
         
         % ============
         linkaxes(hsplots, 'xy');
+        
+        
+        
     end
 end
-
-
-
-if (0) % OLD VERSION, only plots within premotor window ...
-    
-    %% ========== go thru all birds and extract
-    numbirds = length(SummaryStruct.birds);
-    for i=1:numbirds
-        
-        birdname = SummaryStruct.birds(i).birdname;
-        if ~strcmp(birdname, birdtoplot)
-            continue
-        end
-        
-        tmp = load([savedir '/bird' num2str(i) '.mat']);
-        birdstruct = tmp.birdstruct;
-        % ============================== calculate things across all neurons
-        numneurons = length(birdstruct.neuron);
-        
-        for nn=1:numneurons
-            if nn ~= neurtoplot
-                continue
-            end
-            
-            disp(' ############################################################### ');
-            disp([birdname ', ' num2str(i) '-' num2str(nn)]);
-            ngramlist = birdstruct.neuron(nn).ngramlist;
-            
-            % -----------
-            if isempty(ngramstoplot)
-                
-                if ~isempty(pairtypetoplot)
-                    ptypeind = find(strcmp(OUTSTRUCT.PairTypesInOrder, pairtypetoplot));
-                    indtmp = find(OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==nn ...
-                        & OUTSTRUCT.All_diffsyl_PairType==ptypeind);
-                else
-                    indtmp = find(OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==nn);
-                end
-                % -- pikc a random pair
-                indOutStr = indtmp(randperm(length(indtmp), 1));
-                tmp = OUTSTRUCT.All_ngrampair_inorder(indOutStr, :);
-                j = tmp(1);
-                jj = tmp(2);
-            else
-                asdfasdfasdf;
-            end
-            % ----------- all pairwise ngrams
-            
-            % =================== 1) FOR EACH PAIR TY
-            % ---- syl 1
-            motif1 = birdstruct.neuron(nn).ngramnum(j).regexprstr;
-            motif2 = birdstruct.neuron(nn).ngramnum(jj).regexprstr;
-            
-            % ---- sample size
-            N1 = size(birdstruct.neuron(nn).ngramnum(j).DAT.frmat, 2);
-            N2 = size(birdstruct.neuron(nn).ngramnum(jj).DAT.frmat, 2);
-            
-            % ---- pairtypes
-            pairtype = OUTSTRUCT.All_diffsyl_PairType(indOutStr);
-            
-            % ---- osnets and offests
-            %         sylon1 = median(birdstruct.neuron(nn).ngramnum(j).DAT.motifsylOn,1);
-            syloff1 = median(birdstruct.neuron(nn).ngramnum(j).DAT.motifsylOff,1);
-            
-            %         sylon2 = median(birdstruct.neuron(nn).ngramnum(jj).DAT.motifsylOn,1);
-            syloff2 = median(birdstruct.neuron(nn).ngramnum(jj).DAT.motifsylOff,1);
-            
-            % --- get the first offset that is after onset
-            syloff1 = min(syloff1(syloff1>motifpredur)) - motifpredur;
-            syloff2 = min(syloff2(syloff2>motifpredur)) - motifpredur;
-            
-            
-            % ================ FR STUFF
-            frmat1 = birdstruct.neuron(nn).ngramnum(j).DAT.frmat;
-            frmat2 = birdstruct.neuron(nn).ngramnum(jj).DAT.frmat;
-            
-            
-            % ================ FR WITHIN PREMOTOR WINDOW
-            nshufftmp=2;
-            Nmin = Params.Nmin;
-            downfactor= 1;
-            [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth, FRmat, TrialInds] = ...
-                lt_neural_NGRAMS_QUICK_FRdiff(frmat1, frmat2, downfactor, windowx, ...
-                Nmin, nshufftmp);
-            
-            
-            
-            % ########################################################## plot
-            lt_figure; hold on;
-            x = lt_neural_QUICK_XfromFRmat(FRmat);
-            pcolors = lt_make_plot_colors(3,0, 1);
-            
-            
-            
-            % ============================= SUBPLOT 1 - ACTUAL DAT
-            lt_subplot(2,2,1); hold on;
-            title(['[' motif1 '-' motif2 '] actual dat']);
-            
-            Yall = {};
-            % --- motif 1
-            indmotif = 1;
-            plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-            Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-            
-            % --- motif 2
-            indmotif = 2;
-            plot(x, mean(FRmat(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-            Yall{indmotif} = mean(FRmat(:, TrialInds{indmotif}),2);
-            
-            yabsdiff = abs(Yall{2} - Yall{1});
-            ylower = min([Yall{1} Yall{2}]');
-            
-            for k = 1:length(x)
-                xx = x(k);
-                line([xx xx], [ylower(k) ylower(k)+yabsdiff(k)], 'Color', [0.6 0.6 0.6]);
-            end
-            lt_plot_text(0, min(min(cell2mat(Yall)))+1, ['FRdiff=' num2str(FRdiffDAT)], 'r');
-            assert(FRdiffDAT == mean(abs(Yall{2} - Yall{1})), 'asfasd');
-            
-            % --- indicate syl onsets/offset
-            onset = -Params.window_prem(1);
-            line([onset onset], ylim, 'Color', 'g');
-            offset = syloff1+onset;
-            line([offset offset], ylim, 'Color', 'g');
-            
-            
-            
-            % ============================ SUBPLOT 2 - SINGLE SHUFF TRIAL
-            lt_subplot(2,2,2); hold on;
-            title('single shufffle');
-            
-            % ------- first, shuffle TrialInds
-            FRmatShuff = FRmat(:, randperm(TrialInds{end}(end)));
-            
-            Yall = {};
-            % --- motif 1
-            indmotif = 1;
-            plot(x, mean(FRmatShuff(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-            Yall{indmotif} = mean(FRmatShuff(:, TrialInds{indmotif}),2);
-            
-            % --- motif 2
-            indmotif = 2;
-            plot(x, mean(FRmatShuff(:, TrialInds{indmotif}),2), '-', 'Color', pcolors{indmotif});
-            Yall{indmotif} = mean(FRmatShuff(:, TrialInds{indmotif}),2);
-            
-            yabsdiff = abs(Yall{2} - Yall{1});
-            ylower = min([Yall{1} Yall{2}]');
-            
-            for k = 1:length(x)
-                xx = x(k);
-                line([xx xx], [ylower(k) ylower(k)+yabsdiff(k)], 'Color', [0.6 0.6 0.6]);
-            end
-            lt_plot_text(0, min(min(cell2mat(Yall)))+1, ...
-                ['FRdiff=' num2str(mean(abs(Yall{2} - Yall{1})))], 'r');
-            
-            % --- indicate syl onsets/offset
-            onset = -Params.window_prem(1);
-            line([onset onset], ylim, 'Color', 'g');
-            offset = syloff1+onset;
-            line([offset offset], ylim, 'Color', 'g');
-            
-        end
-    end
-    
-    
-end
-
-
-
-
-
-
-
-
+% ==================
 

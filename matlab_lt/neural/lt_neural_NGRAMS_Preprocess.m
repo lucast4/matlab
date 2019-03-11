@@ -108,6 +108,9 @@ if (0)
     
 end
 
+%% ============ REMOVE EMPTY FIELDS FROM OUTSTURCT
+
+OUTSTRUCT = lt_structure_RmvEmptyField(OUTSTRUCT);
 %% ============ REMOVE BAD LABEL PAIRS FROM DATASET
 
 % ==== save original outsturct
@@ -131,6 +134,7 @@ for j=1:length(fnames)
         ytmp = ytmp(indstokeep, :);
         OUTSTRUCT.(fnames{j}) = ytmp;
     catch err
+        disp('ok');
         try ytmp = ytmp(:, indstokeep);
             OUTSTRUCT.(fnames{j}) = ytmp';
         catch err

@@ -15,6 +15,9 @@ Params.dirname = dirname;
 Params.doSqrtTransform = doSqrtTransform;
 Params.use_dPrime = use_dPrime;
 Params.nshufftmp = nshufftmp; % 50-100 is optimal, see DIAG below.
+% NOTE: I think I keep this at 2, since subsequent analysis does not use
+% it.
+Params.dodecode = DoDecode;
 
 %% =========== determine premotor window
 

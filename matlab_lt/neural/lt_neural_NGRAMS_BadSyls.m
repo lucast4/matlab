@@ -98,7 +98,15 @@ if strcmp(Params.strtype, 'xaa')
         
     elseif strcmp(birdname, 'wh44wh39')
         BadStrings = {'jjn'};
+        
+        
+    elseif strcmp(birdname, 'wh72pk12')
+        BadStrings = {}; % NOTE YET CODED
+        
+    elseif strcmp(birdname, 'gr48bu5')
+        BadStrings = {}; % NOTE YET ADDED
     end
+    
 end
 
 assert(exist('BadStrings', 'var')==1, 'bird not coded ...');

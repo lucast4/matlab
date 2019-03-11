@@ -1,5 +1,6 @@
 function lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT, SwitchCohStruct, SwitchStruct, ...
-    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, OUTSTRUCT_LFP)
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, OUTSTRUCT_LFP, ...
+    useoldInds)
 %% 2/1/19 - Plots each scalar, each experiement...
 
 % clim = [-0.1 0.1];
@@ -246,9 +247,9 @@ for i=1:length(OUTSTRUCT.bnum)
     % ================ EXTRACT THINGS
     % ======= 1) LEARNING
     ffvals = OUTSTRUCT_LFP.ffvals{indthis};
-    if (0)
-    indsbase = OUTSTRUCT_LFP.indsbase_epoch{indthis};
-    indswn = OUTSTRUCT_LFP.indsWN_epoch{indthis};
+    if useoldInds==1
+        indsbase = OUTSTRUCT_LFP.indsbase_epoch{indthis};
+        indswn = OUTSTRUCT_LFP.indsWN_epoch{indthis};
     else
        indsbase = OUTSTRUCT.inds_base_epoch{i};
        indswn = OUTSTRUCT.inds_WN_epoch{i};
@@ -536,6 +537,81 @@ end
 xlim([0 5]);
 
 
+% % ################################## SAME PLOT, PLOT ALL DATA
+% lt_subplot(3,2,3); hold on;
+% xlabel('SAME - TARG - DIFF');
+% 
+% % ================================== 1) PLOT THOSE THAT HAVE ALL 3
+% colsthis = 1:3;
+% xthis = [2 1 3];
+% 
+% indsthis = all(~isnan(Yall(:,colsthis))');
+% ythis = Yall(indsthis,colsthis);
+% bnumthis = All_bnum(indsthis);
+% 
+% % -- sort so that is in order of x
+% [~, indstmp] = sort(xthis);
+% xthis = xthis(indstmp);
+% ythis = ythis(:, indstmp);
+% 
+% 
+% % ----- 3) overlay all chans
+% for i=1:size(ythis,1)
+% %     plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)});
+%     plot(xthis, ythis(i,:), '-ok');
+% end
+% 
+% 
+% % ================================== 1) PLOT THOSE THAT ONLY HAVE 2
+% xthis = [2 3];
+% 
+% indsthis = ~all(~isnan(Yall(:,colsthis))');
+% ythis = Yall(indsthis, [1 3]);
+% bnumthis = All_bnum(indsthis);
+% 
+% 
+% % ----- 3) overlay all chans
+% for i=1:size(ythis,1)
+% %     plot(xthis, ythis(i,:), '-o', 'Color', pcols{bnumthis(i)});
+%     plot(xthis, ythis(i,:), '-ok');
+% end
+% 
+% % ------ 1) PLOT MEAN
+% % lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+% lt_plot_bar(xthis, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+% 
+% % ------ 2) OVERLAY EACH BIRD MEAN
+% [ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+% bnumtmp = unique(bnumthis);
+% for i=1:size(ymean,1)
+%     lt_plot(xthis+0.7*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+%     % -- within bird p val
+% %     [~, p] = ttest(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+%     [p] = signrank(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+%     
+%     % --- difference from zero
+%     [p1] = signrank(ythis(bnumthis==bnumtmp(i), 1));
+%    [p2] = signrank(ythis(bnumthis==bnumtmp(i), 2));
+%     % -- plot bird info
+%     lt_plot_text(xthis(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i)) ',p1=' num2str(p1) 'p2=' num2str(p2) ',p(vs same)=' num2str(p)]);
+% end
+% 
+
+
+% 
+% % ------ 2) comaprisons (stats)
+% [p] = signrank(ythis(:,1), ythis(:,2));
+% % [~, p] = ttest(ythis(:,1), ythis(:,2));
+% lt_plot_pvalue(p, 'srank (targ vs. same)', 1);
+% [p] = signrank(ythis(:,2), ythis(:,3));
+% % [~, p] = ttest(ythis(:,2), ythis(:,3));
+% lt_plot_pvalue(p, 'srank (same vs. diff)', 1);
+
+
+
+
+
+
 
 % % ===== only those with 2 (targ diff)
 % lt_subplot(3,2,4); hold on;
@@ -718,9 +794,25 @@ xlabel('Targ, corr (WN - base)');
 
 y = Yall(:,1);
 lt_plot_histogram(y, '', 1, 0, '', 0, 'k');
-
 [p] = signrank(y);
 lt_plot_pvalue(p, 'srank', 1);
+
+YLIM = ylim;
+% --- overlay each birdf
+for i=1:max(All_bnum)
+    y = Yall(All_bnum==i, 1);
+    if isempty(y)
+        continue
+    end
+    ymean = mean(y);
+    ysem = lt_sem(y);
+    p = signrank(y);
+    
+    lt_plot(ymean, 0.95*YLIM(2), {'Xerrors', ysem});
+    lt_plot_text(ymean, YLIM(2), ['b' num2str(i) ', p=' num2str(p)], 'r');
+    
+end
+xlim([-0.3 0.3]);
 lt_plot_zeroline_vert;
 
 

@@ -1,5 +1,6 @@
 function indtoget_b_e_s = lt_neural_LEARN_FilterSwitches(SwitchStruct, swtoget, ...
-    firstswitchfortarget_withinday, firstswitchofday, birdtoget)
+    firstswitchfortarget_withinday, firstswitchofday, birdtoget, ...
+    handRemoveLFP)
 %% lt 12/16/18 - FIND DATA THAT MATCH CRITERIA OF SWITCH TYPE
 % == will consider it a match if EVERY target motif for a given switch
 % pasess criterion.
@@ -16,6 +17,21 @@ end
 if ~exist('birdtoget', 'var')
     birdtoget = [];
 end
+
+%% hand remove LFP experiments that by eye look like might be due to shared noise in LMAN/RA
+
+if ~exist('handRemoveLFP', 'var')
+    handRemoveLFP = 0;
+end
+
+handRemoveList = {...
+    {'wh72pk12', 'RALMANLearn5', 1}, ...
+    {'wh72pk12', 'RALMANLearn6', 1}, ...
+    {'gr48bu5', 'RALMANLearn4', 1}, ...
+    {'gr48bu5', 'RALMANLearn5', 1}, ...
+    {'gr48bu5', 'RALMANLearn6', 1}, ...
+    };
+
 %% hand entered things that should not be included...
 
 % === wh72pk12, RALMANLearn3, switch 7 should be excluded becuase show
@@ -51,6 +67,21 @@ for j=1:length(SwitchStruct.bird)
 %             elseif strcmp(birdname, 'wh72pk12') & strcmp(exptname, 'RALMANLearn6')
 %                 continue
                 % --- no learning.
+            end
+            
+            if handRemoveLFP==1
+                % -- chekc if this expt is in any of the ones to remove
+                
+                tmp1 = cellfun(@(x)strcmp(x{1}, birdname), handRemoveList);
+                tmp2 = cellfun(@(x)strcmp(x{2}, exptname), handRemoveList);
+                tmp3 = cellfun(@(x)(x{3}==ss), handRemoveList);
+                
+                if any(tmp1 & tmp2 & tmp3)
+                    % then means that this bird/expt/switch is listed to be
+                    % removed
+                    continue
+                end
+                
             end
             
             % ##################################

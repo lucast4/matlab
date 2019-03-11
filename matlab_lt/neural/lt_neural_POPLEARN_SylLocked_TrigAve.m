@@ -1,11 +1,10 @@
-function lt_neural_POPLEARN_SylLocked_Over(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
+function lt_neural_POPLEARN_SylLocked_TrigAve(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-    PARAMS, onlygoodexpt, xtoplot, plotraw, plotAlsoWN, fpass)
-%% lt 2/8/19 - plots all syl locked LFP and smoothed MU
-
+    PARAMS, onlygoodexpt, xtoplot, plotraw, plotAlsoWN)
+%% LT 2/25/19 - get LFP triggered MU spiking and spike-triggered LFP
 epochtoplot = 'base_epoch';
 % fpass = [18 35]; % for bandpass filtering LFP.
-% fpass = [12 150]; % for bandpass filtering LFP.
+fpass = [10 150]; % for bandpass filtering LFP.
 
 clim = [-1 1]; % for plotting heat maps
 XLIM = [-0.06 0.06]; % for lags.
@@ -22,7 +21,7 @@ if onlygoodexpt==1
 end
 
 
-%% ============ go thru each switch
+%% ============ go thru each switch [PLOT and COLLECT]
 
 [indsgrp, indsgrpU] = lt_tools_grp2idx({OUTSTRUCT_XCOV.bnum, OUTSTRUCT_XCOV.enum, OUTSTRUCT_XCOV.switch, ...
     OUTSTRUCT_XCOV.motifnum});
@@ -103,8 +102,8 @@ for i=1:length(indsgrpU)
     DAT = MOTIFSTATS_pop.birds(bnum).exptnum(enum).DAT.setnum(nset).motif(mm).SegExtr_neurfakeID;
     segglobal = DAT(1).SegmentsExtract;
     
-[frsmall, x] = lt_neural_POPLEARN_SylLocked_Over_sub2(neurlist, DAT, bregionlist, ...
-    segglobal, xtoplot, plotraw, PARAMS, indstoplot, chanlist);
+    [frsmall, x] = lt_neural_POPLEARN_SylLocked_Over_sub2(neurlist, DAT, bregionlist, ...
+        segglobal, xtoplot, plotraw, PARAMS, indstoplot, chanlist);
     
     FRsmooth_dat = frsmall;
     FRsmooth_neurID = neurlist;
@@ -189,7 +188,7 @@ for i=1:length(indsgrpU)
     
     DATSTRUCT.motifnum = [DATSTRUCT.motifnum; mm];
     DATSTRUCT.FRsmooth_dat = [DATSTRUCT.FRsmooth_dat; FRsmooth_dat'];
-
+    
     DATSTRUCT.FRsmooth_dat_WN = [DATSTRUCT.FRsmooth_dat_WN; frsmall_WN'];
     
     DATSTRUCT.FRsmooth_neurID = [DATSTRUCT.FRsmooth_neurID; FRsmooth_neurID];
@@ -201,7 +200,7 @@ for i=1:length(indsgrpU)
     DATSTRUCT.LFP_chans = [DATSTRUCT.LFP_chans; LFP_chans];
     DATSTRUCT.LFP_bregions = [DATSTRUCT.LFP_bregions; {LFP_bregions}];
     DATSTRUCT.LFP_t = [DATSTRUCT.LFP_t; LFP_t'];
-
+    
     DATSTRUCT.LFP_dat_WN = [DATSTRUCT.LFP_dat_WN; lfpcollect_WN'];
 end
 
@@ -226,16 +225,16 @@ for i=1:length(indsgrpU)
     % === PLOT
     plotWN= 0;
     [fignums_alreadyused, hfigs, figcount, hsplot] = ...
-    lt_neural_POPLEARN_SylLocked_Over_sub3(DATSTRUCT, SummaryStruct, ...
-    subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount, ...
-    i, xtoplot, indsthis,hsplots, indsgrp, indsgrpU, plotWN);
-
-    if plotAlsoWN==1
-        plotWN =1;
-        [fignums_alreadyused, hfigs, figcount, hsplot] = ...
         lt_neural_POPLEARN_SylLocked_Over_sub3(DATSTRUCT, SummaryStruct, ...
         subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount, ...
         i, xtoplot, indsthis,hsplots, indsgrp, indsgrpU, plotWN);
+    
+    if plotAlsoWN==1
+        plotWN =1;
+        [fignums_alreadyused, hfigs, figcount, hsplot] = ...
+            lt_neural_POPLEARN_SylLocked_Over_sub3(DATSTRUCT, SummaryStruct, ...
+            subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount, ...
+            i, xtoplot, indsthis,hsplots, indsgrp, indsgrpU, plotWN);
     end
 end
 

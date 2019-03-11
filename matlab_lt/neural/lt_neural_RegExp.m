@@ -825,8 +825,11 @@ for i=1:length(tokenExtents)
     
     
     %% ============== WITHIN SONG TIMING OF TOKEN
-    
-    WithinSong_TokenOns = SongDat.AllWithinFileOnset(tokenExtents(i));
+    if isfield(SongDat, 'AllWithinFileOnset')
+            WithinSong_TokenOns = SongDat.AllWithinFileOnset(tokenExtents(i));
+    else
+        WithinSong_TokenOns = nan;
+    end
     SegmentsExtract(i).WithinSong_TokenOns=WithinSong_TokenOns;
     
     %% +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -1,13 +1,20 @@
 function lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
-    motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON)
+    motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
+    Nmax, savedirmain)
 
-Nmax = 20; % num trials to plot, if more, then takes random
+% Nmax = 20; % num trials to plot, if more, then takes random
+    tstamp = lt_get_timestamp(0);
 
+if ~exist('savedirmain', 'var')
+    savedirmain = ['/bluejay5/lucas/analyses/neural/FIGS/DIAGN_PlotRawNeural/' tstamp];
+elseif isempty(savedirmain)
+    savedirmain = ['/bluejay5/lucas/analyses/neural/FIGS/DIAGN_PlotRawNeural/' tstamp];
+end
 %% === initiate savedir
 if saveON==1
-    tstamp = lt_get_timestamp(0);
-    savedirmain = ['/bluejay5/lucas/analyses/neural/FIGS/DIAGN_PlotRawNeural/' tstamp];
     mkdir(savedirmain);
+%                 mkdir(savedir);
+                cd(savedirmain);
     save('SummaryStruct', 'SummaryStruct');
 end
 
@@ -31,6 +38,10 @@ for i=1:numbirds
                 continue
             end
         end
+       
+        bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;
+        isSU = SummaryStruct.birds(i).neurons(ii).NOTE_is_single_unit;
+        chan = SummaryStruct.birds(i).neurons(ii).channel;
         
         % ==================== PLOT
         for j = 1:length(motiflist)
@@ -88,14 +99,16 @@ for i=1:numbirds
             for ind = indstoplot
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 title([birdname ',n' num2str(ii) ',' motiftoplot ',tr' num2str(ind)]);
+                ylabel([bregion '-SU' num2str(isSU) '-ch' num2str(chan)]);
                 hsplots = [hsplots hsplot];
                 datneur = SegmentsExtract(ind).neurdatseg_filt;
                 tneur = (1:length(datneur))/NeurDat.metaDat(1).fs;
                 spktimes = SegmentsExtract(ind).spk_Times;
                 
-                plot(tneur, datneur, '-b');
-                plot(spktimes, 0, 'or');
-                line([motifpredur motifpredur], ylim, 'Color', 'k');
+                plot(tneur, datneur, '-k');
+                lt_neural_PLOT_rasterline(spktimes, 0, 'r');
+%                 plot(spktimes, 0, 'or');
+                line([motifpredur motifpredur], ylim, 'Color', 'b');
                 
                 if preAndPostDurRelSameTimept==0
                    % -- put line for all syls in motifs

@@ -132,7 +132,8 @@ elseif plottype==3
     line([0 0], ylim, 'Color', 'k');
     lt_plot_colormap('pval');
 %     colorbar('East');
-    
+        colorbar(colorbarloc);
+
     % --- mark places with pval <0.05
     pmatsig = pmat<log10(0.05);
     for rr=1:length(tbins)

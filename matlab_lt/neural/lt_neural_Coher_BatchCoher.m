@@ -13,6 +13,11 @@ function [C, t, f, phi,S12,S1,S2, Ctrials, Cshuff] = lt_neural_Coher_BatchCoher(
 
 % welch's params
 
+if ~exist('normtype', 'var')
+    normtype = '';
+    Cshuff = [];
+end
+
 %%
 % === chronux p[arams
 lt_switch_chronux(1);
