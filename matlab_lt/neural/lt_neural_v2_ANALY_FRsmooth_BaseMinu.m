@@ -28,6 +28,9 @@ dattype = 'neuron'; % for breaking down shuffle into lower level data.
 % syltypesneeded = [1 1 1] means needs minimum 1 targ, 1 same, 1 diff.
 % [1 0 1] means doesnt care if has same type
 
+
+%% ==== MA KE SURE DIMENSIONS ARE CORRECT
+
 %% ###################### LIMIT TO NEURONS THAT CONTAIN ALL SYL TYPES?
 
 % =-==== go thru all switches. if bad then throw ou
@@ -89,7 +92,118 @@ for i=indsgrpU'
 end
 
 indstokeep = ~ismember(1:length(OUTDAT.All_birdnum), indstoremove');
+disp(['Keeping ' num2str(sum(indstokeep)) '/' num2str(length(indstokeep)) 'neurons (NOT ENOUGHT MOTIFS)']);
 OUTDAT = lt_structure_subsample_all_fields(OUTDAT, indstokeep, 1);
+
+
+%% ####################### SAMPLE SIZES ACROSS EXPERIEMNTS
+[indsgrp, indsgrpU] = lt_tools_grp2idx({OUTDAT.All_birdnum, OUTDAT.All_exptnum, ...
+    OUTDAT.All_swnum, OUTDAT.All_neurnum});
+figcount=1;
+subplotrows=6;
+subplotcols=4;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+Neach_base = cell(length(indsgrpU), 3); % targ, same, diff
+Neach_WN = cell(length(indsgrpU), 3); % targ, same, diff
+
+for i=1:length(indsgrpU)
+    
+    indsthis = indsgrp == indsgrpU(i);
+    
+    bnum = unique(OUTDAT.All_birdnum(indsthis));
+    enum = unique(OUTDAT.All_exptnum(indsthis));
+    sw = unique(OUTDAT.All_swnum(indsthis));
+    neur = unique(OUTDAT.All_neurnum(indsthis));
+    
+    Nbase = cellfun(@length, OUTDAT.AllBase_indsepoch(indsthis));
+    Nwn = cellfun(@(x)x(epochtoplot+1)-x(epochtoplot), OUTDAT.AllWN_indsepoch(indsthis));
+    istarg = OUTDAT.All_istarg(indsthis);
+    issame = OUTDAT.All_issame(indsthis);
+    if ~any(istarg)
+        keyboard
+    end
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title(['b' num2str(bnum) '-e' num2str(enum) '-sw' num2str(sw) '-n' num2str(neur)]);
+    xlabel('N(base)');
+    ylabel('N(wn)');
+    plot(Nbase(istarg==1)+rand-0.5, Nwn(istarg==1)+rand-0.5, 'xr');
+    plot(Nbase(istarg==0 & issame==1)+rand-0.5, Nwn(istarg==0 & issame==1)+rand-0.5, 'ob');
+    plot(Nbase(istarg==0 & issame==0)+rand-0.5, Nwn(istarg==0 & issame==0)+rand-0.5, 'sk');
+    
+    lt_plot_makesquare_plot45line(gca, 'k', -1);
+    
+    % ========== collect
+    Neach_base{i, 1}= Nbase(istarg==1);
+    Neach_base{i, 2}= Nbase(istarg==0 & issame==1);
+    Neach_base{i, 3}= Nbase(istarg==0 & issame==0);
+    
+    Neach_WN{i, 1}= Nwn(istarg==1);
+    Neach_WN{i, 2}= Nwn(istarg==0 & issame==1);
+    Neach_WN{i, 3}= Nwn(istarg==0 & issame==0);
+    
+end
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('targ - same - diff');
+title('baseline(dat = neuron)');
+indscols = 1:3;
+Y = cellfun(@mean, Neach_base);
+indstmp = ~any(isnan(Y(:, indscols)'));
+Y = Y(indstmp,:);
+x = indscols;
+plot(x, Y', '-ok');
+lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y), 'Color', 'r'});
+xlim([0 4]);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('WN(dat = neuron)');
+xlabel('targ - same - diff');
+indscols = 1:3;
+Y = cellfun(@mean, Neach_WN);
+indstmp = ~any(isnan(Y(:, indscols)'));
+Y = Y(indstmp, :);
+x = indscols;
+plot(x, Y', '-ok');
+lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y), 'Color', 'r'});
+xlim([0 4]);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('targ - same - diff');
+title('baseline(dat = neuron)');
+indscols = [1 3];
+Y = cellfun(@mean, Neach_base);
+indstmp = ~any(isnan(Y(:, indscols)'));
+Y = Y(indstmp,indscols);
+x = indscols;
+plot(x, Y', '-ok');
+lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y), 'Color', 'r'});
+xlim([0 4]);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('WN(dat = neuron)');
+xlabel('targ - same - diff');
+indscols = [1 3];
+Y = cellfun(@mean, Neach_WN);
+indstmp = ~any(isnan(Y(:, indscols)'));
+Y = Y(indstmp, indscols);
+x = indscols;
+plot(x, Y', '-ok');
+lt_plot(x+0.2, mean(Y,1), {'Errors', lt_sem(Y), 'Color', 'r'});
+xlim([0 4]);
+
+
+%% ======================= VARIANCE GREATER FOR TARGET SYL?
+%
+% for i=1:length(OUTDAT.All_birdnum)
+%
+%     OUTDAT.All_FRsmooth
+%
+% end
+
 
 %% ####################### SUMMARY - collect, for each subtract global mean
 
@@ -98,6 +212,9 @@ shuffSylType =0;
 plotOn = 1;
 [OUTDAT_tmp] = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffSylType, ...
     epochtoplot, plotOn);
+% if size(OUTDAT_tmp.(analytype){1},1)>1
+%     OUTDAT_tmp.(analytype) = cellfun(@(x)x', OUTDAT_tmp.(analytype), 'UniformOutput', 0);
+% end
 
 % [OUTDAT_tmp] = fn_summaryplot(OUTDAT, SwitchStruct, shuffSylType, ...
 %     epochtoplot, plotOn);
@@ -123,7 +240,7 @@ Ytarg_v2_minusall_dat = mean(abs(cell2mat(tmp(OUTDAT.All_istarg==1))),1);
 % NOTE: This is absolute deviation from baseline. Then compare targ and
 % nontarg. This DIFFERS from the other analyses here (shuffle below), or
 % 'AllOnlyMinusDiff_FRsmooth', which is absolute deviation from the mean of
-% different type (after subtract baseline). 
+% different type (after subtract baseline).
 % NOTE: I am not using this becuase it does not capture the diff between
 % targ and nontarg the same way the analyses above and below do.
 
@@ -174,34 +291,51 @@ title('targ(k) and diff(r)');
 ytarg = AllDiffBase_abs(OUTDAT.All_istarg==1);
 ydiff = AllDiffBase_abs(OUTDAT.All_istarg==0 & OUTDAT.All_issame==0);
 
-xcenters = min(AllDiffBase_abs)-1:5:max(AllDiffBase_abs)+1;
-lt_plot_histogram(ytarg, xcenters, 1, 1, [], 1, 'k');
-lt_plot_histogram(ydiff, xcenters, 1, 1, [], 1, 'r');
+try
+    xcenters = min(AllDiffBase_abs)-1:5:max(AllDiffBase_abs)+1;
+    lt_plot_histogram(ytarg, xcenters, 1, 1, [], 1, 'k');
+    lt_plot_histogram(ydiff, xcenters, 1, 1, [], 1, 'r');
+catch err
+    [~, xcenters] = lt_plot_histogram(ytarg, '', 1, 1, [], 1, 'k');
+    lt_plot_histogram(ydiff, xcenters, 1, 1, [], 1, 'r');
+    
+end
+
 
 %% ===== also compare to shuffle analysis?
 if doShuff==1
-        tbin = OUTDAT.All_FRsmooth_t{1};
-        indstime = tbin>premotorwind(1) & tbin<premotorwind(2);
+    tbin = OUTDAT.All_FRsmooth_t{1};
+    indstime = tbin>premotorwind(1) & tbin<premotorwind(2);
     % ====== many shuffles,
     % each shuffle, permute motif type
     
     Ytarg_shuff = [];
     Ysame_shuff = [];
     Ydiff_shuff = [];
-%     Ywithinwind_all_shuff = [];
+    %     Ywithinwind_all_shuff = [];
     Ytarg_v2_shuffle = [];
     Ytarg_v2_minusall_shuffle = [];
     Ytimewindmetric_SHUFF = [];
+    
+    if all(syltypesneeded == [1 1 1])
+        disp('NOTE: for syltypes [1 1 1] currently shuffling not not best way. currently taking all context/syl and treating independly. idealyl want to keep together all contexts for a given syl.');
+        disp('need to change line 49 in FRsmooth_Comps');
+        pause;
+    end
     for n=1:nshuffs
         disp(['shuff ' num2str(n)]);
         
         shuffSylType = 1;
         plotOn = 0;
+        
         [OUTDAT_tmp] = lt_neural_v2_ANALY_FRsmooth_Comps(OUTDAT, SwitchStruct, shuffSylType, ...
             epochtoplot, plotOn, 0, syltypesneeded);
-%         [OUTDAT_tmp] = fn_summaryplot(OUTDAT, SwitchStruct, shuffSylType, ...
-%             epochtoplot, plotOn);
-        
+        %         [OUTDAT_tmp] = fn_summaryplot(OUTDAT, SwitchStruct, shuffSylType, ...
+        %             epochtoplot, plotOn);
+% if size(OUTDAT_tmp.(analytype){1},1)>1
+%     OUTDAT_tmp.(analytype) = cellfun(@(x)x', OUTDAT_tmp.(analytype), 'UniformOutput', 0);
+% end
+
         
         % ---- save means for diff syl types
         Ytarg_shuff = [Ytarg_shuff; mean(cell2mat(OUTDAT_tmp.(analytype)(OUTDAT_tmp.All_istarg==1)),1)];
@@ -211,7 +345,7 @@ if doShuff==1
         
         tmp = cellfun(@transpose, OUTDAT_tmp.AllDevDiff_NotAbs, 'UniformOutput', 0);
         Ytarg_v2_shuffle = [Ytarg_v2_shuffle; mean(abs(cell2mat(tmp(OUTDAT_tmp.All_istarg==1))),1)];
-
+        
         tmp = cellfun(@transpose, OUTDAT_tmp.AllDevAll_NotAbs, 'UniformOutput', 0);
         Ytarg_v2_minusall_shuffle = [Ytarg_v2_minusall_shuffle; mean(abs(cell2mat(tmp(OUTDAT_tmp.All_istarg==1))),1)];
         
@@ -220,15 +354,15 @@ if doShuff==1
         %     Ydiff_shuff = [Ydiff_shuff; mean(cell2mat(OUTDAT_tmp.AllMinusAll_FRsmooth(OUTDAT_tmp.All_istarg==0 & OUTDAT_tmp.All_issame==0)),1)];
         
         % =================== GET WITHIN TIMEWIND VALUES FOR ALL SYLS
-%         Ywithinwind_all = cell2mat(OUTDAT_tmp.(analytype));
-%         Ywithinwind_all = mean(Ywithinwind_all(:,indstime),2); % get mean over time bins.
-%         Ywithinwind_all_shuff = [Ywithinwind_all_shuff; Ywithinwind_all'];
+        %         Ywithinwind_all = cell2mat(OUTDAT_tmp.(analytype));
+        %         Ywithinwind_all = mean(Ywithinwind_all(:,indstime),2); % get mean over time bins.
+        %         Ywithinwind_all_shuff = [Ywithinwind_all_shuff; Ywithinwind_all'];
         ytimewindmetric = fn_ExtrWithinTimeWind(OUTDAT_tmp, analytype, premotorwind, dattype);
         Ytimewindmetric_SHUFF = [Ytimewindmetric_SHUFF; ytimewindmetric'];
     end
     
     
-    % ################################ PLOT SHUFFLE OUTCOMES
+    %% ################################ PLOT SHUFFLE OUTCOMES
     figcount=1;
     subplotrows=5;
     subplotcols=2;
@@ -243,7 +377,9 @@ if doShuff==1
     title('TARG');
     datreal = Ytarg_dat;
     datshuff = Ytarg_shuff;
-    ylabel('absolute deviation from the mean of diff type (all after subtr base)');
+%     ylabel('absolute deviation from the mean of diff type (all after subtr base)');
+    ylabel(analytype);
+    
     % --- run
     yCI = prctile(datshuff, [2.5 97.5], 1);
     ymean = mean(datshuff,1);
@@ -267,11 +403,13 @@ if doShuff==1
     line([premotorwind(1) premotorwind(1)], ylim, 'Color', 'b')
     line([premotorwind(2) premotorwind(2)], ylim, 'Color', 'b')
     
+    
     % ===== 1) overlay distribution of data and shuffle
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title('SAME');
     datreal = Ysame_dat;
     datshuff = Ysame_shuff;
+    
     % --- run
     yCI = prctile(datshuff, [2.5 97.5], 1);
     ymean = mean(datshuff,1);
@@ -343,7 +481,7 @@ if doShuff==1
     tmp = datshuff>datreal;
     p = log10(sum(tmp,1)./size(tmp,1)+1/nshuffs);
     plot(tbin, p, '-k');
-    line(xlim, log10([0.05 0.05]));    
+    line(xlim, log10([0.05 0.05]));
     
     
     
@@ -382,11 +520,24 @@ if doShuff==1
     % ############################# PLOTS USING PREMOTOR WINDOW
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title('TARG');
-    xlabel('minus base, minus diff, abs');
+    xlabel(analytype);
     indstime = tbin>premotorwind(1) & tbin<premotorwind(2);
     ydat = mean(Ytarg_dat(indstime));
     yshuff = mean(Ytarg_shuff(:, indstime),2);
     lt_plot_shuffresult(ydat, yshuff);
+    
+    % ############################# PLOTS USING PREMOTOR WINDOW
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    title('SAME');
+    if all(syltypesneeded == [1 1 1])
+    xlabel(analytype);
+    indstime = tbin>premotorwind(1) & tbin<premotorwind(2);
+    ydat = mean(Ysame_dat(indstime));
+    yshuff = mean(Ysame_shuff(:, indstime),2);
+    lt_plot_shuffresult(ydat, yshuff);
+    else 
+        lt_plot_annotation(1, 'SKIP - need syltypesneeded == [1 1 1]');
+    end
     
     
     % ######################## USING PREMOTOR WINODW, BUT PLOT SEPARATELY
@@ -394,29 +545,34 @@ if doShuff==1
     lt_figure; hold on;
     title('');
     xlabel('bird, expt, sw, neur');
-    ylabel('scalar, within time wind');
+    ylabel([analytype ', scalar, within time wind']);
     
     for j=1:size(Ytimewindmetric_SHUFF,2) % each ind group (e.g. switches)
-    % ------ 1) plot all shuffles
-    % use mult dist plot
-    yshuff = Ytimewindmetric_SHUFF(:, j);
-    lt_plot_MultDist({yshuff}, j, 0, [0.6 0.6 0.6], 1, 0, 0)
-    
-    % ------ 2 ) overlay all data
-    ydat = Ytimewindmetric_DAT(j);
-    line([j-0.35 j+0.35], [ydat ydat], 'LineWidth', 3)
+        % ------ 1) plot all shuffles
+        % use mult dist plot
+        yshuff = Ytimewindmetric_SHUFF(:, j);
+        lt_plot_MultDist({yshuff}, j, 0, [0.6 0.6 0.6], 1, 0, 0)
+        
+        % ------ 2 ) overlay all data
+        ydat = Ytimewindmetric_DAT(j);
+        line([j-0.35 j+0.35], [ydat ydat], 'LineWidth', 3)
     end
     
     set(gca, 'XTick', 1:size(Ytimewindmetric_SHUFF,2));
     set(gca, 'XTickLabel', num2str(allgrpvals_b_e_s_n));
     rotateXLabels(gca, 90)
+    
+    
+    % ########################### USING PREMOTOR WINDOW, PLOT EACH
+    % SYL/SAME/DIFF, ON SAME PLOT
+    
 end
 
 
 
-%% ###################### FOR EACH EXPERIMENT, 
+%% ###################### FOR EACH EXPERIMENT,
 
-tmp = cell2mat(OUTDAT.AllDevDiff_NotAbs(:))
+tmp = cell2mat(OUTDAT.AllDevDiff_NotAbs(:));
 
 end
 
@@ -425,7 +581,7 @@ function [ytimewindmetric, allgrpvals_b_e_s_n] = fn_ExtrWithinTimeWind(OUTDAT_tm
 
 % dattype = 'switch', 'expt', 'neuron'
 
-% ytimewindmetric = scalars, one for each switch (averaged across neurona nd 
+% ytimewindmetric = scalars, one for each switch (averaged across neurona nd
 % targets. takes average of analytype
 % allgrpvals_b_e_s_n = nunique groups x (bird, expt, switch, neuron)
 %%
@@ -437,9 +593,9 @@ Ywithinwind_all_DAT = mean(Ywithinwind_all_DAT(:,indstime),2); % get mean over t
 
 % ---- 2) extract one value for each switch
 if strcmp(dattype, 'bird')
-indsgrp = lt_tools_grp2idx({OUTDAT_tmp.All_birdnum});    
+    indsgrp = lt_tools_grp2idx({OUTDAT_tmp.All_birdnum});
 elseif strcmp(dattype, 'switch')
-indsgrp = lt_tools_grp2idx({OUTDAT_tmp.All_birdnum, OUTDAT_tmp.All_exptnum, OUTDAT_tmp.All_swnum});
+    indsgrp = lt_tools_grp2idx({OUTDAT_tmp.All_birdnum, OUTDAT_tmp.All_exptnum, OUTDAT_tmp.All_swnum});
 elseif strcmp(dattype, 'expt')
     indsgrp = lt_tools_grp2idx({OUTDAT_tmp.All_birdnum, OUTDAT_tmp.All_exptnum});
 elseif strcmp(dattype, 'neuron')

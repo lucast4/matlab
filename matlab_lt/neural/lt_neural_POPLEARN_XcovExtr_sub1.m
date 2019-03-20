@@ -39,3 +39,8 @@ for ww=1:nwinds
     end
 end
 
+% ======= make single
+xcovgram_base = single(xcovgram_base);
+xcovgram_wn = single(xcovgram_wn);
+
+

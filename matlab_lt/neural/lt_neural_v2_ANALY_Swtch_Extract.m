@@ -65,6 +65,10 @@ for i=1:Numbirds
             targsyl_tmp = SwitchStruct.bird(i).exptnum(ii).switchlist(iii).learningDirs{1};
             targind = find(strcmp(motiflist, targsyl_tmp));
             
+%             if i==3 & ii==3 & iii==1
+%                 keyboard
+%             end
+            
             %% ==== 1) for each motif, plot learning and neural similarity
             for j=1:nummotifs
                 
@@ -188,7 +192,9 @@ for i=1:Numbirds
                     
                     
                     
-                    
+%                     if ~any(trainInds) & iii==1
+% keyboard
+%                     end
                     % =============================== OUTPUT
                     % time, neural, ff,
                     SwitchStruct.bird(i).exptnum(ii).switchlist(iii).neuron(nn).DATA.motif(j).NEURvsbase_FRcorr = NeuralSim;

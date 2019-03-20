@@ -1,7 +1,5 @@
-function lt_neural_v2_ANALY_FRsmooth_Plot(OUTDAT, MOTIFSTATS_Compiled, SwitchStruct)
-%%
-
-
+function lt_neural_v2_ANALY_FRsmooth_Plot(OUTDAT, MOTIFSTATS_Compiled, SwitchStruct, ...
+    birdtoplot, exptoplot, onlyplotTargs)
 
 %%
 numbirds = max(OUTDAT.All_birdnum);
@@ -27,6 +25,18 @@ for i=1:numbirds
                 continue
             end
             
+            if ~isempty(birdtoplot)
+                if ~any(ismember(birdtoplot, i))
+                    continue
+                end
+            end
+            
+            if ~isempty(exptoplot)
+                if ~any(ismember(exptoplot, ii))
+                    continue
+                end
+            end
+            
             for nn=1:numneur
                 
                 bname = SwitchStruct.bird(i).birdname;
@@ -40,6 +50,7 @@ for i=1:numbirds
                     issame_this, fignums_alreadyused, hfigs, figcount, subplotrows, ...
                     subplotcols, MOTIFSTATS_Compiled, SwitchStruct);
                 
+                if onlyplotTargs==0
                 % ========== same types
                 istarg_this = 0;
                 issame_this = 1;
@@ -55,10 +66,11 @@ for i=1:numbirds
                     fn_plotsmooth(OUTDAT, bname, ename, i, ii, ss, nn, istarg_this, ...
                     issame_this, fignums_alreadyused, hfigs, figcount, subplotrows, ...
                     subplotcols, MOTIFSTATS_Compiled, SwitchStruct);
-                
+                end                
             end
-            
+            if onlyplotTargs==0
             pause; close all;
+            end
         end
     end
 end
@@ -84,14 +96,16 @@ for j=indsthis'
     mm = OUTDAT.All_motifnum(j);
     motifthis = ...
         MOTIFSTATS_Compiled.birds(i).exptnum(ii).MOTIFSTATS.neurons(nn).motif_regexpr_str{mm};
-    
+
+    neurlist = find(MOTIFSTATS_Compiled.birds(i).exptnum(ii).neurIDOriginal_inorder);
+    nthis = neurlist(nn);
     
     hsplots = [];
     % ============ BASELINE
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     title('baseline');
     hsplots = [hsplots hsplot];
-    ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn)]});
+    ylabel({[bname], [ename] ['sw' num2str(ss) ', neur' num2str(nn) '[' num2str(nthis) ']']});
     indtmp = 1;
     
     frmat = OUTDAT.All_FRsmooth{j, indtmp};

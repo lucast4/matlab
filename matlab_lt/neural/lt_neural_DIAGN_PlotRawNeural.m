@@ -1,9 +1,15 @@
 function lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
     motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
-    Nmax, savedirmain)
+    Nmax, savedirmain, tdatenum_window)
+
+% tdatenum_window; [datenum datenum] wil only plot trials within this
+% window.
+if ~exist('tdatenum_window', 'var')
+    tdatenum_window = [];
+end
 
 % Nmax = 20; % num trials to plot, if more, then takes random
-    tstamp = lt_get_timestamp(0);
+tstamp = lt_get_timestamp(0);
 
 if ~exist('savedirmain', 'var')
     savedirmain = ['/bluejay5/lucas/analyses/neural/FIGS/DIAGN_PlotRawNeural/' tstamp];
@@ -13,8 +19,8 @@ end
 %% === initiate savedir
 if saveON==1
     mkdir(savedirmain);
-%                 mkdir(savedir);
-                cd(savedirmain);
+    %                 mkdir(savedir);
+    cd(savedirmain);
     save('SummaryStruct', 'SummaryStruct');
 end
 
@@ -38,7 +44,7 @@ for i=1:numbirds
                 continue
             end
         end
-       
+        
         bregion = SummaryStruct.birds(i).neurons(ii).NOTE_Location;
         isSU = SummaryStruct.birds(i).neurons(ii).NOTE_is_single_unit;
         chan = SummaryStruct.birds(i).neurons(ii).channel;
@@ -66,8 +72,17 @@ for i=1:numbirds
                 0, 1, collectWNhit, 0, 0, preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, ...
                 clustnum, PlotDirSong, keepRawNeuralDat);
             
+            
+            
             if isempty(SegmentsExtract)
                 continue
+            end
+            
+            % ======== only kep within datenum window
+            if ~isempty(tdatenum_window)
+                tvals = [SegmentsExtract.song_datenum];
+                indstmp = tvals>tdatenum_window(1) & tvals<tdatenum_window(2);
+                SegmentsExtract = SegmentsExtract(indstmp);
             end
             
             % =============================== DIR OR UNDIR?
@@ -79,10 +94,12 @@ for i=1:numbirds
                 SegmentsExtract([SegmentsExtract.DirSong]==0) = [];
             end
             
-            
-            %% =============== overlay neural + rasters
+            if isempty(SegmentsExtract)
+                continue
+            end
+             %% =============== overlay neural + rasters
             figcount=1;
-            subplotrows=10;
+            subplotrows=11;
             subplotcols=2;
             fignums_alreadyused=[];
             hfigs=[];
@@ -106,19 +123,24 @@ for i=1:numbirds
                 spktimes = SegmentsExtract(ind).spk_Times;
                 
                 plot(tneur, datneur, '-k');
-                lt_neural_PLOT_rasterline(spktimes, 0, 'r');
-%                 plot(spktimes, 0, 'or');
+                lt_neural_PLOT_rasterline(spktimes, 0, 'r', 0, 40);
+                %                 plot(spktimes, 0, 'or');
                 line([motifpredur motifpredur], ylim, 'Color', 'b');
                 
+                % ==== PLOT TIME OF SONG
+                t = datestr(SegmentsExtract(ind).song_datenum, 'ddmmmyyyy-HHMM');
+                xlabel(t);
+                lt_plot_text(0.1, 120, t, 'm', 10);
+                
                 if preAndPostDurRelSameTimept==0
-                   % -- put line for all syls in motifs
-                   for k=1:length(SegmentsExtract(ind).motifsylOnsets)
-                       ons = SegmentsExtract(ind).motifsylOnsets(k);
-                       off = SegmentsExtract(ind).motifsylOffsets(k);
-                       line([ons off], [200 200], 'Color', 'm', 'LineWidth', 2);
-                       line([ons ons], [-200 200], 'Color', 'm', 'LineStyle', '--');
-                       line([off off], [-200 200], 'Color', 'm', 'LineStyle', '--');
-                   end
+                    % -- put line for all syls in motifs
+                    for k=1:length(SegmentsExtract(ind).motifsylOnsets)
+                        ons = SegmentsExtract(ind).motifsylOnsets(k);
+                        off = SegmentsExtract(ind).motifsylOffsets(k);
+                        line([ons off], [200 200], 'Color', 'm', 'LineWidth', 2);
+                        line([ons ons], [-200 200], 'Color', 'm', 'LineStyle', '--');
+                        line([off off], [-200 200], 'Color', 'm', 'LineStyle', '--');
+                    end
                 end
             end
             
@@ -134,7 +156,7 @@ for i=1:numbirds
             %%  SAVE
             
             if saveON ==1
-%                 savedir = '
+                %                 savedir = '
                 savedir = [savedirmain '/' birdname '-neur' num2str(ii) '-' motiftoplot];
                 mkdir(savedir);
                 cd(savedir);
@@ -144,7 +166,7 @@ for i=1:numbirds
             end
             
             
-            %% 
+            %%
             %             % ------------- 2) PLOT SMOOTHED FR
             %             SegmentsExtract = lt_neural_SmoothFR(SegmentsExtract, '');
             %             FRmat = [SegmentsExtract.FRsmooth_rate_CommonTrialDur];

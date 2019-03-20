@@ -1,4 +1,4 @@
-function [indmotif_all, motiflist_out, motifposition_all] = ...
+function [indmotif_all, motiflist_out, motifposition_all, motiflist_out_long] = ...
     lt_neural_QUICK_MotifID(birdname, motifregexp)
 %% lt 10/14/18 - tells you position of a given motif name in global rference frame
 % NOTE: if multiple motifs spelled differently, but refer to same thing
@@ -187,7 +187,7 @@ indbird = strcmp({MotifDatabase.bird.birdname}, birdname);
 assert(sum(indbird)==1, 'PROBLEM - this bird not entered yet');
 
 motiflist_out = MotifDatabase.bird(indbird).motiflist_short;
-
+motiflist_out_long = MotifDatabase.bird(indbird).motifs;
 if isempty(motifregexp)
     indmotif_all = [];
     motifposition_all = [];

@@ -1,5 +1,6 @@
 function OUTDAT = lt_neural_v2_ANALY_FRsmooth(MOTIFSTATS_Compiled, SwitchStruct, onlyFirstSwitch, ...
-    onlyIfSameTarg, BirdsToPlot, BrainLocation, throwoutlonggap, onlyiftargsamedir, removebadsyls)
+    onlyIfSameTarg, BirdsToPlot, BrainLocation, throwoutlonggap, onlyiftargsamedir, removebadsyls, ...
+    removebadchan, removebadtrials)
 
 %% lt - 9/6/18, smoothed FR, average of low and high FF trials, compare to change during learning
 
@@ -37,7 +38,9 @@ OUTDAT.All_FRsmooth = {};
 OUTDAT.All_FRsmooth_t = {};
 OUTDAT.All_FF = {};
 OUTDAT.All_FF_t = {};
-
+OUTDAT.All_indsbase_all = {};
+OUTDAT.All_indstrain_all = {};
+OUTDAT.All_neurnum_orig = [];
 % ============================= RUN THRU ALL DATA
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
@@ -83,31 +86,34 @@ for i=1:numbirds
             
             % =========================== FOR THIS SWITCH, COLLECT SMOOTHED FR
             neuronlist  = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).goodneurons;
+            chanlist = [SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(neuronlist).chan];
             neuronlist_origID = find(MOTIFSTATS_Compiled.birds(i).exptnum(ii).neurIDOriginal_inorder);
             motiflist = {SwitchStruct.bird(i).exptnum(ii).switchlist(ss).STATS_motifsyl.sylname};
             
             sametypelist = lt_neural_QUICK_ExtractSameType(motiflist, targsyls);
             
             
-%             % ============= SKIP IF NOT ENOUGH DATA AT TARGET
-%             swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
-%             swprev = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_previous;
-%             swpost = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_next;
-%             
-%             indtmp = find(ismember({SwitchStruct.bird(i).exptnum(ii).switchlist(ss).STATS_motifsyl.sylname}, targsyls));
-%             for mmm=1:length(indtmp)
-%                 ttmp = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).STATS_motifsyl(1).tvals;
-%                 if sum(ttmp<swthis & ttmp>swprev) < minN
-%                     % -- skip
-%                     skipthis=1;
-%                 elseif sum(ttmp<swthis
-%             end
+            %             % ============= SKIP IF NOT ENOUGH DATA AT TARGET
+            %             swthis = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
+            %             swprev = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_previous;
+            %             swpost = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum_next;
+            %
+            %             indtmp = find(ismember({SwitchStruct.bird(i).exptnum(ii).switchlist(ss).STATS_motifsyl.sylname}, targsyls));
+            %             for mmm=1:length(indtmp)
+            %                 ttmp = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).STATS_motifsyl(1).tvals;
+            %                 if sum(ttmp<swthis & ttmp>swprev) < minN
+            %                     % -- skip
+            %                     skipthis=1;
+            %                 elseif sum(ttmp<swthis
+            %             end
             
             for jjj = 1:length(neuronlist)
                 nn = neuronlist(jjj);
                 nn_orig = neuronlist_origID(nn);
                 
                 bregionthis = MOTIFSTATS_Compiled.SummaryStruct.birds(i).neurons(nn_orig).NOTE_Location;
+                chanthis = MOTIFSTATS_Compiled.SummaryStruct.birds(i).neurons(nn_orig).channel;
+                assert(chanthis==chanlist(jjj))
                 if ~isempty(BrainLocation)
                     if ~any(strcmp(BrainLocation, bregionthis))
                         continue
@@ -123,16 +129,8 @@ for i=1:numbirds
                     istarg = any(strcmp(targsyls, motifthis));
                     issame = any(strcmp(sametypelist, motifthis)) | istarg;
                     
-                    % ========================== REMOVE SYLS THAT ARE BAD
-                    % (I.E. POST TARGET SYL)
-                    if removebadsyls==1
-                        sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, ss, motifthis);
-                        if sylbad==1
-                            disp(['Removing syl, bad syl -----' bname '-' ename '-s' num2str(ss) '-' motifthis]);
-                            continue
-                        end
-                    end
                     
+                    %%
                     if length(SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(nn).DATA.motif) < mm
                         continue
                     end
@@ -145,6 +143,11 @@ for i=1:numbirds
                         inds_base = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(nn).DATA.motif(mm).baseInds;
                         inds_train = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(nn).DATA.motif(mm).trainInds;
                     end
+                    maxtrial = length(inds_train);
+                    
+                    % --- convert to trial num
+                    inds_base = find(inds_base);
+                    inds_train = find(inds_train);
                     
                     % ---- skip if not enough data
                     if sum(inds_base)<minN | sum(inds_train)<minN
@@ -152,9 +155,65 @@ for i=1:numbirds
                         continue
                     end
                     
+                    %% FILTERING EXPERIMENTS
+                    % ========================== REMOVE SYLS THAT ARE BAD
+                    % (I.E. POST TARGET SYL)
+                    if removebadsyls==1
+                        sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, ...
+                            ss, motifthis, {'wn', 'noise'}, chanthis);
+                        if sylbad==1
+                            disp(['Removing syl, bad syl -----' bname '-' ename '-s' num2str(ss) '-' motifthis]);
+                            continue
+                        end
+                    end
+                    
+                    % ======= BAD TRIALS
+                    if removebadtrials==1
+                        tvals_base = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(nn).DATA.motif(mm).tvals(inds_base);
+                        badtrials = lt_neural_QUICK_RemoveTrials(bname, ename, ss, tvals_base, 'spikes', ...
+                            chanthis);
+                        if any(badtrials)
+                            disp(['Removing some trials, [bad trials] -----' bname '-' ename '-s' num2str(ss) '-' motifthis ' -chan' num2str(chanthis)]);
+                            inds_base(badtrials) = [];
+                        end
+                        
+                        
+                        tvals_train = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).neuron(nn).DATA.motif(mm).tvals(inds_train);
+                        badtrials = lt_neural_QUICK_RemoveTrials(bname, ename, ss, tvals_train, 'spikes', ...
+                            chanthis);
+                        
+                        
+                        if any(badtrials)
+                            disp(['Removing some trials, [bad trials] -----' bname '-' ename '-s' num2str(ss) '-' motifthis ' -chan' num2str(chanthis)]);
+                            inds_train(badtrials) = [];
+                        end
+                    end
+                    
+                    % ========== BAD CHANNELS
+                    if removebadchan==1
+                        chanbad = lt_neural_QUICK_RemoveBadChans(bname, ename, ss, chanthis);
+                        if chanbad==1
+                            disp(['Removing syl, [bad chan] -----' bname '-' ename '-s' num2str(ss) '-' motifthis ' -chan' num2str(chanthis)]);
+                            continue
+                        end
+                    end
+                    
+                    
+                    % =================== if no trials base or wn then skip
+                    if isempty(inds_base) | isempty(inds_train)
+                        disp(['NO TRIALS, SKIPPING -----' bname '-' ename '-s' num2str(ss) '-' motifthis ' -chan' num2str(chanthis)]);
+                        continue
+                    end
+                    
+                    
+                    %%
+                    
+                    
                     % ------ collect the data
                     segextract = MOTIFSTATS_Compiled.birds(i).exptnum(ii).MOTIFSTATS.neurons(nn).motif(mm).SegmentsExtract;
-                    assert(length(segextract) == size([inds_base; inds_train],2));
+                    %                     assert(length(segextract) == size([inds_base; inds_train],2));
+                    assert(length(segextract)==maxtrial);
+                    
                     if isempty(segextract)
                         continue
                     end
@@ -187,6 +246,7 @@ for i=1:numbirds
                     
                     fratemat = [segextract(indstmp).FRsmooth_rate_CommonTrialDur];
                     t = segextract(1).FRsmooth_xbin_CommonTrialDur;
+
                     [fratemat, t] = lt_neural_QUICK_GetFRmat(fratemat, t, motif_predur, pretime, posttime);
                     
                     ffthis =  [segextract(indstmp).FF_val];
@@ -220,7 +280,6 @@ for i=1:numbirds
                         
                     end
                     
-                    
                     % ======================== APPEND TO OUTPUT
                     OUTDAT.All_birdnum = [OUTDAT.All_birdnum; i];
                     OUTDAT.All_exptnum = [OUTDAT.All_exptnum; ii];
@@ -228,12 +287,14 @@ for i=1:numbirds
                     OUTDAT.All_istarg = [OUTDAT.All_istarg; istarg];
                     OUTDAT.All_issame = [OUTDAT.All_issame; issame];
                     OUTDAT.All_neurnum = [OUTDAT.All_neurnum; nn];
+                    OUTDAT.All_neurnum_orig = [OUTDAT.All_neurnum_orig; nn_orig];
                     OUTDAT.All_motifnum = [OUTDAT.All_motifnum; mm];
                     OUTDAT.All_FRsmooth = [OUTDAT.All_FRsmooth; FRateall];
                     OUTDAT.All_FRsmooth_t = [OUTDAT.All_FRsmooth_t; FRtbinall];
                     OUTDAT.All_FF = [OUTDAT.All_FF; FFall];
                     OUTDAT.All_FF_t = [OUTDAT.All_FF_t; Tall];
-                    
+                    OUTDAT.All_indsbase_all = [OUTDAT.All_indsbase_all; inds_base];
+                    OUTDAT.All_indstrain_all = [OUTDAT.All_indstrain_all; inds_train];
                 end
                 
             end
@@ -300,9 +361,9 @@ for i=indsgrpU'
         sw = unique(OUTDAT.All_swnum(indsgrp==1));
         disp(['REMOVING!!, ' bname '-' ename '-sw' num2str(sw) ', no target with good sample size ..']);
         indstoremove = [indstoremove; find(indsgrp==i)];
-%         OUTDAT = lt_structure_subsample_all_fields(OUTDAT, indstokeep, 1);
+        %         OUTDAT = lt_structure_subsample_all_fields(OUTDAT, indstokeep, 1);
     end
- end
+end
 % === do remove
 
 indstokeep = ~ismember(1:length(OUTDAT.All_birdnum), indstoremove');

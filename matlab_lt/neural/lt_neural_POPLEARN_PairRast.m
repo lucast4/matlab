@@ -1,7 +1,7 @@
 function lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
     neurpair_globID, motiftoplot, OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-    PARAMS, xgramxlim, xgramylim, clim)
+    PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple)
 
 
 %% ==================== PARAMS
@@ -12,7 +12,7 @@ function lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
 % motiftoplot = {}; % if empty, then plots target(s).
 
 % ========= PLOTTING PARAMS
-Nrand = 20; % number of trials from base and WN to extract
+% Nrand = 20; % number of trials from base and WN to extract
 % clim = [-0.125 0.125]; % for cov gram;
 
 % defgault
@@ -145,8 +145,16 @@ for i=1:numbirds
                 end
                 
                 % === plot random subset of inds from base and WN
-                inds_base_rand = inds_base(sort(randperm(length(inds_base), Nrand)));
-                inds_wn_rand = inds_wn(sort(randperm(length(inds_wn), Nrand)));
+                if length(inds_base)>Nrand
+                    inds_base_rand = inds_base(sort(randperm(length(inds_base), Nrand)));
+                else
+                    inds_base_rand = inds_base;
+                end
+                if length(inds_wn)>Nrand
+                    inds_wn_rand = inds_wn(sort(randperm(length(inds_wn), Nrand)));
+                else
+                    inds_wn_rand = inds_wn;
+                end
                 
                 indstoplot = [inds_base_rand inds_wn_rand];
                 ind_wnon = length(inds_base_rand)+1;
@@ -368,7 +376,7 @@ for i=1:numbirds
                 %% ======= format plot
                 linkaxes(hsplots, 'x');
                 
-                
+                if plotsimple==0
                 %% ############################# PLOT INDIVIDUAL TRIALS
                 hsplots = [];
                 
@@ -606,7 +614,7 @@ for i=1:numbirds
                 lt_plot_MultDist(Yall, [1 2], 1);
                 axis tight;
                 lt_plot_zeroline;
-                
+                end
             end
             
             

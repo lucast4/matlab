@@ -1,6 +1,6 @@
 function lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
-    mintraindur, mintotaltrain, adhoc_replacelearnwithWind2)
+    mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, FFsplit_pu69learn2_combine)
 %% lt 3/5/19 - divides up training into epochs -- here PLOTS
 
 %% ====== [PREPROCESS] only plot good experiments
@@ -63,6 +63,31 @@ elseif strcmp(dattype, 'chan')
     fieldtoget = 'TimeBins_Base_Epochs';
     [allbnum, allenum, allswnum, allDat_TimeMedian] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    % =========== FF SPLIT STUFF
+    fieldtoget = 'xcovscalBase_window_FFsplit';
+    [allbnum, allenum, allswnum, allDat_ffsplit_base] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    % --- first extract just the scalar window you want
+    OUTSTRUCT_XCOV.xcovscalEpochs_FFsplit = ...
+        cellfun(@(x)x{scalwind}, OUTSTRUCT_XCOV.xcovscalEpochs_window_FFsplit, 'UniformOutput', 0);
+    fieldtoget = 'xcovscalEpochs_FFsplit';
+    [allbnum, allenum, allswnum, allDat_epochs_ffsplit] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    fieldtoget = 'learndirTarg';
+    [allbnum, allenum, allswnum, allDat_targLearnDir] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    % ---- learning, each bin split in 2, adaptive and nonadaptive trials.
+    fieldtoget = 'LearnTargDir_Z_XCOV_Split_Adaptive';
+    [allbnum, allenum, allswnum, allDat_learn_Away] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    fieldtoget = 'LearnTargDir_Z_XCOV_Split_NonAdap';
+    [allbnum, allenum, allswnum, allDat_learn_Revert] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
 end
 
 
@@ -79,6 +104,7 @@ allDat_TimeMedian = allDat_TimeMedian(:,2:end, :,:) - ...
 
 
 
+
 %% ==================== [AD HOC] MODIFY SO THAT IS COMPARING WINDOW 1 VS. WINDOW 2
 % DO THIS BY REPLACING LEARNIG MATRIX WITH THE SECOND PEAK
 
@@ -90,6 +116,9 @@ allDat_TimeMedian = allDat_TimeMedian(:,2:end, :,:) - ...
 if adhoc_replacelearnwithWind2==1
     allDat_learn = reshape(allDat_xcov(2, :, :, :), size(allDat_learn));
 end
+
+
+
 %% =================== [PLOT] EACH EXPT,
 
 [indsgrp, indsgrpU] = lt_tools_grp2idx({allbnum, allenum, allswnum});
@@ -243,6 +272,8 @@ linkaxes(hsplots, 'xy');
 %% ================ plot distribution of expt durations
 
 lt_figure; hold on;
+
+lt_subplot(2,2,1); hold on
 exptdur = squeeze(allDat_TimeMedian(1,end, 1, :) - allDat_TimeMedian(1,1, 1, :));
 plot(exptdur, 'ok');
 xlabel('case num');
@@ -250,7 +281,16 @@ ylabel('expt dur (hours, last bin minus first');
 title('red = min train dur');
 line(xlim, [mintraindur mintraindur], 'Color', 'r');
 
-% =============== ONLY KEEP IF DURATION TRAINING LONG ENOUGH.
+
+lt_subplot(2,2,2); hold on
+recdur = squeeze(allDat_TimeMedian(1,end, 1, :));
+plot(recdur, 'ok');
+xlabel('case num');
+ylabel('expt dur (hours, last bin minus first');
+title('red = min train dur');
+line(xlim, [mintotaltrain mintotaltrain], 'Color', 'r');
+
+%% =============== ONLY KEEP IF DURATION TRAINING LONG ENOUGH.
 % LAST BIN MIN US FIRST BIN (OF TRAINING) - THEREFORE NEE DTO HAVE DATA
 % THROUGHOUT TRAINING.
 
@@ -265,11 +305,22 @@ allbnum = allbnum(indstokeep);
 allenum = allenum(indstokeep);
 allswnum = allswnum(indstokeep);
 
+
+% allDat_targLearnDir = 
+allDat_ffsplit_base = allDat_ffsplit_base(:,:,:, indstokeep);
+allDat_epochs_ffsplit = allDat_epochs_ffsplit(:,:,:, indstokeep);
+allDat_targLearnDir = allDat_targLearnDir(:,:,:, indstokeep);
+allDat_learn_Away = allDat_learn_Away(:,:,:,indstokeep);
+allDat_learn_Revert = allDat_learn_Revert(:,:,:,indstokeep);
+
+
 %% ============= REMOVE CASES THAT HAVE TOO SHORT DURATION OF EXPEIRMENT
 % LAST BIN M INUS BASE - DOESN'T CARE WHETHER HAS DATA IN BETWEEM
 
 recdur = squeeze(allDat_TimeMedian(1,end, 1, :));
 indstokeep = recdur>mintotaltrain;
+
+
 allDat_learn = allDat_learn(:,:,:, indstokeep);
 allDat_xcov = allDat_xcov(:,:,:, indstokeep);
 allDat_xcov_basewn = allDat_xcov_basewn(:,:,:, indstokeep);
@@ -280,7 +331,131 @@ allbnum = allbnum(indstokeep);
 allenum = allenum(indstokeep);
 allswnum = allswnum(indstokeep);
 
+% allDat_targLearnDir = 
+allDat_ffsplit_base = allDat_ffsplit_base(:,:,:, indstokeep);
+allDat_epochs_ffsplit = allDat_epochs_ffsplit(:,:,:, indstokeep);
+allDat_targLearnDir = allDat_targLearnDir(:,:,:, indstokeep);
+allDat_learn_Away = allDat_learn_Away(:,:,:,indstokeep);
+allDat_learn_Revert = allDat_learn_Revert(:,:,:,indstokeep);
 
+
+%% ============= FF SPLIT ANALYSES
+
+% ===== first decide if combine last few bins of pu69 data
+if FFsplit_pu69learn2_combine==1
+    i = find(strcmp({SwitchStruct.bird.birdname}, 'pu69wh78'));
+    ii= find(strcmp({SwitchStruct.bird(i).exptnum.exptname}, 'RALMANlearn2'));
+    
+    indsthis = find(allbnum==i & allenum==ii & allswnum==1);
+%     y = squeeze(allDat_learn(:, 1, syltype, indsthis));
+%     lt_figure; hold on;
+%     plot(y, '-ok');
+
+% ==== combine all bins (non-baseline) into last bin
+
+for j=indsthis'
+    
+    tmp = mean(allDat_epochs_ffsplit(:, :, :, j), 1);
+    allDat_epochs_ffsplit(end, :, :, j) = tmp; % replace last bin with this.
+    allDat_epochs_ffsplit(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+
+    tmp = mean(allDat_learn_Away(:, :, :, j), 1);
+    allDat_learn_Away(end, :, :, j) = tmp; % replace last bin with this.
+    allDat_learn_Away(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+    
+    tmp = mean(allDat_learn_Revert(:, :, :, j), 1);
+    allDat_learn_Revert(end, :, :, j) = tmp; % replace last bin with this.
+    allDat_learn_Revert(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+end
+
+end
+
+lt_neural_POPLEARN_Xcov_EpochScal_sub2;
+
+%% =========== collect all correlations (within cases) to compare whetehr AFp bias or overall xcov better predicts laerning
+YYcorr = {};
+
+%% ======== [FFSPLIT VS. ELARNING] Timecourse of change in "apf bias" corelation wtih learning?
+
+% -- measure of afp bias chagne (xcov for pitch in adaptive direction minus
+% in nonadaptive --> then change from baselien)
+tmp = allDat_BaseEpochs_FFsplits_adaptivedir(:,2,:,:) ...
+    - allDat_BaseEpochs_FFsplits_adaptivedir(:,1,:,:); % subtract adaptive from n onadaptiv direciton
+
+allDat_BaseEpochs_AFPbias = tmp - tmp(1,:,:,:); % subtract from baseline
+
+% --- sanity check, this should incresae over laerning
+lt_figure; hold on;
+title('sanity check, increase in "AfP bias" in adaptive direction');
+y = squeeze(allDat_BaseEpochs_AFPbias);
+x = 1:size(y,1);
+plot(x, y, '-k');
+plot(x, nanmean(y,2), '-or');
+
+
+
+% #########################################
+figcount=1;
+subplotrows=4;
+subplotcols=2;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+
+% ================ 
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('rho (neuralbias[FFsplits] vs. learn, over epochs)')
+title('neural(bin n) vs. learn(bin n) [cumulative values]');
+lt_plot_annotation(1, 'bias=neuralxcov in adaptive direction(minus nonadapt, minus base)');
+X = squeeze(allDat_BaseEpochs_AFPbias);
+% X = squeeze(allDat_xcov(scalwind, :, syltype, :));
+Y = squeeze(allDat_learn(:,:, syltype, :));
+Y = [zeros(1, size(Y,2)); Y];
+rho_all = [];
+for i=1:size(X,2)
+    x = X(:,i);
+    y = Y(:,i);
+    
+    %     x = x(2:end);
+    %     y = y(1:end-1);
+%     x = x(1:end-1);
+%     y = y(2:end);
+    rho = corr(x,y);
+    rho_all = [rho_all; rho]
+end
+YYcorr{1} = rho_all;
+rho_all = rho_all(~isnan(rho_all));
+lt_plot_histogram(rho_all);
+[~, p]= ttest(rho_all);
+% p= signrank(rho_all);
+lt_plot_pvalue(p, 'ttest',1);
+
+% ================ SHUFFLE ANALYSIS
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+
+
+nshuff = 1000;
+doshift = 0;
+bintobinchanges = 0; % then this, instead of cumulative values.
+vers = 2;
+[rhodat, rhoperm_all] = lt_neural_POPLEARN_Xcov_EpochScal_sub(allDat_BaseEpochs_AFPbias,...
+    allDat_learn, allbnum, allenum, allswnum, doshift, bintobinchanges, scalwind, syltype, ...
+    nshuff, vers);
+
+
+xperm = mean(rhoperm_all,2);
+lt_plot_histogram(xperm);
+xdat = mean(rhodat);
+line([xdat xdat], ylim, 'Color', 'r');
+p = (1+sum(mean(rhoperm_all,2)>mean(rhodat)))/(1+size(rhoperm_all,1));
+lt_plot_pvalue(p, 'vs shuff', 1);
+
+xlabel('rho (neuralbias[FFsplits] vs. learn, over epochs)')
+title('neural(bin n) vs. learn(bin n) [cumulative values]');
+ylabel([num2str(nshuff) 'shuffs']);
+% lt_plot_annotation(1, 'bias=neuralxcov in adaptive direction(minus nonadapt, minus base)');
 
 %% ============= [RESTRICT ANALYSIS TO ONLY SPECIFIC CASES]
 
@@ -643,6 +818,22 @@ lt_plot_histogram(rho_all);
 % p= signrank(rho_all);
 lt_plot_pvalue(p, 'ttest',1);
 Yall = [Yall, rho_all];
+YYcorr{2} = rho_all;
+
+% ================= 
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+title('rho (xcov vs. learn, over epochs)')
+xlabel('Direction AFp bias --- xcov learn');
+ylabel('neural(bin n) vs. learn(bin n) [cumulative values]');
+x = 1:length(YYcorr);
+Y = cell2mat(YYcorr);
+Y = Y(~any(isnan(Y')), :);
+plot(x, Y', '-ok');
+lt_plot(x, mean(Y), {'Errors', lt_sem(Y), 'Color', 'r'});
+p = signrank(Y(:,1), Y(:,2));
+lt_plot_pvalue(p, 'vs',1);
+xlim([0 3]);
+
 
 % ===================
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);

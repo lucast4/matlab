@@ -10,7 +10,7 @@ BrainArea = {'LMAN', 'RA'}; %
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
 ExptToKeep = {};
 RecordingDepth = [];
-LearningOnly = 0;
+LearningOnly = 1;
 BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
@@ -240,7 +240,7 @@ end
 %% ============= CHECK WHETHER ANY UNITS HAVE OVERLAPPING DATA - IF SO, REMOVE ONE OF THEM
 
 [SummaryStruct, NeurToRemove] =lt_neural_v2_DIAGN_RemoveOlap(SummaryStruct);
-
+[a, b] = lt_neural_v2_DIAGN_RemoveOlap(SummaryStruct)
 
 %% ============ DISPLAY SONGS AND LABELS
 stoponbird = 1; % if 1, then pauses and closes; if 0 then not;
@@ -288,17 +288,21 @@ lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, 
 close all; fclose all;
 
 % == params, entries aligned
-BirdsToPlotList = {'pu69wh78', 'wh44wh39'};
-NeurToPlotList = {[], []}; % leave empty if plot all
-MotifsToPlot = {{'(j)jjbhhg', '(a)abhhg'}, {'(n)hh', '(d)kccbb'}};
+% BirdsToPlotList = {'pu69wh78', 'wh44wh39'};
+% NeurToPlotList = {[], []}; % leave empty if plot all
+% MotifsToPlot = {{'(j)jjbhhg', '(a)abhhg'}, {'(n)hh', '(d)kccbb'}};
+BirdsToPlotList = {'gr48bu5'};
+NeurToPlotList = {[16 17 18]}; % leave empty if plot all
+MotifsToPlot = {{'a(b)'}};
 
 % ======== general params
-motifpredur = 0.05;
-motifpostdur = 0.05;
-preAndPostDurRelSameTimept = 0;
+motifpredur = 0.12;
+motifpostdur = 0.075;
+preAndPostDurRelSameTimept = 1;
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
-saveON = 1;
+saveON = 0;
 
+Nmax = 44;
 
 for i=1:length(BirdsToPlotList)
     BirdToPlot = BirdsToPlotList{i};
@@ -306,7 +310,8 @@ for i=1:length(BirdsToPlotList)
     motiflist = MotifsToPlot{i};
     
     lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
-        motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON);
+        motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
+        Nmax);
 end
 
 %% ======= SONG MOD METRIC - FOR EACH NEURON

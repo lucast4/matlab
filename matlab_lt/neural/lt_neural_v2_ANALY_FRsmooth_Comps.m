@@ -46,8 +46,8 @@ if shuffSylType==1
                             indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
                                 & OUTDAT.All_neurnum==nn & (OUTDAT.All_istarg==1 | OUTDAT.All_issame==0));
                         else
-                            disp('NOT WRITTEN YET!');
-                            return
+                            indsthis = find(OUTDAT.All_birdnum==i & OUTDAT.All_exptnum==ii & OUTDAT.All_swnum==ss ...
+                                & OUTDAT.All_neurnum==nn);
                         end
                     end
                     
@@ -137,13 +137,52 @@ for i=1:numbirds
                 ymean_difftype = mean(Yall(:, Sameall==0 & Targall==0), 2);
                 Yall_minusDiff = Yall - ymean_difftype;
                 
-                % ==== STORE DATA
+                
+                %% =========== GET PERCENT CHANGE FROM BASELINE
+                if (0)
+                % NOTE: decided to modify code earlier on, so that
+                % deviation from baseline is z-score (so subsequent code
+                % for fr will similarly apply)
+                frall = OUTDAT.All_FRsmooth(indsthis, :);
+                indsbase = OUTDAT.AllBase_indsepoch(indsthis);
+                indswn = OUTDAT.AllWN_indsepoch(indsthis);
+                
+                for j=1:size(frall,1)
+                    
+                    % ==== zscore rel baseline 
+                    frbase = frall{j,1}(:,indsbase{j});
+                    frwn = frall{j,2}(:, indswn{j}(epochtoplot):indswn{j}(epochtoplot+1)-1);
+                    
+                    frbase_mean = mean(frbase,2);
+                    frbase_std = std(frbase, [], 2);
+                    frchange_z = (mean(frwn,2) - frbase_mean)./frbase_std;
+                    
+                    % ===== percent change rel baseline
+                    frwn_mean = mean(frwn,2);
+                    
+                    frchange_percent = (frwn_mean-frbase_mean)./frbase_mean;
+                    
+                    if (0)
+                        figure; subplot(2,2,1); hold on; plot(frwn_mean-frbase_mean,'-k'); subplot(2,2,2); plot(frchange_percent, '-k'); subplot(2,2,3); plot(frchange_z, '-b');
+
+                    end
+                end
+                frmean_all = cellfun(@(x)mean(x,2), frall, 'UniformOutput', 0); % take mean within base, wn epochs
+                frmean_all = cellfun(@(x)x', frmean_all, 'UniformOutput', 0);
+                % --- for each baseline case keep only good inds
+                
+                
+                frmean_diff = cell2mat(frmean_all(:,2))-cell2mat(frmean_all(:,1)); % percent change from baseline
+                frmean_prctchange = cell2mat(frmean_all(:,2))./cell2mat(frmean_all(:,1)); % percent change from baseline
+                end
+                
+                %% ==== STORE DATA
                 for j=1:size(Yall,2)
                     
                     % ===== not absoute values
                     AllOnlyMinusBase_FRsmooth{indsthis(j)} = Yall_orig(:,j)';
-                    AllDevDiff_NotAbs{indsthis(j)} = YdevFromDiff(:,j);
-                    AllDevAll_NotAbs{indsthis(j)} = YdevFromAll(:,j);
+                    AllDevDiff_NotAbs{indsthis(j)} = YdevFromDiff(:,j)';
+                    AllDevAll_NotAbs{indsthis(j)} = YdevFromAll(:,j)';
                     
                     % === absolute values
                     AllMinusAll_FRsmooth{indsthis(j)} = Yall(:,j)';
@@ -163,6 +202,8 @@ OUTDAT.AllMinusAllMinusDiff_FRsmooth = AllMinusAllMinusDiff_FRsmooth;
 OUTDAT.AllOnlyMinusDiff_FRsmooth = AllOnlyMinusDiff_FRsmooth;
 
 
+%% ========== ABSOLUTE VALUE DEVIATION FROM BASE
+OUTDAT.AllOnlyMinusBase_FRsmooth_abs = cellfun(@(x)abs(x), OUTDAT.AllOnlyMinusBase_FRsmooth, 'UniformOutput', 0);
 
 %%
 if plotOn==1

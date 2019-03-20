@@ -154,6 +154,9 @@ if plotRaw==1
                     else
                         ydev = OUTDAT.(analytoplot){j}(indstokeep_t);
                     end
+                    if size(ydev,2)>1
+                        ydev = ydev';
+                    end
                     
                     % ------ PITCH, DEVIATION FROM BASELINE
                     pitchdiffZ = OUTDAT.AllMinusBase_PitchZ(j, epochtoplot);
@@ -213,7 +216,9 @@ if plotRaw==1
                 ylim([-1 1]);
                 
             end
+            if ~isempty(hsplots)
             linkaxes(hsplots, 'xy');
+            end
         end
     end
     
@@ -289,6 +294,9 @@ if plotRaw==1
                         ydev = OUTDAT.AllMinusBase_FRmeanAll{j}{epochtoplot}(indstokeep_t);
                     else
                         ydev = OUTDAT.(analytoplot){j}(indstokeep_t);
+                    end
+                    if size(ydev,2)>1
+                        ydev = ydev';
                     end
                     
                     % ------ PITCH, DEVIATION FROM BASELINE
@@ -427,7 +435,11 @@ for i=1:numbirds
                 else
                     ydev = OUTDAT.(analytoplot){j}(indstokeep_t);
                 end
-                
+                                    if size(ydev,2)>1
+                        ydev = ydev';
+                    end
+                    
+
                 % ------ PITCH, DEVIATION FROM BASELINE
                 pitchdiffZ = OUTDAT.AllMinusBase_PitchZ(j, epochtoplot);
                 

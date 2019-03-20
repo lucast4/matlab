@@ -47,7 +47,7 @@ Nnan = sum(any(isnan(datmat_real)'));
 Ntot = length(any(isnan(datmat_real)'));
 
 NanCount = [Nnan Ntot];
-%% get xcov
+%% ===== FIND THE SHUFFLE (SHIFTED) INDICES THAT CORRESPOND TO DATA
 % ================ 2versions, either using SHIFT PREDICTOR CACLULATE IN 2
 % DIRECTIONS OR IN ONE.
 if size(datmat_shuff,1) == 2*(size(datmat_real,1)-1)
@@ -77,6 +77,8 @@ else
     disp('doesnt make sense, not sure how shift predictors were cpmputed...')
     pause;
 end
+
+%% ==================== EXTRACT THE SLIDING DOT PRODUCT FOR BASE AND WN
 % datbase = mean(datmat_real(inds_base,:)) ...
 %     - mean(datmat_shuff(inds_base,:));
 %
@@ -96,7 +98,8 @@ datWN_notminshuff = nanmean(datmat_real(inds_WN,:));
 datbase_notminshuff = nanmean(datmat_real(inds_base,:));
 
 
-%% ################ coherency, using fourier transform
+%% ########################## DIFFERENT METHODS OF GETTIGN NORMALIZED COVARIANCE
+%% ================= coherency, using fourier transform
 if strcmp(xcovver, 'coherency')
     % ==== BASELINE
     indsthis_dat = inds_base;
@@ -185,13 +188,11 @@ if strcmp(xcovver, 'coherency')
         plot(dat_auto(:,2), 'm');
         plot(coh, '--r');
     end
-end
-
-%% ################## OTHER VERSIONS
-% ====== 1) Z-SCORE
-% for each lag, get distribution of values over trials. use that to
-% z-transform actual data
-if strcmp(xcovver, 'zscore')
+    
+elseif strcmp(xcovver, 'zscore')
+    %% ====== 1) Z-SCORE
+    % for each lag, get distribution of values over trials. use that to
+    % z-transform actual data
     % 1) BASE
     yshuff = datmat_shuff(inds_base_shuff,:);
     ydat = datmat_real(inds_base,:);
@@ -209,7 +210,7 @@ if strcmp(xcovver, 'zscore')
     datbase = nanmean(yz_base);
     datWN = nanmean(yz_WN);
 elseif strcmp(xcovver, 'scale')
-    % ======== 2) MATCH THE MAGNITUDE OF SHUFFLES DURING WN VS. BASELINE
+    %% ======== 2) MATCH THE MAGNITUDE OF SHUFFLES DURING WN VS. BASELINE
     %     multfact = nanmean(nanmean(datmat_shuff(inds_base_shuff,:)))/nanmean(nanmean(datmat_shuff(inds_WN_shuff,:))); % one mult for all lags
     multfact = nanmean(datmat_shuff(inds_base_shuff,:))./nanmean(datmat_shuff(inds_WN_shuff,:)); % one for each lag
     datWN_scaled = multfact.*datWN;
@@ -219,7 +220,7 @@ end
 
 
 
-
+%% ########################### MAKE RAW PLOTS
 %%
 if plotraw==1
     %% =========== sanity check, plotting raw xcov.

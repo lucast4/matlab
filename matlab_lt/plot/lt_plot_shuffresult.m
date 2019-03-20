@@ -10,3 +10,6 @@ line([ydat ydat], ylim, 'Color', 'r');
 p = (sum(yshuff>=ydat)+1)/(nshuff+1);
 lt_plot_pvalue(p, 'shuff>dat', 1);
 
+p = (sum(abs(yshuff)>=abs(ydat))+1)/(nshuff+1);
+lt_plot_pvalue(p, 'abs(shuff)>abs(dat)', 2);
+

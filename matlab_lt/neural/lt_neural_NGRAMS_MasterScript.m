@@ -285,10 +285,10 @@ preAndPostDurRelSameTimept = 1;
 % --- 1) directed song
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
 
-saveON = 1; 
+saveON = 0; 
 Nmax = 40;
 
-savedirmain = '/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/xaa_07Mar2019_0000/FIGS/DIAGN_PlotRawNeural/';
+savedirmain = ['/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/' Params.dirname '/FIGS/DIAGN_PlotRawNeural/'];
 
 lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
     motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
@@ -339,10 +339,9 @@ for i=1:maxbirds
     PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
     
     saveON = 1;
-    Nmax = 40;
-    
-    savedirmain = '/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/xaa_07Mar2019_0000/FIGS/DIAGN_PlotRawNeural/';
-    
+    Nmax = 22;
+    savedirmain = ['/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/' Params.dirname '/FIGS/DIAGN_PlotRawNeural/'];
+
     lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
         motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
         Nmax, savedirmain);

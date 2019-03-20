@@ -1,9 +1,20 @@
 function [rhodat, rhoperm_all] = lt_neural_POPLEARN_Xcov_EpochScal_sub(allDat_xcov, allDat_learn, ...
     allbnum, allenum, allswnum, doshift, bintobinchanges, scalwind, syltype, ...
-    nshuff)
-
+    nshuff, vers)
+if ~exist('vers', 'var')
+    vers = 1; % original, lookign at average xcov change
+end
+    
 %%
+if vers==1
 X = squeeze(allDat_xcov(scalwind, :, syltype, :));
+elseif vers==2
+   % looking not at aveage chagne in xcov, but at change in neural-ff corr (i.e. FF split, AFp bias..)
+   X = squeeze(allDat_xcov);
+   X = X(2:end,:); % remove row of 0, since wil add in subsequent code.
+else
+    sdfasdf
+end
 Y = squeeze(allDat_learn(:,:, syltype, :));
 [exptID, exptID_U] = lt_tools_grp2idx({allbnum, allenum, allswnum});
 
@@ -57,3 +68,10 @@ for n=1:nshuff
     rhoperm = diag(corr(Xneural, Yperm));
     rhoperm_all(n, :) = rhoperm;
 end
+
+
+%% remove any nans
+assert(all(find(isnan(rhodat)) == find(any(isnan(rhoperm_all)))), 'shuffle did not introduce errors (ie.. nans)');
+indsnan = find(isnan(rhodat));
+rhodat(indsnan) = [];
+rhoperm_all(:, indsnan) = [];

@@ -96,6 +96,7 @@ for i=1:length(indsgrp_switch_unique)
     %     j=indsgrp_switch_unique(i);
     
     indsthis = indsgrp_switch==indsgrp_switch_unique(i); % all channel pairs for this switch
+    
     % ---------------------- INFO
     allswitch_bnum = [allswitch_bnum; unique(allbnum(indsthis))];
     allswitch_enum = [allswitch_enum; unique(allenum(indsthis))];
@@ -116,9 +117,9 @@ for i=1:length(indsgrp_switch_unique)
     cohmat = squeeze(nanmean(allDat(:,:,sylind,indsthis), 4));
     allswitch_dat(:,:,sylind, i) = cohmat;
     allswitch_Nmotifs(1,sylind,i) = mean(allNmotifs(1,sylind,indsthis));
-    if ~isnan(mean(allNmotifs(1,sylind,indsthis)))
-        assert(length(unique(squeeze(allNmotifs(1,sylind,indsthis))))==1);
-    end
+%     if ~isnan(mean(allNmotifs(1,sylind,indsthis)))
+%         assert(length(unique(squeeze(allNmotifs(1,sylind,indsthis))))==1);
+%     end
     
     % ================= diff
     sylind = 3;
@@ -126,8 +127,8 @@ for i=1:length(indsgrp_switch_unique)
     cohmat = squeeze(nanmean(allDat(:,:,sylind,indsthis), 4));
     allswitch_dat(:,:,sylind, i) = cohmat;
     allswitch_Nmotifs(1,sylind,i) = mean(allNmotifs(1,sylind,indsthis));
-    if ~isnan(mean(allNmotifs(1,sylind,indsthis)))
-        assert(length(unique(squeeze(allNmotifs(1,sylind,indsthis))))==1);
-    end
+%     if ~isnan(mean(allNmotifs(1,sylind,indsthis)))
+%         assert(length(unique(squeeze(allNmotifs(1,sylind,indsthis))))==1);
+%     end
 end
 

@@ -279,7 +279,9 @@ for i=1:numbirds
                 % -- diff
                 pcol = 'r';
                 y = Yall(:, Sameall==0 & Targall==0);
+                if size(y,2)>1
                 shadedErrorBar(tbin, mean(y,2),lt_sem(y'), {'Color', pcol}, 1);
+                end
                 
                 % -- same
                 pcol = 'b';

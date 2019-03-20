@@ -53,3 +53,8 @@ RemoveTrialsZeroFR = 0; % this takes precedence over interpolateCorrNan
 [MOTIFSTATS_Compiled, SwitchStruct] = ...
     lt_neural_v2_ANALY_Swtch_Extract(MOTIFSTATS_Compiled, SwitchStruct, ...
     interpolateCorrNan, RemoveTrialsZeroFR, premotorWind);
+
+
+%%
+
+SummaryStruct = MOTIFSTATS_Compiled.SummaryStruct;

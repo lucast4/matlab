@@ -10,11 +10,10 @@ function OUTDAT = lt_neural_v2_ANALY_FRsmooth_MinusBase(OUTDAT, SwitchStruct,...
 % usepercent = 0; % if 1, then gets fr percent deviation from baseline. otherwise uses hz diff
 % nbasetime = 60; % 60 minutes bnefore first WN trial is min time for baseline
 % nbasetime = []; % 60 minutes bnefore first WN trial is min time for baseline
-    % changed to be before onset of WN...
+% changed to be before onset of WN...
 
 
 %%
-
 %% ####################### FOR EACH MOTIF/NEURON, SUBTRACT BASELINE SM FR
 lt_figure; hold on;
 title('baseline and last epoch data windows');
@@ -23,12 +22,19 @@ ylaball = {};
 numbirds = length(SwitchStruct.bird);
 maxneur = max(OUTDAT.All_neurnum);
 ycount = 1;
+
+AllBase_indsepoch = cell(size(OUTDAT.All_FRsmooth,1),1);
+AllWN_indsepoch = cell(size(OUTDAT.All_FRsmooth,1),1);
+
 AllMinusBase_FRmeanAll = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_FRsemAll = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_tbinAll = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllBase_FRsmooth_Hi = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllBase_FRsmooth_Lo = cell(size(OUTDAT.All_FRsmooth,1),1);
 AllMinusBase_PitchZ = nan(size(OUTDAT.All_FRsmooth,1), length(prctile_divs));
+
+AllTargLearnDir = nan(size(OUTDAT.All_FRsmooth,1),1);
+
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
     birdname = SwitchStruct.bird(i).birdname;
@@ -43,6 +49,10 @@ for i=1:numbirds
             end
             
             swtime = SwitchStruct.bird(i).exptnum(ii).switchlist(ss).switchdnum;
+            ldir = cell2mat(SwitchStruct.bird(i).exptnum(ii).switchlist(ss).learningDirs(2:2:end));
+            ldir = unique(ldir);
+            assert(length(ldir)==1);
+            
             
             % ################### SECOND, PLOT SMOOTH FR FOR ALL SYLS, SUBTRACT BASE
             for nn=1:maxneur
@@ -54,20 +64,41 @@ for i=1:numbirds
                     continue
                 end
                 
+%                 assert(length(indsthis)==1);
+                
                 % ================ COLLECT FRATE
                 for j=indsthis'
                     
                     if ss==1 & nbasetime_ignoreswitch1==1
                         % then ignore base time
                         [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent);
+                            timesbase, ffbase, indsbase_epoch, indsWN_epochOnsets] = ...
+                            fn_subtractbase(OUTDAT, j, prctile_divs, usepercent);
+                        
                     else
                         [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-                            timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, ...
+                            timesbase, ffbase, indsbase_epoch, indsWN_epochOnsets] = ...
+                            fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, ...
                             nbasetime, swtime);
                     end
                     
+                    
+                    if (0) % sanity check, make sure inds are what I think they are.
+                        tmp = mean(OUTDAT.All_FRsmooth{j,2}(:, indsWN_epochOnsets(end):end),2) - ...
+                            mean(OUTDAT.All_FRsmooth{j,1}(:,indsbase_epoch),2)
+                        %                     tmp = cellfun(@(x)mean(x,2), OUTDAT.All_FRsmooth(j,:), 'UniformOutput', 0);
+                        figure; hold on;
+                        plot(tmp, 'k');
+                        %                     plot(tmp{2}-tmp{1}, 'k');
+                        plot(FRmeanAll{3}, 'r');
+                    end
+                    
                     % =========== SAVE
+                    assert(isempty(AllBase_indsepoch{j}));
+                    
+                    AllTargLearnDir(j) = ldir;
+                    AllBase_indsepoch{j} = indsbase_epoch;
+                    AllWN_indsepoch{j} = indsWN_epochOnsets;
                     AllMinusBase_FRmeanAll{j} = FRmeanAll;
                     AllMinusBase_FRsemAll{j} = FRsemAll;
                     AllMinusBase_tbinAll{j} = tbin;
@@ -86,29 +117,35 @@ for i=1:numbirds
             line([min(tbasetmp) max(tbasetmp)], [ycount ycount], 'LineWidth', 2, 'Color','r');
             
             twntmp = (TimesAll{end}-timetolock)*24;
-%             ffzwntmp = PitchmeanAll(end)*learndir;
+            %             ffzwntmp = PitchmeanAll(end)*learndir;
             line([min(twntmp) max(twntmp)], [ycount ycount], 'LineWidth', 2, 'Color', 'r');
             
             line([max(tbasetmp) min(twntmp)], [ycount ycount], 'Color', [0.7 0.7 0.7], 'LineStyle', '--')
             
             
             % --- note down expt
-            strthis = [birdname '-' exptname(end-5:end) '-sw' num2str(ss)];
-%             lt_plot_text(max(twntmp)+0.1, ycount, strthis, 'k');
+            strthis = [birdname '-' exptname(end-7:end) '-sw' num2str(ss)];
+            %             lt_plot_text(max(twntmp)+0.1, ycount, strthis, 'k');
             ylaball = [ylaball; strthis];
-             ycount = ycount+1;
-             
+            ycount = ycount+1;
+            
         end
-       line([xlim], [ycount-0.5 ycount-0.5], 'Color', [0.3 0.3 0.7]);
+        line([xlim], [ycount-0.5 ycount-0.5], 'Color', [0.3 0.3 0.7]);
     end
 end
 
 OUTDAT.AllMinusBase_FRmeanAll = AllMinusBase_FRmeanAll;
+
+OUTDAT.AllBase_indsepoch = AllBase_indsepoch;
+OUTDAT.AllWN_indsepoch= AllWN_indsepoch;
+
 OUTDAT.AllMinusBase_FRsemAll = AllMinusBase_FRsemAll;
 OUTDAT.AllMinusBase_tbinAll = AllMinusBase_tbinAll;
 OUTDAT.AllBase_FRsmooth_Hi = AllBase_FRsmooth_Hi;
 OUTDAT.AllBase_FRsmooth_Lo = AllBase_FRsmooth_Lo;
 OUTDAT.AllMinusBase_PitchZ = AllMinusBase_PitchZ;
+
+OUTDAT.AllTargLearnDir = AllTargLearnDir;
 
 set(gca, 'YTick', 1:ycount-1);
 set(gca, 'YTickLabel', ylaball);
@@ -117,8 +154,8 @@ end
 
 
 function [FRmeanAll, FRsemAll, tbin, frlo, frhi, PitchmeanAll, TimesAll, ...
-    timesbase, ffbase] = fn_subtractbase(OUTDAT, j, prctile_divs, usepercent, ...
-    nbasetime, swtime)
+    timesbase, ffbase, indsbase_epoch, indsWN_epochOnsets] = fn_subtractbase(OUTDAT, j, ...
+    prctile_divs,usepercent, nbasetime, swtime)
 % ===== PARAMS
 % j is ind to extract from in OUTDAT.
 % nbasetime in minutes, counting back from first WN song
@@ -147,12 +184,14 @@ mintime = swtime - nbasetime/(24*60);
 % -- which bnase inds to keep?
 tbase = OUTDAT.All_FF_t{j,1};
 indstokeep = tbase>=mintime;
+indsbase_epoch = find(indstokeep);
 
 % -- get mean FR
 frmat = OUTDAT.All_FRsmooth{j, indtmp}(:, indstokeep);
 ff = OUTDAT.All_FF{j, indtmp}(indstokeep);
 
 frmean_base = mean(frmat, 2);
+frbase_std = std(frmat, [], 2);
 ff_base = mean(ff);
 ff_base_std = std(ff);
 
@@ -161,19 +200,19 @@ timesbase = tbase(indstokeep);
 ffbase = ff_base;
 
 if (0)
-   
+    
     tbase = OUTDAT.All_FF_t{j, 1};
-twn = OUTDAT.All_FF_t{j,2};
-fbase = OUTDAT.All_FF{j,1};
-fwn = OUTDAT.All_FF{j,2};
+    twn = OUTDAT.All_FF_t{j,2};
+    fbase = OUTDAT.All_FF{j,1};
+    fwn = OUTDAT.All_FF{j,2};
     figure; hold on;
     
     if isnan(fbase(1))
         plot(tbase, 1, 'ok');
-    plot(twn, 2, 'or');
+        plot(twn, 2, 'or');
     else
-    plot(tbase, fbase, 'ok');
-    plot(twn, fwn, 'or');    
+        plot(tbase, fbase, 'ok');
+        plot(twn, fwn, 'or');
     end
 end
 % ------------- collect mean baseline divided by median of FF
@@ -198,26 +237,35 @@ ffmat = OUTDAT.All_FF{j, indtmp};
 FRmeanAll = cell(1, length(prctile_divs));
 FRsemAll = cell(1, length(prctile_divs));
 inddivs = [1 ceil(prctile(1:size(frmat,2), prctile_divs))]; % get inds that divide up bins.
+inddivs(end) = inddivs(end)+1; % since want to end on last trial.
 PitchmeanAll = nan(1, length(prctile_divs));
 
 TimesAll = cell(1, length(prctile_divs));
 for k=1:length(inddivs)-1
     
+    indsthis = inddivs(k):inddivs(k+1)-1;
+    
     % ========= FRATE
-    ymean = mean(frmat(:, inddivs(k):inddivs(k+1)), 2);
-    ysem = lt_sem(frmat(:, inddivs(k):inddivs(k+1))')';
+    ymean = mean(frmat(:, indsthis), 2);
+    ystd = std(frmat(:, indsthis), [], 2);
+    ysem = lt_sem(frmat(:, indsthis)')';
     
     if usepercent==1
         ymean = 100*(ymean - frmean_base)./frmean_base;
-    else
+    elseif usepercent==0
         ymean = ymean - frmean_base;
+    elseif usepercent==2
+        % then zscore
+        ymean = (ymean-frmean_base)./frbase_std;
+    elseif usepercent==3
+        ymean = (ymean-frmean_base)./sqrt(0.5.*((frbase_std.^2)+(ystd.^2)));
     end
     
     % =========== FF
-    ffmean = mean(ffmat(inddivs(k):inddivs(k+1)));
+    ffmean = mean(ffmat(indsthis));
     ffmean = (ffmean - ff_base)./ff_base_std;
     
-    TimesAll{k} = tvals(inddivs(k):inddivs(k+1)); % collects times for last bin.
+    TimesAll{k} = tvals(indsthis); % collects times for last bin.
     
     % ========= OUTPUT
     if any(isnan(ymean))
@@ -230,7 +278,7 @@ for k=1:length(inddivs)-1
 end
 
 % --------- OUTPUT TIME OF TRAINING EPOCH INDS
-
+indsWN_epochOnsets = inddivs;
 
 end
 

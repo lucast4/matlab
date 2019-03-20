@@ -11,6 +11,7 @@ function chanbad = lt_neural_QUICK_RemoveBadChans(bname, ename, swnum, chan)
 
 ChansBad = {...,
     {'pu69wh78', 'RALMANlearn1', 1, 14}, ...  % # = NOISE, WN
+    {'gr48bu5', 'RALMANLearn5', 1, 21}, ...  % # = 20 and 21 seem almost identical, so only keep 1. 20 seems better.
     };
 
 %% ========== ask whether the input matches any of the bad CHANS
