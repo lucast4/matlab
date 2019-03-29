@@ -1,7 +1,10 @@
 function lt_neural_Coher_Plot(cohmat, tbins, ffbins, plottype, linestyle, clim, ...
-    plotsig, plotindivtraces, ffbinsedges, colorbarloc, ffbinsedges_indstoplot)
+    plotsig, plotindivtraces, ffbinsedges, colorbarloc, ffbinsedges_indstoplot, ...
+    pcol)
 %% lt 10/9/18 - various plots for coherence
-
+if ~exist('pcol', 'var')
+    pcol = [];
+end
 % cohmat can be multiple trials (dim 3 is trials).
 %%
 
@@ -56,12 +59,17 @@ if plottype==1
     end
     axis tight;
     line([0 0], ylim, 'Color', 'k');
-%     colormap('spring');
+    %     colormap('spring');
     lt_plot_colormap('centered');
     colorbar(colorbarloc);
 elseif plottype==2
-    pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
     
+    pcols = lt_make_plot_colors(length(ffbinsedges)-1, 1, [1 0 0]);
+    if ~isempty(pcol)
+        for j=1:length(pcols)
+            pcols{j} = pcol;
+        end
+    end
     for k=ffbinsedges_indstoplot
         
         indsff = ffbins>ffbinsedges(k) & ffbins<=ffbinsedges(k+1);
@@ -85,9 +93,23 @@ elseif plottype==2
                 shadedErrorBar(tbins, cohmean, cohsem, {'Color', pcols{k}, 'LineStyle', linestyle}, 1);
             end
         end
+        
         % -------------- if is multiple trials, then test deviation from 0
         if plotsig==1
             [h, p] = ttest(cohthis');
+%             [p] = signrank(cohthis');
+% try
+%             plot(tbins(p<0.05), cohmean(p<0.05)+0.02, '*', 'Color', pcols{k});
+%             plot(tbins(p<0.005), cohmean(p<0.005)+0.02, '*', 'Color', pcols{k});
+%             plot(tbins(p<0.0005), cohmean(p<0.005)+0.02, '*', 'Color', pcols{k});
+% catch err
+%     try
+%             plot(tbins(p<0.05), cohthis(p<0.05, 1)+0.02, '*', 'Color', pcols{k});
+%             plot(tbins(p<0.005), cohthis(p<0.005, 1)+0.02, '*', 'Color', pcols{k});
+%             plot(tbins(p<0.0005), cohthis(p<0.005, 1)+0.02, '*', 'Color', pcols{k});
+%     catch err
+%     end
+% end
             try
                 plot(tbins(h==1), cohmean(h==1)+0.02, '*', 'Color', pcols{k});
             catch err
@@ -115,12 +137,12 @@ elseif plottype==3
     ncols = size(cohmat,2);
     pmat = nan(nrows, ncols);
     for rr=1:nrows
-        for cc=1:ncols      
+        for cc=1:ncols
             tmp = squeeze(cohmat(rr, cc, :));
             if all(isnan(tmp))
-            pmat(rr, cc) = nan;
+                pmat(rr, cc) = nan;
             else
-            pmat(rr, cc) = signrank(squeeze(cohmat(rr, cc, :)));
+                pmat(rr, cc) = signrank(squeeze(cohmat(rr, cc, :)));
             end
         end
     end
@@ -131,9 +153,9 @@ elseif plottype==3
     axis tight;
     line([0 0], ylim, 'Color', 'k');
     lt_plot_colormap('pval');
-%     colorbar('East');
-        colorbar(colorbarloc);
-
+    %     colorbar('East');
+    colorbar(colorbarloc);
+    
     % --- mark places with pval <0.05
     pmatsig = pmat<log10(0.05);
     for rr=1:length(tbins)

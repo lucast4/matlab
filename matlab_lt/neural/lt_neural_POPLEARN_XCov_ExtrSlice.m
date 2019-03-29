@@ -13,6 +13,9 @@ tmpBase = nan(length(OUTSTRUCT_XCOV.bnum), size(OUTSTRUCT_XCOV.XcovgramBase{1}, 
 tmpWn = nan(length(OUTSTRUCT_XCOV.bnum), size(OUTSTRUCT_XCOV.XcovgramBase{1}, 2));
 
 covslice_epochs = cell(length(OUTSTRUCT_XCOV.bnum), 1);
+
+covslice_ffsplits_base = cell(length(OUTSTRUCT_XCOV.bnum), 1);
+covslice_ffsplits_epochs = cell(length(OUTSTRUCT_XCOV.bnum), 1);
 for i=1:length(OUTSTRUCT_XCOV.bnum)
     
     covgram_base = OUTSTRUCT_XCOV.XcovgramBase{i};
@@ -42,8 +45,8 @@ for i=1:length(OUTSTRUCT_XCOV.bnum)
     
     
     % ################# DO FOR XCOVGRA WITH MULTIPLE EPOCHS
-%     covslice_epochs = nan(size(OUTSTRUCT_XCOV.XcovgramWN_epochs{1}, 3), ...
-%         size(OUTSTRUCT_XCOV.XcovgramWN_epochs{1}, 2));
+    %     covslice_epochs = nan(size(OUTSTRUCT_XCOV.XcovgramWN_epochs{1}, 3), ...
+    %         size(OUTSTRUCT_XCOV.XcovgramWN_epochs{1}, 2));
     if isfield(OUTSTRUCT_XCOV, 'XcovgramWN_epochs')
         xgram_epochs = OUTSTRUCT_XCOV.XcovgramWN_epochs{i};
         
@@ -51,6 +54,17 @@ for i=1:length(OUTSTRUCT_XCOV.bnum)
         tmpepochs = squeeze(mean(xgram_epochs(indst, :,:),1))';
         covslice_epochs{i} = tmpepochs;
     end
+    
+    
+    % ################# DO FOR FFSPLITS
+    if isfield(OUTSTRUCT_XCOV, 'XcovgramWN_FFsplits_Base')
+        xgramsplits = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Base(i,:);
+        covslice_ffsplits_base{i} = cellfun(@(x)mean(x(indst, :), 1), xgramsplits, 'UniformOutput', 0);
+        
+        xgramsplits = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs(i,:);
+        covslice_ffsplits_epochs{i} = cellfun(@(x)mean(x(indst, :, :), 1), xgramsplits, 'UniformOutput', 0);
+    end
+    
 end
 
 % ======= save old versions
@@ -62,6 +76,9 @@ OUTSTRUCT_XCOV.XcovBase = tmpBase;
 OUTSTRUCT_XCOV.XcovWN = tmpWn;
 
 OUTSTRUCT_XCOV.Xcovslice_epochs = covslice_epochs;
+
+OUTSTRUCT_XCOV.Xcovslice_ffsplits_base = covslice_ffsplits_base;
+OUTSTRUCT_XCOV.Xcovslice_ffsplits_epochs = covslice_ffsplits_epochs;
 
 %% ======= save to params
 PARAMS.Xcov_Slice_twindow = twindow;

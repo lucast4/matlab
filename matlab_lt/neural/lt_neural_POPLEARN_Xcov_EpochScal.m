@@ -1,6 +1,7 @@
 function lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
-    mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, FFsplit_pu69learn2_combine)
+    mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, FFsplit_pu69learn2_combine, ...
+    doFFsplit)
 %% lt 3/5/19 - divides up training into epochs -- here PLOTS
 
 %% ====== [PREPROCESS] only plot good experiments
@@ -43,6 +44,32 @@ if strcmp(dattype, 'switch')
     [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_TimeMedian] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
     
+    % ######################### FF SPLIT STUFF
+    fieldtoget = 'xcovscalBase_window_FFsplit';
+    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_ffsplit_base] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    % --- first extract just the scalar window you want
+    OUTSTRUCT_XCOV.xcovscalEpochs_FFsplit = ...
+        cellfun(@(x)x{scalwind}, OUTSTRUCT_XCOV.xcovscalEpochs_window_FFsplit, 'UniformOutput', 0);
+    fieldtoget = 'xcovscalEpochs_FFsplit';
+    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_epochs_ffsplit] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    fieldtoget = 'learndirTarg';
+    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_targLearnDir] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    
+    % ---- learning, each bin split in 2, adaptive and nonadaptive trials.
+    fieldtoget = 'LearnTargDir_Z_XCOV_Split_Adaptive';
+    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_learn_Away] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+    fieldtoget = 'LearnTargDir_Z_XCOV_Split_NonAdap';
+    [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_learn_Revert] = ...
+        lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+
+
+
 elseif strcmp(dattype, 'chan')
     fieldtoget = 'LearnTargDir_Z_Epochs';
     [allbnum, allenum, allswnum, allDat_learn] = ...
@@ -64,7 +91,7 @@ elseif strcmp(dattype, 'chan')
     [allbnum, allenum, allswnum, allDat_TimeMedian] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
     
-    % =========== FF SPLIT STUFF
+    % ######################### FF SPLIT STUFF
     fieldtoget = 'xcovscalBase_window_FFsplit';
     [allbnum, allenum, allswnum, allDat_ffsplit_base] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
@@ -92,7 +119,7 @@ end
 
 
 
-% ============= GET DIFFERENCE FROM BASELINE FOR ALL XCOV SCALARS
+%% ============= GET DIFFERENCE FROM BASELINE FOR ALL XCOV SCALARS
 Nepoch = size(allDat_xcov,2);
 for j=1:size(allDat_xcov,1)
     allDat_xcov(j, :,:,:) = allDat_xcov(j,:,:,:) - repmat(allDat_xcov_basewn(j,1,:,:), 1, Nepoch,1,1);
@@ -102,7 +129,10 @@ end
 allDat_TimeMedian = allDat_TimeMedian(:,2:end, :,:) - ...
     repmat(allDat_TimeMedian(1,1,:,:), 1, size(allDat_TimeMedian,2)-1, 1, 1);
 
-
+%% 
+if doFFsplit==1
+   assert(size(allDat_ffsplit_base,2) ==1, 'to do ffsplit code requires only having one scalar time window...');
+end
 
 
 %% ==================== [AD HOC] MODIFY SO THAT IS COMPARING WINDOW 1 VS. WINDOW 2
@@ -249,6 +279,9 @@ for i=1:length(indsgrpU)
     ylearn = squeeze(allDat_learn(:,:, syltype, indsthis));
     yN = squeeze(allDat_Nperbin(:,:, syltype, indsthis));
     ytime = squeeze(allDat_TimeMedian(:,:, syltype, indsthis));
+    if all(isnan(ytime(:)))
+        continue
+    end
     if size(ytime,1)==1
         ytime = ytime';
     end
@@ -277,7 +310,7 @@ lt_subplot(2,2,1); hold on
 exptdur = squeeze(allDat_TimeMedian(1,end, 1, :) - allDat_TimeMedian(1,1, 1, :));
 plot(exptdur, 'ok');
 xlabel('case num');
-ylabel('expt dur (hours, last bin minus first');
+ylabel('duration with data (hours, last bin minus first');
 title('red = min train dur');
 line(xlim, [mintraindur mintraindur], 'Color', 'r');
 
@@ -286,7 +319,7 @@ lt_subplot(2,2,2); hold on
 recdur = squeeze(allDat_TimeMedian(1,end, 1, :));
 plot(recdur, 'ok');
 xlabel('case num');
-ylabel('expt dur (hours, last bin minus first');
+ylabel('expt dur (hours, last bin minus baseline');
 title('red = min train dur');
 line(xlim, [mintotaltrain mintotaltrain], 'Color', 'r');
 
@@ -340,37 +373,72 @@ allDat_learn_Revert = allDat_learn_Revert(:,:,:,indstokeep);
 
 
 %% ============= FF SPLIT ANALYSES
-
-% ===== first decide if combine last few bins of pu69 data
-if FFsplit_pu69learn2_combine==1
-    i = find(strcmp({SwitchStruct.bird.birdname}, 'pu69wh78'));
-    ii= find(strcmp({SwitchStruct.bird(i).exptnum.exptname}, 'RALMANlearn2'));
+if doFFsplit==1
     
-    indsthis = find(allbnum==i & allenum==ii & allswnum==1);
-%     y = squeeze(allDat_learn(:, 1, syltype, indsthis));
-%     lt_figure; hold on;
-%     plot(y, '-ok');
+    % ===== first decide if combine last few bins of pu69 data
+    if FFsplit_pu69learn2_combine==1
+        i = find(strcmp({SwitchStruct.bird.birdname}, 'pu69wh78'));
+        if ~isempty(i)
+        ii= find(strcmp({SwitchStruct.bird(i).exptnum.exptname}, 'RALMANlearn2'));
+        
+        indsthis = find(allbnum==i & allenum==ii & allswnum==1);
+        %     y = squeeze(allDat_learn(:, 1, syltype, indsthis));
+        %     lt_figure; hold on;
+        %     plot(y, '-ok');
+        
+        % ==== combine all bins (non-baseline) into last bin
+        
+        for j=indsthis'
+            
+            tmp = mean(allDat_epochs_ffsplit(:, :, :, j), 1);
+            allDat_epochs_ffsplit(end, :, :, j) = tmp; % replace last bin with this.
+            allDat_epochs_ffsplit(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+            
+            tmp = mean(allDat_learn_Away(:, :, :, j), 1);
+            allDat_learn_Away(end, :, :, j) = tmp; % replace last bin with this.
+            allDat_learn_Away(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+            
+            tmp = mean(allDat_learn_Revert(:, :, :, j), 1);
+            allDat_learn_Revert(end, :, :, j) = tmp; % replace last bin with this.
+            allDat_learn_Revert(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+            
+            allDat_learn_pu69combined = allDat_learn;
+            tmp = mean(allDat_learn(:, :, :, j), 1);
+            allDat_learn_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
+            allDat_learn_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
 
-% ==== combine all bins (non-baseline) into last bin
+            allDat_xcov_pu69combined = allDat_xcov;
+            tmp = mean(allDat_xcov(:, :, :, j), 1);
+            allDat_xcov_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
+            allDat_xcov_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
 
-for j=indsthis'
+        end
+        end
+    end
     
-    tmp = mean(allDat_epochs_ffsplit(:, :, :, j), 1);
-    allDat_epochs_ffsplit(end, :, :, j) = tmp; % replace last bin with this.
-    allDat_epochs_ffsplit(1:end-1, :, :, j) = nan; % make nan the non-last bins.
-
-    tmp = mean(allDat_learn_Away(:, :, :, j), 1);
-    allDat_learn_Away(end, :, :, j) = tmp; % replace last bin with this.
-    allDat_learn_Away(1:end-1, :, :, j) = nan; % make nan the non-last bins.
     
-    tmp = mean(allDat_learn_Revert(:, :, :, j), 1);
-    allDat_learn_Revert(end, :, :, j) = tmp; % replace last bin with this.
-    allDat_learn_Revert(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+    % ================ plot all learning, show that within bin difference
+    % is greater than across bin difference
+    lt_figure; hold on;
+    xlabel('WN bin');
+    ylabel('mean(std) learning (z)');
+    title('ffsplits are not simply early/late within a bin');
+    
+    ymean = squeeze(nanmean(allDat_learn_Away(:, 1, syltype, :),4));
+    ystd = squeeze(nanstd(allDat_learn_Away(:, 1, syltype, :),[], 4));
+    x = 1:length(ymean);
+    lt_plot(x, ymean, {'Errors', ystd, 'Color', 'r'});
+    
+    ymean = squeeze(nanmean(allDat_learn_Revert(:, 1, syltype, :),4));
+    ystd = squeeze(nanstd(allDat_learn_Revert(:, 1, syltype, :),[], 4));
+    x = 1:length(ymean);
+    lt_plot(x, ymean, {'Errors', ystd, 'Color', 'k'});
+    
+    lt_plot_zeroline;
+    xlim([-1 4]);
+    
+    lt_neural_POPLEARN_Xcov_EpochScal_sub2;
 end
-
-end
-
-lt_neural_POPLEARN_Xcov_EpochScal_sub2;
 
 %% =========== collect all correlations (within cases) to compare whetehr AFp bias or overall xcov better predicts laerning
 YYcorr = {};

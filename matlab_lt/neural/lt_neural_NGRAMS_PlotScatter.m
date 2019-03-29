@@ -1,7 +1,7 @@
 function [AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
     lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
     PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
-    removeBadSyls, minPairs, zscoreMin)
+    removeBadSyls, minPairs, zscoreMin, labelneur)
 %%
 assert(sum([plotRawGood plotON])<2, 'cannot do both types of raw plots ...');
 
@@ -59,6 +59,7 @@ hsplots = [];
 AllPairs_Means = [];
 AllPairs_Bregions = {};
 AllPairs_Birdnum = [];
+AllPairs_Neur = [];
 for i=1:maxbirds
     birdname = SummaryStruct.birds(i).birdname;
     for ii=1:maxneur
@@ -116,11 +117,6 @@ for i=1:maxbirds
                 % ======== collect negative distribution
                 AllRhoNeg = [AllRhoNeg; oneminusrho_neg];
             end
-            
-            % ======== collect each neuron
-            AllPairs_Means = [AllPairs_Means; allmeans];
-            AllPairs_Bregions = [AllPairs_Bregions; bregion];
-            AllPairs_Birdnum = [AllPairs_Birdnum; i];
             
             % ======== overlay negative distribution
             if dosubtractcontrol==0
@@ -220,12 +216,13 @@ for i=1:maxbirds
                 continue
             end
             
+            
+        end
             % ======== collect each neuron
             AllPairs_Means = [AllPairs_Means; allmeans];
             AllPairs_Bregions = [AllPairs_Bregions; bregion];
             AllPairs_Birdnum = [AllPairs_Birdnum; i];
-            
-        end
+            AllPairs_Neur = [AllPairs_Neur; ii];
         
         % =============================== PLOT,
         if plotRawGood==1 & strcmp(plottype, 'absfrdiff_globZ')
@@ -628,7 +625,7 @@ xlim([0 3]);
 linkaxes(hsplots, 'y');
 
 
-% ###########################33 COMBINE ALL IN ONE PLOT
+%% ###########################33 COMBINE ALL IN ONE PLOT
 lt_figure; hold on;
 title('[dat - neg]/[pos - neg]');
 ylabel([PairtypesToplot{2} '/' PairtypesToplot{1}])
@@ -644,6 +641,13 @@ for j=1:maxbirds
     indstmp = strcmp(AllPairs_Bregions, 'LMAN') & AllPairs_Birdnum==j;
     if any(indstmp)
         lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
+        if labelneur==1
+           z = AllPairs_Neur(indstmp);
+           y = AllPairs_Ratios(indstmp, :);
+           for k=1:length(y)
+              lt_plot_text(x+0.3, y(k), ['n=' num2str(z(k))], 'm', 8);
+           end
+        end
     end
     Yall{j, 1} = AllPairs_Ratios(indstmp, :);
     
@@ -653,7 +657,14 @@ for j=1:maxbirds
     indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
     if any(indstmp)
         lt_plot_MultDist({AllPairs_Ratios(indstmp, :)}, x, 0, pcol);
-    end
+            if labelneur==1
+           z = AllPairs_Neur(indstmp);
+           y = AllPairs_Ratios(indstmp, :);
+           for k=1:length(y)
+              lt_plot_text(x+0.3, y(k), ['n=' num2str(z(k))], 'm', 8);
+           end
+        end
+end
     Yall{j, 2} = AllPairs_Ratios(indstmp, :);
     
     line(3*[j j], ylim, 'Color', 'k' ,'LineStyle', '--');
@@ -665,7 +676,7 @@ set(gca, 'XTick', 1:3:3*maxbirds, 'XTickLabel', {SummaryStruct.birds.birdname});
 rotateXLabels(gca, 90);
 
 
-% ########################### PLOT ALL ON ONE PLOT
+%% ########################### PLOT ALL ON ONE PLOT
 lt_figure; hold on;
 % === bird by bird
 lt_subplot(2,2,1); hold on;

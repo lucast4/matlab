@@ -1,5 +1,8 @@
 function badtrials = lt_neural_QUICK_RemoveTrials(bname, ename, sw, tvals, ...
     removebadtrialtype, chanthis)
+%% lt 3/21/19 - modified so that can work even if not learnig experiment
+% make the switch input empty.
+
 %% lt 2/5/19 - removes by hand bad trials, designated by time bnelow
 
 % Enter array of trials (by datenums) and will tell you which ones to keep.
@@ -36,6 +39,8 @@ if strcmp(removebadtrialtype, 'spikes') | strcmp(removebadtrialtype, 'all')
         {{'gr48bu5', 'RALMANLearn5', 1, {'23Jan2019-1724', '23Jan2019-2103'}, []}}; ... % then gets noisy at a(j). aj(j), and a(b), and j(b)...
         {{'gr48bu5', 'RALMANLearn6', 1, {'28Jan2019-2039', '28Jan2019-2100'}, []}}; ... % could keep, but gets a little bit noisier, and already showing good learning, so take earlier...
         {{'wh72pk12', 'RALMANLearn7', 1, {'11Jan2019-2040', '11Jan2019-2300'}, []}}; ... % gradual fall off, see noise becuase spikes wwaker. this is rleatively conservative I think. could prb go to aroudn2140;
+        {{'br92br54', 'LMANlearn6', [], {'16Jun2017-1146', '16Jun2017-1220'}, []}}; ... % see lt_neural_QUICK_RemoveBadSyls
+        {{'or74bk35', 'LMANneural2', [], {'12May2017-1444', '12May2017-2133'}, []}}; ... % see lt_neural_QUICK_RemoveBadSyls
         ];
 end
 

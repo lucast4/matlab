@@ -1,4 +1,4 @@
-function [SwitchStruct]= lt_neural_LEARN_getswitch(SummaryStruct)
+function [SwitchStruct]= lt_neural_LEARN_getswitch(SummaryStruct, ver)
 %% lt 1/16/18 - modified from lt_neural_v2_ANALY_GetSwitches
 % NOW DOES NOT NEED MOTIFSTATS
 
@@ -12,10 +12,13 @@ function [SwitchStruct]= lt_neural_LEARN_getswitch(SummaryStruct)
 % If have one neuron that overlaps multiple switches is fine - will extract
 % time bins that appropriate for each switch.
 
+if ~exist('ver', 'var')
+    ver = '';
+end
 
 %%
 
-LearnSummary = lt_neural_v2_LoadLearnMetadat;
+LearnSummary = lt_neural_v2_LoadLearnMetadat(ver);
 
 
 

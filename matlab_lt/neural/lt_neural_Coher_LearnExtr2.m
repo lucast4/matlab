@@ -1,4 +1,4 @@
-function SwitchCohStruct = lt_neural_Coher_LearnExtr(COHSTRUCT, MOTIFSTATS_pop, SwitchStruct, pairtoget, ...
+function SwitchCohStruct = lt_neural_Coher_LearnExtr2(COHSTRUCT, MOTIFSTATS_pop, SwitchStruct, pairtoget, ...
     LFPSTRUCT, PARAMS, baseuseallinds, removeBadTrials)
 %% lt 10/12/18 - extract lerning related coherence dataset
 
@@ -21,9 +21,9 @@ SwitchCohStruct = struct;
 numbirds = length(SwitchStruct.bird);
 for i=1:numbirds
     numexpts = length(SwitchStruct.bird(i).exptnum);
-     bname = SwitchStruct.bird(i).birdname;
+    bname = SwitchStruct.bird(i).birdname;
     for ii=1:numexpts
-     ename = SwitchStruct.bird(i).exptnum(ii).exptname;
+        ename = SwitchStruct.bird(i).exptnum(ii).exptname;
         numswitch = length(SwitchStruct.bird(i).exptnum(ii).switchlist);
         for ss=1:numswitch
             

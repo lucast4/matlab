@@ -26,11 +26,14 @@ saveON =1;
 
 NGRAMSTRUCT = lt_neural_NGRAMS_Extract(SummaryStruct, Params, saveON);
 
+
+
 %% #################################### EXTRACTION/PREPROCESSING
 %% ================= EXTRACT NGRAMSTRUCT FROM SAVED DATA
 close all;
 % dirname = 'xaa_30Apr2018_2342'; % 
-dirname = 'xaa_10Mar2019_0109'; % new, from 3/7/2019
+% dirname = 'xaa_10Mar2019_0109'; % new, from 3/7/2019
+dirname = 'xaa_21Mar2019_0146'; % new, from 3/7/2019
 window_prem = [-0.025 0.025]; % relative to syl onset
 Nshuffs = 1; % for negative control (corr analysis)
 doSqrtTransform = 1;
@@ -104,6 +107,9 @@ lt_neural_NGRAMS_DsampScript;
 
 lt_neural_NGRAMS_Diagnostic;
 
+%%  ################### DIAGNOSTIC - SEQUENCE OF THINGS I DID TO CHECK [GOOD]
+
+lt_neural_NGRAMS_DiagnScript;
 
 
 %% ####################################### MAIN PLOTS
@@ -138,10 +144,12 @@ sanitycheckuseneg = 0; % uses negative control data instead of data
 minPairs = 3; % i.e. if any pairtype has fewer pairs that this then will skip
 zscoreMin = [1 0.75]; % [pairnum minz] only keep a neuron if the zscore(mean) for pairnum is greater than minZ
 
+labelneur = 1;
+
 [AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
     lt_neural_NGRAMS_PlotScatter(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
     PairtypesToplot, dosubtractcontrol, sanitycheckuseneg, plotRawGood, usemedian, ...
-    removeBadSyls, minPairs, zscoreMin);
+    removeBadSyls, minPairs, zscoreMin, labelneur);
 
 
 %% ============ [PLOT] separate by pair type, and average across units
@@ -166,102 +174,15 @@ lt_neural_NGRAMS_Regression;
 %% ============ for every ngram, figure out how variable gap durations are...
 
 
-%% ============= PLOT INFORMATION FOR EACH BIRD 
+%% ============= PLOT INFORMATION FOR EACH BIRD
 % I.E. NGRAMS, SAMPLE SIZES, NEURONS...
 
 pairtype = '1  0  0'; % will list all ngrams that match this pairtype
 
-maxbirds = max(OUTSTRUCT.All_birdnum);
 
 savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/' Params.dirname];
 
-for i=1:maxbirds
-   
-    bname = SummaryStruct.birds(i).birdname;
-    
-    indsthis = find(OUTSTRUCT.All_birdnum==i & ...
-        OUTSTRUCT.All_diffsyl_PairType == find(strcmp(OUTSTRUCT.PairTypesInOrder, pairtype)));
-    
-    
-    neurlist = unique(OUTSTRUCT.All_neurnum(indsthis));
-    
-    disp(' ========================================= ');
-    disp(bname);
-    
-    for nn=neurlist'
-        bregion = SummaryStruct.birds(i).neurons(nn).NOTE_Location;
-        disp(['neur: ' num2str(nn) ' -- ' bregion]);
-    end
-    
-    % ===== display pairs of ngrams
-    ngrampairs = OUTSTRUCT.All_ngramstring_inorder(indsthis,:);
-    N = OUTSTRUCT.All_N(indsthis);
-    
-    [inds_out, inds_unique, X_cell] = lt_tools_grp2idx({ngrampairs(:,1), ngrampairs(:,2)});
-    [~, indstmp] = unique(inds_out);
-    ngrampairs = ngrampairs(indstmp,:);
-    N = N(indstmp);
-    
-%     ngrampairs = unique(ngrampairs, 'rows');
-    
-    fname = [savedir '/ngramlist.txt'];
-    fid = fopen(fname, 'w');
-    cellfun(@(x)fwrite(fid, x), ngrampairs);
-%     fwrite(fid, ngrampairs);
-    fclose(fid);  
-    disp(['Pairtype: ' num2str(pairtype)]);
-    
-    for j=1:size(ngrampairs,1)
-        disp([ngrampairs(j,:) ' -- N= ' num2str(N(j))]);
-    end
-    
-    
-    % ====================== LOAD BIRD DATA
-    cd(savedir)
-    tmp = load(['bird' num2str(i) '.mat']);
-    ngramslistall = {};
-    Nall = [];
-    STDmax = []; % max std of on-on [max over all syls in motif]
-    for j=1:length(tmp.birdstruct.neuron)
-       
-        for jj=1:length(tmp.birdstruct.neuron(j).ngramlist)
-            if isempty(tmp.birdstruct.neuron(j).ngramnum(jj).DAT)
-                continue
-            end
-%            off = [tmp.birdstruct.neuron(j).ngramnum(jj).DAT.motifsylOff];
-           on = [tmp.birdstruct.neuron(j).ngramnum(jj).DAT.motifsylOn];
-           assert(Params.alignsyl==2, 'i assuem that deviation from syl 2 is value to use as mean in cv..')
-           tmp1 = std(on, [], 1);
-%            tmp2 = diff(mean(on,1), [], 2);
-%            tmp1([1 3:end])./tmp2
-          
-           % ====== save all
-           ngramslistall = [ngramslistall; tmp.birdstruct.neuron(j).ngramnum(jj).regexprstr];
-           Nall = [Nall; length(tmp.birdstruct.neuron(j).ngramnum(jj).DAT.tvals)];
-           STDmax = [STDmax; max(tmp1)];
-           
-        end
-    end
-    [~, indsort] = sort(ngramslistall);
-    ngramslistall = ngramslistall(indsort);
-    Nall = Nall(indsort);
-    STDmax = STDmax(indsort);
-    
-    Nlist = round(grpstats(Nall, ngramslistall));
-    [stdmaxlist, nmot] = grpstats(STDmax, ngramslistall, {'mean', 'numel'});
-    ngramlist = unique(ngramslistall);
-    
-    % =========== disp all motifs
-    disp('All Ngrams, mean sample size, mean of max onset-onset standard deviation, Nneur with this motif: ');
-%     indsthis = find(OUTSTRUCT.All_birdnum==i);
-%     ngrams = OUTSTRUCT.All_ngramstring_inorder(indsthis,:);
-%     
-%     disp(unique(ngrams(:)));
-for j=1:length(ngramlist)
-   disp([ngramlist{j} ' -- N= ' num2str(Nlist(j)) ' -- on-onSTD = ' num2str(round(1000*stdmaxlist(j))) ' ms ---Nneur: ' num2str(nmot(j))]); 
-end
-end
-
+lt_neural_NGRAMS_PlotInfo;
 
 %% ============ PLOT RAW NEURAL DATA (multiple trials, for each NGRAM)
 
@@ -348,61 +269,132 @@ for i=1:maxbirds
     
 end
 
-%% ============= PLOT EXAMPLE FR TRACES
-close all;
+
+%% =============== [RAW NEURAL] After saving (above) then plot
 birdtoplot = 'pu69wh78';
-neurtoplot = 2;
+neurtoplot = 11;
+motiftoplot ='n(a)a';
+
+% close all;
+
+% dname = dir('*');
+% dname = dir(['wh44wh39-neur*' '-' motiftoplot]);
+dname = dir([birdtoplot '-neur' num2str(neurtoplot) '-' motiftoplot]);
+
+for i=1:length(dname)
+    disp(i);
+    if dname(i).isdir
+        try
+        openfig([dname(i).name '/figsall.fig']);
+         
+        set(gcf, 'units', 'normalized', 'outerposition', [0 0 1 1]);
+%         figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+        ylim([-200 200]);
+        pause; 
+        catch err
+            
+        end
+
+    end
+    
+    if mod(i,10)==0
+        close all; 
+    end
+    if mod(i,11)==0
+        close all; 
+    end
+end
+
+%% =============== [RAW NEURAL] After saving (above) then plot
+birdtoplot = 'bk7';
+neurtoplot = 10;
+motiftoplot ='g(b)b';
+
+openfig([birdtoplot '-neur' num2str(neurtoplot) '-' motiftoplot '/figsall.fig']);
+% 
+% for i=1:length(dname)
+%     disp(i);
+%     if dname(i).isdir
+%         try
+%         openfig([dname(i).name '/figsall.fig']);
+%          
+%         set(gcf, 'units', 'normalized', 'outerposition', [0 0 1 1]);
+% %         figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+%         ylim([-200 200]);
+%         pause; 
+%         catch err
+%             
+%         end
+% 
+%     end
+%     
+%     if mod(i,10)==0
+%         close all; 
+%     end
+%     if mod(i,11)==0
+%         close all; 
+%     end
+% end
+% 
+% 
+
+%% ============= [RAW NEURAL] one plot for each neuron (i.e. to check spike sorting
+% GO TO SAVE FOLDER FROM ABOVE.
+cc =1 ;
+for i=1:length(SummaryStruct.birds)
+    for ii=1:length(SummaryStruct.birds(i).neurons)
+        disp(['bird' num2str(i) ' - neur' num2str(ii)]);
+        bname = SummaryStruct.birds(i).birdname;
+        
+        fname = [bname '-neur' num2str(ii) '*'];
+        tmp = dir(fname);
+        
+        if isempty(tmp)
+            continue
+        end
+        
+        openfig([tmp(1).name '/figsall.fig']);
+        
+        set(gcf, 'units', 'normalized', 'outerposition', [0 0 1 1]);
+        %         figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+        ylim([-200 200]);
+        pause;
+        cc=cc+1;
+        if mod(cc,10)==0
+            close all;
+        end
+    end
+end
+
+%% ============= [SHOW METADAT] FOR EACH BIRD AND NEURON, SHOW DIRECTORY
+% for each directory, displays channels to get.
+longversion=0;
+lt_neural_SummaryStruct_ShowDirChans(SummaryStruct, longversion);
+
+
+%% ============= PLOT EXAMPLE FR TRACES
+% only plots 2. below plots more (but with less detail)
+if (0)
+    close all;
+birdtoplot = 'wh44wh39';
+neurtoplot = 71;
 ngramstoplot = {}; % leave empty to plot random one
 pairtypetoplot = '1  1  1';
 
 lt_neural_NGRAMS_PlotEgAll(OUTSTRUCT, SummaryStruct, Params, ...
     birdtoplot, neurtoplot, ngramstoplot, pairtypetoplot);
 
+end
 
 %% ============== PLOT ALL EXAMPLES FOR A GIVEN NEURON IN ONE PLOT
 
 % close all;
-birdtoplot = 'gr48bu5';
-neurtoplot = 3;
+birdtoplot = 'bk7';
+neurtoplot = 10;
 pairtypes = {'1  0  0', '1  1  1'};
 plotsqrt = 1; % if 1, then mean of sqrt firing rate
 lt_neural_NGRAMS_PlotEgPair(OUTSTRUCT, SummaryStruct, Params, ...
     birdtoplot, neurtoplot, pairtypes, plotsqrt);
-
-
-
-%% ============= LIST SAMPLE SIZES ETC.
-% for each neuron in each bird, list a few thigns:
-
-maxbird = max(OUTSTRUCT.All_birdnum);
-maxneur = max(OUTSTRUCT.All_neurnum);
-
-for i=1:maxbird
-    lt_figure; hold on;
-       
-    figcount=1;
-    subplotrows=4;
-    subplotcols=2;
-    fignums_alreadyused=[];
-    hfigs=[];
-    hsplots = [];
-
-    for ii=1:maxneur
-    
-        % ===== 
-        indsthis = OUTSTRUCT.All_birdnum==i & OUTSTRUCT.All_neurnum==ii;
-        if ~any(indsthis)
-            continue
-        end
-                
-        
-        % #################### PLOT EACH 
-        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        title([]);
-        
-    end
-    
-end
 
 
 

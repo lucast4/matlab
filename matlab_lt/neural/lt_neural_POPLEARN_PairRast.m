@@ -1,8 +1,9 @@
 function lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
     neurpair_globID, motiftoplot, OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-    PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple)
+    PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple, plotrawneural)
 
+Nraw = 28; % how many raw neural plots to make? make it multipel of 7
 
 %% ==================== PARAMS
 % BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'}; % ordered p[aors {bird, expt, bird, expt } ....
@@ -18,7 +19,7 @@ function lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
 % defgault
 corrwind = [-0.115 0.015]; % rel syl onset, to get pairwise trial by trial correlations.
 % corrwind = [-0.1 0.0]; % rel syl onset, to get pairwise trial by trial correlations.
-% 
+%
 % corrwind = [-0.05 0.02]; % rel syl onset, to get pairwise trial by trial correlations.
 % corrwind = [-0.12 -0.05]; % rel syl onset, to get pairwise trial by trial correlations.
 
@@ -110,126 +111,130 @@ for i=1:numbirds
                 %                    & all(OUTSTRUCT_XCOV.neurpair'==neurpair_globID')';
                 %                assert(sum(indstmp)==1, 'if not 1, then means crucial error somewjhere...');
                 
-                indstmp = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==iii ...
-                    & OUTSTRUCT.motifnum==mm);
-                indstmp=indstmp(1); % assumes that multip[el cases are multip[el chans..
-                assert(length(indstmp)==1);
+                
                 
                 if (0)
-                    inds_base = find(OUTSTRUCT.indsbase{indstmp});
+                    % ==== USES OUTSTRUCT
+                    indstmp = find(OUTSTRUCT.bnum==i & OUTSTRUCT.enum==ii & OUTSTRUCT.switch==iii ...
+                        & OUTSTRUCT.motifnum==mm);
+                    indstmp=indstmp(1); % assumes that multip[el cases are multip[el chans..
+                    assert(length(indstmp)==1);
+                    
+                    if (0)
+                        inds_base = find(OUTSTRUCT.indsbase{indstmp});
+                    else
+                        %                     OUTSTRUCT_XCOV.inds_base_epoch{indstmp}
+                        inds_base = OUTSTRUCT.indsbase_epoch{indstmp};
+                    end
+                    if (0) % entire WN
+                        inds_wn = find(OUTSTRUCT.indsWN{indstmp});
+                    else % WN epoch that was used for analsyis.
+                        %                     inds_wn = OUTSTRUCT_XCOV.inds_WN_epoch{indstmp};
+                        inds_wn = OUTSTRUCT.indsWN_epoch{indstmp};
+                    end
                 else
-                    inds_base = OUTSTRUCT.indsbase_epoch{indstmp};
+                    % ========== USES OUTSTRUCT_XCOV
+                    indstmp = find(OUTSTRUCT_XCOV.bnum==i & OUTSTRUCT_XCOV.enum==ii & OUTSTRUCT_XCOV.switch==iii ...
+                        & OUTSTRUCT_XCOV.motifnum==mm);
+                    indstmp=indstmp(1); % assumes that multip[el cases are multip[el chans..
+                    assert(length(indstmp)==1);
+                    
+                    inds_base = OUTSTRUCT_XCOV.inds_base_epoch{indstmp};
+                    inds_wn = OUTSTRUCT_XCOV.inds_WN_epoch{indstmp};
+                    
                 end
-                if (0) % entire WN
-                    inds_wn = find(OUTSTRUCT.indsWN{indstmp});
-                else % WN epoch that was used for analsyis.
-                    inds_wn = OUTSTRUCT.indsWN_epoch{indstmp};
-                end
-                
-                
-                %% =================== PLOT RASTERS
-                lt_figure;
-                hsplots = [];
-                
-                hsplot =lt_subplot(8,4,[1:3 5:7 9:11]);
-                hsplots = [hsplots hsplot];
-                
-                if strcmp(bregion_list{1}, 'RA')
+            end
+            %% =================== PLOT RASTERS
+            lt_figure;
+            hsplots = [];
+            
+            hsplot =lt_subplot(8,4,[1:3 5:7 9:11]);
+            hsplots = [hsplots hsplot];
+            
+            if strcmp(bregion_list{1}, 'RA')
                 %                 pcol1 = 'r';
                 pcol1 = [0.8 0.2 0.2];
                 %                 pcol2 = [0.1 0.2 0.1];
                 pcol2 = [0.1 0.2 0.1];
-                else
+            else
                 pcol2 = [0.8 0.2 0.2];
                 pcol1 = [0.1 0.2 0.1];
-                end
-                
-                % === plot random subset of inds from base and WN
-                if length(inds_base)>Nrand
-                    inds_base_rand = inds_base(sort(randperm(length(inds_base), Nrand)));
-                else
-                    inds_base_rand = inds_base;
-                end
-                if length(inds_wn)>Nrand
-                    inds_wn_rand = inds_wn(sort(randperm(length(inds_wn), Nrand)));
-                else
-                    inds_wn_rand = inds_wn;
-                end
-                
-                indstoplot = [inds_base_rand inds_wn_rand];
-                ind_wnon = length(inds_base_rand)+1;
-                
-                % ==== region 1
-                Y = {seg1(indstoplot).spk_Times};
-                Y = cellfun(@(x)x-motifpredur, Y, 'UniformOutput', 0);
-                pcol = pcol1;
-                yoffset = -0.1;
-                
-                for kk=1:length(Y)
-                    lt_neural_PLOT_rasterline(Y{kk}, kk+yoffset, pcol, 0, 0.4);
-                end
-                lt_plot_text(0, kk+1, [bregion_list{1} '-' num2str(neurpair_globID(1))], pcol);
-                
-                
-                % ==== region 2
-                Y = {seg2(indstoplot).spk_Times};
-                Y = cellfun(@(x)x-motifpredur, Y, 'UniformOutput', 0);
-                pcol = pcol2;
-                yoffset = 0.11;
-                
-                for kk=1:length(Y)
-                    lt_neural_PLOT_rasterline(Y{kk}, kk+yoffset, pcol, 0, 0.4);
-                end
-                lt_plot_text(0, kk+2, [bregion_list{2} '-' num2str(neurpair_globID(2))], pcol);
-                
-                % ============ ANNOTATE
-                axis tight;
-                line(xlim, [ind_wnon ind_wnon]-0.5)
-                xlabel('t rel syl');
-                ylabel('trial (random subset, in order) [line=wnon]');
-                title([birdname '-' exptname '-sw' num2str(iii) '-' motifname]);
-                lt_plot_zeroline_vert;
-                
-                
-                
-                %% ============== PLOT SMOOTHED FR.
-                % ====== 1) extract smoothed FR
-                seg1 = lt_neural_SmoothFR(seg1, [], kernelSD, binsize, 0, seg_global);
-                seg2 = lt_neural_SmoothFR(seg2, [], kernelSD, binsize, 0, seg_global);
-                
-                
-                % ##################################### UNIT 1
-                hsplot = lt_subplot(8,4,[13:15]); hold on;
-                hsplots = [hsplots hsplot];
-                title([bregion_list{1} '-' num2str(neurpair_globID(1))]);
-                segthis = seg1;
-                pcolthis = pcol1;
-                ylabel('BASE(solid), WN(dash)');
-                
-                % ==== BASELINE
-                indsthis = inds_base;
-                linstyle = '-';
-                
-                if (0)
-                    Ycell = {segthis(indsthis).spk_Times};
-                    [xbin, ymean, ysem, ymean_hz, ysem_hz, ystd, ystd_hz] = ...
-                        lt_neural_plotRastMean(Ycell, 0.01, 0.001, 0, []);
-                    shadedErrorBar(xbin, ymean_hz, ysem_hz, {}, 1);
-                else
-                    frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
-                    frx = frx-motifpredur;
-                    
-                    frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                    ymean = mean(frmat,2);
-                    ysem = lt_sem(frmat');
-                    shadedErrorBar(frx, ymean, ysem, ...
-                        {'Color', pcolthis, 'LineStyle', linstyle},1);
-                end
-                
-                % ==== WN
-                indsthis = inds_wn;
-                linstyle = '--';
-                
+            end
+            
+            % === plot random subset of inds from base and WN
+            if length(inds_base)>Nrand
+                inds_base_rand = inds_base(sort(randperm(length(inds_base), Nrand)));
+            else
+                inds_base_rand = inds_base;
+            end
+            if length(inds_wn)>Nrand
+                inds_wn_rand = inds_wn(sort(randperm(length(inds_wn), Nrand)));
+            else
+                inds_wn_rand = inds_wn;
+            end
+            
+            indstoplot = [inds_base_rand inds_wn_rand];
+            ind_wnon = length(inds_base_rand)+1;
+            
+            % ==== region 1
+            Y = {seg1(indstoplot).spk_Times};
+            Y = cellfun(@(x)x-motifpredur, Y, 'UniformOutput', 0);
+            pcol = pcol1;
+            yoffset = -0.1;
+            
+            for kk=1:length(Y)
+                lt_neural_PLOT_rasterline(Y{kk}, kk+yoffset, pcol, 0, 0.4);
+            end
+            lt_plot_text(0, kk+1, [bregion_list{1} '-' num2str(neurpair_globID(1))], pcol);
+            
+            
+            % ==== region 2
+            Y = {seg2(indstoplot).spk_Times};
+            Y = cellfun(@(x)x-motifpredur, Y, 'UniformOutput', 0);
+            pcol = pcol2;
+            yoffset = 0.11;
+            
+            for kk=1:length(Y)
+                lt_neural_PLOT_rasterline(Y{kk}, kk+yoffset, pcol, 0, 0.4);
+            end
+            lt_plot_text(0, kk+2, [bregion_list{2} '-' num2str(neurpair_globID(2))], pcol);
+            
+            tmptmp1 = Y{1};
+            
+            % ============ ANNOTATE
+            axis tight;
+            line(xlim, [ind_wnon ind_wnon]-0.5)
+            xlabel('t rel syl');
+            ylabel('trial (random subset, in order) [line=wnon]');
+            title([birdname '-' exptname '-sw' num2str(iii) '-' motifname]);
+            lt_plot_zeroline_vert;
+            
+            
+            
+            %% ============== PLOT SMOOTHED FR.
+            % ====== 1) extract smoothed FR
+            seg1 = lt_neural_SmoothFR(seg1, [], kernelSD, binsize, 0, seg_global);
+            seg2 = lt_neural_SmoothFR(seg2, [], kernelSD, binsize, 0, seg_global);
+            
+            
+            % ##################################### UNIT 1
+            hsplot = lt_subplot(8,4,[13:15]); hold on;
+            hsplots = [hsplots hsplot];
+            title([bregion_list{1} '-' num2str(neurpair_globID(1))]);
+            segthis = seg1;
+            pcolthis = pcol1;
+            ylabel('BASE(solid), WN(dash)');
+            
+            % ==== BASELINE
+            indsthis = inds_base;
+            linstyle = '-';
+            
+            if (0)
+                Ycell = {segthis(indsthis).spk_Times};
+                [xbin, ymean, ysem, ymean_hz, ysem_hz, ystd, ystd_hz] = ...
+                    lt_neural_plotRastMean(Ycell, 0.01, 0.001, 0, []);
+                shadedErrorBar(xbin, ymean_hz, ysem_hz, {}, 1);
+            else
                 frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
                 frx = frx-motifpredur;
                 
@@ -238,145 +243,159 @@ for i=1:numbirds
                 ysem = lt_sem(frmat');
                 shadedErrorBar(frx, ymean, ysem, ...
                     {'Color', pcolthis, 'LineStyle', linstyle},1);
-                axis tight;
-                lt_plot_zeroline_vert;
-                
-                % ############################## UNIT 2
-                hsplot = lt_subplot(8,4,[17:19]); hold on;
-                hsplots = [hsplots hsplot];
-                
-                title([bregion_list{2} '-' num2str(neurpair_globID(2))]);
-                segthis = seg2;
-                pcolthis = pcol2;
-                ylabel('BASE(solid), WN(dash)');
-                
-                % ==== BASELINE
-                indsthis = inds_base;
-                linstyle = '-';
-                
-                frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
-                frx = frx-motifpredur;
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ysem = lt_sem(frmat');
-                shadedErrorBar(frx, ymean, ysem, ...
-                    {'Color', pcolthis, 'LineStyle', linstyle},1);
-                
-                % ==== WN
-                indsthis = inds_wn;
-                linstyle = '--';
-                
-                frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
-                frx = frx-motifpredur;
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ysem = lt_sem(frmat');
-                shadedErrorBar(frx, ymean, ysem, ...
-                    {'Color', pcolthis, 'LineStyle', linstyle},1);
-                axis tight;
-                lt_plot_zeroline_vert;
-                
-                %% ============== OVERLAY Z-SCORED SMOOTHED FR
-                hsplot = lt_subplot(8,4,[21:23]); hold on;
-                hsplots = [hsplots hsplot];
-                
-                % =========================== 1) UNIT 1
-                segthis = seg1;
-                pcolthis = pcol1;
-                
-                % ==== BASELINE
-                indsthis = inds_base;
-                linstyle = '-';
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
-                plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
-                
-                % ==== WN
-                indsthis = inds_wn;
-                linstyle = '--';
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
-                plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
-                
-                
-                % =========================== 1) UNIT 1
-                segthis = seg2;
-                pcolthis = pcol2;
-                
-                % ==== BASELINE
-                indsthis = inds_base;
-                linstyle = '-';
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
-                plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
-                
-                % ==== WN
-                indsthis = inds_wn;
-                linstyle = '--';
-                
-                frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
-                ymean = mean(frmat,2);
-                ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
-                plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
-                
-                
-                % =======================
-                ylim([-3 3]);
-                lt_plot_zeroline_vert;
-                %% ============== PLOT XCOV GRAMS
-                indthis = OUTSTRUCT_XCOV.bnum==i & OUTSTRUCT_XCOV.enum==ii ...
-                    & OUTSTRUCT_XCOV.switch==iii & OUTSTRUCT_XCOV.motifnum==mm ...
-                    & (all(OUTSTRUCT_XCOV.neurpair'==neurpair_globID')' | all(OUTSTRUCT_XCOV.neurpair'==fliplr(neurpair_globID)')');
-                assert(sum(indthis)==1, 'if not 1, then means crucial error somewjhere...');
-                
-                % ==== important: determine the order of neurons
-                neurpair_ordered = OUTSTRUCT_XCOV.neurpair(indthis,:);
-                bregion_ordered = {SummaryStruct.birds(i).neurons(neurpair_ordered).NOTE_Location};
-                
-                % === pare down to relevant region
-                x = PARAMS.xcenters_gram;
-                y = PARAMS.Xcov_ccLags;
-                indx = x>=xgramxlim(1) & x<=xgramxlim(2);
-                indy = y>=xgramylim(1) & y<=xgramylim(2);
-                x = x(indx);
-                y = y(indy);
-                
-
-                % ==================== BASELINE
-                hsplot = lt_subplot(8,4,[25:27]); hold on;
-                hsplots = [hsplots hsplot];
-                xcovgram = OUTSTRUCT_XCOV.XcovgramBase{indthis};
-                xcovgram = xcovgram(indx, indy);
-                title('BASE');
-                ylabel([bregion_ordered{1} '<-->' bregion_ordered{2}]);
-                lt_neural_Coher_Plot(xcovgram, x, y, ...
-                    1, '', clim, '', '', '', 'East');
-                lt_plot_zeroline;
-                
-                % ==================== WN
-                hsplot = lt_subplot(8,4,[29:31]); hold on;
-                hsplots = [hsplots hsplot];
-                xcovgram = OUTSTRUCT_XCOV.XcovgramWN{indthis};
-                xcovgram = xcovgram(indx, indy);
-                title('WN');
-                ylabel([bregion_ordered{1} '<-->' bregion_ordered{2}]);
-                lt_neural_Coher_Plot(xcovgram, x, y, ...
-                    1, '', clim, '', '', '', 'East');
-                lt_plot_zeroline;
-                
-                
-                %% ======= format plot
-                linkaxes(hsplots, 'x');
-                
-                if plotsimple==0
+            end
+            
+            % ==== WN
+            indsthis = inds_wn;
+            linstyle = '--';
+            
+            frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
+            frx = frx-motifpredur;
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ysem = lt_sem(frmat');
+            shadedErrorBar(frx, ymean, ysem, ...
+                {'Color', pcolthis, 'LineStyle', linstyle},1);
+            axis tight;
+            lt_plot_zeroline_vert;
+            
+            % ############################## UNIT 2
+            hsplot = lt_subplot(8,4,[17:19]); hold on;
+            hsplots = [hsplots hsplot];
+            
+            title([bregion_list{2} '-' num2str(neurpair_globID(2))]);
+            segthis = seg2;
+            pcolthis = pcol2;
+            ylabel('BASE(solid), WN(dash)');
+            
+            % ==== BASELINE
+            indsthis = inds_base;
+            linstyle = '-';
+            
+            frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
+            frx = frx-motifpredur;
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ysem = lt_sem(frmat');
+            shadedErrorBar(frx, ymean, ysem, ...
+                {'Color', pcolthis, 'LineStyle', linstyle},1);
+            
+            % ==== WN
+            indsthis = inds_wn;
+            linstyle = '--';
+            
+            frx = segthis(indsthis).FRsmooth_xbin_CommonTrialDur;
+            frx = frx-motifpredur;
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ysem = lt_sem(frmat');
+            shadedErrorBar(frx, ymean, ysem, ...
+                {'Color', pcolthis, 'LineStyle', linstyle},1);
+            axis tight;
+            lt_plot_zeroline_vert;
+            
+            %% ============== OVERLAY Z-SCORED SMOOTHED FR
+            hsplot = lt_subplot(8,4,[21:23]); hold on;
+            hsplots = [hsplots hsplot];
+            
+            % =========================== 1) UNIT 1
+            segthis = seg1;
+            pcolthis = pcol1;
+            
+            % ==== BASELINE
+            indsthis = inds_base;
+            linstyle = '-';
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
+            plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
+            
+            % ==== WN
+            indsthis = inds_wn;
+            linstyle = '--';
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
+            plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
+            
+            
+            % =========================== 1) UNIT 1
+            segthis = seg2;
+            pcolthis = pcol2;
+            
+            % ==== BASELINE
+            indsthis = inds_base;
+            linstyle = '-';
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
+            plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
+            
+            % ==== WN
+            indsthis = inds_wn;
+            linstyle = '--';
+            
+            frmat = [segthis(indsthis).FRsmooth_rate_CommonTrialDur];
+            ymean = mean(frmat,2);
+            ymean = (ymean-mean(ymean(10:end-9)))./std(ymean(10:end-9));
+            plot(frx, ymean, 'Color', pcolthis, 'LineStyle', linstyle, 'LineWidth', 2);
+            
+            
+            % =======================
+            ylim([-3 3]);
+            lt_plot_zeroline_vert;
+            %% ============== PLOT XCOV GRAMS
+            indthis = OUTSTRUCT_XCOV.bnum==i & OUTSTRUCT_XCOV.enum==ii ...
+                & OUTSTRUCT_XCOV.switch==iii & OUTSTRUCT_XCOV.motifnum==mm ...
+                & (all(OUTSTRUCT_XCOV.neurpair'==neurpair_globID')' | all(OUTSTRUCT_XCOV.neurpair'==fliplr(neurpair_globID)')');
+            assert(sum(indthis)==1, 'if not 1, then means crucial error somewjhere...');
+            
+            % ==== important: determine the order of neurons
+            neurpair_ordered = OUTSTRUCT_XCOV.neurpair(indthis,:);
+            bregion_ordered = {SummaryStruct.birds(i).neurons(neurpair_ordered).NOTE_Location};
+            
+            % === pare down to relevant region
+            x = PARAMS.xcenters_gram;
+            y = PARAMS.Xcov_ccLags;
+            indx = x>=xgramxlim(1) & x<=xgramxlim(2);
+            indy = y>=xgramylim(1) & y<=xgramylim(2);
+            x = x(indx);
+            y = y(indy);
+            
+            
+            % ==================== BASELINE
+            hsplot = lt_subplot(8,4,[25:27]); hold on;
+            hsplots = [hsplots hsplot];
+            xcovgram = OUTSTRUCT_XCOV.XcovgramBase{indthis};
+            xcovgram = xcovgram(indx, indy);
+            title('BASE');
+            ylabel([bregion_ordered{1} '<-->' bregion_ordered{2}]);
+            lt_neural_Coher_Plot(xcovgram, x, y, ...
+                1, '', clim, '', '', '', 'East');
+            lt_plot_zeroline;
+            
+            % ==================== WN
+            hsplot = lt_subplot(8,4,[29:31]); hold on;
+            hsplots = [hsplots hsplot];
+            xcovgram = OUTSTRUCT_XCOV.XcovgramWN{indthis};
+            xcovgram = xcovgram(indx, indy);
+            title('WN');
+            ylabel([bregion_ordered{1} '<-->' bregion_ordered{2}]);
+            lt_neural_Coher_Plot(xcovgram, x, y, ...
+                1, '', clim, '', '', '', 'East');
+            lt_plot_zeroline;
+            
+            
+            %% ======= format plot
+            linkaxes(hsplots, 'x');
+            
+            if plotsimple==0
                 %% ############################# PLOT INDIVIDUAL TRIALS
                 hsplots = [];
                 
@@ -562,11 +581,11 @@ for i=1:numbirds
                 
                 Yall = cell(1,2); % unit1(base, wn), 2(base,wn)
                 XlabAll = {};
-
+                
                 % =================================== BASELINE
                 indsthis = inds_base;
                 yidx = 1;
-
+                
                 % ----------------- COLLECT
                 frmat1 = [seg1(indsthis).FRsmooth_rate_CommonTrialDur];
                 frmat2 = [seg2(indsthis).FRsmooth_rate_CommonTrialDur];
@@ -588,7 +607,7 @@ for i=1:numbirds
                 % =================================== WN
                 indsthis = inds_wn;
                 yidx = 2;
-
+                
                 % ----------------- COLLECT
                 frmat1 = [seg1(indsthis).FRsmooth_rate_CommonTrialDur];
                 frmat2 = [seg2(indsthis).FRsmooth_rate_CommonTrialDur];
@@ -614,13 +633,116 @@ for i=1:numbirds
                 lt_plot_MultDist(Yall, [1 2], 1);
                 axis tight;
                 lt_plot_zeroline;
-                end
             end
             
             
-            
+            %% ======== PLOT RAW NEURAL?
+            if plotrawneural==1
+                
+                Yrawneur = cell(1,2);
+                % ===== 1) extract raw neural [unit 1]
+                nn = neurpair_globID(1);
+                [tmp, tneur] = lt_neural_DIAGN_PlotRawNeural(SummaryStruct, ...
+                    birdname, nn, {motifname}, PARAMS.motif_predur, ...
+                    PARAMS.motif_postdur, ...
+                    0, 1, 0, 22, '', [], 0);
+                
+                if length(tmp)~=length(seg_global)
+                    disp('problem, new extracted segextract is not identical to old verion, cannot map traisl to each other...');
+                    disp('TRIAL NUMBERS MAY NOT MATCH!');
+                    matchflag=1;
+                else
+                    matchflag=0;
+                end
+                
+                %                 assert(length(tmp)==length(seg_global), 'problem, new extracted segextract is not identical to old verion, cannot map traisl to each other...')
+                
+                % ==== save and extract next neruon
+                Yrawneur{1} = {tmp.neurdatseg_filt};
+                
+                
+                
+                % ========== 2) do the same thing for the other neuron
+                % [unit 2]
+                nn = neurpair_globID(2);
+                [tmp, tneur] = lt_neural_DIAGN_PlotRawNeural(SummaryStruct, ...
+                    birdname, nn, {motifname}, PARAMS.motif_predur, ...
+                    PARAMS.motif_postdur, ...
+                    0, 1, 0, 22, '', [], 0);
+                
+                
+                if length(tmp)~=length(Yrawneur{1})
+                    disp('problem, why are neurons not matched for trials?');
+                    disp('HAVE TO SKIP THIS CASE');
+                else
+                    % ==== save and extract next neruon
+                    Yrawneur{2} = {tmp.neurdatseg_filt};
+                    
+                    % ===== COLLECT NEUR DAT
+                    %                 [~, NeurDat, Params] = lt_neural_ExtractDat2(SummaryStruct, i, nn);
+                    
+                    % ==== align tneur to syl onset
+                    tneur = tneur - PARAMS.motif_predur;
+                    
+                    % ############## PLOT
+                    figcount=1;
+                    subplotrows=7;
+                    subplotcols=1;
+                    fignums_alreadyused=[];
+                    hfigs=[];
+                    hsplots = [];
+                    
+                    indstoplot_raw = sort(randperm(length(indstoplot), Nraw));
+                    indstoplot_raw_orig = indstoplot(indstoplot_raw);
+                    
+                    for k = 1:length(indstoplot_raw)
+                        [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                        hsplots = [hsplots; hsplot];
+                        trialthis = indstoplot_raw_orig(k);
+                        trialthis_fake = indstoplot_raw(k);
+                        title(['trial ' num2str(trialthis_fake) ', actual' num2str(trialthis)]);
+                        if matchflag==1
+                            lt_plot_annotation(1, 'NOTE: trials of raw may not match rasters');
+                        end
+                        
+                        if strcmp(bregion_list{1}, 'RA')
+                            pcol1 = [0.8 0.2 0.2];
+                            pcol2 = [0.1 0.2 0.1];
+                        else
+                            pcol2 = [0.8 0.2 0.2];
+                            pcol1 = [0.1 0.2 0.1];
+                        end
+                        
+                        % ========== CHAN 1
+                        indchan=1;
+                        datneur = Yrawneur{indchan}{trialthis};
+                        t = tneur;
+                        plot(t, datneur, 'Color', pcol1);
+                        % overlay spikes
+                        spk = seg1(trialthis).spk_Times-PARAMS.motif_predur;
+                        lt_neural_PLOT_rasterline(spk, prctile(datneur, [10]), 'k', 0, 30);
+                        
+                        % ========== CHAN 2
+                        indchan=2;
+                        datneur = Yrawneur{indchan}{trialthis}-300;
+                        t = tneur;
+                        plot(t, datneur, 'Color', pcol2);
+                        % overlay spikes
+                        spk = seg2(trialthis).spk_Times-PARAMS.motif_predur;
+                        %                     spk = tmp(trialthis).spk_Times-PARAMS.motif_predur;
+                        lt_neural_PLOT_rasterline(spk, prctile(datneur, [10]), 'k', 0, 30);
+                        
+                        % ==========
+                        lt_plot_zeroline_vert;
+                        
+                    end
+                    linkaxes(hsplots, 'xy');
+                    
+                end
+                
+                
+            end
         end
-        
-        
     end
+end
 end

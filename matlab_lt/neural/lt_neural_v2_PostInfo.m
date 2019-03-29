@@ -281,6 +281,9 @@ for j=1:NumBirds
                 elseif strcmp(exptname, 'RALMANLearn6')
                     MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
                         '(a)j', '(j)jb', 'jb', 'jb(h)'};
+                elseif strcmp(exptname, 'RALMANLearn7')
+                    MotifsActual = {'(a)rd', '(r)rd', '(r)d', 'r(d)', 'abh', ...
+                        '(a)j', '(j)jb', 'jb', 'jb(h)'};
                 end
             else
                 disp('NO MOTIFS INPUTED!!');

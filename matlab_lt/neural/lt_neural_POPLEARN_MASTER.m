@@ -533,6 +533,22 @@ load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_05Feb2019_2142.mat');
 load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/05Feb2019_2142/COHSTRUCT.mat');
 
 
+% 1) gr48 - RALMANLearn7 ONLY
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_26Mar2019_2352.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_26Mar2019_2352.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_26Mar2019_2352.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/26Mar2019_2352/COHSTRUCT.mat');
+
+% 1) MULTI-DAY LEARNING ONLY
+clear all; close all;
+load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_28Mar2019_1106.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/LFPSTRUCT_28Mar2019_1106.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PARAMS_28Mar2019_1106.mat');
+load('/bluejay5/lucas/analyses/neural/LFP/PROCESSED/28Mar2019_1106/COHSTRUCT.mat');
+
+% ===========================
+
 % 1) all data (100ms window)
 clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14Oct2018_2147.mat');
@@ -703,6 +719,8 @@ disp('CHECK SCRIPT - some things not auto correct');
 pause;
 lt_neural_Coher_PreProcess;
 
+lt_neural_Coher_PreProcess_multiday; % for multiday learning 
+% only difference is loads a different switchstruct.
 
 %% ##################### [SCRIPT WITH LIST OF STUFF TO DO IN ORDER]
 
@@ -1241,7 +1259,7 @@ lt_neural_Coher_Learn_PlotSum(OUTSTRUCT, PARAMS, SwitchStruct, sumplottype, ...
 
 % ============== THIS IS BETTER - subsumes the above, more compacta ndf
 % flexible.
-fieldtoplot = 'spec';
+fieldtoplot = 'coher';
 % 'coher'
 % 'spec'
 birdstoplot = [];
@@ -2162,7 +2180,7 @@ BirdsToSkip = {'wh72pk12'};
 binsize_spk = 0.0025; % default, 5ms bins for cross corr
 % xcov_dattotake = [-0.12 0.02]; % rel syl onset.
 % xcov_dattotake = [-0.05 0.02]; % rel syl onset.
-xcov_dattotake = [-0.1 0]; % rel syl onset. [BEST WINDOW]
+xcov_dattotake = [-0.06 0]; % rel syl onset. [BEST WINDOW]
 % xcov_dattotake = [-0.08 0.02]; % rel syl onset.
 % xcovwindmax = 0.06; % seconds
 xcovwindmax = 0.03; % seconds
@@ -2209,10 +2227,10 @@ end
 usealltrials = 0; % otehrwise uses epchs.
 % --- option 2: [only does this if usealltrials=0]
 useallbase = 0; % 1: all; 0=last half.
-% wntouse = 'all';
+wntouse = 'all';
 % wntouse = 'half';
 % wntouse = 'third';
-wntouse = 'quarter';
+% wntouse = 'quarter';
 
 % ============== smoothe in lag space? 
 dosmooth = 1; % interpolate, then smooth
@@ -2330,6 +2348,9 @@ dosmooth_sigma = 2*PARAMS.Xcov.binsize_spk; % sec
 [OUTSTRUCT_XCOV, PARAMS] = lt_neural_POPLEARN_XcovSmth(...
     OUTSTRUCT_XCOV, PARAMS, dosmooth_sigma);
 
+
+
+    
 %% [SAVE] --- especially useful if computed covariance heat maps
 
 savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/POPLEARN/OUTSTRUCT_XCOV/' PARAMS.savemarker];
@@ -2470,6 +2491,21 @@ save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
 save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
 
+
+% ############################### [3/25/19 - 60ms bins - gr48bu5 -
+% RALMANLearn7]
+savemarker = 'gr48bu5_RALMANLearn7';  % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
+% ############################### [3/28/19 - 60ms bins - multi-day learning
+savemarker = 'multiday_032819';  % latest, and 6 epochs for Xcovgram
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
+
 %% [LOAD] --- 
 % NOTE: the same switchxcov struct could apply for adifferent outstructs.
 if (0)
@@ -2503,6 +2539,13 @@ savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgra
 load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
+
+% ================ [60ms bins - gr48bu5 - RALMANLearn7]
+savemarker = 'gr48bu5_RALMANLearn7';  % latest, and 6 epochs for Xcovgram
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
+load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
+load([savedir '/PARAMS_' savemarker '.mat']);
+
 
 end
 
@@ -2559,6 +2602,37 @@ prewind_relSyl = [-0.07 -0.03];
 lt_neural_LFP_AlignToWN_Xcov(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchStruct, ...
     PARAMS, prewind_relWN, prewind_relSyl);
 
+%% ================== AD HOC COMBINING OF EPOCHS
+% == PU69 RL2, since there is gap in trials, need to combine.
+numepochs = 3;
+disp(['nume pochs = ' num2str(numepochs) '?']);
+pause;
+
+
+btoget = find(strcmp({SummaryStruct.birds.birdname}, 'pu69wh78'));
+etoget = find(strcmp({SwitchStruct.bird(btoget).exptnum.exptname}, 'RALMANlearn2'));
+
+indsthis = find(OUTSTRUCT_XCOV.bnum==btoget & OUTSTRUCT_XCOV.enum==etoget);
+ 
+for j=indsthis'
+
+    tmp = OUTSTRUCT_XCOV.XcovgramWN_epochs{j};    
+    tmp(:,:, numepochs) = nanmean(tmp, 3);
+    tmp(:,:, 1:numepochs-1) = nan;
+    OUTSTRUCT_XCOV.XcovgramWN_epochs{j} = tmp;
+    
+    tmp = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j};    
+    tmp(:,:, numepochs) = nanmean(tmp, 3);
+    tmp(:,:, 1:numepochs-1) = nan;
+    OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j} = tmp;
+
+    tmp = OUTSTRUCT_XCOV.trialedges_epoch{j};    
+    tmp([numepochs numepochs+1]) = [tmp(1) tmp(end)];
+    tmp(1:numepochs-1) = nan;
+    OUTSTRUCT_XCOV.trialedges_epoch{j} = tmp;
+
+end
+
 
 %% ========= 2) EXTRACT SCALAR FOR TWO PEAKS FOR EACH EXPERIMENT
 twindows = {[-0.06 -0.03], [-0.95 -0.035], [-0.06 -0.03]}; % one array for each window [x centers...] [inclusive]
@@ -2601,9 +2675,9 @@ lagwindows = {[-0.01 0.005], [-0.014 0.006]}; % OK
 alignto = 'sylonset'; 
 twindows = {[-0.07 -0.03], [-0.1 -0.01]}; % one array for each window [x centers...] [inclusive]
 lagwindows = {[-0.01 0.005], [-0.014 0.006]}; % OK
-% alignto = 'sylonset'; 
-% twindows = {[-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
-% lagwindows = {[-0.01 0.005]}; % OK
+alignto = 'sylonset'; 
+twindows = {[-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.01 0.005]}; % OK
 
 % % ========= GOOD: [60ms window]
 % alignto = 'sylonset'; 
@@ -2677,29 +2751,69 @@ OUTSTRUCT_XCOV = lt_neural_POPLEARN_XCov_ExtrSlice(OUTSTRUCT_XCOV, ...
 
 close all;
 plotNotminShuff=0; % 1, then not shift subtracted
-onlygoodexpt = 1;
+onlygoodexpt = 0;
 clim = [-0.1 0.1];
 lt_neural_POPLEARN_XCov_PlotAll(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
     plotNotminShuff, onlygoodexpt, clim);
 
 
+%% ============ [XCOV] PLOT EACH SYL/CHAN IN EACH EXPT
+
+close all;
+plotNotminShuff=0; % 1, then not shift subtracted
+onlygoodexpt = 0;
+clim = [-0.1 0.1];
+btoplot = 2;
+etoplot = 2;
+stoplot = 4;
+lt_neural_POPLEARN_XCov_PlotEach(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
+    plotNotminShuff, onlygoodexpt, clim, btoplot, etoplot, stoplot);
+
+
+
+%% ============ [XCOV] PLOT EACH SYL/CHAN IN EACH EXPT [FF SPLIT VERSION]
+
+% close all;
+plotNotminShuff=0; % 1, then not shift subtracted
+onlygoodexpt = 0;
+clim = [-0.1 0.1];
+btoplot = 2;
+etoplot = 1;
+stoplot = 1;
+epochstoplot = [1:3]; % will average over these.
+
+lt_neural_POPLEARN_XCov_PlotEachSplit(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
+    plotNotminShuff, onlygoodexpt, clim, btoplot, etoplot, stoplot, ...
+    epochstoplot);
+
 
 %% =========== [XCOV] sUMMARIZE LEARNING
 
 close all;
-onlygoodexpt = 1;
+onlygoodexpt = 0;
 lt_neural_POPLEARN_Xcov_PitchLearn(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     PARAMS, onlygoodexpt);
+
 
 
 %% ############################ [EPOCHS ANALYSIS - I.E. TRAINIGN BINS]
 %% =========== [EXTRACTION] GET LEARNING INTO BINS
 % === ALSO PLOTS SAMPLE SIZES...
 onlygoodexpt = 1;
+windowprem = [-0.1 0.01]; % for counting spikes
+OUTSTRUCT_XCOV = lt_neural_POPLEARN_Xcov_ExtrLearn(OUTSTRUCT, OUTSTRUCT_XCOV, ... 
+    SwitchStruct, PARAMS, SwitchCohStruct, MOTIFSTATS_pop, windowprem);
 
-OUTSTRUCT_XCOV = lt_neural_POPLEARN_Xcov_ExtrLearn(OUTSTRUCT, OUTSTRUCT_XCOV,...
-    SwitchStruct, PARAMS, onlygoodexpt);
 
+%% =========== [EPOCH SPLIT STATS - PLOT DISTRIBUTIONS]
+    % 1) across epoch
+    % 2) across song bout
+    % 3) mean frate difference
+    
+close all;
+onlygoodexpt = 1;
+lt_neural_POPLEARN_Xcov_Epochs_Distr(OUTSTRUCT_XCOV, PARAMS, ...
+    onlygoodexpt, SwitchStruct)
 
 %% =========== [XCOV SLICE EPOCHS] - change over epohcs
 % must have exctracted epoch data above.
@@ -2714,6 +2828,7 @@ dattype = 'chan';
 % dattype = 'switch';
 scalwind = 1; % t/f window for scalar. (i.e which peak)
 syltype = 1; %, 1,2,3 = targ, same, diff.
+doFFsplit=0;
 
 % casestokeep = 'goodlearn';
 % casestokeep = 'goodneural';
@@ -2745,7 +2860,7 @@ adhoc_replacelearnwithWind2 = 0; % NOTE: have not modified FFsplit code to run t
 
 % === NOTES ABOUT FFSPLIT
 % - have not coded for dattype=switch
-% - have not used if, so if do not have, this entier code wil not run
+% - have not used if, so if do not have FF splits extracted, this entier code wil not run
 % - all plots are AFTER removing too short experiments
 % - to plot all the varaints (ie.. towards baseline bias/away bias) have to
 % go in by hand and uncomment various thigns int he code (in the
@@ -2756,12 +2871,12 @@ adhoc_replacelearnwithWind2 = 0; % NOTE: have not modified FFsplit code to run t
 FFsplit_pu69learn2_combine = 1; % combines all bins into one bin (since only looked at trials at end of learning, since noisy neural during learning)
 mintraindur = 0; % hours. (have to have data)
 mintotaltrain = 3; % hours (end of data minus base) (doesn't have to actually have data throughotu)
-
+doFFsplit=1;
 
 lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
     mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, ...
-    FFsplit_pu69learn2_combine)
+    FFsplit_pu69learn2_combine, doFFsplit)
 
 
 
@@ -2843,12 +2958,20 @@ plotindivswitch=0;
 clim = [-0.1 0.1];
 XLIM = [-0.1 -0.04];
 YLIMGRAM = [-0.05 0.05];
-clim = [-0.2 0.2];
+clim = [-0.3 0.3];
 XLIM = [-0.1 -0.01];
 YLIMGRAM = [-0.05 0.05];
+plotlines = 1; % then plots each channel on the summary figure.
+
+% === do ffsplit?
+ffsplitparams = struct;
+ffsplitparams.dosplit = 1; % on or off
+ffsplitparams.epochtoplot = 1;
+ffsplitparams.adaptivebin = 3; % usually 1=non-adaptive; 2=adaptive, 3= take difference
+
 lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
     onlygoodexpt, PARAMS, dattype, lagwindows, clim, ffbinsedges_indstoplot, ...
-    plotindivswitch, XLIM, YLIMGRAM);
+    plotindivswitch, XLIM, YLIMGRAM, plotlines, ffsplitparams);
 
 
 %% =========== [XCOV] PLOT INVIDIDUAL EXPEIRMNTS, BUT XCOV GRAM
@@ -2860,11 +2983,13 @@ lt_neural_POPLEARN_XCov_PlotAllGram(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
 
 
 %% =========== [XCOV] PLOT EACH MOTIF/CHAN, FOR A GIVEN EXPERIMENT
+% HEAT MAP
+
 close all;
 
-bb = 4;
+bb = 1;
 ee = 1;
-sw = 1;
+sw = 3;
 clim = [-0.15 0.15];
 
 bname = SwitchStruct.bird(bb).birdname;
@@ -2938,10 +3063,11 @@ end
 close all;
 windthis =1;
 Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
+Yscalar = cellfun(@(x)mean(x(windthis,:),2), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
 % clim = [-0.2 0.2];
 clim = [-0.2 0.2];
 % clim = [-1.5e-4 1.5e-4];
-onlygoodexpt = 1;
+onlygoodexpt = 0;
 expttype = 'xcov_spikes';
 % plotlevel = 'switch';
 plotlevel = 'chanpair';
@@ -2952,6 +3078,22 @@ useoldInds = 1; % default 0. only use 1 if you haven't extracted inds_base_epoch
 lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
     MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, ...
     OUTSTRUCT, useoldInds);
+
+
+
+%% ========== [XCOV SCALAR] - MOTIF POSITION...
+% NOTE: is currently plotting at level of channel pair. to change is easy -
+% eitehr replace which indsgrp is used in the code by hand or add as
+% variable.
+close all;
+windthis =1;
+Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
+
+onlygoodexpt = 1;
+expttype = 'xcov_spikes';
+
+lt_neural_POPLEARN_Xcov_MotifPosition(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, ...
+    SwitchStruct, MOTIFSTATS_Compiled, PARAMS, onlygoodexpt, expttype);
 
 
 
@@ -2967,47 +3109,154 @@ lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, Switc
 %% ========= [XCOV AT BASELINE... - PLOT DISTRUBUTION OVER SYLS]
 
 close all;
+plotorigxcov = 1; % if 0, then recalcualed, otherwise 1 origianl. [default 0]
 lt_neural_POPLEARN_Xcov_Sumcorr(OUTSTRUCT_XCOV, SummaryStruct, ...
-    PARAMS, SwitchStruct);
+    PARAMS, SwitchStruct, plotorigxcov);
 
+
+%% ========= [PLOT SLIDING DOT PRODUCT USED TO COMPUTE XCOV]
+close all;
+% === option1:
+birdtoplot = 'wh44wh39';
+motiftoplot = '(j)n';
+pairtoplot = [1 2];
+% === option 2(overrides 1);
+plotrandpair = 0;
+
+
+
+recalcver = 1;
+% 0 = zscore;
+% 1 = first do minus, then do for all shuff, then get z rel shuff. [should
+% be identical to 0]
+
+% === i.e. shuffle. data, and zscore.
+if plotrandpair==1
+indthis = randi(length(OUTSTRUCT_XCOV.bnum));
+
+bnum = OUTSTRUCT_XCOV.bnum(indthis);
+motiftoplot = OUTSTRUCT_XCOV.motifname{indthis};
+pairtoplot = OUTSTRUCT_XCOV.neurpair(indthis, :);
+else
+
+% ####################
+bnum = find(strcmp({SummaryStruct.birds.birdname}, birdtoplot));
+indthis = find(OUTSTRUCT_XCOV.bnum==bnum & ...
+    strcmp(OUTSTRUCT_XCOV.motifname, motiftoplot) & ...
+    ismember(OUTSTRUCT_XCOV.neurpair, pairtoplot, 'rows'));
+assert(length(indthis)==1);
+end
+
+enum = OUTSTRUCT_XCOV.enum(indthis);
+
+% #####################################
+y = OUTSTRUCT_XCOV.Xcov_DotProd_trials{indthis}.base_dat;
+yshuff = OUTSTRUCT_XCOV.Xcov_DotProd_trials{indthis}.base_shuff;
+yxcov = OUTSTRUCT_XCOV.XcovBase_orig(indthis, :);
+
+
+if recalcver==1
+    % --- first convert both data and shuffle to xcov (i.e. subtraact the
+    % man of shuffle).
+    
+        zmean = mean(yshuff,1);
+%         zstd = std(yshuff, [], 1);
+
+        % -- first convert all to xcov (i..e minus mean of shuff).
+        yshuff = (yshuff - zmean);
+        y = y - zmean;
+    
+end
+
+x = PARAMS.Xcov_ccLags;
+
+lt_figure; hold on;
+hsplots = [];
+
+% ==== 
+hsplot = lt_subplot(3,2,1); hold on;
+hsplots = [hsplots hsplot];
+xlabel('lag');
+ylabel('dot prod');
+title('data trials');
+plot(x, y', '-r');
+lt_plot_zeroline;
+
+hsplot = lt_subplot(3,2,2); hold on;
+hsplots = [hsplots hsplot];
+xlabel('lag');
+ylabel('dot prod');
+title('data trials');
+plot(x, yshuff', '-k');
+lt_plot_zeroline;
+
+% === overlay
+hsplot = lt_subplot(3,2,3); hold on;
+hsplots = [hsplots hsplot];
+title([num2str(bnum) '-e' num2str(enum) ','  motiftoplot '-neur:' num2str(pairtoplot)]);
+plot(x, yshuff', '-', 'Color', [0.7 0.7 0.7]);
+shadedErrorBar(x, mean(yshuff,1), lt_sem(yshuff), {'Color' , 'k'},1);
+plot(x, mean(y,1), '-r');
+lt_plot_zeroline;
+xlim([-0.03 0.03]);
+
+hsplot = lt_subplot(3,2,4); hold on;
+% hsplots = [hsplots hsplot];
+title('xcov');
+ylabel('b=orig; m=recalc');
+plot(x, yxcov, '-b');
+lt_plot_zeroline;
+
+% ======== recalculate xcov
+% if recalcver==0
+yxcov_recalc = (mean(y,1) - mean(yshuff,1))./std(yshuff, [], 1);
+% elseif recalcver==1
+%         
+%         % --- then convert data to zscore rel shuff
+%         yxcov_recalc = (mean(y2,1) - mean(yshuff2,1))./std(yshuff2,[], 1);
+% end
+plot(x, yxcov_recalc, 'm');
+
+linkaxes(hsplots, 'xy');
+xlim([-0.03 0.03]);
 
 %% ========= [RAW, RASTERS] FOR A SINGLE CASE, PLOT RANDOM SUBSET OF TRIALS
 
 close all;
 % ======================== PLOT PAIRED RASTERS, ALIGNED TO SYL
-% BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn1'}; % ordered p[aors {bird, expt, bird, expt } ....
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'}; % ordered p[aors {bird, expt, bird, expt } ....
 % BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn3'}; % ordered p[aors {bird, expt, bird, expt } ....
-BirdExptPairsToPlot = {'gr48bu5', 'RALMANLearn2'}; % ordered p[aors {bird, expt, bird, expt } ....
+% BirdExptPairsToPlot = {'gr48bu5', 'RALMANLearn2'}; % ordered p[aors {bird, expt, bird, expt } ....
 SwitchToPlot = [1]; % array of swiches.
-neurpair_globID = [4 2]; % only one pair allowed: e.g. [9 17], actual global ID.
+neurpair_globID = [1 2]; % only one pair allowed: e.g. [9 17], actual global ID.
 TypeOfPairToPlot = {'LMAN-RA'}; % e.g. 'LMAN-RA' (in alphabetical order)
-motiftoplot = {}; % if empty, then plots target(s).
+motiftoplot = {'(j)n'}; % if empty, then plots target(s).
 xgramxlim = [-0.085 -0.03];
 xgramylim = [-0.045 0.045];
 clim = [-0.25 0.25]; % for cov gram;
 Nrand = 50; % number of trials from base and WN to extract
 plotsimple = 1;
+plotrawneural = 1; % will plot a few raw neural examples
 lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
     neurpair_globID, motiftoplot, OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
     SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-    PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple);
+    PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple, plotrawneural);
 
 
 %% ===================== [RAW RASTERS] PLOT ALL CASES, SAVING
-cd('/bluejay0/bluejay2/lucas/analyses/neural/LEARN/LMAN-RA');
 close all;
 for i=1:length(OUTSTRUCT_XCOV.bnum)
     
-   bnum = OUTSTRUCT_XCOV.bnum(i);
-   enum = OUTSTRUCT_XCOV.enum(i);
-   sw = OUTSTRUCT_XCOV.switch(i);
-   neurpair = OUTSTRUCT_XCOV.neurpair(i,:);
-   motif = OUTSTRUCT_XCOV.motifname{i};
-
-   bname = SwitchStruct.bird(bnum).birdname;
-   ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
-   
-   
+    bnum = OUTSTRUCT_XCOV.bnum(i);
+    enum = OUTSTRUCT_XCOV.enum(i);
+    sw = OUTSTRUCT_XCOV.switch(i);
+    neurpair = OUTSTRUCT_XCOV.neurpair(i,:);
+    motif = OUTSTRUCT_XCOV.motifname{i};
+    
+    bname = SwitchStruct.bird(bnum).birdname;
+    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
+    
+    
     BirdExptPairsToPlot = {bname, ename}; % ordered p[aors {bird, expt, bird, expt } ....
     SwitchToPlot = [sw]; % array of swiches.
     neurpair_globID = neurpair; % only one pair allowed: e.g. [9 17], actual global ID.
@@ -3018,19 +3267,27 @@ for i=1:length(OUTSTRUCT_XCOV.bnum)
     clim = [-0.25 0.25]; % for cov gram;
     Nrand = 40; % number of trials from base and WN to extract
     plotsimple = 1;
+    plotrawneural = 1; % will plot a few raw neural examples
     lt_neural_POPLEARN_PairRast(BirdExptPairsToPlot, SwitchToPlot, ...
         neurpair_globID, motiftoplot, OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
         SwitchCohStruct, MOTIFSTATS_Compiled, MOTIFSTATS_pop, SummaryStruct, ...
-        PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple);
+        PARAMS, xgramxlim, xgramylim, clim, Nrand, plotsimple, plotrawneural);
     
-    savefig(gcf, [bname '-' ename '-sw' num2str(sw) '-' motif '-n' num2str(neurpair(1)) '_' num2str(neurpair(2)) '.fig'], 'compact');
-close all;
+    dirthis = [bname '-' ename '-sw' num2str(sw) '-' motif '-n' num2str(neurpair(1)) '_' num2str(neurpair(2))];
+    cd('/bluejay0/bluejay2/lucas/analyses/neural/LEARN/LMAN-RA');
+    mkdir(dirthis);
+    cd(dirthis);
+%     savefig(gcf, [bname '-' ename '-sw' num2str(sw) '-' motif '-n' num2str(neurpair(1)) '_' num2str(neurpair(2)) '.fig'], 'compact');
+    lt_save_all_figs;
+    close all;
+    cd ..
 end
 
 
 %% ======================= [RAW RASTERS]
 % ITERATE AND PLOT ALL CASES
 cd('/bluejay0/bluejay2/lucas/analyses/neural/LEARN/LMAN-RA');
+cd('/bluejay0/bluejay2/lucas/analyses/neural/LEARN/LMAN-RA_beforeSaveRawNeural/LMAN-RA');
 close all;
 for i=1:length(SwitchStruct.bird)
     bname = SwitchStruct.bird(i).birdname;

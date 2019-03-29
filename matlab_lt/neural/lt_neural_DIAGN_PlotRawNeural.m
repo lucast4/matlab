@@ -1,6 +1,10 @@
-function lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
+function [SegmentsExtract, tneur] = lt_neural_DIAGN_PlotRawNeural(SummaryStruct, BirdToPlot, NeurToPlot, motiflist, ...
     motifpredur, motifpostdur, PlotDirSong, preAndPostDurRelSameTimept, saveON, ...
-    Nmax, savedirmain, tdatenum_window)
+    Nmax, savedirmain, tdatenum_window, plotON)
+
+if ~exist('plotON', 'var')
+    plotON=1;
+end
 
 % tdatenum_window; [datenum datenum] wil only plot trials within this
 % window.
@@ -97,7 +101,11 @@ for i=1:numbirds
             if isempty(SegmentsExtract)
                 continue
             end
-             %% =============== overlay neural + rasters
+            
+            tneur = (1:length(SegmentsExtract(1).neurdatseg_filt))/NeurDat.metaDat(1).fs;
+
+            if plotON==1
+            %% =============== overlay neural + rasters
             figcount=1;
             subplotrows=11;
             subplotcols=2;
@@ -151,7 +159,7 @@ for i=1:numbirds
                 
                 axis tight
             end
-            
+            end
             
             %%  SAVE
             

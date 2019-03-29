@@ -39,6 +39,7 @@ hsplots = [];
 
 % ========== TO COLLECT FOR MEAN PLOTS
 Yall = []; % targ, same, diff, nontarg (means across chans, motifs)
+Yall_allsyls = cell(length(indsgrp_switch_unique), 4); % same as above, but do not average withni syl type.
 All_bname ={};
 All_bnum = [];
 All_ename = {};
@@ -111,10 +112,7 @@ for i=1:length(indsgrp_switch_unique)
         end
         lt_plot_text(motifID(end)+0.3, cohscal(end), tmp, 'm', 8);
         
-        % ==================== ADD
-        istarg = OUTSTRUCT.istarg(indsthis);
-        issame = OUTSTRUCT.issame(indsthis);
-        
+        % ================================ SAVE OUTPUT
         
         %         Allchanpair_Y = [Allchanpair_Y; ];
     end
@@ -137,6 +135,14 @@ for i=1:length(indsgrp_switch_unique)
         motifnames = OUTSTRUCT.motifname(indsthis);
     end
     
+    
+    
+    % ================ SAVE INDIVBIDUAL SYLS EBFORE PERFORM MEAN
+       Yall_allsyls{i, 1} = cohscal(istarg==1);
+       Yall_allsyls{i, 2} = cohscal(istarg==0 & issame==1);
+       Yall_allsyls{i, 3} = cohscal(istarg==0 & issame==0);
+
+    
     % ============= GET MEAN ACROSS CHANNEL PAIRS.
     [ymean, ysem] = grpstats(cohscal, motifID, {'mean', 'sem'});
     [istarg, Ntarg] = grpstats(istarg, motifID, {'mean', 'numel'});
@@ -154,7 +160,9 @@ for i=1:length(indsgrp_switch_unique)
     %     indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==1;
     %     xtarg = unique(lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)));
     %     plot(xtarg, clim(1)+0.02, '^r');
+    if any(istarg)
     plot(x(istarg), clim(1)+0.02, '^r');
+    end
     
     % ------- NOTE POSITION OF SAME_TYPES
     %     indsthis = indsgrp_switch==swgrpthis & OUTSTRUCT.istarg==0 & OUTSTRUCT.issame==1;
@@ -221,7 +229,155 @@ for i=1:length(indsgrp_switch_unique)
     % =========== SAVE STUFF FOR MOTIFS.
     All_Nmotifs = [All_Nmotifs; [sum(istarg) sum(issame) sum(istarg==0 & issame==0)]];
     
+    
 end
+
+
+%% ======== ONE DATAPOINT PER CHANNEL -
+
+Yall_scal = {};
+Yall_bnum = [];
+Yall_enum = [];
+Yall_chanID = [];
+Yall_istarg = {};
+Yall_issame = {};
+Yall_sw = [];
+for i=1:length(indsgrp_chanpair_unique)
+    
+    indsthis = indsgrp_chanpair == indsgrp_chanpair_unique(i);
+    
+    bnum = unique(OUTSTRUCT.bnum(indsthis));
+    enum = unique(OUTSTRUCT.enum(indsthis));
+    swnum = unique(OUTSTRUCT.switch(indsthis));
+    
+    bname = MOTIFSTATS_Compiled.birds(bnum).birdname;
+    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
+    
+    % =========================== DATA
+    cohscal = Yscalar(indsthis);
+    istarg = OUTSTRUCT.istarg(indsthis);
+    issame = OUTSTRUCT.issame(indsthis);
+    motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
+    chnums = OUTSTRUCT.chanpair_actual(indsthis,:);
+    neurpair = OUTSTRUCT.neurpair(indsthis,:);
+    
+    % ================================ SAVE OUTPUT
+    Yall_scal = [Yall_scal; cohscal];
+    Yall_bnum = [Yall_bnum ; bnum];
+    Yall_enum = [Yall_enum ; enum];
+    Yall_chanID = [Yall_chanID; indsgrp_chanpair_unique(i)];
+    Yall_istarg = [Yall_istarg; istarg];
+    Yall_issame = [Yall_issame; issame];
+    Yall_sw = [Yall_sw; swnum];
+end
+
+lt_figure; hold on;
+% === 1) sort in order of number of 1syls
+Nall =cellfun(@length, Yall_scal);
+% [~, indsort] = sort(Nall);
+[~, ~, indrank] = lt_tools_sort(Nall);
+
+
+% ################################# NOT CENTERED AT DIFF TYPE
+lt_subplot(1,2,1); hold on;
+xlabel('xcov (minus base)');
+ylabel('chan');
+Ylabstr = {};
+pcol_expt = lt_make_plot_colors(max(Yall_enum+Yall_bnum), 0, 0);
+XMIN = 1.1*min(Yscalar);
+for j=1:length(indrank)
+    
+    y = indrank(j);
+    dat = Yall_scal{j};
+    istarg = Yall_istarg{j};
+    issame = Yall_issame{j};
+    
+    % ---
+    indtmp = istarg==1;
+    plot(dat(indtmp), y, 'or');
+    %    lt_plot(dat(indtmp), y, {'Color', 'r'});
+    
+    % --
+    indtmp = istarg==0 & issame==1;
+    if any(indtmp)
+        plot(dat(indtmp), y, 'xb');
+    end
+    
+    % ---
+    indtmp = istarg==0 & issame==0;
+    if any(indtmp)
+        plot(dat(indtmp), y, 'xk');
+    end
+    % ---
+    
+    % --- mark to help distinguish different expts
+    pcoltmp = pcol_expt{Yall_enum(j)+Yall_bnum(j)};
+    lt_plot(XMIN, y, {'Color', pcoltmp});
+    
+    
+    str = [num2str(Yall_bnum(j)) '-' num2str(Yall_enum(j)) '-' num2str(Yall_sw(j))];
+    %    lt_plot_text(1.05*max(dat), y, str, 'm', 8);
+    
+    Ylabstr = [Ylabstr; str];
+end
+[~, indtmp] = sort(indrank);
+Ylabstr = Ylabstr(indtmp);
+
+set(gca, 'YTick', 1:length(Ylabstr), 'YTickLabel', Ylabstr);
+
+% ################################# CENTERED AT DIFF TYPE
+lt_subplot(1,2,2); hold on;
+xlabel('xcov (minus base)(centered using diff type)');
+ylabel('chan');
+Ylabstr = {};
+pcol_expt = lt_make_plot_colors(max(Yall_enum+Yall_bnum), 0, 0);
+XMIN = 1.1*min(Yscalar);
+for j=1:length(indrank)
+    
+    y = indrank(j);
+    dat = Yall_scal{j};
+    istarg = Yall_istarg{j};
+    issame = Yall_issame{j};
+    
+    % -- center using mean of diff type
+    dat = dat-mean(dat(istarg==0 & issame==0));
+    
+    % ---
+    indtmp = istarg==1;
+    plot(dat(indtmp), y, 'or');
+    %    lt_plot(dat(indtmp), y, {'Color', 'r'});
+    
+    % --
+    indtmp = istarg==0 & issame==1;
+    if any(indtmp)
+        plot(dat(indtmp), y, 'xb');
+    end
+    
+    % ---
+    indtmp = istarg==0 & issame==0;
+    if any(indtmp)
+        plot(dat(indtmp), y, 'xk');
+    end
+    % ---
+    
+    % --- mark to help distinguish different expts
+    pcoltmp = pcol_expt{Yall_enum(j)+Yall_bnum(j)};
+    lt_plot(XMIN, y, {'Color', pcoltmp});
+    
+    
+    str = [num2str(Yall_bnum(j)) '-' num2str(Yall_enum(j)) '-' num2str(Yall_sw(j))];
+    %    lt_plot_text(1.05*max(dat), y, str, 'm', 8);
+    
+    Ylabstr = [Ylabstr; str];
+end
+[~, indtmp] = sort(indrank);
+Ylabstr = Ylabstr(indtmp);
+
+set(gca, 'YTick', 1:length(Ylabstr), 'YTickLabel', Ylabstr);
+lt_plot_zeroline_vert;
+
+
+
 
 
 %% ======= COPY THINGS FROM OLD OUTSTRUCT TO NEW OUTSTRUCT

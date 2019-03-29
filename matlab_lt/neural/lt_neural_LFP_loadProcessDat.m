@@ -38,7 +38,7 @@ else
     
     
     tmp = size(Coh_ChpairByTrial{1});
-    dat = nan(tmp(1), tmp(2), length(Coh_ChpairByTrial), numchanpairs); % t, ff, trials, chanpairs
+    dat = nan(tmp(1), tmp(2), size(Coh_ChpairByTrial,2), numchanpairs); % t, ff, trials, chanpairs
     for j=1:numchanpairs
         intmpthis = chanpairtoget(j);
         cohmatthis = lt_neural_Coher_Cell2Mat(Coh_ChpairByTrial(intmpthis,:));

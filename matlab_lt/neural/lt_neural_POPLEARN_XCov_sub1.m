@@ -1,4 +1,5 @@
-function [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount] = ...
+function [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount, ...
+    dattrials] = ...
     lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
     dosmooth_sigma, inds_base, inds_WN, xbins, plotraw, xcovver, datcell_auto_real,...
     datcell_auto_shift)
@@ -191,6 +192,10 @@ if strcmp(xcovver, 'coherency')
     
 elseif strcmp(xcovver, 'zscore')
     %% ====== 1) Z-SCORE
+    % --- to output individual trials
+    dattrials = struct;
+    
+    
     % for each lag, get distribution of values over trials. use that to
     % z-transform actual data
     % 1) BASE
@@ -199,13 +204,19 @@ elseif strcmp(xcovver, 'zscore')
     
     yz_base = (ydat - nanmean(yshuff,1))./nanstd(yshuff, [], 1);
     
+    dattrials.base_shuff = yshuff;
+    dattrials.base_dat = ydat;
     
     % 2) WN
     yshuff = datmat_shuff(inds_WN_shuff,:);
     ydat = datmat_real(inds_WN,:);
     
     yz_WN = (ydat - nanmean(yshuff,1))./nanstd(yshuff, [], 1);
+ 
+    dattrials.WN_shuff = yshuff;
+    dattrials.WN_dat = ydat;
     
+
     % ========== REPLACE OUTPUT
     datbase = nanmean(yz_base);
     datWN = nanmean(yz_WN);

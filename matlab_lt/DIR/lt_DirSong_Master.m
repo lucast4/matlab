@@ -45,7 +45,7 @@ if (0)
         overwrite);
 end
 
-%% ================ EXTRACTION OF FF FROM SONG FILES
+%% ================ MAKE BATCH FILES WITH LABELED SONGS.
 nbirds = length(dirstruct.bird);
 
 % === will skip if already done
@@ -56,22 +56,22 @@ for i=1:nbirds
     for ii=1:ndir
         % ================ DIRECTED
         cd(dirstruct.bird(i).DIR_directories{ii});
-%         disp(dirstruct.bird(i).DIR_directories{ii});
+        %         disp(dirstruct.bird(i).DIR_directories{ii});
         eval('!> batchall');
         eval('!ls *.rhd > batchall');
         eval('!ls *.cbin >> batchall');
-% ----- GET SUBNSET THAT IS LABELED
-lt_sort_batch_by_labeled('batchall');
+        % ----- GET SUBNSET THAT IS LABELED
+        lt_sort_batch_by_labeled('batchall');
         
         
         cd(dirstruct.bird(i).UNDIR_directories{ii});
         eval('!> batchall');
         eval('!ls *.rhd > batchall');
         eval('!ls *.cbin >> batchall');
-% ----- GET SUBNSET THAT IS LABELED
-lt_sort_batch_by_labeled('batchall');
+        % ----- GET SUBNSET THAT IS LABELED
+        lt_sort_batch_by_labeled('batchall');
         
-
+        
     end
 end
 
@@ -81,7 +81,7 @@ nbirds = length(dirstruct.bird);
 
 % doOverwrite = 1;
 plotAllPC = 1;
-overwrite = 1; % if 0, then will do any cases not already done.
+overwrite = 0; % if 0, then will do any cases not already done.
 plotEachSyl = 0;
 
 for i=1:nbirds
@@ -95,8 +95,8 @@ for i=1:nbirds
         ListOfDirs_ALL = [ListOfDirs_UNDIR ListOfDirs_DIR];
         
         ListOfBatch = {...
-            'batchall.UNLABELED', ...
-            'batchall.UNLABELED'};
+            'batchall.LABELED', ...
+            'batchall.LABELED'};
         
         FFparams = dirstruct.bird(i).FFparams;
         
@@ -116,13 +116,108 @@ end
 
 
 
+
 %% ###########################################################
 %% ###########################################################
 %% ==================== EXTRACT FF FOR A GIVEN SYLLABLE
 MotifsToExtract = {'ab(h)', 'jb(h)',  'jbh(h)', 'a(b)h', 'j(b)', 'h(g)'};
-DATSTRUCT = lt_batchsong_extractFF(ListOfDirs_UNDIR, ListOfDirs_DIR, ListOfBatch, MotifsToExtract);
+DATSTRUCT = lt_batchsong_extractFF(ListOfDirs_UNDIR, ListOfDirs_DIR, ...
+    ListOfBatch, MotifsToExtract);
 
 
 
 %% ===================== FOR EACH BIRD, EXTRACT ALL UNIQUE MOTIFS AND SAVE
 dirstruct = lt_DirSong_MotifID;
+
+
+%% ================ PLOT SUMMARY FOR EACH BIRD
+
+figcount=1;
+subplotrows=5;
+subplotcols=3;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+nbirds = length(dirstruct.bird);
+for i=1:nbirds
+    nmotifs = length(dirstruct.bird(i).DAT.motifID);
+    for mm=1:nmotifs
+        
+        disp([i mm]);
+        ff = [dirstruct.bird(i).DAT.motifID(mm).rendnum.ff];
+        t = [dirstruct.bird(i).DAT.motifID(mm).rendnum.datenum_song_SecRes];
+        isDir = [dirstruct.bird(i).DAT.motifID(mm).rendnum.isDIR];
+        
+        if all(isnan(ff))
+            disp('ff is nan...');
+            continue
+        end
+        
+        % === sort by t (for fun)
+        [~, indsort] = sort(t);
+        t = t(indsort);
+        ff = ff(indsort);
+        isDir = isDir(indsort);
+        
+        if rand<1.1
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title([bname '-mot' num2str(mm)]);
+            plot(t(isDir==0), ff(isDir==0), 'ok');
+            plot(t(isDir==1), ff(isDir==1), 'ob');
+            datetick('x', 'mm/dd');
+            
+            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            title([bname '-mot' num2str(mm)]);
+            
+            x = 1:length(t);
+            plot(x(isDir==0), ff(isDir==0), 'ok');
+            plot(x(isDir==1), ff(isDir==1), 'ob');
+        end
+        
+        
+        % ========== for each day, get mean DIR and UNDIR (difference)
+        t_day = floor(t);
+        
+        [ff_day_UNDIR, ff_day_UNDIR_std] = grpstats(ff(isDir==0), t_day(isDir==0), {'mean', 'std'});
+        [ff_day_DIR, ff_day_DIR_std] = grpstats(ff(isDir==1), t_day(isDir==1), {'mean', 'std'});
+        %     ff_day_UNDIR = grpstats(ff(isDir==0), t_day(isDir==0), {'median'});
+        %     ff_day_DIR = grpstats(ff(isDir==1), t_day(isDir==1), {'median'});
+        assert(length(ff_day_UNDIR)==length(ff_day_DIR));
+        
+        ff_UndirMinusDir = ff_day_UNDIR - ff_day_DIR;
+        
+        %     ff_UndirMinusDir_z = [];
+        ff_UndirMinusDir_z = -(ff_day_DIR - ff_day_UNDIR)./ff_day_UNDIR_std;
+        
+        
+        % ============= COULD BE GOOD:
+%         % ==== CV UNDIR AND DIR
+%         cv_UNDIR = ff_day_UNDIR_std./ff_day_UNDIR;
+%         cv_DIR = ff_day_DIR_std./ff_day_DIR;
+%         
+%         All_ffUndir_cv = [All_ffUndir_cv; cv_UNDIR];
+%         All_ffDir_cv = [All_ffDir_cv; cv_DIR];
+%         
+%         if strcmp(cvdiffmethod, 'diff')
+%             cvdiff_UndirOverDir = cv_UNDIR-cv_DIR;
+%         elseif strcmp(cvdiffmethod, 'percent')
+%             cvdiff_UndirOverDir = (cv_UNDIR-cv_DIR)./cv_UNDIR;
+%         end
+%         All_ffUndirOverDir_cv = [All_ffUndirOverDir_cv; cvdiff_UndirOverDir];
+%         
+%         % =============== SAVE
+%         if useff_zscore==2
+%             All_ffUndirMinusDir = [All_ffUndirMinusDir; (ff_day_UNDIR - ff_day_DIR)./ff_day_UNDIR];
+%         elseif useff_zscore==1
+%             All_ffUndirMinusDir = [All_ffUndirMinusDir; ff_UndirMinusDir_z];
+%         elseif useff_zscore==0
+%             All_ffUndirMinusDir = [All_ffUndirMinusDir; ff_UndirMinusDir];
+%         end
+%         All_neuralHiMinusLo = [All_neuralHiMinusLo; yneur];
+%         All_bnum = [All_bnum; bnum];
+%         All_motifID = [All_motifID; mm];
+%         
+%         All_neuralXcovBase = [All_neuralXcovBase; yxcov_base];
+    end
+end

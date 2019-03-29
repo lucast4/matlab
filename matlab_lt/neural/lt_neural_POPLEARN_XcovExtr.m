@@ -44,7 +44,7 @@ OUTSTRUCT_XCOV.trialedges_epoch = {};
 OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Base = {};
 OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs = {};
 
-
+OUTSTRUCT_XCOV.Xcov_DotProd_trials = {};
 
 NanCountAll = []; % if Nan then means: (1) if "unbiased" normalikzation, then should not ever be nan.
 % (2) if using "coeff" then means that one of the trials had variance of 0.
@@ -69,7 +69,6 @@ for i=1:length(SwitchXCovStruct.bird)
                         continue
                     end
                 end
-                
                 datthis = SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif(mm);
                 %                 if usealltrials==1
                 % %                     inds_base = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase;
@@ -204,10 +203,12 @@ for i=1:length(SwitchXCovStruct.bird)
                     
                     
                     % ==== process (e.g. smooth) and get xcov output
-                    [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount] = ...
+                    [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount, ...
+                        dattrials] = ...
                         lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
                         dosmooth_sigma, inds_base, inds_WN, PARAMS.Xcov_ccLags, plotraw, ...
                         xcovver, datcell_auto_real, datcell_auto_shift);
+                    
                     
                     %% ===== get xcov-gram... [BASE AND WN]
                     if getxgram==1
@@ -318,6 +319,8 @@ for i=1:length(SwitchXCovStruct.bird)
                     
                     OUTSTRUCT_XCOV.XcovBase = [OUTSTRUCT_XCOV.XcovBase; datbase];
                     OUTSTRUCT_XCOV.XcovWN = [OUTSTRUCT_XCOV.XcovWN; datWN];
+                    
+                    OUTSTRUCT_XCOV.Xcov_DotProd_trials = [OUTSTRUCT_XCOV.Xcov_DotProd_trials; dattrials];
                     
                     OUTSTRUCT_XCOV.XcovBase_NoMinShuff = ...
                         [OUTSTRUCT_XCOV.XcovBase_NoMinShuff; datbase_notminshuff];

@@ -275,6 +275,14 @@ if PlotWhat.filt==1;
             plot(tt./1000, board_adc_data(i, :), 'b');
             hsplots=[hsplots hsplot];
             
+                            % ======== OVERLAY SYL LABELS
+            fnamenotmat = [filename '.not.mat'];
+            if exist(fnamenotmat, 'file')
+            tmp = load(fnamenotmat);
+            for jj=1:length(tmp.labels)
+               lt_plot_text(tmp.onsets(jj)/1000, 1.5, tmp.labels(jj), 'r');
+            end
+            end
             % === overlay digital over amplitude;
             if PlotWhat.digital==1
                 for j=1:length(DigChans_zero)
@@ -282,6 +290,8 @@ if PlotWhat.filt==1;
                     plot(tt./1000, board_dig_in_data(j, :), 'k', 'LineWidth', 2);
                     lt_plot_annotation(1, 'Dig signal', 'k')
                 end
+            
+
             end
             
             % 2) spectrogram
@@ -294,6 +304,7 @@ if PlotWhat.filt==1;
 %             t=t./1000;
 %             imagesc(t, f, spec);
 %             axis([t(1) t(end) f(1) f(end)]);
+
             hsplots=[hsplots hsplot];
         end
         

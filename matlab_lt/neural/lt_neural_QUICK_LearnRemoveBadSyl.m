@@ -1,5 +1,15 @@
 function sylbad = lt_neural_QUICK_LearnRemoveBadSyl(bname, ename, swnum, ...
     syltoken, typesToRemove, chanthis)
+%% note about MULTIDAY LEARN
+% - those cases flagged below, those are for LMAN-RA analysis multiday
+% learning, looking at days where I lowred chanelks but niot necessariyl
+% imposed switch in neural activity. as a kluge to use code that requires
+% switches, I added fake switches. those switch numbers are therefore fake,
+% and only work specificialyl for this analysis. Using MOTIFSTATS_COMPILED
+% compiled on 28Mar2019_1106.
+% NOTE: this means that need to comment out those cases after doing this
+% analysis...
+
 %% 
 % chanthis is current channel. can exclude certain channels below.
 if ~exist('chanthis', 'var')
@@ -60,6 +70,7 @@ SylsBad = {...,
     {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jj(b)', 'noise'}, ... % @#
     {'pu69wh78', 'RALMANOvernightLearn1', 1, 'h(g)', 'wn', [9 14]}, ... % @#
     {'pu69wh78', 'RALMANOvernightLearn1', 1, 'jjbhh(g)', 'noise'}, ... % #
+    {'pu69wh78', 'RALMANOvernightLearn1', 3, 'aabh(h)', 'wn'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'aab(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'aabh(h)'}, ...
     {'pu69wh78', 'RALMANOvernightLearn1', 6, 'jjb(h)'}, ...
@@ -91,6 +102,22 @@ SylsBad = {...,
     {'pu69wh78', 'RALMANlearn2', 1, '(j)jbhh', 'noise'}, ... % #
     {'pu69wh78', 'RALMANlearn2', 1, 'jj(b)hh', 'noise'}, ... % #
     {'wh44wh39', 'RALMANlearn1', 1, 'dk(c)c', 'noise'}, ... % # [note: is actually not bad, except for ch17. others are sort of bad at around 1704+ (sometimes clack). Easiest is just to remove all c]
+    {'wh44wh39', 'RALMANlearn1', 4, '(j)jn', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 4, '(m)d', 'noise'}, ... % #MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 5, 'dk(c)c', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 5, '(j)n', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 10, 'dk(c)c', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 10, '(j)n', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 10, 'cb(b)', 'wn'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 11, '(n)hh', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 11, '(j)n', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 11, 'dk(c)c', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 11, '(m)d', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 11, 'cb(b)', 'wn'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 13, '(n)hh', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 13, '(m)d', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 13, 'dk(c)c', 'noise'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn1', 13, 'cb(b)', 'wn'}, ... % # MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
     {'wh44wh39', 'RALMANlearn1', 2, 'cb(b)'}, ...
     {'wh44wh39', 'RALMANlearn1', 7, 'cb(b)'}, ...
     {'wh44wh39', 'RALMANlearn1', 8, 'cb(b)'}, ...
@@ -107,6 +134,10 @@ SylsBad = {...,
     {'wh44wh39', 'RALMANlearn3', 1, '(d)kcc', 'noise', [17, 18, 20, 22]}, ... % #
     {'wh44wh39', 'RALMANlearn3', 1, '(j)n', 'wn'}, ... % #
     {'wh44wh39', 'RALMANlearn3', 1, 'nh(h)', 'wn'}, ...
+    {'wh44wh39', 'RALMANlearn3', 3, 'dk(c)c', 'noise'}, ... % MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn3', 4, '(n)h', 'noise'}, ... % MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn3', 4, 'dk(c)c', 'noise'}, ... % MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
+    {'wh44wh39', 'RALMANlearn3', 4, '(d)kcc', 'noise'}, ... % MULTIDAYLEARN - i.e. switch is fake, entered just to could use learning code LMAN-RA, which requires switch for anaysis.
     {'wh44wh39', 'RALMANlearn4', 1, '(m)d', 'noise', [17 18 20 21 22]}, ... % @  ok
     {'wh44wh39', 'RALMANlearn4', 1, '(d)kc', 'noise', [17 18 20 21 22]}, ... % @ ok
     {'wh44wh39', 'RALMANlearn4', 1, 'dk(c)', 'noise'}, ... % @ r3emove

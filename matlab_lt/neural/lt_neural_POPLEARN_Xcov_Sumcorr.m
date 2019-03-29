@@ -1,5 +1,5 @@
 function lt_neural_POPLEARN_Xcov_Sumcorr(OUTSTRUCT_XCOV, SummaryStruct, ...
-    PARAMS, SwitchStruct)
+    PARAMS, SwitchStruct, plotorigxcov)
 %% lt 2/16/19 - summarize xcov at baseline (pool by motifID)
 
 XLIM = [-0.02 0.02]; % only for the survey plot
@@ -17,6 +17,11 @@ assert(~any(isnan(motifidall)));
 
 OUTSTRUCT_XCOV.motifID = motifidall;
 
+
+%% ================== USE ORIGIANL/
+if plotorigxcov==1
+   OUTSTRUCT_XCOV.XcovBase = OUTSTRUCT_XCOV.XcovBase_orig;
+end
 
 %% ================ SEPARATE BY MOTIF X UNIT...
 

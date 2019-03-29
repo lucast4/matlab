@@ -19,17 +19,18 @@ MOTIFSTATS_pop = lt_neural_POP_ExtractXCov(MOTIFSTATS_pop, SummaryStruct, ...
 %% ==== 2) EXTRACT LEARNING SWITCH STRUCT
 
 SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct);
+SwitchStruct = lt_neural_LEARN_getswitch(SummaryStruct, 'multidaylearn');
 
 
 %% =========== SUMMARIZE LEARNING TRAJECTORY (PLUS NEURON SETS)
-close all;
+% close all;
 
-% BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
-% motiftoplot = 'c(b)';
+BirdExptPairsToPlot = {'wh44wh39', 'RALMANlearn1'};
+motiftoplot = 'c(b)';
 % BirdExptPairsToPlot = {'pu69wh78', 'RALMANOvernightLearn1'};
 % motiftoplot = 'aa(b)';
-BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn2'};
-motiftoplot = 'aa(b)';
+% BirdExptPairsToPlot = {'pu69wh78', 'RALMANlearn2'};
+% motiftoplot = 'aa(b)';
 
 lt_neural_POPLEARN_PlotLearnTraj(MOTIFSTATS_pop ,SwitchStruct, ...
     SummaryStruct, BirdExptPairsToPlot, motiftoplot);

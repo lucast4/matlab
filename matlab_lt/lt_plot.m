@@ -9,6 +9,9 @@ if isempty(X)
     return
 end
 
+if isnan(X) | isnan(Y)
+    return
+end
 %% Default params
 plot_errors=0;
 
@@ -81,10 +84,11 @@ else
     if length(X)==1;
         X=ones(length(Y), 1)*X;
     end
-    
+    if ~all(isnan(Y))
     hfig=errorbar(X, Y, Yerr);
     if ~strcmp(version('-release'), '2017a')
         errorbar_tick(hfig, 10000000)
+    end
     end
 end
 

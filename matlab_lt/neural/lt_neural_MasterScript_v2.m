@@ -3,15 +3,19 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {'pu69wh78', 'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
 BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
-ExptToKeep = {};
+ExptToKeep = {'RALMANOvernightLearn1', 'RALMANlearn1', 'RALMANlearn3'};
 RecordingDepth = [];
 LearningOnly = 1;
-BatchesDesired = {};
+BatchesDesired = {'Batch0922to1529', 'Batch0922to1300UndirDir', 'Batch1435to1629DirUndir', ...
+    'Batch1435to1719DirUndir', 'Batch0957to2238UndirDir', 'Batch1016to1301',  'Batch1434to2030UndirDir', ...
+    'Batch1326to1740DirUndir', 'Batch1743to2319', 'Batch1345to2242DirUndir', ...
+    'Batch1033to1427DirUndir', 'Batch1550to2036DirUndir', 'Batch1126to2105', ...
+    'Batch1126to1800'};
 ChannelsDesired = [];
 extractpreDatenums = 1;
 onlySpikes = 1; % [default =1]if 1, then only keeps if have spiking data; if 0, then gets anything.
@@ -26,6 +30,11 @@ onlySpikes = 1; % [default =1]if 1, then only keeps if have spiking data; if 0, 
 if (0)
     [NeuronDatabase, SummaryStruct] = lt_neural_v2_ConvertSummary2Database;
 end
+
+
+%% ===== PARAMS TO USE FOR DIFFERENT DATASETS 
+
+
 
 %% ==== LIST OF PREPROCESSING STEPS TO DO WHEN ADD NEW NEURONS
 % 1) remove song dat
@@ -63,6 +72,11 @@ lt_neural_DISP_AllUnits(SummaryStruct);
 
 lt_neural_DISP_AllPopUnits(SummaryStruct);
 
+
+%% ============= [SHOW METADAT] FOR EACH BIRD AND NEURON, SHOW DIRECTORY
+% for each directory, displays channels to get.
+longversion = 1; % then shows each extracted neuron
+lt_neural_SummaryStruct_ShowDirChans(SummaryStruct, longversion);
 
 %% check fs for all
 
