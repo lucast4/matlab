@@ -24,7 +24,7 @@ end
 
 %% ====== plot single file dat [align neural and song]
 close all;
-filename='wh44wh39_180324_202727.rhd';
+filename='gr48bu5_190329_111730.rhd';
 ChansToPlot.DigChans_zero=[0]; % make string "all" to plot all that exist. empty array to ignore
 ChansToPlot.AnalogChans_zero=[0]; % assumes that this is audio
 % ChansToPlot.AmpChans_zero=[9 14 19];
@@ -37,8 +37,8 @@ ChansToPlot.AmpChans_zero=[14 15 17 18 20 21];
 % ChansToPlot.AmpChans_zero=16:31;
 ChansToPlot.AmpChans_zero=0:15;
 % ChansToPlot.AmpChans_zero=[8 10 15];
-% ChansToPlot.AmpChans_zero=0:31;
-ChansToPlot.AmpChans_zero=[14 17 18 21];
+ChansToPlot.AmpChans_zero=0:31;
+% ChansToPlot.AmpChans_zero=[14 17 18 21];
 
 % neuralFiltLow=500;
 neuralFiltLow=300;
@@ -120,7 +120,7 @@ channel_board = [9 14 17 18 21];
 channel_board = 0:31;
 channel_board = [8 9 14 21];
 channel_board = [23];
-batchf = 'Batch1049to2106';
+batchf = 'Batch1117to2038';
 
 %% ==== exploratory - concat all audio and neural and plot for each neural channel
 close all;

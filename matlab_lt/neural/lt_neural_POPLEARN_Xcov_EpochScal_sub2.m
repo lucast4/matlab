@@ -5,8 +5,8 @@ n1 = size(allDat_ffsplit_base,2) + size(allDat_epochs_ffsplit,1); % base + epoch
 n2 = size(allDat_ffsplit_base,1); assert(n2 == size(allDat_epochs_ffsplit,2)); % number of ff splits
 allDat_BaseEpochs_FFsplits = nan(n1, n2, 3, size(allDat_epochs_ffsplit,4));
 
-for i=1:size(allDat_epochs_ffsplit,3)
-    for ii=1:size(allDat_epochs_ffsplit,4)
+for i=1:size(allDat_epochs_ffsplit,3) % syl types
+    for ii=1:size(allDat_epochs_ffsplit,4) % cases
    
         tmp1 = allDat_ffsplit_base(:,1, i, ii);
         tmp2 = allDat_epochs_ffsplit(:, :, i, ii);
@@ -63,7 +63,14 @@ for i=1:size(allDat_BaseEpochs_FFsplits,4)
 end
 
 
-
+%% ===================== 
+if useAd_Nonad_Average_forBaseline ==1
+    
+    tmp = mean(allDat_BaseEpochs_FFsplits_adaptivedir(1, :, 1, :), 2);
+    
+    allDat_BaseEpochs_FFsplits_adaptivedir(1, 1, 1, :) = tmp;
+    allDat_BaseEpochs_FFsplits_adaptivedir(1, 2, 1, :) = tmp;
+end
 %% =================== [PLOT] EACH EXPT [SHOW TIMING]
 % === FF SPLITS, HOW CHANGE DURING LEARNING
 % === SEPARATE PLOTS SPLIT BY DIRECTION OF LEARNING

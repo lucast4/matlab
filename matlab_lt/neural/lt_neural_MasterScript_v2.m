@@ -3,19 +3,15 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'pu69wh78', 'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {'gr48bu5'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
 BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
-ExptToKeep = {'RALMANOvernightLearn1', 'RALMANlearn1', 'RALMANlearn3'};
+ExptToKeep = {'RALMANLearn9'};
 RecordingDepth = [];
-LearningOnly = 1;
-BatchesDesired = {'Batch0922to1529', 'Batch0922to1300UndirDir', 'Batch1435to1629DirUndir', ...
-    'Batch1435to1719DirUndir', 'Batch0957to2238UndirDir', 'Batch1016to1301',  'Batch1434to2030UndirDir', ...
-    'Batch1326to1740DirUndir', 'Batch1743to2319', 'Batch1345to2242DirUndir', ...
-    'Batch1033to1427DirUndir', 'Batch1550to2036DirUndir', 'Batch1126to2105', ...
-    'Batch1126to1800'};
+LearningOnly = 0;
+BatchesDesired = {};
 ChannelsDesired = [];
 extractpreDatenums = 1;
 onlySpikes = 1; % [default =1]if 1, then only keeps if have spiking data; if 0, then gets anything.
@@ -33,6 +29,17 @@ end
 
 
 %% ===== PARAMS TO USE FOR DIFFERENT DATASETS 
+
+% ======= MULTIDAY LEARNING (LMAN - RA)
+BirdsToKeep = {'pu69wh78', 'wh44wh39'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BrainArea = {'LMAN', 'RA'}; % 
+ExptToKeep = {'RALMANOvernightLearn1', 'RALMANlearn1', 'RALMANlearn3'};
+BatchesDesired = {'Batch0922to1529', 'Batch0922to1300UndirDir', 'Batch1435to1629DirUndir', ...
+    'Batch1435to1719DirUndir', 'Batch0957to2238UndirDir', 'Batch1016to1301',  'Batch1434to2030UndirDir', ...
+    'Batch1326to1740DirUndir', 'Batch1743to2319', 'Batch1345to2242DirUndir', ...
+    'Batch1033to1427DirUndir', 'Batch1550to2036DirUndir', 'Batch1126to2105', ...
+    'Batch1126to1800'};
+
 
 
 
@@ -381,8 +388,8 @@ BirdToPlot = 'gr48bu5';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = []; % 4 % vector (e.g. [5 7]) - if [] then plots all;
-motiflist = {'(a)b'};
+NeurToPlot = [1 2 3 4]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+motiflist = {'a(b)'};
 % motiflist = {'a(r)dabh', 'r(r)dabh'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
@@ -393,7 +400,7 @@ plotIndivRaster = 0; % one raster for each neuron/motif
 plotCombRast = 1; % one figure, all rasters
 plotSmFR = 1; % all smoothed FR.
 
-LearnKeepOnlyBase = 0;
+LearnKeepOnlyBase = 1;
 
 % --- 1) directed song
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both

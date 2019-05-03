@@ -1428,6 +1428,18 @@ if (0)
 end
 
 
+%% ======================== [CIRCADIAN] RELATED TO AFP BIAS?
+close all;
+    useHandLab = 1;
+    plotsametype = 0; % default: 0 (just targ)
+    plotPC = 0; % for raw plots..
+    % --- which syls to collect
+    collectAllSyls = 1; % if 0, then only targ and same...
+    PCtimeWindowUsingWN = 0; % defgault 0; if 1, then only gets target syllables, 
+
+lt_seq_dep_pitch_ACROSSBIRDS_CircAFPbias(SeqDepPitch_AcrossBirds_LMAN, PARAMS, ...
+    useHandLab)
+
     
 %% ==================== BASELINE EFFECT OF INACTIVATION
 % NOTE: this shows that baseline effect of musc is to bring same types

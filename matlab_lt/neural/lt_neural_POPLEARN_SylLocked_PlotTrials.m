@@ -271,10 +271,12 @@ for i=1:length(indsgrpU)
     %% ========= COLLECT ALL TRIALS
     % ###################### [PLOT SPIKING]
     for j=1:length(neurlist)
-        assert(neurlist(j)==DAT(j).neurID_orig);
+%         assert(neurlist(j)==DAT(j).neurID_orig);
+        
+        inddat = find([DAT.neurID_orig]==neurlist(j));
         
         % ============= COLLECT SPIKE TIMES AND GET IN WINDOW OF INTEREST
-        spktimes = {DAT(j).SegmentsExtract.spk_Times};
+        spktimes = {DAT(inddat).SegmentsExtract.spk_Times};
         
         spktimes = cellfun(@(x)(x-PARAMS.motif_predur), spktimes, 'UniformOutput', 0); % get rel to syl onset
         
@@ -283,10 +285,10 @@ for i=1:length(indsgrpU)
         spktimes = cellfun(@(x)single(x), spktimes, 'UniformOutput', 0);
         
         % ================ COLLECT SMOOTHED FR
-        DAT(j).SegmentsExtract = ...
-            lt_neural_SmoothFR(DAT(j).SegmentsExtract, [], kernelSD, [], 0, segglobal);
-        frmat = [DAT(j).SegmentsExtract.FRsmooth_rate_CommonTrialDur];
-        frx = DAT(j).SegmentsExtract(1).FRsmooth_xbin_CommonTrialDur - PARAMS.motif_predur;
+        DAT(inddat).SegmentsExtract = ...
+            lt_neural_SmoothFR(DAT(inddat).SegmentsExtract, [], kernelSD, [], 0, segglobal);
+        frmat = [DAT(inddat).SegmentsExtract.FRsmooth_rate_CommonTrialDur];
+        frx = DAT(inddat).SegmentsExtract(1).FRsmooth_xbin_CommonTrialDur - PARAMS.motif_predur;
         
         frmat = frmat(frx>xtoplot(1) & frx<xtoplot(2), :);
         frx = frx(frx>xtoplot(1) & frx<xtoplot(2));

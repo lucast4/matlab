@@ -9,8 +9,13 @@ if isempty(X)
     return
 end
 
-if isnan(X) | isnan(Y)
+if all(isnan(X))
     return
+end
+if exist('Y', 'var')
+    if all(isnan(Y))
+        return
+    end
 end
 %% Default params
 plot_errors=0;

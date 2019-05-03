@@ -1,7 +1,8 @@
 function [SwitchXCovStruct, PARAMS] = lt_neural_POPLEARN_XcovCalc(BirdsToSkip, ...
     binsize_spk, xcov_dattotake, xcovwindmax, normmethod, normspiketoprob, ...
     bregionpairtoget, removeIfLFPOnly, getXgram, windsize, windshift, PARAMS, ...
-    SwitchCohStruct, SwitchStruct, MOTIFSTATS_pop, SummaryStruct, goodexptonly)
+    SwitchCohStruct, SwitchStruct, MOTIFSTATS_pop, SummaryStruct, goodexptonly, ...
+    dojitter, jitterwindSize)
 %% ============= lt 2/2019 - does xcov analyses.
 
 % BirdsToSkip = {'wh72pk12'};
@@ -157,9 +158,9 @@ for i=1:length(SwitchCohStruct.bird)
                             - [segcommon.global_ontime_motifInclFlank]);
                         
                         seg1 = lt_neural_QUICK_SpkBinned(seg1, maxdur, ...
-                            binsize_spk, 1);
+                            binsize_spk, 1, dojitter, jitterwindSize);
                         seg2 = lt_neural_QUICK_SpkBinned(seg2, maxdur, ...
-                            binsize_spk, 1);
+                            binsize_spk, 1, dojitter, jitterwindSize);
                         
                         dattmp1 = struct;
                         dattmp1.SegmentsExtract = seg1;

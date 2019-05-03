@@ -2,7 +2,18 @@ function [datbase, datWN, datWN_notminshuff, datbase_notminshuff, Xq, NanCount, 
     dattrials] = ...
     lt_neural_POPLEARN_XCov_sub1(datmat_real, datmat_shuff, dosmooth, ...
     dosmooth_sigma, inds_base, inds_WN, xbins, plotraw, xcovver, datcell_auto_real,...
-    datcell_auto_shift)
+    datcell_auto_shift, shuffver)
+
+
+% shuffver = 1; % then matches trials to 
+% shuffver = 2; % then takes hand entered set of trials (using WN inds)
+
+if ~exist('shuffver', 'var')
+    shuffver = 1;
+end
+
+%%
+
 
 if ~exist('plotraw', 'var')
     plotraw = 0;
@@ -66,8 +77,14 @@ if size(datmat_shuff,1) == 2*(size(datmat_real,1)-1)
     tmp = sort([1 2:size(datmat_real,1)-1 2:size(datmat_real,1)-1 size(datmat_real,1)]); % tmp(2) tells you the ind (in real dat) that shuff trial 2 corresponds to
     assert(length(tmp)==size(datmat_shuff,1));
     
-    inds_base_shuff = find(ismember(tmp, inds_base));
-    inds_WN_shuff = find(ismember(tmp, inds_WN));
+    if shuffver==1
+        % matches traials to shuff
+        inds_base_shuff = find(ismember(tmp, inds_base));
+        inds_WN_shuff = find(ismember(tmp, inds_WN));
+    elseif shuffver==2
+        inds_base_shuff = find(ismember(tmp, inds_base));
+        inds_WN_shuff = find(ismember(tmp, min(inds_WN):max(inds_WN)));
+    end
 elseif size(datmat_shuff,1)==size(datmat_real,1)
     % ======== OLD VERSION, SHUFF INDICES ARE EXACTYL SAME AS INDS FOR REAL
     % DAT
@@ -212,11 +229,11 @@ elseif strcmp(xcovver, 'zscore')
     ydat = datmat_real(inds_WN,:);
     
     yz_WN = (ydat - nanmean(yshuff,1))./nanstd(yshuff, [], 1);
- 
+    
     dattrials.WN_shuff = yshuff;
     dattrials.WN_dat = ydat;
     
-
+    
     % ========== REPLACE OUTPUT
     datbase = nanmean(yz_base);
     datWN = nanmean(yz_WN);

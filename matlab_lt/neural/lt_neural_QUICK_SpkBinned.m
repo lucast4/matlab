@@ -1,6 +1,10 @@
 function [segextract, xtimes] = lt_neural_QUICK_SpkBinned(segextract, ...
-    maxdur, binsize, convertosingle)
+    maxdur, binsize, convertosingle, dojitter, jitterwindSize)
 %% lt 1/17/18 - takes spktime and outputs binned (1ms res)
+
+if ~exist('dojitter', 'var')
+    dojitter = 0;
+end
 
 if ~exist('binsize', 'var')
     binsize = 0.001;
@@ -30,6 +34,67 @@ end
 % maxtime-mod(maxtime, binsize)
 xedges = 0:binsize:maxtime;
 xtimes = (xedges(2)-binsize/2):binsize:(xedges(end)-binsize/2);
+
+%% do jitter?
+if dojitter==1
+    spktimes = {segextract.spk_Times};
+   
+   % -- convert to one long array
+   tnumall = [];
+   stimeall = [];
+   clustnumall = [];
+   for j=1:length(spktimes)
+           stimeall = [stimeall spktimes{j}];
+           tnumall = [tnumall j*ones(size(spktimes{j}))];
+           clustnumall = [clustnumall segextract(j).spk_Clust];
+   end
+   
+   % ======= for each jitter window perform jitter
+   jitterWindOff = jitterwindSize:jitterwindSize:maxdur;
+   if maxdur-jitterWindOff(end)>jitterwindSize/2
+       % -- take the last window
+       jitterWindOff = [jitterWindOff jitterWindOff(end)+jitterwindSize];
+   elseif maxdur-jitterWindOff(end)==0
+       % -- do nothing       
+   else
+       % -- combine with last window
+       jitterWindOff(end) = maxdur;
+   end
+   jitterWindOn = jitterWindOff-jitterwindSize;
+   
+   % ============ got thru each jitter window.
+   for j=1:length(jitterWindOn)
+      jitOn = jitterWindOn(j);
+      jitOff = jitterWindOff(j);
+      
+      % ============ COLLECT ALL SPIKES IN THIS WINDOW
+      sInds = find(stimeall>jitOn & stimeall<=jitOff);
+      
+      sTimes = stimeall(sInds);
+      cNums = clustnumall(sInds);
+      
+      % =========== mix up the spike times and put them back.
+      indrand = randperm(length(sTimes));
+      stimeall(sInds) = sTimes(indrand);
+      clustnumall(sInds) = cNums(indrand);
+   end
+   
+   % ======== PUT SPIKES BACK INTO ORIGINAL SEGEXTRACT
+   for j=1:length(segextract)
+       
+       Sthis = stimeall(tnumall == j);
+       Cthis = clustnumall(tnumall ==j);
+       
+       [~, indsort] = sort(Sthis);
+       
+       Sthis = Sthis(indsort);
+       Cthis = Cthis(indsort);
+       
+       segextract(j).spk_Times = Sthis;
+       segextract(j).spk_Clust = Cthis;
+%        assert(length(unique(segextract(j).spk_Clust))==1, 'then the mapping between clust and spike will be messed up..');
+   end
+end
 
 %% for each trial get counts
 ntrials = length(segextract);

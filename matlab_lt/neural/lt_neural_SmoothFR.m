@@ -44,7 +44,7 @@ end
 % uses kde, gaussian.
 
 if ~exist('kernelSD', 'var')
-    kernelSD = 0.005; % ms gaussian, as in Mehaffey LMAN stuff
+    kernelSD = 0.005; % ms gaussian, as in Mehaffey LMAN stuff (what he calls a 10ms gaussian means 5ms sigma)
 elseif isempty(kernelSD)
     kernelSD = 0.005; % ms gaussian
 end

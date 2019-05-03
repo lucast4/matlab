@@ -2,11 +2,17 @@ function [OUTSTRUCT_XCOV, PARAMS, NanCountAll] = lt_neural_POPLEARN_XcovExtr(Swi
     SwitchStruct, PARAMS, SwitchCohStruct, OUTSTRUCT, usealltrials, ...
     useallbase, dosmooth, dosmooth_sigma, removebadsyl, ...
     windlist, plotrawtrials, xcovver, wntouse, removebadtrials, getxgram, removebadchans, ...
-    getxgram_epochbins, getHiLoFFSplit)
+    getxgram_epochbins, getHiLoFFSplit, hilosplit_shuffver)
+%% what do use as shuffle trials if do ffsplit
+
+% hilosplit_shuffver=2;
+   % then use the exact same shuffle trials for both low and high (i.e. take data without splitting)
+
 %% NOTE: if any trials have nan, then just ignroes in calcualting dat minus shuff
 % i.e. uses nanmean. I do not expect there to be any nan for xcorr
 % ("unbiased");
 %% lt 2/2019 - extracts OUTSTRUCT_XCOV for xcov analysis during learning.
+% MinTotRends = 10; % skips if etiher base or Wn (all, not epoch) has fewer trials than this
 
 %% % ===================================
 OUTSTRUCT_XCOV = struct;
@@ -70,7 +76,10 @@ for i=1:length(SwitchXCovStruct.bird)
                     end
                 end
                 datthis = SwitchXCovStruct.bird(i).exptnum(ii).switchlist(iii).motif(mm);
-                %                 if usealltrials==1
+                
+            
+            
+            %                 if usealltrials==1
                 % %                     inds_base = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase;
                 % %                     inds_WN = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsWN;
                 %                 elseif usealltrials==0
@@ -97,6 +106,10 @@ for i=1:length(SwitchXCovStruct.bird)
                 inds_base_all = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsbase;
                 inds_WN_all = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).indsWN;
                 tvals = SwitchCohStruct.bird(i).exptnum(ii).switchlist(iii).motifnum(mm).tvals;
+                
+                if length(inds_base_all)<10
+                    continue
+                end
                 
                 % ---- filter out the good trials
                 if removebadtrials==1
@@ -233,7 +246,7 @@ for i=1:length(SwitchXCovStruct.bird)
                        inds_base_hi = inds_base(ffthis>ffmid);
                        [~, xcovgram_wn] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
                            dosmooth, dosmooth_sigma, inds_base, inds_base_hi, PARAMS, xcovver, datbase, ...
-                           np);
+                           np, hilosplit_shuffver);
                        
                        xcovgram_base_ffsplits{2} = xcovgram_wn;
                        
@@ -241,7 +254,7 @@ for i=1:length(SwitchXCovStruct.bird)
                        inds_base_lo = inds_base(ffthis<ffmid);
                        [~, xcovgram_wn] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
                            dosmooth, dosmooth_sigma, inds_base, inds_base_lo, PARAMS, xcovver, datbase, ...
-                           np);
+                           np, hilosplit_shuffver);
                        
                        xcovgram_base_ffsplits{1} = xcovgram_wn;
                         
@@ -290,7 +303,7 @@ for i=1:length(SwitchXCovStruct.bird)
                                 trialsthis_hi = trialsthis(ffthis>midff);
                                 [~, xcovgram_hi] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
                                     dosmooth, dosmooth_sigma, inds_base, trialsthis_hi, PARAMS, xcovver, datbase, ...
-                                    np);
+                                    np, hilosplit_shuffver);
                                 
                                 XcovgramWN_epochs_hiFF(:,:, bb) = xcovgram_hi;
                             
@@ -298,7 +311,7 @@ for i=1:length(SwitchXCovStruct.bird)
                                 trialsthis_lo = trialsthis(ffthis<midff);
                                  [~, xcovgram_lo] = lt_neural_POPLEARN_XcovExtr_sub1(datthis, ...
                                     dosmooth, dosmooth_sigma, inds_base, trialsthis_lo, PARAMS, xcovver, datbase, ...
-                                    np);
+                                    np, hilosplit_shuffver);
                                 
                                 XcovgramWN_epochs_loFF(:,:, bb) = xcovgram_lo;
                                 

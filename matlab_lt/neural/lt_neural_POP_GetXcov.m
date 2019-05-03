@@ -1,6 +1,6 @@
 function [ccRealAll, ccShiftAll, lags_sec] = lt_neural_POP_GetXcov(dattmp1, dattmp2, xcov_dattotake, ...
     motifpredur, xcovwindmax, binsize_spk, plotSummary, plotThisCC, normmethod, ...
-    normspiketoprob)
+    normspiketoprob, dojitter, jitter)
 %% lt 1/9/19 - copied over from code for POPLEARN, XCov analyses
 % NOTE: have only looked carefully at things that will run by default (i.e
 % not things like plotSummary.
@@ -35,6 +35,7 @@ if plotThisCC==1
 end
 
 
+%% ============= JITTER CORRECTION?
 
 %% ============== NEW VERSION - bins spikes, cross-correlation,
 % corrected against cross corr of PSTH

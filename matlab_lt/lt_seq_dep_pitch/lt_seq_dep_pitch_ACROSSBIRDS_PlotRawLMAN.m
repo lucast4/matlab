@@ -3,7 +3,7 @@ function lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds, ...
     UseSylColors, flipsign, use_std, OverlayLMANStats, OverlayMUSC_days, ...
     plotLarge, plotRunningCV)
 
-if ~exist('plotLarge','var');
+if ~exist('plotLarge','var')
     plotLarge=0;
 end
 

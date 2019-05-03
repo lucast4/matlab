@@ -1,4 +1,4 @@
-function lt_neural_POPLEARN_SylLocked_CoorLearn(DATSTRUCT_SPK, DATSTRUCT_LFP, ...
+function DATSTRUCT_POP = lt_neural_POPLEARN_SylLocked_CoorLearn(DATSTRUCT_SPK, DATSTRUCT_LFP, ...
     PARAMS, OUTSTRUCT_XCOV, SwitchStruct)
 %% lt 2/25/19 - spk-spk coorelation (WITHIN AREA) CHANGE DURING ELARNIGN?
 % USING SMOOTHED FR (LIKE HAMISH STUFF)
@@ -293,7 +293,9 @@ for i=1:length(x)
     xthis = [x(i)-0.2 x(i)+0.2];
     ythis = [ybase(:,i) ywn(:,i)];
     plot(xthis, ythis, '-ko');
+    if size(ythis,1)>1
     lt_plot(xthis+0.2, mean(ythis,1), {'Errors', lt_sem(ythis)});
+    end
 end
 lt_plot_zeroline;
 

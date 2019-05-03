@@ -3,12 +3,14 @@ function [NeuronDatabase, SummaryStruct_filtered] = ...
     RecordingDepth, LearningOnly, BatchesDesired, ChannelsDesired, ...
     extractpreDatenums, onlySpikes)
 %%
+if (0)
 if onlySpikes==0
     disp('not sure what to do with wh72 - some chans multiple extractions, LFP vs spikes');
     pause;
 end
 disp('NOTE: if OnlySpikes=1, then this will not work for any birds that added after gr48bu5, since assumes that any bird other than gr48bu5 and wh72pk12 are all spike data (which is true)');
 pause
+end
 
 % NOTE:
 % For all birds did not enter what cell type it is, except following

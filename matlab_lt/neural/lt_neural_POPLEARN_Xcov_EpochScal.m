@@ -1,7 +1,7 @@
 function lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
     mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, FFsplit_pu69learn2_combine, ...
-    doFFsplit)
+    doFFsplit, useAd_Nonad_Average_forBaseline)
 %% lt 3/5/19 - divides up training into epochs -- here PLOTS
 
 %% ====== [PREPROCESS] only plot good experiments
@@ -308,6 +308,7 @@ lt_figure; hold on;
 
 lt_subplot(2,2,1); hold on
 exptdur = squeeze(allDat_TimeMedian(1,end, 1, :) - allDat_TimeMedian(1,1, 1, :));
+exptdur(isnan(exptdur)) = 0;
 plot(exptdur, 'ok');
 xlabel('case num');
 ylabel('duration with data (hours, last bin minus first');
@@ -327,7 +328,7 @@ line(xlim, [mintotaltrain mintotaltrain], 'Color', 'r');
 % LAST BIN MIN US FIRST BIN (OF TRAINING) - THEREFORE NEE DTO HAVE DATA
 % THROUGHOUT TRAINING.
 
-indstokeep = exptdur>mintraindur;
+indstokeep = exptdur>=mintraindur;
 allDat_learn = allDat_learn(:,:,:, indstokeep);
 allDat_xcov = allDat_xcov(:,:,:, indstokeep);
 allDat_xcov_basewn = allDat_xcov_basewn(:,:,:, indstokeep);
@@ -351,7 +352,7 @@ allDat_learn_Revert = allDat_learn_Revert(:,:,:,indstokeep);
 % LAST BIN M INUS BASE - DOESN'T CARE WHETHER HAS DATA IN BETWEEM
 
 recdur = squeeze(allDat_TimeMedian(1,end, 1, :));
-indstokeep = recdur>mintotaltrain;
+indstokeep = recdur>=mintotaltrain;
 
 
 allDat_learn = allDat_learn(:,:,:, indstokeep);

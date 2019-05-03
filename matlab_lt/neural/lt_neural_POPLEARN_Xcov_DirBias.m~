@@ -1,12 +1,8 @@
 function lt_neural_POPLEARN_Xcov_DirBias(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dirstruct, useff_zscore, targsylonly, ...
-    cvdiffmethod, giveFakeAFPbias)
+    cvdiffmethod)
 %% lt 3/5/19 - divides up training into epochs -- here PLOTS
 
-if giveFakeAFPbias==1
-    cvdiffmethod = 'diff'; % because std will not be defined
-    useff_zscore = 0;
-end
 %% ====== [PREPROCESS] only plot good experiments
 
 if onlygoodexpt==1
@@ -87,15 +83,8 @@ for i=1:length(indsgrpU)
     t = [dirstruct.bird(ind1).DAT.motifID(motifID).rendnum.datenum_song_SecRes];
     isDir = [dirstruct.bird(ind1).DAT.motifID(motifID).rendnum.isDIR];
     
-    
     if all(isnan(ff))
-    if giveFakeAFPbias==0
         continue
-    elseif giveFakeAFPbias==1
-        ff = zeros(size(ff));
-        
-        isDir(1:2)=1; % need at least some dir data to get afp bias.
-    end
     end
     
     % === sort by t (for fun)
