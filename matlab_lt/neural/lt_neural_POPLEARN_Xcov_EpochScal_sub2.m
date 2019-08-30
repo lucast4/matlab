@@ -12,6 +12,7 @@ for i=1:size(allDat_epochs_ffsplit,3) % syl types
         tmp2 = allDat_epochs_ffsplit(:, :, i, ii);
         tmp3 = [tmp1'; tmp2];
         allDat_BaseEpochs_FFsplits(:,:, i, ii) = tmp3;
+        
     end
 end
 clear allDat_ffsplit_base
@@ -61,7 +62,6 @@ for i=1:size(allDat_BaseEpochs_FFsplits,4)
    
    allDat_BaseEpochs_FFsplits_adaptivedir(:,:,1, i) = tmp;
 end
-
 
 %% ===================== 
 if useAd_Nonad_Average_forBaseline ==1
@@ -458,7 +458,14 @@ lt_plot_zeroline;
 
 
 
-%% =============== [PLOT] CHANGE IN ADAPTIVE VS. UNADAPTIVE STATE
+%% [PUBLICATION] =============== [PLOT] CHANGE IN ADAPTIVE VS. UNADAPTIVE STATE
+
+% wnbins = size(allDat_BaseEpochs_FFsplits_adaptivedir,1)-1; % use the last bin.
+wnbins = [3 4];
+plotraw = 1; % overlay individual pairs.
+% =======================
+wnbins = wnbins+1; % since bin 1 is always baseline.
+
 
 
 % ####################################### WHICH ONES TO PLOT?
@@ -469,8 +476,6 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-wnbins = 3;
-plotraw = 0; % overlay individual pairs.
 % indsthis = allbnum==4;
 indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
 % indsthis = allDat_himinuslo_switchmeans<0;
@@ -481,8 +486,6 @@ indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
 % --- experiments driving opposite adaptive direction
 % indsthis = (allDat_himinuslo_switchmeans>0) ~= (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
 
-% =======================
-wnbins = wnbins+1; % since bin 1 is always baseline.
 
 if plotraw==1
     YLIM = [-0.2 0.5];
@@ -501,21 +504,11 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-wnbins = 3;
-plotraw = 0; % overlay individual pairs.
-% indsthis = allbnum==4;
-% indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
-% indsthis = allDat_himinuslo_switchmeans<0;
-
-% --- experiments driving in adaptive direction
 indsthis = (allDat_himinuslo_switchmeans>0) == (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
 
 % --- experiments driving opposite adaptive direction
 % indsthis = (allDat_himinuslo_switchmeans>0) ~= (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
 
-% =======================
-wnbins = wnbins+1; % since bin 1 is always baseline.
-
 if plotraw==1
     YLIM = [-0.2 0.5];
 else
@@ -533,22 +526,10 @@ subplotcols=2;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
-
-wnbins = 3;
-plotraw = 0; % overlay individual pairs.
-% indsthis = allbnum==4;
-% indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
-% indsthis = allDat_himinuslo_switchmeans<0;
-
-% --- experiments driving in adaptive direction
-% indsthis = (allDat_himinuslo_switchmeans>0) == (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
 
 % --- experiments driving opposite adaptive direction
 indsthis = (allDat_himinuslo_switchmeans>0) ~= (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
 
-% =======================
-wnbins = wnbins+1; % since bin 1 is always baseline.
-
 if plotraw==1
     YLIM = [-0.2 0.5];
 else
@@ -567,22 +548,8 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-wnbins = 3;
-plotraw = 0; % overlay individual pairs.
-% indsthis = allbnum==4;
-% indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
-% indsthis = allDat_himinuslo_switchmeans<0;
 
 indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==1;
-
-% --- experiments driving in adaptive direction
-% indsthis = (allDat_himinuslo_switchmeans>0) == (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
-
-% --- experiments driving opposite adaptive direction
-% indsthis = (allDat_himinuslo_switchmeans>0) ~= (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
-
-% =======================
-wnbins = wnbins+1; % since bin 1 is always baseline.
 
 if plotraw==1
     YLIM = [-0.2 0.5];
@@ -602,22 +569,7 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-wnbins = 3;
-plotraw = 0; % overlay individual pairs.
-% indsthis = allbnum==4;
-% indsthis = 1:size(allDat_BaseEpochs_FFsplits_adaptivedir,4);
-% indsthis = allDat_himinuslo_switchmeans<0;
-
 indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==-1;
-
-% --- experiments driving in adaptive direction
-% indsthis = (allDat_himinuslo_switchmeans>0) == (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
-
-% --- experiments driving opposite adaptive direction
-% indsthis = (allDat_himinuslo_switchmeans>0) ~= (squeeze(allDat_targLearnDir(1,1,1,:))==1); 
-
-% =======================
-wnbins = wnbins+1; % since bin 1 is always baseline.
 
 if plotraw==1
     YLIM = [-0.2 0.5];
@@ -627,6 +579,7 @@ end
 
 lt_neural_POPLEARN_XCov_EpochScal_sub21;
 lt_subtitle('driving pitch down');
+
 
 %% ================== PLOT ALL EXPERIMENTS 
 figcount=1;

@@ -1,0 +1,57 @@
+% ===== GET ONLY EXPERIMENTS THAT HAVE DATA FOR ALL DESIRED SYL TYPES
+indsthis = all(~cellfun(@(x)isempty(x), Yall_allsyls(:, x))');
+
+% ================= COLLECT ALL LOWER LEVEL DATA
+Ythis = {};
+
+for i=1:size(Yall_allsyls,2)
+    Ythis{i} = cell2mat(Yall_allsyls(indsthis,i));
+end
+
+% ============ WHAT IS GOOD BINSIZE
+binsize = 0.025;
+y = cell2mat(cellfun(@(x)x', Ythis, 'UniformOutput', 0));
+tmp = round(100*max(abs(y)))/100;
+tmp = tmp+(binsize-mod(tmp, binsize));
+% tmp = tmp+binsize/2;
+xcenter = -tmp:binsize:tmp;
+
+
+% =============== PLOT RAW DISTRIBUTION
+distributionPlot(Ythis(x), 'xValues', x, 'showMM', 4, 'addSpread', 0, 'color', ...
+    'b', 'histOpt', 0, 'divFactor', xcenter);
+lt_plot_zeroline;
+lt_plot_text(2, 0.3, ['N=' num2str(cellfun(@(y)length(y), Ythis(x)))], 'r');
+
+
+% ================== OVERLAY EACH BIRD MEAN
+indsthis = all(~isnan(Yall(:,x))');
+ythis = Yall(indsthis,x);
+bnumthis = All_bnum(indsthis);
+
+% ------ 1) PLOT ALL CHANS
+if (0)
+% lt_plot(x+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
+% ------ 2) comaprisons (stats)
+[p] = signrank(ythis(:,1), ythis(:,2));
+% [~, p] = ttest(ythis(:,1), ythis(:,2));
+lt_plot_pvalue(p, 'srank (1vs2)', 1);
+for i=1:size(ythis,1)
+    plot(x, ythis(i,:), '-', 'Color', [0.7 0.7 0.7]);
+end
+end
+
+% ------ 2) OVERLAY EACH BIRD MEAN
+[ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+bnumtmp = unique(bnumthis);
+for i=1:size(ymean,1)
+    lt_plot(x+0.7*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+    % -- within bird p val
+%     [~, p] = ttest(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+    [p] = signrank(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+    [p1] = signrank(ythis(bnumthis==bnumtmp(i), 1));
+   [p2] = signrank(ythis(bnumthis==bnumtmp(i), 2));
+    % -- plot bird info
+    lt_plot_text(x(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i)) ',p1=' num2str(p1) 'p2=' num2str(p2) ',p(v2)=' num2str(p)]);
+end
+xlim([0 5]);

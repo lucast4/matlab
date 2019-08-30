@@ -144,9 +144,9 @@ for edge1 = edgelist
         for gg = GetTrainList
             indsthis = DATBYREND.IsDurTrain==gg & DATBYREND.Sylcounter==ss;
             
-            
             if ~any(indsthis)
                 rowcount = rowcount+1;
+                disp('skipping, syl doesnt exist');
                 continue
             end
             
@@ -194,9 +194,23 @@ for edge1 = edgelist
             % -------------------------- BIN DATA
             tbins = discretize(tthis, xedgethis);
             
+            % ----------------------- ONLY KEEP VALUES THAT ARE IN BINS OF
+            % INTEREST
+            indstmp = isnan(tbins);
+            tthis(indstmp) = [];
+            ffthis(indstmp) = [];
+            tbins(indstmp) = [];
+            
+            
             % ------ collect binned balues
             BinID = unique(tbins);
-            tbinned = grpstats(tthis, tbins, {'mean'});
+            
+            if logtime==1
+                func = @(x)mean(10.^x);
+                tbinned = log10(grpstats(tthis, tbins, {func}));
+            else
+                tbinned = grpstats(tthis, tbins, {'mean'});
+            end
             ffbinned = grpstats(ffthis, tbins, {'mean'});
             ffbinned_sem = grpstats(ffthis, tbins, {'sem'});
             nbinned = tabulate(tbins);
@@ -206,6 +220,7 @@ for edge1 = edgelist
             % ------------- COLLECT
             tmptmp = tabulate(tbins);
             if min(tmptmp(:,2))< minrendsinbin
+                disp(['rends ' num2str(min(tmptmp(:,2)))]);
                 plotflag=1;
             else
                 plotflag = 0;
@@ -317,14 +332,19 @@ for edge1 = edgelist
             [~, indsort] = sort(tthis);
             tthis = tthis(indsort);
             ffthis = ffthis(indsort);
-            if length(tthis)<1.5*nbin_sm
-                rowcount = rowcount+1;
-                continue
+            if length(tthis)<1.1*nbin_sm
+                nbin_sm_this = length(tthis);
+%                 rowcount = rowcount+1;
+%                 disp('SKIPPING - CANNOT SMOOTH, too few rends');
+%                                 continue
+                disp('[NOT A PROBLEM] smoothing bin shortened to match data size');
+            else
+                nbin_sm_this = nbin_sm;
             end
             
             % --- get runing
-            tthis_sm = lt_running_stats(tthis, nbin_sm);
-            ffthis_sm = lt_running_stats(ffthis, nbin_sm);
+            tthis_sm = lt_running_stats(tthis, nbin_sm_this);
+            ffthis_sm = lt_running_stats(ffthis, nbin_sm_this);
             
             if plotsmooth ==1
                 % =================== PLOT
@@ -371,7 +391,7 @@ for edge1 = edgelist
                 
                 if plotflag==1 % then don't collect
                     rowcount = rowcount+1;
-                    
+                    disp(['SKIPPING - not enoguh rends in at least one bin, ' birdname '-' exptname '-' sylthis]);
                     continue
                 end
                 

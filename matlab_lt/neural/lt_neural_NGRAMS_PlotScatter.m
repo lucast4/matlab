@@ -29,6 +29,19 @@ useGlobalNeg = 0; % if 0, then just neg for the desired pairs. default: 1
 % dosubtractcontrol = 1; % then subtracts negative control before plotting [if 0, then overlays neg]
 % sanitycheckuseneg = 0; % uses negative control data instead of data
 
+%%
+
+if ~exist('minPairs', 'var')
+    minPairs = 0; % i.e. if any pairtype has fewer pairs that this then will skip
+end
+if ~exist('zscoreMin', 'var')
+    zscoreMin = [1 0]; % [pairnum minz] only keep a neuron if the zscore(mean) for pairnum is greater than minZ
+end
+
+if ~exist('labelneur', 'var')
+    labelneur = 0;
+end
+
 
 %% pull out data
 % ========================== FOR COMPATIBILITY WITH OLD CODE, EXTRACT ALL
@@ -589,6 +602,10 @@ for j=1:maxbirds
     indstmp = strcmp(AllPairs_Bregions, 'RA') & AllPairs_Birdnum==j;
     Y{2} = AllPairs_Ratios(indstmp, :);
     
+    if isempty([Y{1}' Y{2}'])
+        continue
+    end
+        
     % === plot
     lt_plot_MultDist(Y, [1 2], 1);
     

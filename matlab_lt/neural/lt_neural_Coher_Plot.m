@@ -1,9 +1,13 @@
 function lt_neural_Coher_Plot(cohmat, tbins, ffbins, plottype, linestyle, clim, ...
     plotsig, plotindivtraces, ffbinsedges, colorbarloc, ffbinsedges_indstoplot, ...
-    pcol)
+    pcol, plotPval)
 %% lt 10/9/18 - various plots for coherence
 if ~exist('pcol', 'var')
     pcol = [];
+end
+
+if ~exist('plotPval', 'var')
+    plotPval=1;
 end
 % cohmat can be multiple trials (dim 3 is trials).
 %%
@@ -114,6 +118,13 @@ elseif plottype==2
                 plot(tbins(h==1), cohmean(h==1)+0.02, '*', 'Color', pcols{k});
             catch err
                 plot(tbins(h==1), cohthis(h==1, 1)+0.02, '*', 'Color', pcols{k});
+            end
+            if plotPval ==1
+                for j=1:length(p)
+                    if p(j)<0.1
+                        lt_plot_text(tbins(j), cohthis(j, 1), ['p=' num2str(p(j))], 'm', 8);
+                    end
+                end
             end
         end
         % --

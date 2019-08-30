@@ -56,6 +56,7 @@ if strcmp(dattype, 'switch')
     [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_epochs_ffsplit] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
     
+    
     fieldtoget = 'learndirTarg';
     [~, ~, ~, ~, allbnum, allenum, allswnum, allDat_targLearnDir] = ...
         lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
@@ -117,6 +118,7 @@ elseif strcmp(dattype, 'chan')
     
 end
 
+allDat_epochs_ffsplit_allSyls = OUTSTRUCT_XCOV.xcovscalEpochs_FFsplit;
 
 
 %% ============= GET DIFFERENCE FROM BASELINE FOR ALL XCOV SCALARS
@@ -327,8 +329,12 @@ line(xlim, [mintotaltrain mintotaltrain], 'Color', 'r');
 %% =============== ONLY KEEP IF DURATION TRAINING LONG ENOUGH.
 % LAST BIN MIN US FIRST BIN (OF TRAINING) - THEREFORE NEE DTO HAVE DATA
 % THROUGHOUT TRAINING.
-
+keptallinds= 1;
 indstokeep = exptdur>=mintraindur;
+if ~all(indstokeep)
+    keptallinds=0;
+end
+
 allDat_learn = allDat_learn(:,:,:, indstokeep);
 allDat_xcov = allDat_xcov(:,:,:, indstokeep);
 allDat_xcov_basewn = allDat_xcov_basewn(:,:,:, indstokeep);
@@ -353,6 +359,9 @@ allDat_learn_Revert = allDat_learn_Revert(:,:,:,indstokeep);
 
 recdur = squeeze(allDat_TimeMedian(1,end, 1, :));
 indstokeep = recdur>=mintotaltrain;
+if ~all(indstokeep)
+    keptallinds=0;
+end
 
 
 allDat_learn = allDat_learn(:,:,:, indstokeep);
@@ -380,40 +389,47 @@ if doFFsplit==1
     if FFsplit_pu69learn2_combine==1
         i = find(strcmp({SwitchStruct.bird.birdname}, 'pu69wh78'));
         if ~isempty(i)
-        ii= find(strcmp({SwitchStruct.bird(i).exptnum.exptname}, 'RALMANlearn2'));
-        
-        indsthis = find(allbnum==i & allenum==ii & allswnum==1);
-        %     y = squeeze(allDat_learn(:, 1, syltype, indsthis));
-        %     lt_figure; hold on;
-        %     plot(y, '-ok');
-        
-        % ==== combine all bins (non-baseline) into last bin
-        
-        for j=indsthis'
+            ii= find(strcmp({SwitchStruct.bird(i).exptnum.exptname}, 'RALMANlearn2'));
             
-            tmp = mean(allDat_epochs_ffsplit(:, :, :, j), 1);
-            allDat_epochs_ffsplit(end, :, :, j) = tmp; % replace last bin with this.
-            allDat_epochs_ffsplit(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+            indsthis = find(allbnum==i & allenum==ii & allswnum==1);
+            %     y = squeeze(allDat_learn(:, 1, syltype, indsthis));
+            %     lt_figure; hold on;
+            %     plot(y, '-ok');
             
-            tmp = mean(allDat_learn_Away(:, :, :, j), 1);
-            allDat_learn_Away(end, :, :, j) = tmp; % replace last bin with this.
-            allDat_learn_Away(1:end-1, :, :, j) = nan; % make nan the non-last bins.
-            
-            tmp = mean(allDat_learn_Revert(:, :, :, j), 1);
-            allDat_learn_Revert(end, :, :, j) = tmp; % replace last bin with this.
-            allDat_learn_Revert(1:end-1, :, :, j) = nan; % make nan the non-last bins.
-            
-            allDat_learn_pu69combined = allDat_learn;
-            tmp = mean(allDat_learn(:, :, :, j), 1);
-            allDat_learn_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
-            allDat_learn_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
-
-            allDat_xcov_pu69combined = allDat_xcov;
-            tmp = mean(allDat_xcov(:, :, :, j), 1);
-            allDat_xcov_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
-            allDat_xcov_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
-
-        end
+            % ==== combine all bins (non-baseline) into last bin
+            for j=indsthis'
+                
+                % ==== IGNORE IF HAS ALREADY BEEN DONE BEOFRE THIS FUNCTION
+%                 if all(all(isnan(allDat_epochs_ffsplit(1:end-1, :, syltype, j))))
+%                     % then means that have already averaged everything and put into
+%                     % last bin. So do nothing.
+%                     continue
+%                 end
+                
+                
+                tmp = nanmean(allDat_epochs_ffsplit(:, :, :, j), 1);
+                allDat_epochs_ffsplit(end, :, :, j) = tmp; % replace last bin with this.
+                allDat_epochs_ffsplit(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+                
+                tmp = mean(allDat_learn_Away(:, :, :, j), 1);
+                allDat_learn_Away(end, :, :, j) = tmp; % replace last bin with this.
+                allDat_learn_Away(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+                
+                tmp = mean(allDat_learn_Revert(:, :, :, j), 1);
+                allDat_learn_Revert(end, :, :, j) = tmp; % replace last bin with this.
+                allDat_learn_Revert(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+                
+                allDat_learn_pu69combined = allDat_learn;
+                tmp = mean(allDat_learn(:, :, :, j), 1);
+                allDat_learn_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
+                allDat_learn_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+                
+                allDat_xcov_pu69combined = allDat_xcov;
+                tmp = mean(allDat_xcov(:, :, :, j), 1);
+                allDat_xcov_pu69combined(end, :, :, j) = tmp; % replace last bin with this.
+                allDat_xcov_pu69combined(1:end-1, :, :, j) = nan; % make nan the non-last bins.
+                
+            end
         end
     end
     
@@ -445,6 +461,7 @@ end
 YYcorr = {};
 
 %% ======== [FFSPLIT VS. ELARNING] Timecourse of change in "apf bias" corelation wtih learning?
+if doFFsplit==1
 
 % -- measure of afp bias chagne (xcov for pitch in adaptive direction minus
 % in nonadaptive --> then change from baselien)
@@ -525,6 +542,7 @@ xlabel('rho (neuralbias[FFsplits] vs. learn, over epochs)')
 title('neural(bin n) vs. learn(bin n) [cumulative values]');
 ylabel([num2str(nshuff) 'shuffs']);
 % lt_plot_annotation(1, 'bias=neuralxcov in adaptive direction(minus nonadapt, minus base)');
+end
 
 %% ============= [RESTRICT ANALYSIS TO ONLY SPECIFIC CASES]
 
@@ -658,47 +676,16 @@ end
 %% ============= [PLOT]
 
 figcount=1;
-subplotrows=4;
+subplotrows=2;
 subplotcols=2;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
 
-% =================== LEARNING TRAJECTORY
-[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-ylabel('learning (z rel base)')
-xlabel('epoch (bin)');
-title('one dat per neural')
-Y = squeeze(allDat_learn(:,:, syltype, :));
-
-Y = [zeros(1,size(Y,2)); Y];
-x = 1:size(Y,1);
-plot(x, Y', '-ok');
-ymean = mean(Y,2);
-ysem = lt_sem(Y');
-shadedErrorBar(x, ymean, ysem, {'Color', 'r'},1);
-xlim([0 size(Y,1)+1]);
-lt_plot_zeroline;
-% --- p value for each bin
-YLIM = ylim;
-tmp = [];
-for i=2:size(Y,1)
-    y = Y(i,:);
-    y = unique(y);
-    if isempty(tmp)
-        tmp = length(y);
-    else
-        assert(length(y)==tmp);
-    end
-    p = signrank(y);
-    if p<0.1
-        lt_plot_text(i, YLIM(2), ['p=' num2str(p)], 'm', 8);
-    end
-end
-
-
 % ==================== PLOT LEARNINGM, BUT ONE DATAPOINT PER TRAJECTORY
+Y = squeeze(allDat_learn(:,:, syltype, :));
+Y = [zeros(1,size(Y,2)); Y];
 Yuni = [];
 for i=2:size(Y,1)
     y = unique(Y(i,:), 'stable');
@@ -728,13 +715,65 @@ for i=2:size(Y,1)
     else
         assert(length(y)==tmp);
     end
+%     p = signrank(y);
     p = signrank(y);
     if p<0.1
         lt_plot_text(i, YLIM(2), ['p=' num2str(p)], 'm', 8);
     end
 end
 p = signrank(Y(end,:), Y(2,:));
-% [~, p] = ttest(Y(end,:), Y(2,:));
+lt_plot_pvalue(p, 'last vs 1st train bin');
+p = signrank(mean(Y([end-1 end],:),1), mean(Y([2 3],:),1));
+lt_plot_pvalue(p, 'last2 vs 1st2 train bin', 2);
+
+
+% ==================== PLOT LEARNINGM, BUT ONE DATAPOINT PER TRAJECTORY
+% PLOT AT MEDIAN TIMEPOINTS
+Y = squeeze(allDat_learn(:,:, syltype, :));
+Ytime = squeeze(allDat_TimeMedian(:,:, syltype, :));
+Y = [zeros(1,size(Y,2)); Y];
+Yuni = [];
+Ytimeuni = [];
+for i=2:size(Y,1)
+    y = unique(Y(i,:), 'stable');
+    Yuni = [Yuni; y];
+    
+    yt = unique(Ytime(i-1,:), 'stable');
+    Ytimeuni = [Ytimeuni; yt];
+end
+Yuni = [zeros(1,size(Yuni,2)); Yuni];
+Ytimeuni = [zeros(1, size(Yuni, 2)); Ytimeuni];
+Ytimeuni = median(Ytimeuni,2);
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+ylabel('learning (z rel base)')
+xlabel('medianTime (minus base median, dat=switch) (bin)');
+title('one dat per learn traj');
+Y = Yuni;
+x = Ytimeuni;
+plot(x, Y', '-ok');
+ymean = mean(Y,2);
+ysem = lt_sem(Y');
+shadedErrorBar(x, ymean, ysem, {'Color', 'r'},1);
+xlim([0 size(Y,1)+1]);
+lt_plot_zeroline;
+% --- p value for each bin
+YLIM = ylim;
+tmp = [];
+for i=2:size(Y,1)
+    y = Y(i,:);
+    y = unique(y);
+    if isempty(tmp)
+        tmp = length(y);
+    else
+        assert(length(y)==tmp);
+    end
+%     p = signrank(y);
+    p = signrank(y);
+    if p<0.1
+        lt_plot_text(i, YLIM(2), ['p=' num2str(p)], 'm', 8);
+    end
+end
+p = signrank(Y(end,:), Y(2,:));
 lt_plot_pvalue(p, 'last vs 1st train bin');
 p = signrank(mean(Y([end-1 end],:),1), mean(Y([2 3],:),1));
 lt_plot_pvalue(p, 'last2 vs 1st2 train bin', 2);
@@ -773,6 +812,41 @@ p = signrank(Y(end,:), Y(2,:));
 lt_plot_pvalue(p, 'last vs 1st train bin');
 p = signrank(mean(Y([end-1 end],:),1), mean(Y([2 3],:),1));
 lt_plot_pvalue(p, 'last2 vs 1st2 train bin', 2);
+
+% ===================
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+ylabel('xcov (minus base, z))')
+xlabel('epoch (bin)');
+Y = squeeze(allDat_xcov(scalwind, :, syltype, :));
+Y = [zeros(1,size(Y,2)); Y];
+x = Ytimeuni;
+plot(x, Y', '-ok');
+ymean = mean(Y,2);
+ysem = lt_sem(Y');
+shadedErrorBar(x, ymean, ysem, {'Color', 'r'},1);
+xlim([0 size(Y,1)+1]);
+lt_plot_zeroline;
+% --- p value for each bin
+YLIM = ylim;
+tmp = [];
+for i=2:size(Y,1)
+    y = Y(i,:);
+    y = unique(y);
+    if isempty(tmp)
+        tmp = length(y);
+    else
+        assert(length(y)==tmp);
+    end
+    p = signrank(y);
+    if p<0.1
+        lt_plot_text(i, 1.1*max(y), ['p=' num2str(p)], 'm', 8);
+    end
+end
+p = signrank(Y(end,:), Y(2,:));
+lt_plot_pvalue(p, 'last vs 1st train bin');
+p = signrank(mean(Y([end-1 end],:),1), mean(Y([2 3],:),1));
+lt_plot_pvalue(p, 'last2 vs 1st2 train bin', 2);
+
 %% relative timing of WN and neural change
 
 learn = squeeze(allDat_learn(:,:, syltype, :));

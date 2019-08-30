@@ -89,23 +89,25 @@ else
     if length(X)==1;
         X=ones(length(Y), 1)*X;
     end
-    if ~all(isnan(Y))
-    hfig=errorbar(X, Y, Yerr);
-    if ~strcmp(version('-release'), '2017a')
-        errorbar_tick(hfig, 10000000)
-    end
-    end
+%     if ~all(isnan(Y))
+        hfig=errorbar(X, Y, Yerr);
+        if ~strcmp(version('-release'), '2017a')
+            errorbar_tick(hfig, 10000000)
+        end
+%     else
+%         afasdfsdafsadfdf;
+%     end
 end
 
 if any(strcmp(Modifiers, 'Color'))
     pcol = Modifiers{find(strcmp(Modifiers, 'Color'))+1};
 else
-   pcol = 'k'; 
+    pcol = 'k';
 end
 if plot_Xerrors==1
     for j=1:length(Xerr)
         line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'Color', pcol);
-%         line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'LineCor', pcol);
+        %         line([X(j)-Xerr(j) X(j)+Xerr(j)], [Y(j) Y(j)], 'LineCor', pcol);
     end
 end
 

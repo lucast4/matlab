@@ -8,46 +8,46 @@ Nrends = 20; % at edges
 
 %% figure out which experiments
 if (0) % replaced by raw plotting below.
-% ===================== 1) PLOT EACH EXPERIMENT RAW
-numbirds = length(TrialStruct.birds);
-for i=1:numbirds
-    numexpts = length(TrialStruct.birds(i).exptnum);
-    bname = TrialStruct.birds(i).birdname;
-    for ii=1:numexpts
-        ename = TrialStruct.birds(i).exptnum(ii).exptname;
-        isSDP = isfield(TrialStruct.birds(i).exptnum(ii).sylnum(1), 'INFO_SylDimensions');
-        %     disp(isSDP)
-        functmp = @(X)(strcmp(X{1}, bname) & strcmp(X{2}, ename));
-        if ~any(cellfun(functmp, ListOfExperiments)) | isSDP==1
-            % then skip
-            continue
+    % ===================== 1) PLOT EACH EXPERIMENT RAW
+    numbirds = length(TrialStruct.birds);
+    for i=1:numbirds
+        numexpts = length(TrialStruct.birds(i).exptnum);
+        bname = TrialStruct.birds(i).birdname;
+        for ii=1:numexpts
+            ename = TrialStruct.birds(i).exptnum(ii).exptname;
+            isSDP = isfield(TrialStruct.birds(i).exptnum(ii).sylnum(1), 'INFO_SylDimensions');
+            %     disp(isSDP)
+            functmp = @(X)(strcmp(X{1}, bname) & strcmp(X{2}, ename));
+            if ~any(cellfun(functmp, ListOfExperiments)) | isSDP==1
+                % then skip
+                continue
+            end
+            disp([bname '-' ename]);
+            disp(isSDP)
+            
+            
+            % ==================== PLOT
+            %         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+            %
+            %         close all;
+            ignoreDiffType=0;
+            birdtoplot = bname;
+            expttoplot = ename; % blank if don't care
+            lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
+                ignoreDiffType, birdtoplot, expttoplot);
+            %
+            %
+            %         % ================
+            %         numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+            %     for ss =1:numsyls
+            %
+            %         sylthis = TrialStruct.birds(i).exptnum(ii).sylnum(ss)
+            %
+            %     end
+            %
+            
         end
-        disp([bname '-' ename]);
-        disp(isSDP)
-        
-        
-        % ==================== PLOT
-        %         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-        %
-        %         close all;
-        ignoreDiffType=0;
-        birdtoplot = bname;
-        expttoplot = ename; % blank if don't care
-        lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Raw(TrialStruct, ParamsTrial, ...
-            ignoreDiffType, birdtoplot, expttoplot);
-        %
-        %
-        %         % ================
-        %         numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-        %     for ss =1:numsyls
-        %
-        %         sylthis = TrialStruct.birds(i).exptnum(ii).sylnum(ss)
-        %
-        %     end
-        %
-        
     end
-end
 end
 %% ################## COLLECT ACROSS EXPERIEMENTS
 binedges = 6/24:(1/24):24/24; % in hours, start to end of day
@@ -103,31 +103,33 @@ for i=1:numbirds
             
             % ---
             if strcmp(baseNormMethod, 'circadian')
-            tbase_withinday = tbase - floor(tbase);
-            indsbins = discretize(tbase_withinday, binedges);
-            ffbase_binned = grpstats(ffbase, indsbins, {'mean'});
-            tbase_binned = unique(indsbins);
-            
-            % ---- 2) for all day, bin then subtract base
-            tvals_withinday = tvals - floor(tvals);
-            indsbins = discretize(tvals_withinday, binedges);
-            assert(~any(isnan(indsbins)));
-            [~, indstmp] = ismember(indsbins, tbase_binned);
-            assert(sum(indstmp==0)/length(indstmp)<0.01, 'more than 1% files thrown out..');
-            %             assert(all(tbase_binned(indstmp(1:end)) == indsbins));
-            % OUTPUT:
-            tvals = tvals(indstmp~=0); % thropwing out those without bins...
-            ffvals = ffvals(indstmp~=0);
-            indstmp = indstmp(indstmp~=0);
-            % subtract base bins
-            ffvals = ffvals - ffbase_binned(indstmp);
+                tbase_withinday = tbase - floor(tbase);
+                indsbins = discretize(tbase_withinday, binedges);
+                ffbase_binned = grpstats(ffbase, indsbins, {'mean'});
+                tbase_binned = unique(indsbins);
+                
+                % ---- 2) for all day, bin then subtract base
+                tvals_withinday = tvals - floor(tvals);
+                indsbins = discretize(tvals_withinday, binedges);
+                assert(~any(isnan(indsbins)));
+                [~, indstmp] = ismember(indsbins, tbase_binned);
+                assert(sum(indstmp==0)/length(indstmp)<0.01, 'more than 1% files thrown out..');
+                %             assert(all(tbase_binned(indstmp(1:end)) == indsbins));
+                % OUTPUT:
+                tvals = tvals(indstmp~=0); % thropwing out those without bins...
+                ffvals = ffvals(indstmp~=0);
+                indstmp = indstmp(indstmp~=0);
+                % subtract base bins
+                ffvals = ffvals - ffbase_binned(indstmp);
             elseif strcmp(baseNormMethod, 'onemean')
                 % - one value for mean over all days
                 ffvals = ffvals - mean(ffbase);
             end
             
             % ---- 3) for each day, flip if training is down
+            if TrialStruct.FFalreadyFlippedLearnDir==0
             ffvals = ffvals*learndir;
+            end
             
             % ---- 4) for each day, collect edge ff vals
             daylist = unique(floor(tvals));
@@ -141,15 +143,15 @@ for i=1:numbirds
                 
                 if strcmp(edgemethod, 'edgemean')
                     ffedges(day*2-1) = mean(ftmp(1:Nrends));
-                ffedges(day*2) = mean(ftmp(end-Nrends+1:end));
+                    ffedges(day*2) = mean(ftmp(end-Nrends+1:end));
                 elseif strcmp(edgemethod, 'regression')
-                                            % -- fit regression
-                        [b] =lt_regress(ftmp, ttmp, 0);
-                        % -- collect FF at beginning and end of each day (from
-                        % regression fit)
-                        ff_fit = b(1) + b(2)*(ttmp);
-                         ffedges(day*2-1) = ff_fit(1);
-                         ffedges(day*2) = ff_fit(end);
+                    % -- fit regression
+                    [b] =lt_regress(ftmp, ttmp, 0);
+                    % -- collect FF at beginning and end of each day (from
+                    % regression fit)
+                    ff_fit = b(1) + b(2)*(ttmp);
+                    ffedges(day*2-1) = ff_fit(1);
+                    ffedges(day*2) = ff_fit(end);
                 end
             end
             
@@ -186,93 +188,93 @@ end
 %% ================= PLOT EACH EXPERIEMNT, OPVERLAYING CALCULATED EDGE VALUES.
 if plotEachExptRaw==1
     disp('ONLY WORKS WELL IF USE OVERALL BASE AS NORM...');
-maxbirds = max(All_bnum);
-maxexpts = max(All_enum);
-
-pcol = {};
-pcol{2,2} = [0.6 0.6 0.6]; %(targ, smae)
-pcol{1,2} = [0.3 0.3 0.8];
-pcol{1,1} = [0.8 0.3 0.3];
-
-for i=1:maxbirds
-    for ii=1:maxexpts
-   
-        indsthis = All_bnum==i & All_enum==ii;
-        if ~any(indsthis)
-            continue
-        end
-        
-        bname = TrialStruct.birds(i).birdname;
-        ename = TrialStruct.birds(i).exptnum(ii).exptname;
-        
-        % ======= plot this experiment
-        figcount=1;
-        subplotrows=6;
-        subplotcols=2;
-        fignums_alreadyused=[];
-        hfigs=[];
-        hsplots = [];
-
-        % ====== go thru all syls
-        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
-        for ss=1:numsyls
+    maxbirds = max(All_bnum);
+    maxexpts = max(All_enum);
+    
+    pcol = {};
+    pcol{2,2} = [0.6 0.6 0.6]; %(targ, smae)
+    pcol{1,2} = [0.3 0.3 0.8];
+    pcol{1,1} = [0.8 0.3 0.3];
+    
+    for i=1:maxbirds
+        for ii=1:maxexpts
             
-            sylname = TrialStruct.birds(i).exptnum(ii).sylnum(ss).syl;
-            t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).tvals_minusbase;
-            ff_minusbase = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ffvals_minusbase;
-            ffedges = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ffedges;
-            ffedges = ffedges(~isnan(ffedges));
-            tedges = reshape([unique(floor(t))'+0.2917; unique(floor(t))'+0.875], length(unique(floor(t)))*2, [])';
-            assert(length(tedges)==length(ffedges));
-            
-            % is targ?
-            istarg = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget;
-            issame = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_similar;
-            pcthis = pcol{istarg+1, issame+1};
-            
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title(sylname);
-            if ss==1
-                ylabel([bname '-' ename]);
+            indsthis = All_bnum==i & All_enum==ii;
+            if ~any(indsthis)
+                continue
             end
-            plot(t, ff_minusbase, 'x', 'Color', pcthis);
-            lt_plot(tedges, ffedges);
-            axis tight;
-            lt_plot_zeroline;
-        end
-         
-        % ====== plot summary for this expt
+            
+            bname = TrialStruct.birds(i).birdname;
+            ename = TrialStruct.birds(i).exptnum(ii).exptname;
+            
+            % ======= plot this experiment
+            figcount=1;
+            subplotrows=6;
+            subplotcols=2;
+            fignums_alreadyused=[];
+            hfigs=[];
+            hsplots = [];
+            
+            % ====== go thru all syls
+            numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+            for ss=1:numsyls
+                
+                sylname = TrialStruct.birds(i).exptnum(ii).sylnum(ss).syl;
+                t = TrialStruct.birds(i).exptnum(ii).sylnum(ss).tvals_minusbase;
+                ff_minusbase = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ffvals_minusbase;
+                ffedges = TrialStruct.birds(i).exptnum(ii).sylnum(ss).ffedges;
+                ffedges = ffedges(~isnan(ffedges));
+                tedges = reshape([unique(floor(t))'+0.2917; unique(floor(t))'+0.875], length(unique(floor(t)))*2, [])';
+                assert(length(tedges)==length(ffedges));
+                
+                % is targ?
+                istarg = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_istarget;
+                issame = TrialStruct.birds(i).exptnum(ii).sylnum(ss).INFO_similar;
+                pcthis = pcol{istarg+1, issame+1};
+                
+                [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                hsplots = [hsplots hsplot];
+                title(sylname);
+                if ss==1
+                    ylabel([bname '-' ename]);
+                end
+                plot(t, ff_minusbase, 'x', 'Color', pcthis);
+                lt_plot(tedges, ffedges);
+                axis tight;
+                lt_plot_zeroline;
+            end
+            
+            % ====== plot summary for this expt
             [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-% hsplots = [hsplots hsplot];
-title('summary - actual analysis dat');
-        % -- targ
+            % hsplots = [hsplots hsplot];
+            title('summary - actual analysis dat');
+            % -- targ
             indtmp = All_bnum==i & All_enum==ii & All_istarg==1;
-         ff = cell2mat(All_dayedges(indtmp));
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xk');
-         end
-         
-        % -- same
+            ff = cell2mat(All_dayedges(indtmp));
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xk');
+            end
+            
+            % -- same
             indtmp = All_bnum==i & All_enum==ii & All_istarg==0 & ...
                 All_issame==1;
-         ff = cell2mat(All_dayedges(indtmp));
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xb');
-         end
-        % -- diff
+            ff = cell2mat(All_dayedges(indtmp));
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xb');
+            end
+            % -- diff
             indtmp = All_bnum==i & All_enum==ii & All_istarg==0 & ...
                 All_issame==0;
-         ff = cell2mat(All_dayedges(indtmp));
-         for j=1:length(ff)/2
-             plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xr');
-         end
-         lt_plot_zeroline;
-         
-         % ----------------
-        linkaxes(hsplots, 'xy');
+            ff = cell2mat(All_dayedges(indtmp));
+            for j=1:length(ff)/2
+                plot(j*2-1:j*2, ff(:, j*2-1:j*2)', '-xr');
+            end
+            lt_plot_zeroline;
+            
+            % ----------------
+            linkaxes(hsplots, 'xy');
+        end
     end
-end
 end
 
 %% ================ PLOT

@@ -1,7 +1,16 @@
 function lt_neural_v2_DIAGN_PlotRasterMotif(SummaryStruct, BirdToPlot, NeurToPlot, ...
     motiflist, plotbytime, motifpredur, motifpostdur, plotIndivRaster, ...
-    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase)
+    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase, plotSongSpec, ...
+    Ntrialtoplot)
 
+if ~exist('plotSongSpec', 'var')
+    plotSongSpec = 0;
+end
+
+% Ntrialtoplot  leave empty if want all trials.
+
+
+%%
 % plotIndivRaster; % one raster for each neuron/motif
 % plotCombRast; % one figure, all rasters
 % plotSmFR; % all smoothed FR.
@@ -28,7 +37,8 @@ AllSmoothFR_sem = {};
 AllSmoothFR_x = {};
 AllNeurNum = [];
 AllMotif = {};
-
+AllSong = {};
+AllSylDur = [];
 numbirds = length(SummaryStruct.birds);
 
 for i=1:numbirds
@@ -58,7 +68,8 @@ for i=1:numbirds
             end
             
             % ================
-            [SongDat, NeurDat, Params] = lt_neural_ExtractDat2(SummaryStruct, i, ii);
+            [SongDat, NeurDat, Params] = lt_neural_ExtractDat2(SummaryStruct, i, ii, ...
+                plotSongSpec);
             
             if isempty(SongDat.AllLabels)
                 continue
@@ -71,12 +82,14 @@ for i=1:numbirds
             clustnum = SummaryStruct.birds(i).neurons(ii).clustnum;
             [SegmentsExtract, Params]=lt_neural_RegExp(SongDat, NeurDat, Params, ...
                 motiftoplot, motifpredur, motifpostdur, 1, '', FFparams, ...
-                0, 1, collectWNhit, 0, LearnKeepOnlyBase, preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, ...
+                plotSongSpec, 1, collectWNhit, 0, LearnKeepOnlyBase, preAndPostDurRelSameTimept, RemoveIfTooLongGapDur, ...
                 clustnum, PlotDirSong);
             
             if isempty(SegmentsExtract)
                 continue
             end
+            
+           
             
             % =============================== DIR OR UNDIR?
             if PlotDirSong==0
@@ -89,8 +102,7 @@ for i=1:numbirds
             
                 
             
-            % ================================
-            
+            % =========
             
             % ------------- 1) PLOT RASTER
             if plotIndivRaster==1
@@ -135,7 +147,10 @@ for i=1:numbirds
             
             % ############################### COLLECT SPIKE TIMES
             AllRasters = [AllRasters {{SegmentsExtract.spk_Times}}];
-            
+            if plotSongSpec==1
+            AllSong = [AllSong {{SegmentsExtract.songdat}}];
+            AllSylDur = [AllSylDur {[SegmentsExtract.Dur_syl]}];
+            end
             
             % ------------- 2) PLOT SMOOTHED FR
             SegmentsExtract = lt_neural_SmoothFR(SegmentsExtract, '');
@@ -201,6 +216,11 @@ assert(length(AllSmoothFR) == length(AllNeurNum), 'asdfas');
 %% ================= COMBINATION PLOT (RASTERS)
 if plotCombRast ==1
     lt_figure; hold on;
+    hsplots = [];
+    
+    % ====== RASTERS
+    hsplot = lt_subplot(7,1,2:7); hold on;
+    hsplots = [hsplots; hsplot];
     numplots = length(AllRasters);
     plotcols = lt_make_plot_colors(numplots, 0, 0);
     yval = 1;
@@ -208,6 +228,14 @@ if plotCombRast ==1
         
         % ======= plot raster
         rasters = AllRasters{i};
+                    % ========== TAKE SUBSET OF TRIALS IF DESIRED.
+            if ~isempty(Ntrialtoplot)
+               indtmp = randperm(length(rasters), Ntrialtoplot);
+               indtmp = sort(indtmp);
+               rasters = rasters(indtmp);
+            end
+            
+
         for j=1:length(rasters)
             spktimes = rasters{j};
             lt_neural_PLOT_rasterline(spktimes, yval, plotcols{i});
@@ -219,13 +247,29 @@ if plotCombRast ==1
     ylabel('trial');
     xlabel('time (sec)');
     line([motifpredur motifpredur], ylim);
+
+    % ==== overlay song spectrogram if desired
+    if plotSongSpec==1
+        hsplot = lt_subplot(7,1,1); hold on;
+        hsplots = [hsplots; hsplot];
+        % --- plot the median duration spectrogram
+        [~, indthis] = min(abs(AllSylDur{1} - median(AllSylDur{1})));
+        songdat = AllSong{1}{indthis};
+        fs = NeurDat.metaDat.fs;
+        lt_plot_spectrogram(double(songdat), fs, 1, 0);
+    end
+   linkaxes(hsplots, 'x'); 
 end
 
 %% ================== COMBINATION PLOT (SMOOTHED FR)
 if plotSmFR==1
     lt_figure; hold on;
+    hsplots =[];
     numplots = length(AllRasters);
     plotcols = lt_make_plot_colors(numplots, 0, 0);
+    
+    hsplot = lt_subplot(7,1,2:7); hold on;
+            hsplots = [hsplots; hsplot];
     for i=1:numplots
         
         % ======= plot raster
@@ -238,6 +282,42 @@ if plotSmFR==1
     axis tight
     xlabel('time (sec)');
     line([motifpredur motifpredur], ylim);
+    
+        % ==== overlay song spectrogram if desired
+    if plotSongSpec==1
+        hsplot = lt_subplot(7,1,1); hold on;
+        hsplots = [hsplots; hsplot];
+        % --- plot the median duration spectrogram
+        [~, indthis] = min(abs(AllSylDur{1} - median(AllSylDur{1})));
+        songdat = AllSong{1}{indthis};
+        fs = NeurDat.metaDat.fs;
+        lt_plot_spectrogram(double(songdat), fs, 1, 0);
+    end
+   linkaxes(hsplots, 'x'); 
 end
 
 
+
+%% ================== PLOT ALL SPECTROGRAMS
+if plotSongSpec==1
+    lt_figure; hold on;
+    hsplots =[];
+    numplots = length(AllRasters);
+    
+    for i=1:numplots
+        
+        hsplot = lt_subplot(5,1,i); hold on;
+            hsplots = [hsplots; hsplot];
+        title(motiflist{i});
+        % ======= plot raster
+        % --- plot the median duration spectrogram
+        [~, indthis] = min(abs(AllSylDur{i} - median(AllSylDur{i})));
+        songdat = AllSong{i}{indthis};
+        fs = NeurDat.metaDat.fs;
+        lt_plot_spectrogram(double(songdat), fs, 1, 0);
+    end
+    axis tight
+    xlabel('time (sec)');
+    line([motifpredur motifpredur], ylim);
+   linkaxes(hsplots, 'x'); 
+end

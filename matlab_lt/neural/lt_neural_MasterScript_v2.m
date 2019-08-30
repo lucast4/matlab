@@ -53,6 +53,16 @@ BatchesDesired = {'Batch0922to1529', 'Batch0922to1300UndirDir', 'Batch1435to1629
 % 7) plot example motif to see if stable.
 % 8) syllables to skip if noisy, WN overlap etc
 
+%% ========= [PAPER FIGURES - LMAN/RA XCOV]
+
+% ===== example song spectrograms
+close all;
+% fname = 'gr48bu5_200119_122708.209.cbin'; 
+fname = 'wh44wh39_210318_143026.204.cbin';
+fs = 32000;
+songdat = ReadCbinFile(fname);
+lt_plot_spectrogram(songdat, fs, 1, 0, [], [], 0, 1, [150 260])
+
 
 %% ========= [NEGATIVE CONTROLS] CHANNELS OUTSIDE OF SONG SYSTEM
 % RUN THIS AFTER EXTRACTING. % USE ESPECIALYL FOR POPLEARN ANALYSIS.
@@ -388,26 +398,29 @@ BirdToPlot = 'gr48bu5';
 % % ---- give it either
 % A) one neuron and a bunch of motifs or
 % B) bunch of neurons and one motif
-NeurToPlot = [1 2 3 4]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
-motiflist = {'a(b)'};
+NeurToPlot = [1]; % 4 % vector (e.g. [5 7]) - if [] then plots all;
+motiflist = {'a(r)r', 'r(r)r'};
 % motiflist = {'a(r)dabh', 'r(r)dabh'};
 plotbytime = 0; % links rasters for all motifs by time of song.
 
-motifpredur = 0.1;
-motifpostdur = 0.15;
+motifpredur = 0.2;
+motifpostdur = 0.3;
 
 plotIndivRaster = 0; % one raster for each neuron/motif
 plotCombRast = 1; % one figure, all rasters
 plotSmFR = 1; % all smoothed FR.
 
 LearnKeepOnlyBase = 1;
+plotSongSpec = 1;
 
+Ntrialtoplot = 10; % will take random subset
 % --- 1) directed song
 PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
 
 lt_neural_v2_DIAGN_PlotRasterMotif(SummaryStruct, BirdToPlot, NeurToPlot, ...
     motiflist, plotbytime, motifpredur, motifpostdur, plotIndivRaster, ...
-    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase)
+    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase, plotSongSpec, ...
+    Ntrialtoplot)
 
 
 if (0)
@@ -416,7 +429,7 @@ PlotDirSong = 0; % 0 is only UNDIR, 1 is only DIR; 2 is both
 
 lt_neural_v2_DIAGN_PlotRasterMotif(SummaryStruct, BirdToPlot, NeurToPlot, ...
     motiflist, plotbytime, motifpredur, motifpostdur, plotIndivRaster, ...
-    plotCombRast, plotSmFR, PlotDirSong )
+    plotCombRast, plotSmFR, PlotDirSong, LearnKeepOnlyBase, plotSongSpec)
 end
 
 

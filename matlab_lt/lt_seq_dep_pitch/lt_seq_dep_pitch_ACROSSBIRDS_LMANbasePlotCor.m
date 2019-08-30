@@ -666,9 +666,11 @@ y = DATSTRUCT.pairedsyls.CorrSong_PBS_pairs(inds);
 Y = {};
 Y{1} = y(x==0);
 Y{2} = y(x==1);
+if ~all(isnan(y))
 lt_plot_MultDist(Y, [0 1],1);
 xlim([-1 2]);
 lt_plot_zeroline;
+end
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% diff
@@ -709,10 +711,11 @@ y = DATSTRUCT.pairedsyls.CorrSong_PBS_pairs(inds);
 Y = {};
 Y{1} = y(x==0);
 Y{2} = y(x==1);
+if ~all(isnan(y))
 lt_plot_MultDist(Y, [0 1],1);
 xlim([-1 2]);
 lt_plot_zeroline;
-
+end
 
 %% ############################# difference distyributions [within overlapping domain]
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -782,8 +785,10 @@ lt_plot_zeroline;
 line([-0.5 1], [-0.5 1])
 % ylim([-100 100]);
 
+try
 aoctool(x, y, samemotif)
-
+catch err
+end
 
 % ======== DIFF TYPE
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
@@ -806,16 +811,119 @@ lt_plot_zeroline;
 line([-0.5 1], [-0.5 1])
 % ylim([-100 100]);
 
+try
 aoctool(x, y, samemotif)
-
+catch err
+end
 
 %% ======= COMPARE SAME AND DIFF ... (CORR)
-x = CorrSong_PBS_pairs;
-y = CorrSong_MUSC_pairs;
-samesyl = IsSameSyl;
+x = CorrSong_PBS_pairs';
+y = CorrSong_MUSC_pairs';
+samesyl = IsSameSyl';
 
+dat = table(y, x, samesyl);
+model = 'y ~ x + samesyl';
+lme = fitlme(dat, model);
+
+lt_figure; hold on;
+lt_subplot(2,2,1); hold on;
+xlabel('corr (pbs)');
+ylabel('corr (musc)');
+title('fit, lme (y ~ x + samesyl)');
+plot(dat.x(dat.samesyl==1), dat.y(dat.samesyl==1), 'ob');
+plot(dat.x(dat.samesyl==0), dat.y(dat.samesyl==0), 'or');
+lt_plot_makesquare_plot45line(gca, 'k');
+
+% --- overlay fits
+F = lme.fitted;
+plot(dat.x(dat.samesyl==1), F(dat.samesyl==1), '.b');
+plot(dat.x(dat.samesyl==0), F(dat.samesyl==0), '.r');
+
+% =========== plot changes
+corrchange = y-x;
+lt_subplot(2,2,2); hold on;
+plotSpread(corrchange, 'distributionIdx', samesyl);
+
+
+% === fixed effects
+lt_tools_lme_plotEffects(lme);
+
+
+if (0)
 aoctool(x, y, samesyl)
+end
 
+%% ==== directly compare sametype vs. diff type, [constraining to those that start similar]
+
+Y=DATSTRUCT.pairedsyls.CorrSong_MUSC_pairs ...
+    - DATSTRUCT.pairedsyls.CorrSong_PBS_pairs;
+IsSame = DATSTRUCT.pairedsyls.IsSameSyl;
+
+% --- get bird index
+bnameInd = DATSTRUCT.pairedsyls.bnameInd;
+
+% ----------------- PLOT
+lt_figure; hold on;
+
+lt_subplot(2,2,1); hold on;
+xlabel('IsSame');
+ylabel('CORR (musc-pbs)');
+% --- plot summary bar
+[ymean, ysem] = grpstats(Y, IsSame, {'mean', 'sem'});
+x = double(unique(IsSame));
+lt_plot_bar(x+1, ymean, {'Errors', ysem});
+plotSpread(Y, 'distributionIdx', IsSame);
+
+
+lt_subplot(2,2,2); hold on;
+title('color = bird');
+xlabel('IsSame');
+ylabel('FF (musc-pbs)');
+
+bnames = unique(bnameInd)';
+pcols = lt_make_plot_colors(length(bnames), 0, 0);
+for j=bnames
+    indthis = bnameInd==j;
+    
+    plotSpread(Y(indthis), 'distributionIdx', IsSame(indthis), 'distributionColors', pcols{j});
+    % --- plot summary bar
+    [ymean, ysem] = grpstats(Y, IsSame, {'mean', 'sem'});
+    x = double(unique(IsSame));
+    lt_plot_bar(x+1, ymean, {'Errors', ysem});
+end
+
+lt_subplot(2,2, 3:4); hold on;
+title('color = bird');
+xlabel('IsSame');
+ylabel('FF (musc-pbs)');
+
+bnames = unique(bnameInd)';
+pcols = lt_make_plot_colors(length(bnames), 0, 0);
+for j=bnames
+    
+    indthis = bnameInd==j;
+    
+    % --- plot summary bar
+    [ymean, ysem] = grpstats(Y(indthis), IsSame(indthis), {'mean', 'sem'});
+    x = 2*j + unique(IsSame(indthis))-1;
+    lt_plot_bar(x+1, ymean, {'Errors', ysem, 'Color', 'w'});
+    
+    % =-- plot datapoints
+    x = 2*j+IsSame(indthis);
+    plotSpread(Y(indthis), 'distributionIdx', x, 'distributionColors', pcols{j});
+end
+
+% ========= LME - control for bird
+bnameInd = categorical(bnameInd);
+Y = Y';
+IsSame = IsSame';
+dat = table(Y, IsSame, bnameInd);
+model = 'Y ~ IsSame + (-1+ IsSame|bnameInd)';
+lme = fitlme(dat, model);
+
+lt_tools_lme_plotEffects(lme);
+
+%% ====================== PLOT CHANGE IN CORRELATION
 
 %% ===================== CORR, SEPARATE BY MOTIF (DIRECTL YCOMPARE SASME AND DIFF)
 
@@ -875,8 +983,10 @@ Yall{1} = y;
 inds = IsSameMotif==0 & IsSameSyl==1;
 y = ChangeInCorr(inds);
 Yall{2} = y;
-
+try
 lt_plot_MultDist(Yall, [0 1], 1)
+catch err
+end
 lt_plot_zeroline
 ylim([-1 1]);
 % --- test each
@@ -887,7 +997,10 @@ for i=1:2
     end
 end
 % --- compare
+try
 p = ranksum(Yall{1}, Yall{2});
+catch err
+end
 lt_plot_text(0.5, 0.8, ['(vs)p=' num2str(p)], 'b')
 
 % ========== DIFF
@@ -905,18 +1018,27 @@ inds = IsSameMotif==0 & IsSameSyl==0;
 y = ChangeInCorr(inds);
 Yall{2} = y;
 
+try
 lt_plot_MultDist(Yall, [0 1], 1)
+catch err
+end
 lt_plot_zeroline
 ylim([-1 1]);
 % --- test each
 for i=1:2
+    try
     p = signrank(Yall{i});
+    catch err
+    end
     if p<0.1
         lt_plot_text(i-1, max(Yall{i}), ['p=' num2str(p)], 'r');
     end
 end
 % --- compare
+try
 p = ranksum(Yall{1}, Yall{2});
+catch err
+end
 lt_plot_text(0.5, 0.8, ['(vs)p=' num2str(p)], 'b')
 
 %% ######################33 CORR, DEPENDENCE ON MOTIF POSOTIION

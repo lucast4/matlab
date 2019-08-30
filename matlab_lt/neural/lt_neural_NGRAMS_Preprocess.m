@@ -8,6 +8,9 @@ for i=1:length(OUTSTRUCT.All_birdnum)
 end
 OUTSTRUCT.All_Bregion = All_Bregion;
 
+%% ===== remove or74. see notes within.
+
+lt_neural_NGRAMS_RemoveBad
 %% ================= get all pairwise distances during premotor window
 if (0) % OLD VERSION --- this works with NGRAMSTRUCT. new version does not since
     % filesize too large.
@@ -108,9 +111,57 @@ if (0)
     
 end
 
+%% ============ FIGURE OUT BAD SYLS (NOISY, ETC)
+ver = 1; % 
+% 1 = only checks syls 1 and 2. use this if only analyzing convergent
+% branch points.
+% NOTE: This takes a few minutes to run...
+
+N = length(OUTSTRUCT.All_birdnum);
+All_BadSylv2 = nan(size(OUTSTRUCT.All_birdnum));
+for i=1:N
+    disp(i)
+    b = OUTSTRUCT.All_birdnum(i);
+    neur = OUTSTRUCT.All_neurnum(i);
+    
+    bname = SummaryStruct.birds(b).birdname;
+    eID = SummaryStruct.birds(b).neurons(neur).exptID;
+    
+    chanthis = SummaryStruct.birds(b).neurons(neur).channel;
+    
+    syltok = OUTSTRUCT.All_ngramstring_inorder(i,:);
+    if ver==1
+        syltok = cellfun(@(x)x(1:2), syltok, 'UniformOutput', 0); % take first 2 syls
+        % --- get list of all syltokens
+        tmp1 = lt_neural_QUICK_GetTokens(syltok{1}, 1:2);
+        tmp2 = lt_neural_QUICK_GetTokens(syltok{2}, 1:2);
+        syltoklist = [tmp1; tmp2];
+    else
+        disp('nothing coded for this ver...');
+        pause;
+    end
+    
+    % ------ iterate over all syltokens. if any of them are bad, then throw
+    % out this ngram pair
+    anybad = 0;
+    for j=1:length(syltoklist)
+       sylthis = syltoklist{j};
+        sylbad = lt_neural_QUICK_RemoveBadSyl(bname, eID, sylthis, {'wn', 'noise'}, chanthis);
+        if sylbad==1
+            anybad=1;
+            break
+        end
+    end
+    All_BadSylv2(i) = anybad;
+    
+    
+end
+
+OUTSTRUCT.All_BadSylv2 = All_BadSylv2;
 %% ============ REMOVE EMPTY FIELDS FROM OUTSTURCT
 
 OUTSTRUCT = lt_structure_RmvEmptyField(OUTSTRUCT);
+
 %% ============ REMOVE BAD LABEL PAIRS FROM DATASET
 
 % ==== save original outsturct
@@ -123,7 +174,7 @@ PairTypesInOrder = OUTSTRUCT.PairTypesInOrder;
 OUTSTRUCT = rmfield(OUTSTRUCT, 'PairTypesInOrder');
 
 % ==== go thru all fields and only keep the good syls
-indstokeep = ~OUTSTRUCT.All_BadSyls;
+indstokeep = ~(OUTSTRUCT.All_BadSyls | OUTSTRUCT.All_BadSylv2);
 fnames = fieldnames(OUTSTRUCT);
 
 for j=1:length(fnames)

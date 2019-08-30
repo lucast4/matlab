@@ -17,7 +17,7 @@ if ffsplitparams.dosplit==1
     
     % ===== COLLECT ALL FFSPLIT DATA
     ybase = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Base;
-    ywn = cellfun(@(x)x(:,:, epochtoplot), OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs, 'UniformOutput', 0);
+    ywn = cellfun(@(x)nanmean(x(:,:, epochtoplot),3), OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs, 'UniformOutput', 0);
     
     % --- flip those are driving learning down
     indstoflip = OUTSTRUCT_XCOV.learndirTarg==-1;
@@ -63,8 +63,8 @@ allDat_Diff = allDat_wn - allDat_base;
 %% ==================== [PLOT] SUMMARY OVER ALL
 
 figcount=1;
-subplotrows=5;
-subplotcols=4;
+subplotrows=2;
+subplotcols=3;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];

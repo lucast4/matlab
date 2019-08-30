@@ -73,7 +73,7 @@ plot(t, ymean, ':', 'Color', 'k', 'LineWidth', 2);
 dat = squeeze(allDat_epochs(:, :, ind3, :));
 for i=1:size(dat,1)
     y = squeeze(dat(i,:,:));
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     plot(t, ymean, 'Color', pcols{i}, 'LineWidth', 2);
     lt_plot_text(t(end), ymean(end), ['epoch' num2str(i)], pcols{i}, 9);
 end
@@ -102,7 +102,7 @@ dat = squeeze(allDat_epochs(:, :, ind3, :));
 for i=1:size(dat,1)
     y = squeeze(dat(i,:,:));
     y = y - datBase;
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     plot(t, ymean, 'Color', pcols{i}, 'LineWidth', 2);
     lt_plot_text(t(end), ymean(end), ['epoch' num2str(i)], pcols{i}, 9);
 end
@@ -133,14 +133,14 @@ for i=1:size(dat,1)
     
     % ------------ baseline
     datbase = squeeze(allDat_base(:,:, ind3, :));
-    ymean = mean(datbase, 2);
+    ymean = nanmean(datbase, 2);
     ysem = lt_sem(datbase');
     shadedErrorBar(t, ymean, ysem, {'Color', 'k', 'LineStyle', '--'}, 1);
     
     
     % -------- epoch (this)
     y = squeeze(dat(i,:,:));
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     ysem = lt_sem(y');
     %     shadedErrorBar(t, ymean, ysem, {'Color', pcols{i}}, 1);
     shadedErrorBar(t, ymean, ysem, {'Color', 'r'}, 1);
@@ -149,7 +149,7 @@ for i=1:size(dat,1)
     
     % -------- FINAL
     datWN = squeeze(allDat_wn(:,:, ind3, :));
-    ymean = mean(datWN, 2);
+    ymean = nanmean(datWN, 2);
     ysem = lt_sem(datWN');
     plot(t, ymean, 'Color', 'm');
     
@@ -174,14 +174,14 @@ ind3 = 3; % target
 
 % ---- 1) plot baseline
 dat = squeeze(allDat_base(:,:, ind3, :));
-ymean = mean(dat, 2);
+ymean = nanmean(dat, 2);
 plot(t, ymean, ':', 'Color', 'k', 'LineWidth', 2);
 
 % ----- 2) WN epochs
 dat = squeeze(allDat_epochs(:, :, ind3, :));
 for i=1:size(dat,1)
     y = squeeze(dat(i,:,:));
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     plot(t, ymean, 'Color', pcols{i}, 'LineWidth', 2);
     lt_plot_text(t(end), ymean(end), ['epoch' num2str(i)], pcols{i}, 9);
 end
@@ -210,7 +210,7 @@ dat = squeeze(allDat_epochs(:, :, ind3, :));
 for i=1:size(dat,1)
     y = squeeze(dat(i,:,:));
     y = y - datBase;
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     plot(t, ymean, 'Color', pcols{i}, 'LineWidth', 2);
     lt_plot_text(t(end), ymean(end), ['epoch' num2str(i)], pcols{i}, 9);
 end
@@ -241,14 +241,14 @@ for i=1:size(dat,1)
     
     % ------------ baseline
     datbase = squeeze(allDat_base(:,:, ind3, :));
-    ymean = mean(datbase, 2);
+    ymean = nanmean(datbase, 2);
     ysem = lt_sem(datbase');
     shadedErrorBar(t, ymean, ysem, {'Color', 'k', 'LineStyle', '--'}, 1);
     
     
     % -------- epoch (this)
     y = squeeze(dat(i,:,:));
-    ymean = mean(y,2);
+    ymean = nanmean(y,2);
     ysem = lt_sem(y');
     %     shadedErrorBar(t, ymean, ysem, {'Color', pcols{i}}, 1);
     shadedErrorBar(t, ymean, ysem, {'Color', 'r'}, 1);
@@ -257,7 +257,7 @@ for i=1:size(dat,1)
     
     % -------- FINAL
     datWN = squeeze(allDat_wn(:,:, ind3, :));
-    ymean = mean(datWN, 2);
+    ymean = nanmean(datWN, 2);
     ysem = lt_sem(datWN');
     plot(t, ymean, 'Color', 'm');
     

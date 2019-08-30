@@ -7,11 +7,13 @@ for i=1:length(SummaryStruct.birds)
     alldir = {};
     allsubdir = {};
     allchans = [];
+    allnuerID = [];
     for ii=1:numneur
        [a, b] = fileparts(SummaryStruct.birds(i).neurons(ii).dirname);
        alldir = [alldir; a];
        allsubdir = [allsubdir; b];
        allchans = [allchans; SummaryStruct.birds(i).neurons(ii).channel];
+       allnuerID = [allnuerID; ii];
     end
     
     [alldir,~, ind2] = unique(alldir);
@@ -25,6 +27,7 @@ for i=1:length(SummaryStruct.birds)
         disp([alldir{j}]);
         cellfun(@(x)disp(x), allsubdir(ind2==j));
 %         num2str(unique(allchans(ind2==j))')]);
+        disp(allnuerID(ind2==j));
         end
 
         cellfun(@(x)disp(x), allsubdir);

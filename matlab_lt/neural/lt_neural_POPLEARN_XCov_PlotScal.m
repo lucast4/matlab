@@ -31,14 +31,15 @@ assert(length(Yscalar) == length(OUTSTRUCT.bnum));
 
 %% ############ ONE PLOT FOR EACH SWITCH, SHOW ALL MOTIFS.
 figcount=1;
-subplotrows=6;
-subplotcols=1;
+subplotrows=3;
+subplotcols=2;
 fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
 % ========== TO COLLECT FOR MEAN PLOTS
 Yall = []; % targ, same, diff, nontarg (means across chans, motifs)
+% Ydiffall = {};
 Yall_allsyls = cell(length(indsgrp_switch_unique), 4); % same as above, but do not average withni syl type.
 All_bname ={};
 All_bnum = [];
@@ -94,6 +95,7 @@ for i=1:length(indsgrp_switch_unique)
             assert(length(unique(neurpair)')==2);
             neurpair = neurpair(1,:);
         end
+        
         
         cohscal = Yscalar(indsthis);
         assert(length(unique(motifID)) == length(motifID), 'each motif shoudl have at most 1 datapoint');
@@ -219,6 +221,7 @@ for i=1:length(indsgrp_switch_unique)
     Y(4) = nanmean(ymean(istarg==0));
     
     Yall = [Yall; Y];
+%     Ydiffall = [Ydiffall; {ymean(istarg==0 & issame==0)}];
     All_bname = [All_bname; bname];
     All_ename = [All_ename; ename];
     All_swnum = [All_swnum; swnum];
@@ -380,6 +383,51 @@ lt_plot_zeroline_vert;
 
 
 
+%% ======== ONE DATAPOINT PER CHANNEL -
+
+Yall_scal = {};
+Yall_bnum = [];
+Yall_enum = [];
+Yall_chanID = [];
+Yall_istarg = {};
+Yall_issame = {};
+Yall_sw = [];
+for i=1:length(indsgrp_chanpair_unique)
+    
+    indsthis = indsgrp_chanpair == indsgrp_chanpair_unique(i);
+    
+    bnum = unique(OUTSTRUCT.bnum(indsthis));
+    enum = unique(OUTSTRUCT.enum(indsthis));
+    swnum = unique(OUTSTRUCT.switch(indsthis));
+    
+    bname = MOTIFSTATS_Compiled.birds(bnum).birdname;
+    ename = SwitchStruct.bird(bnum).exptnum(enum).exptname;
+    
+    % =========================== DATA
+    cohscal = Yscalar(indsthis);
+    istarg = OUTSTRUCT.istarg(indsthis);
+    issame = OUTSTRUCT.issame(indsthis);
+    motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
+    chnums = OUTSTRUCT.chanpair_actual(indsthis,:);
+    neurpair = OUTSTRUCT.neurpair(indsthis,:);
+    
+    % ================================ SAVE OUTPUT
+    Yall_scal = [Yall_scal; cohscal];
+    Yall_bnum = [Yall_bnum ; bnum];
+    Yall_enum = [Yall_enum ; enum];
+    Yall_chanID = [Yall_chanID; indsgrp_chanpair_unique(i)];
+    Yall_istarg = [Yall_istarg; istarg];
+    Yall_issame = [Yall_issame; issame];
+    Yall_sw = [Yall_sw; swnum];
+end
+
+lt_figure; hold on;
+% === 1) sort in order of number of 1syls
+Nall =cellfun(@length, Yall_scal);
+% [~, indsort] = sort(Nall);
+[~, ~, indrank] = lt_tools_sort(Nall);
+
+
 %% ======= COPY THINGS FROM OLD OUTSTRUCT TO NEW OUTSTRUCT
 disp('NOTE: using the exact same trial inds to compute the xcov and learning and cohscalar');
 
@@ -453,9 +501,14 @@ windthis = 1;
 OUTSTRUCT.yscal1 = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT.Xcovscal_window_BaseWN);
 
 % ========= SCALAR 2
+if size(OUTSTRUCT.Xcovscal_window_BaseWN{1},1)==2
 windthis = 2;
 OUTSTRUCT.yscal2 = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT.Xcovscal_window_BaseWN);
-
+else
+    OUTSTRUCT.yscal2 = OUTSTRUCT.yscal1;
+    disp('NOTE: window 2 scalar doesnt exist, so copied exactly from scalar 1 [PAUSED]');
+    pause;
+end
 % ========= LAERNING
 if strcmp(plotlevel, 'chanpair')
     [ ~, ~, ~, All_yscal1, ~, ~, ~, ~] = ...
@@ -943,16 +996,54 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
+binsize = 0.035;
 
 % ===== only those with 2 (targ diff)
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 xlabel('Targ, corr (WN - base)');
 
 y = Yall(:,1);
-lt_plot_histogram(y, '', 1, 0, '', 0, 'k');
+tmp = round(100*max(abs(y)))/100;
+tmp = tmp+(binsize-mod(tmp, binsize));
+% tmp = tmp+binsize/2;
+x = -tmp:binsize:tmp;
+lt_plot_histogram(y, x, 1, 1, '', 1, 'k');
 [p] = signrank(y);
 lt_plot_pvalue(p, 'srank', 1);
+lt_plot_text(0, 0, ['n=' num2str(length(y))], 'm');
+YLIM = ylim;
+% --- overlay each birdf
+for i=1:max(All_bnum)
+    y = Yall(All_bnum==i, 1);
+    if isempty(y)
+        continue
+    end
+    ymean = mean(y);
+    ysem = lt_sem(y);
+    p = signrank(y);
+    
+    lt_plot(ymean, 0.95*YLIM(2), {'Xerrors', ysem});
+    lt_plot_text(ymean, YLIM(2), ['b' num2str(i) ', p=' num2str(p)], 'r');
+    
+end
+xlim([-0.3 0.3]);
+lt_plot_zeroline_vert;
 
+
+% ===== DIFF
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('DIFF, corr (WN - base)');
+
+y = cell2mat(Yall_allsyls(:,3));
+% y = Yall(:,1);
+tmp = round(100*max(abs(y)))/100;
+tmp = tmp+(binsize-mod(tmp, binsize));
+% tmp = tmp+binsize/2;
+x = -tmp:binsize:tmp;
+lt_plot_histogram(y, x, 1, 1, '', 1, 'r');
+[p] = signrank(y);
+lt_plot_pvalue(p, 'srank', 1);
+lt_plot_text(0, 0, ['n=' num2str(length(y))], 'm');
 YLIM = ylim;
 % --- overlay each birdf
 for i=1:max(All_bnum)
@@ -1054,6 +1145,35 @@ xlim([0 5]);
 
 
 
+
+
+%% ############## [HISTOGRAMS, lowest level data, chan x syl]
+figcount=1;
+subplotrows=1;
+subplotcols=3;
+fignums_alreadyused=[];
+hfigs=[];
+hsplots = [];
+
+
+% ############################# 1) TARG -- DIFF
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('Targ -- DIFF');
+ylabel('xcov, change');
+title('dat = chan x syl');
+x = [1 3];
+
+lt_neural_POPLEARN_XCov_PlotScal_sub2;
+
+
+% ############################# 1) TARG -- SAME
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+xlabel('Targ -- SAME -- DIFF');
+ylabel('xcov, change');
+title('dat = chan x syl');
+x = [1 2 3];
+
+lt_neural_POPLEARN_XCov_PlotScal_sub2;
 
 %% ########## [MORE PLOTS] NOT DIRECTLY REALTED TO YSCALAR.
 % ==== CORREALTING SCALARS WITH BEHAVIOR

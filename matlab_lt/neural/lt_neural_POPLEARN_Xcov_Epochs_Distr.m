@@ -1,5 +1,5 @@
 function lt_neural_POPLEARN_Xcov_Epochs_Distr(OUTSTRUCT_XCOV, PARAMS, ...
-    onlygoodexpt, SwitchStruct)
+    onlygoodexpt, SwitchStruct, plotRaw, epochWN)
 %% lt 3/26/19 - distributions of trials within each epoch
 
 %% ONE PLOT FOR EACH SWITCH (I.E. EACH TARGET SYL)
@@ -23,7 +23,7 @@ end
 [indsgrp, indsgrpU] = lt_tools_grp2idx({OUTSTRUCT_XCOV.bnum, ...
     OUTSTRUCT_XCOV.enum, OUTSTRUCT_XCOV.switch});
 
-
+if plotRaw==1
 for i=1:length(indsgrpU)
     
 figcount=1;
@@ -160,6 +160,7 @@ hsplots = [];
         linkaxes(hsplots, 'xy');
     end
 end
+end
 
 %% ==================== PLOT SUMMARY IS THERE OVERALL INCREASE IN FIRING RATE?
 
@@ -169,10 +170,11 @@ epochtoplot = 0;
     OUTSTRUCT_XCOV, epochtoplot);
 
 % ================= WN EPOCH, LAST
-epochtoplot = 3;
+for j=1:length(epochtoplot)
+%     epochtoplot = epochWN;
 [spkmeanNonadAdapt_LMAN, spkmeanNonadAdapt_RA] = lt_neural_POPLEARN_Xcov_Epochs_DistrSub(...
-    OUTSTRUCT_XCOV, epochtoplot);
-
+    OUTSTRUCT_XCOV, epochWN(j));
+end
 % ============= PLOT
 lt_figure; hold on;
 indsthis = OUTSTRUCT_XCOV.istarg==1;

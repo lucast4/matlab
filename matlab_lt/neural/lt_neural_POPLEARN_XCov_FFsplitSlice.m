@@ -19,8 +19,8 @@ assert(length(covbase{1})==2, 'assumes that split into 2 ff (i.e hi and lo)');
 covbase = [cellfun(@(x)x{1}, covbase, 'UniformOutput', 0) ...
     cellfun(@(x)x{2}, covbase, 'UniformOutput', 0)];
 
-covWN = [cellfun(@(x)mean(x{1}(:,:, epochstoplot), 3), covWN, 'UniformOutput', 0) ...
-    cellfun(@(x)mean(x{2}(:,:, epochstoplot), 3), covWN, 'UniformOutput', 0)];
+covWN = [cellfun(@(x)nanmean(x{1}(:,:, epochstoplot), 3), covWN, 'UniformOutput', 0) ...
+    cellfun(@(x)nanmean(x{2}(:,:, epochstoplot), 3), covWN, 'UniformOutput', 0)];
 
 
 %% =================== FOR EACH CASE FLIP SO IS IN ADAPTIVE DIRECTION
@@ -129,6 +129,80 @@ for i=1:length(indsgrpU)
     lt_plot_zeroline_vert;
     
 end
+
+
+
+%% =============== PLOT OVERALL SUMMARY [EXPT AS DATAPOINT]
+
+OUTSTRUCT_XCOV.covbase_nonadapt = covbase(:,1);
+OUTSTRUCT_XCOV.covbase_adapt = covbase(:,2);
+OUTSTRUCT_XCOV.covWN_nonadapt = covWN(:,1);
+OUTSTRUCT_XCOV.covWN_adapt = covWN(:,2);
+
+fieldtoget = 'covbase_nonadapt';
+[~, ~, ~, ~, allbnum, allenum, allswnum, covbase_nonadapt] = ...
+    lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+fieldtoget = 'covbase_adapt';
+[~, ~, ~, ~, allbnum, allenum, allswnum, covbase_adapt] = ...
+    lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+fieldtoget = 'covWN_nonadapt';
+[~, ~, ~, ~, allbnum, allenum, allswnum, covWN_nonadapt] = ...
+    lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+fieldtoget = 'covWN_adapt';
+[~, ~, ~, ~, allbnum, allenum, allswnum, covWN_adapt] = ...
+    lt_neural_LFP_GrpStats(OUTSTRUCT_XCOV, fieldtoget);
+
+
+% ================ GET ONE VALUE PER EXPERIMENT
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+title('baseline [one line per switch]');
+ylabel('(k=nonad, r=adaptive)');
+%     xlabel([num2str(bnum) '-' num2str(enum) '-' num2str(sw)]);
+x = PARAMS.Xcov_ccLags;
+
+y1 = squeeze(covbase_nonadapt(:, :, 1, :))';
+y2 = squeeze(covbase_adapt(:,:,1,:))';
+shadedErrorBar(x, mean(y1), lt_sem(y1), {'Color', 'k'},1);
+shadedErrorBar(x, mean(y2), lt_sem(y2), {'Color', 'r'},1)
+axis tight;
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
+
+% ================ GET ONE VALUE PER EXPERIMENT
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+title('WN [one line per switch]');
+ylabel('(k=nonad, r=adaptive)');
+%     xlabel([num2str(bnum) '-' num2str(enum) '-' num2str(sw)]);
+x = PARAMS.Xcov_ccLags;
+
+y1 = squeeze(covWN_nonadapt(:, :, 1, :))';
+y2 = squeeze(covWN_adapt(:,:,1,:))';
+shadedErrorBar(x, mean(y1), lt_sem(y1), {'Color', 'k'},1);
+shadedErrorBar(x, mean(y2), lt_sem(y2), {'Color', 'r'},1)
+axis tight;
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
+
+% ================ GET ONE VALUE PER EXPERIMENT
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots hsplot];
+title('WN minus base [one line per switch]');
+ylabel('(k=nonad, r=adaptive)');
+%     xlabel([num2str(bnum) '-' num2str(enum) '-' num2str(sw)]);
+x = PARAMS.Xcov_ccLags;
+
+y1 = squeeze(covWN_nonadapt(:, :, 1, :))' -  squeeze(covbase_nonadapt(:, :, 1, :))';
+y2 = squeeze(covWN_adapt(:,:,1,:))' - squeeze(covbase_adapt(:,:,1,:))';
+shadedErrorBar(x, mean(y1), lt_sem(y1), {'Color', 'k'},1);
+shadedErrorBar(x, mean(y2), lt_sem(y2), {'Color', 'r'},1)
+axis tight;
+lt_plot_zeroline;
+lt_plot_zeroline_vert;
+
 
 %% =============== PLOT OVERALL SUMMARY
 if ploteachsyl==1

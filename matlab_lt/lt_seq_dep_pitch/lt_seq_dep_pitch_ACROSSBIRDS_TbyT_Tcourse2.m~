@@ -1558,7 +1558,7 @@ for i = 1:nbirds
             Inds_IsTarg==1 & Inds_IsSame==1;
         
         for j = find(indsthis)
-%             t = OUTSTRUCT.Tmean_binned(j, :);
+            t = OUTSTRUCT.Tmean_binned(j, :);
             ff = OUTSTRUCT.FFdevMean_binned(j, :);
             %         ffsem = OUTSTRUCT.FFdevSEM_binned(indsthis, :);
             

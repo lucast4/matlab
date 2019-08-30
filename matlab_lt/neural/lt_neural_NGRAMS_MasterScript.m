@@ -141,9 +141,11 @@ removeBadSyls = 1; % i.e. badly labeled...
 dosubtractcontrol = 1; % then subtracts negative control before plotting [if 0, then overlays neg]
 sanitycheckuseneg = 0; % uses negative control data instead of data
 
+% minPairs = 3; % i.e. if any pairtype has fewer pairs that this then will skip
+% zscoreMin = [1 0.75]; % [pairnum minz] only keep a neuron if the zscore(mean) for pairnum is greater than minZ
+% labelneur = 1;
 minPairs = 3; % i.e. if any pairtype has fewer pairs that this then will skip
 zscoreMin = [1 0.75]; % [pairnum minz] only keep a neuron if the zscore(mean) for pairnum is greater than minZ
-
 labelneur = 1;
 
 [AllPairs_Means, AllPairs_Birdnum, AllPairs_Bregions] = ...
@@ -165,7 +167,6 @@ lt_neural_NGRAMS_PlotByPairtype(OUTSTRUCT, SummaryStruct, plottype, plotON, ...
 
 %%  ######################## REGRESSION MODELING
 
-
 lt_neural_NGRAMS_Regression;
 
 
@@ -178,7 +179,6 @@ lt_neural_NGRAMS_Regression;
 % I.E. NGRAMS, SAMPLE SIZES, NEURONS...
 
 pairtype = '1  0  0'; % will list all ngrams that match this pairtype
-
 
 savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/NGRAMS/' Params.dirname];
 
@@ -366,9 +366,11 @@ for i=1:length(SummaryStruct.birds)
     end
 end
 
+%% #############################################################
+%% ########################## EXAMPLES, V2 - good
 %% ============= [SHOW METADAT] FOR EACH BIRD AND NEURON, SHOW DIRECTORY
 % for each directory, displays channels to get.
-longversion=0;
+longversion=1;
 lt_neural_SummaryStruct_ShowDirChans(SummaryStruct, longversion);
 
 
@@ -388,11 +390,11 @@ end
 
 %% ============== PLOT ALL EXAMPLES FOR A GIVEN NEURON IN ONE PLOT
 
-% close all;
-birdtoplot = 'bk7';
-neurtoplot = 10;
+close all;
+birdtoplot = 'gr48bu5';
+neurtoplot = 18;
 pairtypes = {'1  0  0', '1  1  1'};
-plotsqrt = 1; % if 1, then mean of sqrt firing rate
+plotsqrt = 0; % if 1, then mean of sqrt firing rate
 lt_neural_NGRAMS_PlotEgPair(OUTSTRUCT, SummaryStruct, Params, ...
     birdtoplot, neurtoplot, pairtypes, plotsqrt);
 

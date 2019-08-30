@@ -2260,7 +2260,7 @@ xcovver = 'zscore'; % i.e. each lag bin, zscore relative to shuffle.
 
 % ===== get xcovgram?
 getxgram = 1;
-getxgram_epochbins = 3; % if empty, then ignore. otherwise divides training into this many even bins
+getxgram_epochbins = 4; % if empty, then ignore. otherwise divides training into this many even bins
 
 % ====== removebad syl?
 removebadsyl = 1;
@@ -2277,14 +2277,14 @@ end
 getHiLoFFSplit = 1; 
 
 % ====
-hilosplit_shuffver=2;
+hilosplit_shuffver=1;
 
 % =============== RUN
 [OUTSTRUCT_XCOV, PARAMS, NanCountAll] = lt_neural_POPLEARN_XcovExtr(SwitchXCovStruct, ...
     SwitchStruct, PARAMS, SwitchCohStruct, OUTSTRUCT, usealltrials, ...
     useallbase, dosmooth, dosmooth_sigma, removebadsyl, ...
     PARAMS.Xcov.Xgram.windlist, plotraw, xcovver, wntouse, removebadtrials, ...
-    getxgram, removebadchans, getxgram_epochbins, getHiLoFFSplit);
+    getxgram, removebadchans, getxgram_epochbins, getHiLoFFSplit, hilosplit_shuffver);
 
 assert(all(PARAMS.xcenters_gram == mean(PARAMS.Xcov.Xgram.windlist,2)))
 
@@ -2462,14 +2462,27 @@ save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
 
 % ############################### [3/19/19 - LATEST, 60MS, after check
 % rasteres and raw neural and all clearned). [3 epochs; hi lo split]
-savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgram
+savemarker = '60mswind_031919_3bins_hiloFF';  % latest, 
 save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
 save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
 
+% ====================== 
+savemarker = '60mswind_031919_3binsAll';  % 3 bins for both xcovgram and epochs
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
+% ====================== 
+savemarker = '60mswind_031919_4binsAll';  % 4 bins for both xcovgram and epochs
+save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
+
 savemarker = '60mswind_031919_3bins_hiloFF_shuffver2';  % using shufflever = 2
 save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3')
+
 
 
 % ############################### [3/19/19 - LATEST, 60MS, after check
@@ -2535,10 +2548,23 @@ load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
 
 % ================ [60ms bins - after recurating data][3 epochs] [hi lo ff split]
+% "quarter" for xcov gram, 4 bins for epoch
+% ################### GOOD
 savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgram
 load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
+
+% ====================== [SAME, but 3 bins for both xcovgram and epochs]
+savemarker = '60mswind_031919_3binsAll';  % 
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV');
+load([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct');
+load([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS')
+
+% ====================== [SAME, but 4 bins for both xcovgram and epochs]
+savemarker = '60mswind_031919_4binsAll';  % 4 bins for both xcovgram and epochs
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV');
+load([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS')
 
 
 % ############################### [3/19/19 - LATEST, 60MS, after check
@@ -2614,9 +2640,11 @@ lt_neural_LFP_AlignToWN_Xcov(OUTSTRUCT_XCOV, OUTSTRUCT, SwitchStruct, ...
 
 %% ================== AD HOC COMBINING OF EPOCHS
 % == PU69 RL2, since there is gap in trials, need to combine.
-numepochs = 3;
+numepochs = size(OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{1}, 3);
 disp(['nume pochs = ' num2str(numepochs) '?']);
 pause;
+assert(size(OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs,2)==2, 'then need to modify code for OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs below');
+
 
 
 btoget = find(strcmp({SummaryStruct.birds.birdname}, 'pu69wh78'));
@@ -2626,16 +2654,24 @@ indsthis = find(OUTSTRUCT_XCOV.bnum==btoget & OUTSTRUCT_XCOV.enum==etoget);
  
 for j=indsthis'
 
+    % ====================
     tmp = OUTSTRUCT_XCOV.XcovgramWN_epochs{j};    
     tmp(:,:, numepochs) = nanmean(tmp, 3);
     tmp(:,:, 1:numepochs-1) = nan;
     OUTSTRUCT_XCOV.XcovgramWN_epochs{j} = tmp;
     
-    tmp = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j};    
+    % ====================
+    tmp = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j, 1};    
     tmp(:,:, numepochs) = nanmean(tmp, 3);
     tmp(:,:, 1:numepochs-1) = nan;
-    OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j} = tmp;
+    OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j,1} = tmp;
 
+    tmp = OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j,2};    
+    tmp(:,:, numepochs) = nanmean(tmp, 3);
+    tmp(:,:, 1:numepochs-1) = nan;
+    OUTSTRUCT_XCOV.XcovgramWN_FFsplits_Epochs{j,2} = tmp;
+
+    % ====================
     tmp = OUTSTRUCT_XCOV.trialedges_epoch{j};    
     tmp([numepochs numepochs+1]) = [tmp(1) tmp(end)];
     tmp(1:numepochs-1) = nan;
@@ -2689,7 +2725,13 @@ alignto = 'sylonset';
 twindows = {[-0.07 -0.03]}; % one array for each window [x centers...] [inclusive]
 lagwindows = {[-0.01 0.005]}; % OK
 
-
+% ========= GOOD: [60ms window]
+% alignto = 'sylonset'; 
+% twindows = {[-0.07 -0.03], [-0.1 -0.01]}; % one array for each window [x centers...] [inclusive]
+% lagwindows = {[-0.01 0.005], [-0.014 0.006]}; % OK
+alignto = 'sylonset'; 
+twindows = {[-0.06 -0.03]}; % one array for each window [x centers...] [inclusive]
+lagwindows = {[-0.009 0.006]}; % OK
 
 % % ========= GOOD: [60ms window]
 % alignto = 'sylonset'; 
@@ -2698,7 +2740,7 @@ lagwindows = {[-0.01 0.005]}; % OK
 % 
 % 
 % alignto = 'wnonset'; % not good.
-% twindows = {[-0.09 -0.06], [-0.09 -0.06]}; % one array for each window [x centers...] [inclusive]
+% twindows = {[-0.09 -0.06], [-0.09 -0.06]}; % one array for  0 each window [x centers...] [inclusive]
 % lagwindows = {[-0.015 0.005], [0.03 0.05]}; % OK
 % 
 % alignto = 'wnonset'; % using median of WN
@@ -2740,7 +2782,7 @@ twindow = [-0.1 -0.01]; % one array for each window [x centers...] [inclusive]
 alignto = 'sylonset'; 
 
 % ======= GOOD [60ms window]
-twindow = [-0.07 -0.03]; % one array for each window [x centers...] [inclusive]
+twindow = [-0.06 -0.03]; % one array for each window [x centers...] [inclusive]
 alignto = 'sylonset'; 
 % twindow = [-0.09 -0.02]; % one array for each window [x centers...] [inclusive]
 % alignto = 'sylonset'; 
@@ -2801,8 +2843,9 @@ lt_neural_POPLEARN_XCov_PlotEachSplit(OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
 
 %% ========== [XCOV] SUMMARIZE FFSPLIT XCOV SLICE DIFFERENCES
 close all;
-epochstoplot = 3;
+epochstoplot = 3:4;
 lt_neural_POPLEARN_XCov_FFsplitSlice(OUTSTRUCT_XCOV, PARAMS, epochstoplot)
+
 
 %% =========== [XCOV] sUMMARIZE LEARNING
 
@@ -2817,20 +2860,23 @@ lt_neural_POPLEARN_Xcov_PitchLearn(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, ...
 %% =========== [EXTRACTION] GET LEARNING INTO BINS
 % === ALSO PLOTS SAMPLE SIZES...
 onlygoodexpt = 1;
-windowprem = [-0.1 0.01]; % for counting spikes
+% windowprem = [-0.1 0.01]; % for counting spikes
+windowprem = [-0.1 0]; % for counting spikes
 OUTSTRUCT_XCOV = lt_neural_POPLEARN_Xcov_ExtrLearn(OUTSTRUCT, OUTSTRUCT_XCOV, ... 
     SwitchStruct, PARAMS, SwitchCohStruct, MOTIFSTATS_pop, windowprem);
 
 
-%% =========== [EPOCH SPLIT STATS - PLOT DISTRIBUTIONS]
+%% =========== [EPOCH SPLIT STATS - PLOT DISTRIBUTIONS] [FRATE EFFECT ALSO]
     % 1) across epoch
     % 2) across song bout
     % 3) mean frate difference
     
 close all;
 onlygoodexpt = 1;
+plotRaw=0;
+epochWN = [3:4];
 lt_neural_POPLEARN_Xcov_Epochs_Distr(OUTSTRUCT_XCOV, PARAMS, ...
-    onlygoodexpt, SwitchStruct)
+    onlygoodexpt, SwitchStruct, plotRaw, epochWN)
 
 %% =========== [XCOV SLICE EPOCHS] - change over epohcs
 % must have exctracted epoch data above.
@@ -2885,18 +2931,20 @@ adhoc_replacelearnwithWind2 = 0; % NOTE: have not modified FFsplit code to run t
 % - the "casestokeep" does not apply for ffsplit analyses.
 
 % ---- FF SPLIT? USE THESE PARAMS
-FFsplit_pu69learn2_combine = 1; % combines all bins into one bin (since only looked at trials at end of learning, since noisy neural during learning)
-mintraindur = 0; % hours. (have to have data)
-mintotaltrain = 3; % hours (end of data minus base) (doesn't have to actually have data throughotu)
-doFFsplit=1;
-
-useAd_Nonad_Average_forBaseline = 1; % if 0, then (adaptive minus adaptive), (nonad - nonad)
-% if 1, then for each case subtract the baseline mean over non and ad)
+% FFsplit_pu69learn2_combine = 1; % combines all bins into one bin (since only looked at trials at end of learning, since noisy neural during learning)
+% mintraindur = 0; % hours. (have to have data)
+% mintotaltrain = 3; % hours (end of data minus base) (doesn't have to actually have data throughotu)
+% doFFsplit=1;
+% useAd_Nonad_Average_forBaseline = 0; % if 0, then (adaptive minus adaptive), (nonad - nonad)
+% % if 1, then for each case subtract the baseline mean over non and ad)
+% % DEFAULT: 0
 
 lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
     mintraindur, mintotaltrain, adhoc_replacelearnwithWind2, ...
     FFsplit_pu69learn2_combine, doFFsplit, useAd_Nonad_Average_forBaseline)
+
+
 
 
 
@@ -2987,8 +3035,8 @@ plotlines = 1; % then plots each channel on the summary figure.
 % === do ffsplit?
 ffsplitparams = struct;
 ffsplitparams.dosplit = 1; % on or off
-ffsplitparams.epochtoplot = 1;
-ffsplitparams.adaptivebin = 3; % usually 1=non-adaptive; 2=adaptive, 3= take difference
+ffsplitparams.epochtoplot = 3:4;
+ffsplitparams.adaptivebin = 2; % usually 1=non-adaptive; 2=adaptive, 3= take difference
 
 lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
     onlygoodexpt, PARAMS, dattype, lagwindows, clim, ffbinsedges_indstoplot, ...
@@ -3084,22 +3132,89 @@ end
 close all;
 windthis =1;
 Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
-Yscalar = cellfun(@(x)mean(x(windthis,:),2), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
+% Yscalar = cellfun(@(x)mean(x(windthis,:),2), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
 % clim = [-0.2 0.2];
 clim = [-0.2 0.2];
 % clim = [-1.5e-4 1.5e-4];
-onlygoodexpt = 0;
+onlygoodexpt = 1;
 expttype = 'xcov_spikes';
 % plotlevel = 'switch';
 plotlevel = 'chanpair';
 
-useoldInds = 1; % default 0. only use 1 if you haven't extracted inds_base_epoch to OUTSTRUCT_XCOV yet...
+useoldInds = 0; % default 0. only use 1 if you haven't extracted inds_base_epoch to OUTSTRUCT_XCOV yet...
 % there will be error if you need to switch to 1.
 
 lt_neural_POPLEARN_XCov_PlotScal(Yscalar, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
     MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, ...
     OUTSTRUCT, useoldInds);
 
+%% ========= [GOOD - PUBLICATION] Linear mixed effects of change in xcov
+close all;
+
+windthis =1;
+Yscalar = cellfun(@(x)(x(windthis,2)-x(windthis,1)), OUTSTRUCT_XCOV.Xcovscal_window_BaseWN);
+
+clim = [-0.2 0.2];
+onlygoodexpt = 1;
+expttype = 'xcov_spikes';
+
+onlyIfSameType=0; % if 1, then only expt that has at least one asme type.
+% will also include same-type in model.
+
+lt_neural_POPLEARN_XCov_LME(Yscalar, OUTSTRUCT_XCOV, ...
+    SwitchStruct, MOTIFSTATS_Compiled, PARAMS, clim, ...
+    onlygoodexpt, expttype, onlyIfSameType)
+
+%% ========= [FR SCALAR, CHANGE FROM BASELINE]
+
+epochtoplot = 3;
+normtype = 'usefrac';
+% useminus
+j=1;
+
+fr1_base = {};
+fr2_base = {};
+fr1_wn = {};
+fr2_wn = {};
+
+for j=1:length(OUTSTRUCT_XCOV.epochSplitStatsAll)
+    fr1_base = [fr1_base; OUTSTRUCT_XCOV.epochSplitStatsAll{j}(1).nspksByNeuron(1)];
+    fr2_base = [fr2_base; OUTSTRUCT_XCOV.epochSplitStatsAll{j}(1).nspksByNeuron(2)];
+    fr1_wn = [fr1_wn; OUTSTRUCT_XCOV.epochSplitStatsAll{j}(epochtoplot+1).nspksByNeuron(1)];
+    fr2_wn = [fr2_wn; OUTSTRUCT_XCOV.epochSplitStatsAll{j}(epochtoplot+1).nspksByNeuron(2)];
+end
+
+if strcmp(normtype, 'useminus')
+frchange_neur1 = cellfun(@(x)mean(x), fr1_wn) - cellfun(@(x)mean(x), fr1_base);
+frchange_neur2 = cellfun(@(x)mean(x), fr2_wn) - cellfun(@(x)mean(x), fr2_base);
+elseif strcmp(normtype, 'usefrac')
+frchange_neur1 = cellfun(@(x)mean(x), fr1_wn)./cellfun(@(x)mean(x), fr1_base);
+frchange_neur2 = cellfun(@(x)mean(x), fr2_wn)./cellfun(@(x)mean(x), fr2_base);    
+end
+% ============== PLOT SCALAR
+close all;
+clim = [min([frchange_neur1; frchange_neur2]) ...
+    max([frchange_neur1; frchange_neur2])];
+
+onlygoodexpt = 0;
+expttype = 'xcov_spikes';
+plotlevel = 'chanpair';
+
+useoldInds = 0; % default 0. only use 1 if you haven't extracted inds_base_epoch to OUTSTRUCT_XCOV yet...
+% there will be error if you need to switch to 1.
+
+assert(all(strcmp(OUTSTRUCT_XCOV.bregionpair, 'LMAN-RA')), 'not true that neurons 1 and 2 and LMAN and RA');
+   
+% ============= 1) CHANGE IN FR FOR NERUON 1 (is always LMAN)
+lt_neural_POPLEARN_XCov_PlotScal(frchange_neur1, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, ...
+    OUTSTRUCT, useoldInds);
+
+% ============= 1) CHANGE IN FR FOR NERUON 2 (is always RA)
+close all;
+lt_neural_POPLEARN_XCov_PlotScal(frchange_neur2, OUTSTRUCT_XCOV, SwitchCohStruct, SwitchStruct, ...
+    MOTIFSTATS_Compiled, PARAMS, clim, onlygoodexpt, expttype, plotlevel, ...
+    OUTSTRUCT, useoldInds);
 
 
 %% ========== [XCOV SCALAR] - MOTIF POSITION...
@@ -3661,6 +3776,7 @@ alignto = 'sylonset';
 
 OUTSTRUCT_MeanRhoSplit = lt_neural_POPLEARN_XCov_ExtrSlice(OUTSTRUCT_MeanRhoSplit, ...
     OUTSTRUCT, PARAMS_MeanRhoSplit, twindow, alignto);
+
 %% ====== [PLOT] XCOV SLICES (ADAPTIVE VS. NONADAPTIVE)
 
 close all;

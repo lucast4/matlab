@@ -84,7 +84,7 @@ for i=1:numbirds
                     downfactor = downfactorlist(k); % to downsample, while still at least equal to Nmin
                     [FRdiffDAT, FRdiffShuff, FRdiff_Z, Nboth] = lt_neural_NGRAMS_QUICK_FRdiff(...
                         frmat1, frmat2, downfactor, windowx, Params.Nmin, nshufftmp, ...
-                        Params);
+                        Params, Params.dodecode);
                     
                     % ========= save
                     FRdiffstruct(k).FRdiffDAT = FRdiffDAT;

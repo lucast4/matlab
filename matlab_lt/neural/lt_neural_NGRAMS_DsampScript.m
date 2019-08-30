@@ -66,6 +66,8 @@ for i=1:maxbirds
         %         xlabel('subsample N (mean 2 motifs)');
         xlabel('downfactor');
         ylabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)}]);
+        
+        if ~isempty(ydat)
         % -- dat
         if sum(indtmp)<100
             plot(x, ydat, '-', 'Color', [0.7 0.7 0.7]);
@@ -74,7 +76,7 @@ for i=1:maxbirds
         % -- means
         plot(x, mean(yshuff,1), '-r', 'LineWidth', 2);
         plot(x, mean(ydat,1), '-k', 'LineWidth', 2);
-        
+        end
         
         % --------------------------- second pairtype (x)
         indtype = 2;
@@ -90,7 +92,7 @@ for i=1:maxbirds
         %         xlabel('subsample N (mean 2 motifs)');
         xlabel('downfactor');
         ylabel([OUTSTRUCT.PairTypesInOrder{Indpaircomp(indtype)}]);
-        
+        if ~isempty(ydat)
         % -- dat
         if sum(indtmp)<100
             plot(x, ydat, '-', 'Color', [0.7 0.7 0.7]);
@@ -99,7 +101,7 @@ for i=1:maxbirds
         % -- means
         plot(x, mean(yshuff,1), '-r', 'LineWidth', 2);
         plot(x, mean(ydat,1), '-k', 'LineWidth', 2);
-        
+        end
         
         % ------------------------ COMBINE (EACH TYPE, SUBTRACT GLOBAL NEG)
         [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);

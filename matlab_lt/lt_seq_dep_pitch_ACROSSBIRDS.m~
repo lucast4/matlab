@@ -807,10 +807,10 @@ onlyifhaveAllSylTypes = 1; % 1 then needs targ, same, diff...
 % onlyifhaveDataAllDays = 1;
 throwoutnan=1; % then any syl must have dat across all days...
 plotEachExptRaw=0; % then all syls, overlay ff and extracted edges.
-minDurNoSong = 1; % in hours, min time between morning-firstsong lastsong-night
+only
 [BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
-    onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw, minDurNoSong);
+    onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw);
 
 
 % #################################### COMBINE WITH GENERALIZATION STRUCT
@@ -859,18 +859,6 @@ singleRendOnly=1; % if 1, then takes first dat post rend. otherwise takes all fl
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, songasrend, singleRendOnly);
 
-% ================ 1b) take all adjacent syls, not just the first 
-close all;
-ignoreLMANexpt=1; % usually 1, since they lack full day label
-songasrend = 1; % if 1, then instead of rends, uses songs. 
-if songasrend==1
-    assert(addWithinSongTime==0, 'since uses same datenum to decide that is same song');
-end
-singleRendOnly=0; % if 1, then takes first dat post rend. otherwise takes all flank.
-lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt, songasrend, singleRendOnly);
-
-
 
 % %%%%%%%%%%%%%%%%% V2 - modular version of v1 above.
 % ========= 1) EXTRACT
@@ -900,13 +888,6 @@ close all;
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Moment(DATBYREND, TrialStruct)
 
 
-% ######################## SANITY CHECK
-if isfield(TrialStruct, 'FFalreadyFlippedLearnDir')
-    disp('NOTE: FF all flipped. BUT for LMAN inactivated experiments that will not be true. See the lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Extract code, where this occurs');
-    pause;
-end
-
-
 % ###################### DAY/NIGHT LEARNING, USING ONLY NON-SDP EXPERIMENTS
 % [I.E. FULLY LABELED]
 % NOTE: needs work. 1) not enough days. 2) use linear fit to subtract
@@ -920,8 +901,6 @@ close all;
 %     {'pu53wh88', 'SeqDepPitchShift'}, ...
 %     {'bk34bk68', 'SeqDepPitchLMAN3'}, ...
 %     };
-
-% GOOD LIST:
 ListOfExperiments = {...
     {'pu11wh87', 'SeqDepPitchShift2'}, ...
     {'pu53wh88', 'SeqDepPitchShift3'}, ...

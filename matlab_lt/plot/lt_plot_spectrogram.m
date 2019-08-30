@@ -1,10 +1,15 @@
-function lt_plot_spectrogram(songdat, fs, bk_red, plot_ms, XLIM, YLIM, flipflip)
+function lt_plot_spectrogram(songdat, fs, bk_red, plot_ms, XLIM, YLIM, flipflip, climscale, climgood)
 %% lt 11/13/17 - flips upside down
-
+if ~exist('climscale', 'var')
+    climscale = 1;
+end
 if ~exist('flipflip', 'var')
     flipflip=0;
 end
-   
+
+if ~exist('climgood', 'var')
+    climgood = [];
+end
 %% lt 10/2017 - XLIM and YLIM, to scale spectrogram to plot in certain posiiton
 % note: x and y values will be innacurate
 
@@ -22,7 +27,7 @@ end
 %% lt 8/18/16 - takes song vector and plots spectrogram on current active axes
 
 % plot_ms=1, ms (if 0, sec)
-    
+
 if isempty('plot_ms')
     plot_ms=0;
 end
@@ -35,7 +40,7 @@ end
 if isempty('bk_red')
     bk_red=0;
 end
-   
+
 
 % - spectrogram
 window = 0.016*fs; % make it 16ms, to match evtaf stuff
@@ -58,7 +63,7 @@ songdat=bandpass(songdat,fs,F_low,F_high,filter_type);
 % === colect spectrogram
 [sp, f, t] = spectrogram(songdat', window, noverlap, nfft, fs);
 if plot_ms==1
-t=t.*1000;
+    t=t.*1000;
 end
 sp=abs(sp);
 
@@ -90,7 +95,7 @@ if bk_red==1
     sptemp_vector=reshape(sptemp, numel(sptemp), 1);
     Xcenters=linspace(min(sptemp_vector), max(sptemp_vector), length(sptemp_vector)/200);
     [Ybinned, ~, ~]=lt_plot_histogram(sptemp_vector, Xcenters, 0, '','',1,'k');
-%     plot(Xcenters, Ybinned);
+    %     plot(Xcenters, Ybinned);
     
     [~, maxind]=max(Ybinned); % first peak in distrubtion of magnitudes
     Cmin=Xcenters(maxind);
@@ -102,10 +107,15 @@ if bk_red==1
         t = linspace(XLIM(1), XLIM(2), length(t));
         f = linspace(YLIM(1), YLIM(2), length(f))';
     end
-    if flipflip==1
-    imagesc(t, f, flipud(sptemp), [Cmin+Cmin/10 Cmax]);      
+    if isempty(climgood)
+        CLIM = [(Cmin+Cmin/10)/climscale climscale*Cmax];
     else
-    imagesc(t, f, sptemp, [Cmin+Cmin/10 Cmax]);
+        CLIM = climgood;
+    end
+    if flipflip==1
+        imagesc(t, f, flipud(sptemp), CLIM);
+    else
+        imagesc(t, f, sptemp, CLIM);
     end
     
 else
@@ -113,10 +123,10 @@ else
         t = linspace(XLIM(1), XLIM(2), length(t));
         f = linspace(YLIM(1), YLIM(2), length(f))';
     end
-                if flipflip==1
-    imagesc(t, f, flipud(sptemp));      
-                else
-                    imagesc(t, f, sptemp);
-                end
+    if flipflip==1
+        imagesc(t, f, flipud(sptemp));
+    else
+        imagesc(t, f, sptemp);
+    end
 end
-            axis([t(1) t(end) f(1) f(end)]);
+axis([t(1) t(end) f(1) f(end)]);

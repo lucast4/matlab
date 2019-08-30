@@ -1,5 +1,6 @@
 function lt_neural_POPLEARN_Xcov_PitchLearn(OUTSTRUCT, OUTSTRUCT_XCOV, SwitchStruct, PARAMS, ...
     onlygoodexpt)
+
 %% lt 2/20/19 - summarizes learning trajectories. only experiemtns in outstructxcov
 
 %% ======= first downsample OUTSRRUCT to get only the experiments in xcov
@@ -146,6 +147,19 @@ for i=1:length(allswitch_bnum)
    ybase = mean(ff(indsbase));
    line(xlim, [ybase ybase], 'Color', [0.7 0.7 0.7]);
    
+   % -- lines for epoch boundaries
+   tredges = OUTSTRUCT_XCOV.trialedges_epoch{indxcov};
+   for j=1:length(tredges)
+       if isnan(tredges(j))
+           continue
+       end
+       if j==length(tredges)
+       line([t(tredges(j)-1) t(tredges(j)-1)]+0.25/60, ylim);    
+       else
+       line([t(tredges(j)) t(tredges(j))]-0.25/60, ylim);
+       end
+%       line([t(tredges(j+1)-1) t(tredges(j+1)-1)]+0.25/60, ylim);
+   end
 end
 
 
@@ -212,6 +226,21 @@ for i=1:length(allswitch_bnum)
         line([t(max(indsbase)) t(max(indsbase))], ylim, 'Color', 'r');
         ybase = mean(ff(indsbase));
         line(xlim, [ybase ybase], 'Color', [0.7 0.7 0.7]);
+        
+        % -- lines for epoch boundaries
+        tredges = OUTSTRUCT_XCOV.trialedges_epoch{indxcov};
+        for j=1:length(tredges)
+            if isnan(tredges(j))
+                continue
+            end
+            if j==length(tredges)
+                line([t(tredges(j)-1) t(tredges(j)-1)]+0.25/60, ylim);
+            else
+                line([t(tredges(j)) t(tredges(j))]-0.25/60, ylim);
+            end
+            %       line([t(tredges(j+1)-1) t(tredges(j+1)-1)]+0.25/60, ylim);
+        end
+        
     end
 end
 
@@ -262,9 +291,12 @@ ylabel('learning(z)');
 y = allswitch_dat(:,1);
 lt_plot_bar(1, mean(y), {'Errors', lt_sem(y)})
 lt_plot_MultDist({y}, 1, 0, 'r', 1);
+% --- color each bird
+scatter(2*ones(size(y)), y, [], allswitch_bnum);
 lt_plot_zeroline;
-[~, p] = ttest(y);
-lt_plot_pvalue(p, 'ttest');
+% [~, p] = ttest(y);
+[p] = signrank(y);
+lt_plot_pvalue(p, 'srank');
 
 % =================== 1) 
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);

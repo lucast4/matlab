@@ -5,7 +5,8 @@
 
 %% LT 6/20/16
 function lt_seq_dep_pitch_ACROSSBIRDS_Hamish2(SeqDepPitch_AcrossBirds, Params, ...
-    plotsametype, useHandLab, plotPC, collectAllSyls, PCtimeWindowUsingWN)
+    plotsametype, useHandLab, plotPC, collectAllSyls, PCtimeWindowUsingWN, ...
+    useSD, plotRunningCV, plotLMANalldata, ignoreMUSC)
 
 %% HAND ENTERED time windows for pitch contours
 % NOTE: if there is WN during training, then this would be based on
@@ -239,15 +240,17 @@ for i=1:NumBirds
         overlayMeans=1;
         UseSylColors=0; % 0 is black;
         flipsign=1; % plot pos, if neg
-        use_std=0; % applies to mean plots only!! (std, instead of sem)
+        use_std=useSD; % applies to mean plots only!! (std, instead of sem)
         plotRawFF=1; % 1=raw FF, 0= baseline subtracted (MUSC-MUSC)
         OverlayLMANStats=1; % plots mean shift in single target learning window (defined below)
         OverlayMUSC_days=[];
-        plotRunningCV = 0;
+%         plotRunningCV = plotRunningCV;
+        plotLMANalldata = plotLMANalldata;
+        ignoreMUSC = ignoreMUSC;
         lt_seq_dep_pitch_ACROSSBIRDS_PlotRawLMAN(SeqDepPitch_AcrossBirds,...
             Params, BirdToPlot, ExptToPlot, SylsToPlot, overlayMeans, ...
             plotRawFF, UseSylColors, flipsign, use_std, OverlayLMANStats, ...
-            OverlayMUSC_days, plotLarge, plotRunningCV)
+            OverlayMUSC_days, plotLarge, plotRunningCV, plotLMANalldata, ignoreMUSC)
         
         count = count+1;
         

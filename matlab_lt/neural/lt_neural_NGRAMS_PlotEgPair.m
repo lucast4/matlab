@@ -35,8 +35,8 @@ bregion = SummaryStruct.birds(bnum).neurons(nn).NOTE_Location;
 for i=1:length(pairtypes)
     
     figcount=1;
-    subplotrows=8;
-    subplotcols=4;
+    subplotrows=4;
+    subplotcols=8;
     fignums_alreadyused=[];
     hfigs=[];
     hsplots = [];
@@ -146,8 +146,8 @@ for i=1:length(pairtypes)
         plot(x, mean(sqrt(frmat1),2), '-', 'Color', pcolors{1})
         plot(x, mean(sqrt(frmat2),2), '-', 'Color', pcolors{2})
         else
-        plot(x, mean(frmat1),2, '-', 'Color', pcolors{1})
-        plot(x, mean(frmat2),2, '-', 'Color', pcolors{2})
+        plot(x, mean(frmat1,2), '-', 'Color', pcolors{1})
+        plot(x, mean(frmat2,2), '-', 'Color', pcolors{2})
         end
 
         

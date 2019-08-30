@@ -1,6 +1,6 @@
 function [BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
-    onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw)
+    onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw, minDurNoSong)
 %% 10/6/18 -
 
 % BirdExptIncluded = []; 'i-ii' where i and ii are numbers and concat into
@@ -277,6 +277,26 @@ for i=1:Numbirds
             end
         end
         
+        % ======== ONLY KEEP IF TEDGES ARE CLOSE TO LIGHTS ON AND OFF
+        % -- go thru all syls and get the day to remove
+        for ss=1:size(tedges_allsyls,1)
+            
+%             binstoremove = nan(1, size(tedges_allsyls,2));
+            
+            tmp = diff(tedges_allsyls(ss, :));
+            tmp = tmp(1:2:end); % only overday diffs
+            
+            mindurhour = (14 - 2*minDurNoSong); % i.e. a day (14 hours) minus edge
+            daytoremove = find(tmp*24 < mindurhour);
+            
+            indstoremove = sort([daytoremove*2-1 daytoremove*2]);
+            
+            % --- for each bad day remove morngina nd nighht
+            tedges_allsyls(ss, indstoremove) = nan;
+            ffedges_allsyls(ss, indstoremove) = nan;
+        end
+        
+        disp(ffedges_allsyls);
         
         DATSTRUCT.AllBirdnum = [DATSTRUCT.AllBirdnum; i*ones(size(ffedges_allsyls,1),1)];
         DATSTRUCT.AllExptnum =[DATSTRUCT.AllExptnum; ii*ones(size(ffedges_allsyls,1),1)];
@@ -403,7 +423,6 @@ end
 
 
 %% ================= scale so that last day is 1 for all expts?
-
 if strcmp(scalemethod, 'lastdaymean')
     
     assert(strcmp(normmethod, 'base_overall') | strcmp(normmethod, 'base_edges'), ...
@@ -430,8 +449,7 @@ if strcmp(scalemethod, 'lastdaymean')
             % did not take negative laerning and then flip it)
             
         end
-    end
-    
+    end   
 end
 
 %% ================= [PLOT] --- means across experiments
@@ -441,7 +459,8 @@ lt_figure; hold on;
 % ================= TARGET
 lt_subplot(3,1,1); hold on;
 title('target');
-inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==1; % makes sure each datapoint has all days
 
 ffedges = DATSTRUCT.AllFFedges(inds,:);
 x1 = 0.3:1:(size(ffedges,2)/2);
@@ -452,7 +471,7 @@ x = x(:)';
 % ==== plot, onsets and offsets combined
 plot(x, ffedges, '-ok');
 % -- plot means
-ffmeans = mean(ffedges,1);
+ffmeans = nanmean(ffedges,1);
 ffsem = lt_sem(ffedges);
 lt_plot(x+0.1, ffmeans, {'Errors', ffsem, 'Color', 'r'});
 % ---
@@ -462,8 +481,9 @@ lt_plot_text(0, max(ffmeans), ['N=' num2str(sum(inds))], 'b')
 % ================= SAME TYPE
 lt_subplot(3,1,2); hold on;
 title('Same (syl = datapoint)');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1; % makes sure each datapoint has all days
 
 ffedges = DATSTRUCT.AllFFedges(inds,:);
 x1 = 0.3:1:(size(ffedges,2)/2);
@@ -474,7 +494,7 @@ x = x(:)';
 % ==== plot, onsets and offsets combined
 plot(x, ffedges, '-ok');
 % -- plot means
-ffmeans = mean(ffedges,1);
+ffmeans = nanmean(ffedges,1);
 ffsem = lt_sem(ffedges);
 lt_plot(x+0.1, ffmeans, {'Errors', ffsem, 'Color', 'r'});
 % ---
@@ -485,8 +505,9 @@ lt_plot_text(0, max(ffmeans), ['N=' num2str(sum(inds))], 'b')
 % ================= DIFF TYPE
 lt_subplot(3,1,3); hold on;
 title('Diff (syl = datapoint)');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0; % makes sure each datapoint has all days
 
 ffedges = DATSTRUCT.AllFFedges(inds,:);
 x1 = 0.3:1:(size(ffedges,2)/2);
@@ -497,7 +518,7 @@ x = x(:)';
 % ==== plot, onsets and offsets combined
 plot(x, ffedges, '-ok');
 % -- plot means
-ffmeans = mean(ffedges,1);
+ffmeans = nanmean(ffedges,1);
 ffsem = lt_sem(ffedges);
 lt_plot(x+0.1, ffmeans, {'Errors', ffsem, 'Color', 'r'});
 % ---
@@ -547,9 +568,9 @@ for i=1:maxbirds
         % ---- for each syl, calculate mean learning at night and morning
         
         % NIGHT BIn
-        ytarg = [mean(fftarg(:, bins_night),2) mean(fftarg(:, bins_morning),2)];
-        ysame = [mean(ffsame(:, bins_night),2) mean(ffsame(:, bins_morning),2)];
-        ydiff = [mean(ffdiff(:, bins_night),2) mean(ffdiff(:, bins_morning),2)];
+        ytarg = [nanmean(fftarg(:, bins_night),2) nanmean(fftarg(:, bins_morning),2)];
+        ysame = [nanmean(ffsame(:, bins_night),2) nanmean(ffsame(:, bins_morning),2)];
+        ydiff = [nanmean(ffdiff(:, bins_night),2) nanmean(ffdiff(:, bins_morning),2)];
         
         % ================= OUTPUT
         Yall_targ = [Yall_targ; ytarg];
@@ -581,7 +602,7 @@ xlabel('TARG - SAME - SAME(learn<0) - SAME(learn>0) - DIFF');
 x = [1 2];
 y = Yall_targ;
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -592,7 +613,7 @@ end
 x = [4 5];
 y = Yall_same;
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -601,9 +622,9 @@ end
 
 % - same
 x = [7 8];
-y = Yall_same(mean(Yall_same,2)<0,:);
+y = Yall_same(nanmean(Yall_same,2)<0,:);
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -612,9 +633,9 @@ end
 
 % - same
 x = [10 11];
-y = Yall_same(mean(Yall_same,2)>0,:);
+y = Yall_same(nanmean(Yall_same,2)>0,:);
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -626,7 +647,7 @@ end
 x = [13 14];
 y = Yall_diff;
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -645,7 +666,7 @@ xlabel('same(all) -- same(learn<0) -- same(learn>0) -- diff');
 x = [1 2];
 y = Yall_same_gen;
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -654,9 +675,9 @@ end
 
 % - same (neg learn)
 x = [4 5];
-y = Yall_same_gen(mean(Yall_same,2)<0, :);
+y = Yall_same_gen(nanmean(Yall_same,2)<0, :);
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -665,9 +686,9 @@ end
 
 % - same (pos learn)
 x = [7 8];
-y = Yall_same_gen(mean(Yall_same,2)>0, :);
+y = Yall_same_gen(nanmean(Yall_same,2)>0, :);
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -678,7 +699,7 @@ end
 x = [10 11];
 y = Yall_diff_gen;
 plot(x, y', '-', 'Color', 'r');
-lt_plot_bar(x, mean(y,1), {'Errors', lt_sem(y)});
+lt_plot_bar(x, nanmean(y,1), {'Errors', lt_sem(y)});
 % compare nigha nd mornig
 p = signrank(y(:,1), y(:,2));
 if p<0.2
@@ -770,7 +791,8 @@ lt_figure; hold on;
 % =============================== TARGET
 lt_subplot(3,1,1); hold on;
 title('target');
-inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,:),1,2);
@@ -787,7 +809,7 @@ plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
 % lt_plot_bar(xdifftmp, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
 %     'Color', 'none', 'BarWidth', 0.2});
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- NIGHTTIME
@@ -796,7 +818,7 @@ ffdifftmp = ffdiff(:,2:2:end);
 xdifftmp = xdiff(2:2:end);
 plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- OTHER STUFF
@@ -807,8 +829,9 @@ lt_plot_zeroline;
 % =============================== SAME TYPE
 lt_subplot(3,1,2); hold on;
 title('same type');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,:),1,2);
@@ -825,7 +848,7 @@ plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
 % lt_plot_bar(xdifftmp, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
 %     'Color', 'none', 'BarWidth', 0.2});
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- NIGHTTIME
@@ -834,7 +857,7 @@ ffdifftmp = ffdiff(:,2:2:end);
 xdifftmp = xdiff(2:2:end);
 plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- OTHER STUFF
@@ -846,8 +869,9 @@ lt_plot_zeroline;
 % =============================== DIFF TYPE
 lt_subplot(3,1,3); hold on;
 title('diff type');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,:),1,2);
@@ -864,7 +888,7 @@ plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
 % lt_plot_bar(xdifftmp, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
 %     'Color', 'none', 'BarWidth', 0.2});
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- NIGHTTIME
@@ -873,7 +897,7 @@ ffdifftmp = ffdiff(:,2:2:end);
 xdifftmp = xdiff(2:2:end);
 plot(xdifftmp, ffdifftmp', 'x', 'Color', pcol);
 % -- plot bar
-lt_plot_bar(xdifftmp+0.2, mean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
+lt_plot_bar(xdifftmp+0.2, nanmean(ffdifftmp,1), {'Errors', lt_sem(ffdifftmp), ...
     'Color', 'none', 'BarWidth', 0.2});
 
 % ---- OTHER STUFF
@@ -954,17 +978,17 @@ if combineSylsInExpt==1 & onlyifhaveAllSylTypes==1
         indtmp = 1;
         pcol = 'b';
         plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        lt_plot(nanmean(ytarg(:,indtmp)), nanmean(ysame(:, indtmp)), {'Color', pcol});
         % - night 1
         indtmp = 2;
         pcol = 'k';
         plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        lt_plot(nanmean(ytarg(:,indtmp)), nanmean(ysame(:, indtmp)), {'Color', pcol});
         % - morning 2
         indtmp = 3;
         pcol = 'r';
         plot(ytarg(:,indtmp), ysame(:,indtmp), 'x', 'Color', pcol);
-        lt_plot(mean(ytarg(:,indtmp)), mean(ysame(:, indtmp)), {'Color', pcol});
+        lt_plot(nanmean(ytarg(:,indtmp)), nanmean(ysame(:, indtmp)), {'Color', pcol});
         lt_plot_makesquare_plot45line(gca, 'k');
         
         
@@ -1012,14 +1036,14 @@ if combineSylsInExpt==1 & onlyifhaveAllSylTypes==1
     pcol = 'b';
     x = Learn_day_targ(:, numbasedays+1:end);
     y = Learn_day_nontarg(:, numbasedays+1:end);
-    x = mean(x,2); y = mean(y,2);
+    x = nanmean(x,2); y = nanmean(y,2);
     plot(x,y, 'x', 'Color', pcol);
     
     % -- night
     pcol = 'r';
     x = Learn_night_targ(:, numbasedays+1:end);
     y = Learn_night_nontarg(:, numbasedays+1:end);
-    x = mean(x,2); y = mean(y,2);
+    x = nanmean(x,2); y = nanmean(y,2);
     plot(x,y, 'x', 'Color', pcol);
     
     % --
@@ -1060,16 +1084,16 @@ if combineSylsInExpt==1 & onlyifhaveAllSylTypes==1
     pcol = 'k';
     x = Learn_day_targ(:, numbasedays+1:end);
     y = Learn_night_targ(:, numbasedays+1:end);
-    x = mean(x,2);
-    y = mean(y,2);
+    x = nanmean(x,2);
+    y = nanmean(y,2);
     plot(x,y, 'x', 'Color', pcol);
     
     % -- nontarg
     pcol = 'm';
     x = Learn_day_nontarg(:, numbasedays+1:end);
     y = Learn_night_nontarg(:, numbasedays+1:end);
-    x = mean(x,2);
-    y = mean(y,2);
+    x = nanmean(x,2);
+    y = nanmean(y,2);
     plot(x,y, 'x', 'Color', pcol);
     
     % --
@@ -1088,7 +1112,8 @@ lt_figure; hold on;
 % =============================== TARGET
 lt_subplot(2,2,1); hold on;
 title('target');
-inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
@@ -1096,14 +1121,14 @@ ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
 Y = [];
 % ---- DAYTIME
 ffdifftmp = ffdiff(:,1:2:end);
-Y(:,1) = mean(ffdifftmp,2);
+Y(:,1) = nanmean(ffdifftmp,2);
 % ---- OVERNIGHT
 ffdifftmp = ffdiff(:,2:2:end);
-Y(:,2) = mean(ffdifftmp,2);
+Y(:,2) = nanmean(ffdifftmp,2);
 
 % ======== plot
 plot([1 2], Y', '-', 'Color', [0.7 0.7 0.7]);
-lt_plot([1 2]+0.1, mean(Y), {'Errors', lt_sem(Y)});
+lt_plot([1 2]+0.1, nanmean(Y), {'Errors', lt_sem(Y)});
 lt_plot_zeroline;
 % --- stats
 for j=1:2
@@ -1143,8 +1168,9 @@ end
 % =============================== SAME
 lt_subplot(2,2,2); hold on;
 title('SAME');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
@@ -1152,14 +1178,14 @@ ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
 Y = [];
 % ---- DAYTIME
 ffdifftmp = ffdiff(:,1:2:end);
-Y(:,1) = mean(ffdifftmp,2);
+Y(:,1) = nanmean(ffdifftmp,2);
 % ---- OVERNIGHT
 ffdifftmp = ffdiff(:,2:2:end);
-Y(:,2) = mean(ffdifftmp,2);
+Y(:,2) = nanmean(ffdifftmp,2);
 
 % ======== plot
 plot([1 2], Y', '-', 'Color', [0.7 0.7 0.7]);
-lt_plot([1 2]+0.1, mean(Y), {'Errors', lt_sem(Y)});
+lt_plot([1 2]+0.1, nanmean(Y), {'Errors', lt_sem(Y)});
 lt_plot_zeroline;
 % --- stats
 for j=1:2
@@ -1199,8 +1225,9 @@ end
 % =============================== DIFF
 lt_subplot(2,2,3); hold on;
 title('DIFF');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
@@ -1208,14 +1235,14 @@ ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end),1,2);
 Y = [];
 % ---- DAYTIME
 ffdifftmp = ffdiff(:,1:2:end);
-Y(:,1) = mean(ffdifftmp,2);
+Y(:,1) = nanmean(ffdifftmp,2);
 % ---- OVERNIGHT
 ffdifftmp = ffdiff(:,2:2:end);
-Y(:,2) = mean(ffdifftmp,2);
+Y(:,2) = nanmean(ffdifftmp,2);
 
 % ======== plot
 plot([1 2], Y', '-', 'Color', [0.7 0.7 0.7]);
-lt_plot([1 2]+0.1, mean(Y), {'Errors', lt_sem(Y)});
+lt_plot([1 2]+0.1, nanmean(Y), {'Errors', lt_sem(Y)});
 lt_plot_zeroline;
 % --- stats
 for j=1:2
@@ -1262,7 +1289,8 @@ lt_figure; hold on;
 % =============================== TARGET
 lt_subplot(2,2,1); hold on;
 title('target');
-inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end-1),1,2);
@@ -1295,7 +1323,8 @@ lt_plot_pvalue(p, 'ranksum vs', 1);
 % =============================== TARGET
 lt_subplot(2,2,1); hold on;
 title('target');
-inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==1 & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end-1),1,2);
@@ -1328,8 +1357,9 @@ lt_plot_pvalue(p, 'ranksum vs', 1);
 % =============================== SAME TYPE
 lt_subplot(2,2,2); hold on;
 title('SAME');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==1; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end-1),1,2);
@@ -1363,8 +1393,9 @@ lt_plot_pvalue(p, 'ranksum vs', 1);
 % =============================== SAME TYPE
 lt_subplot(2,2,3); hold on;
 title('DIFF');
-inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
-    & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+% inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0 ...
+%     & ~any(isnan(DATSTRUCT.AllFFedges),2); % makes sure each datapoint has all days
+inds = DATSTRUCT.AllIsTarg==0 & DATSTRUCT.AllIsSame==0; % makes sure each datapoint has all days
 
 % ----------- all differences
 ffdiff = diff(DATSTRUCT.AllFFedges(inds,ind_wnon:end-1),1,2);

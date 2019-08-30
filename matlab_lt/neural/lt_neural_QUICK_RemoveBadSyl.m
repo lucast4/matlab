@@ -142,9 +142,11 @@ SylsBad = {...,
 %% ========== fill in whether is "noise" or "wn"
 % === if empty, then is "wn"
 for i=1:length(SylsBad)
-   if length(SylsBad{i})==4
+   if length(SylsBad{i})==3
        % then add on the end
-      SylsBad{i} = [SylsBad{i} 'wn'];
+      SylsBad{i} = [SylsBad{i} 'noise'];
+   elseif isempty(SylsBad{i}{4})
+       SylsBad{i}{4} = 'noise';
    end
 end
 
@@ -154,22 +156,21 @@ sylbad = 0;
 for j=1:length(SylsBad)
     tmp1 = strcmp(SylsBad{j}{1}, bname);
     tmp2 = strcmp(SylsBad{j}{2}, ename);
-    tmp3 = SylsBad{j}{3}==swnum;
-    tmp4 = strcmp(SylsBad{j}{4}, syltoken);
+    tmp3 = strcmp(SylsBad{j}{3}, syltoken);
     
     % -- if this is chan to exclude, then abort
-    if ~isempty(chanthis) & length(SylsBad{j})>5
+    if ~isempty(chanthis) & length(SylsBad{j})>4
         
-        if any(ismember(SylsBad{j}{6}, chanthis))
+        if any(ismember(SylsBad{j}{5}, chanthis))
         % then this channel should be excludede, i.e. this syl cannot be
         % bad for this chan
             continue
         end
     end
     
-    if all([tmp1 tmp2 tmp3 tmp4]) & any(ismember(typesToRemove, SylsBad{j}{5}))
+    if all([tmp1 tmp2 tmp3]) & any(ismember(typesToRemove, SylsBad{j}{4}))
         sylbad=1;
-        disp(['BAD SYL: ' bname '-' ename '-sw' num2str(swnum) '-' syltoken]);
+        disp(['BAD SYL: ' bname '-' ename '-' syltoken]);
         break
     end
 end
