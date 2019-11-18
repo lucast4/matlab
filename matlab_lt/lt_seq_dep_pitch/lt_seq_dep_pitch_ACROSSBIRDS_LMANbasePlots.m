@@ -277,6 +277,12 @@ XY(indflip,:) = fliplr(XY(indflip,:));
 % -- annotate cases where MUSC brought separation closer
 indsMuscCloser = abs(separationMUSC_paired(inds)) < abs(separationPBS_paired(inds));
 
+for i=1:length(inds)
+   ii = inds(i);
+   if abs(separationMUSC_paired(ii)) < abs(separationPBS_paired(ii)) & XY(i,1)<0 & XY(i,2)>0 & IsSameSyl(i)==1
+      disp(ii); 
+   end
+end
 % --- PLOT
 lt_regress(XY(:,2), XY(:,1), 1, 0, 1, 1, color);
 plot(XY(indsMuscCloser, 1), XY(indsMuscCloser,2), 'mo');

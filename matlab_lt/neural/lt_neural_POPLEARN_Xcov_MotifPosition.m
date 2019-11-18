@@ -42,6 +42,8 @@ All_posreltarget = [];
 All_swunique = [];
 All_issame = [];
 All_bnum = [];
+All_enum = [];
+All_channum = [];
 for i=1:length(indsgrp_chanpair_unique)
     
     swgrpthis = indsgrp_chanpair_unique(i);
@@ -146,16 +148,304 @@ for i=1:length(indsgrp_chanpair_unique)
     All_posreltarget = [All_posreltarget; posreltarget];
     All_bnum = [All_bnum; bnum*ones(size(cohscal))];
     All_swunique = [All_swunique; i*ones(size(cohscal))];
+    All_enum = [All_enum; enum*ones(size(cohscal))];
 end
 
 assert(max(All_posreltarget)<1, 'if there are some follolwing, then want to modify code to plot those. code would be fine if not, but would be intersting to look at.');
+
+%% ============= [PUBLIATION] ADJACENT
+lt_figure; hold on;
+
+
+% ================ ALL
+lt_subplot(2,3,1); hold on;
+title('all syl (col=bird)');
+xlabel('TARG -- ADJACENT (preceding) -- REST(same motif) -- diff motif');
+ylabel('coh change');
+
+pcolall = lt_make_plot_colors(max(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+Bnum =[];
+Enum = [];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i;
+    bnum = All_bnum(indsthis);
+    bnum = unique(bnum); assert(length(bnum)==1);
+    enum = All_enum(indsthis);
+    enum = unique(enum); assert(length(enum)==1);    
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    diffmotifID = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+    
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    disp(unique(All_bnum(indsthis)));
+    X = 1:4;
+    Y = nan(1,4);
+    
+    % -- targ
+    Y(1) = mean(cohscal(pos==0));
+    % -- adjacnet (-preceding)
+    Y(2) = mean(cohscal(pos==-1));
+    % -- rest
+    Y(3) = mean(cohscal(pos<-1 & pos>diffmotifID));
+    % -- adjacent, folliwi
+    % -- diff motif
+    Y(4) = mean(cohscal(pos==diffmotifID));
+    
+    if any(pos>0)
+        disp('NOTE: in some case ther eare syls folliowujng - ignoreing those for "adjavent');
+    end
+    %     assert(all(pos<1), 'assumed that all are precedeing...');
+    
+    plot(X+0.4*rand-0.2, Y, '-o', 'Color', pcol);
+    
+    Yall =[Yall; Y];
+    Bnum = [Bnum; bnum]; 
+    Enum = [Enum; enum];
+end
+
+
+
+% ====================== PLOTS
+
+% lt_plot(X+0.3, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'k'});
+xlim([0 X(end)+1]);
+lt_plot_zeroline;
+N = sum(~isnan(Yall));
+lt_plot_annotation(1, num2str(N), 'm')
+
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+lt_subplot(2,3,2); hold on;
+lt_plot_distributionPlot(Yall)
+title("all syls")
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+
+lt_subplot(2,3,3); hold on;
+title('all syl (only if has targ and adjacent)');
+% xlabel('TARG -- ADJACENT (preceding) -- REST');
+ylabel('coh change');
+
+Bnum(any(isnan(Yall(:,[1 2]))')) = [];
+Enum(any(isnan(Yall(:,[1 2]))')) = [];
+Yall = Yall(:,[1 2]);
+Yall(any(isnan(Yall(:,[1 2]))'),:) = [];
+X = 1:size(Yall,2);
+plot(X, Yall', '-k');
+xlim([0 max(X)+1]);
+% lt_plot(X+0.2, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'r'});
+lt_plot_zeroline;
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+xlim([0 X(end)+1]);
+lt_plot_zeroline;
+N = sum(~isnan(Yall));
+lt_plot_annotation(1, num2str(N), 'm')
+
+
+
+lt_subplot(2,3,4); hold on;
+lt_plot_distributionPlot(Yall)
+title("all syls (only if have all cases)")
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+
+
+% ==================== LME
+% Yallcell = mat2cell(Yall, size(Yall,1), ones(size(Yall,2),1));
+Yallvec = Yall(:);
+Bnumvec = repmat(Bnum, 1, size(Yall,2));
+Bnumvec = Bnumvec(:);
+Enumvec = lt_tools_grp2idx({Bnum, Enum});
+Enumvec = repmat(Enumvec, 1, size(Yall,2));
+Enumvec = Enumvec(:);
+Syltype = repmat(size(Yall,2)-1:-1:0, size(Yall,1), 1);
+Syltype = Syltype(:);
+dat = table(Yallvec, categorical(Bnumvec), categorical(Enumvec), ...
+    Syltype, 'VariableNames', {'Yresponse', 'bnum', 'exptnum', 'syltype'});
+% dat=dat(dat.syltype(:)==categorical(1) | dat.syltype(:)==categorical(2), :); % only care about target and adjacent
+formula = 'Yresponse ~ syltype + (syltype|exptnum)';
+lme = fitlme(dat, formula, 'StartMethod', 'random')
+disp("LME: syltype 0 (intercept) is adjacents. syltype 1 is targ. only cases where they have both targ and adjacent.")
+disp("N unique expts after only keeping cases with adjacent: ")
+disp(length(unique(Enumvec)))
+
+%% CONITNUED
+pcolall = lt_make_plot_colors(max(unique(All_bnum)), 0,0);
+Xall = [];
+Yall =[];
+Bnum =[];
+Enum = [];
+for i=unique(All_swunique)'
+    
+    indsthis = All_swunique==i;
+    bnum = All_bnum(indsthis);
+    bnum = unique(bnum); assert(length(bnum)==1);
+    enum = All_enum(indsthis);
+    enum = unique(enum); assert(length(enum)==1);    
+    pos = All_posreltarget(indsthis);
+    cohscal = All_cohscal(indsthis);
+    issame = All_issame(indsthis);
+    istarg = All_istarg(indsthis);
+    
+    % -- any nan, convert to large number
+    pos(isnan(pos)) = min(All_posreltarget)-2;
+    diffmotifID = min(All_posreltarget)-2;
+    
+    % --- average over chanels
+    cohscal = grpstats(cohscal, pos);
+    issame = grpstats(issame, pos);
+    istarg = grpstats(istarg, pos);
+    pos = unique(pos);
+    
+    % --- sort
+    [~, indsort] = sort(pos);
+    pos = pos(indsort);
+    cohscal = cohscal(indsort);
+    
+    
+    % === plot
+    pcol = pcolall{unique(All_bnum(indsthis))};
+    disp(unique(All_bnum(indsthis)));
+    X = 1:4;
+    Y = nan(1,4);
+    
+    % -- targ
+    Y(1) = mean(cohscal(pos==0));
+    % -- adjacnet (-preceding)
+    Y(2) = mean(cohscal(pos==-1));
+    % -- rest
+    Y(3) = mean(cohscal(pos<-1 & pos>diffmotifID));
+    % -- adjacent, folliwi
+    % -- diff motif
+    Y(4) = mean(cohscal(pos==diffmotifID));
+    
+    if any(pos>0)
+        disp('NOTE: in some case ther eare syls folliowujng - ignoreing those for "adjavent');
+    end
+    %     assert(all(pos<1), 'assumed that all are precedeing...');
+    
+    plot(X+0.4*rand-0.2, Y, '-o', 'Color', pcol);
+    
+    Yall =[Yall; Y];
+    Bnum = [Bnum; bnum]; 
+    Enum = [Enum; enum];
+end
+
+
+
+
+lt_subplot(2,3,5); hold on;
+title('all syl (only if has all cases)');
+% xlabel('TARG -- ADJACENT (preceding) -- REST');
+ylabel('coh change');
+
+Bnum(any(isnan(Yall)')) = [];
+Enum(any(isnan(Yall)')) = [];
+Yall(any(isnan(Yall)'),:) = [];
+plot(X, Yall', '-k');
+xlim([0 max(X)+1]);
+% lt_plot(X+0.2, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'r'});
+lt_plot_zeroline;
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+xlim([0 X(end)+1]);
+lt_plot_zeroline;
+N = sum(~isnan(Yall));
+lt_plot_annotation(1, num2str(N), 'm')
+
+
+lt_subplot(2,3,6); hold on;
+lt_plot_distributionPlot(Yall)
+title("all syls (only if have all cases)")
+% -- overlay bird means
+[Ymean, Ysem] = grpstats(Yall, Bnum, {"nanmean", @(x)lt_sem(x)});
+for i=1:length(unique(Bnum))
+    b = unique(Bnum);
+    pcol = pcolall{b(i)};
+    ym = Ymean(i,:);
+    ys = Ysem(i,:);
+    x = 1:length(ym);
+    lt_plot(x+0.05*i, ym, {'Errors', ys, 'Color', pcol, 'LineStyle', '-'});
+end
+
+%% LME MODEL?
+
+
+
 %% =============== [PLOT] -- TARG, ADJACENT, NOT ADJACENT
 lt_figure; hold on;
 
 
 % ================ ALL
 lt_subplot(2,2,1); hold on;
-title('all syl');
+title('all syl (col=bird)');
 xlabel('TARG -- ADJACENT (preceding) -- REST(same motif) -- diff motif');
 ylabel('coh change');
 
@@ -217,7 +507,8 @@ end
 lt_plot(X+0.3, nanmean(Yall,1), {'Errors', lt_sem(Yall), 'Color', 'k'});
 xlim([0 X(end)+1]);
 lt_plot_zeroline;
-
+N = sum(~isnan(Yall));
+lt_plot_annotation(1, num2str(N), 'm')
 
 
 % =========== REPLOT, BUT USING DIFFERENCE (i.e paired structure included)

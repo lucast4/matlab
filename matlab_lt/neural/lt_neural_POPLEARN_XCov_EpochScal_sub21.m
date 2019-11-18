@@ -95,6 +95,13 @@ y = squeeze(allDat_BaseEpochs_FFsplits_adaptivedir(:,2,1,indsthis) ...
 y = [y(1,:); nanmean(y(wnbins, :),1)];
 x = 1:size(y,1);
 
+% =============== DO LME
+indsexpt = categorical(lt_tools_grp2idx({allbnum, allenum}));
+xcov_ad_minus_nonad_without_subtr_base = y(2,:)';
+dat = table(xcov_ad_minus_nonad_without_subtr_base, indsexpt);
+formula = 'xcov_ad_minus_nonad_without_subtr_base ~ 1 + (1|indsexpt)';
+lme = fitlme(dat, formula)
+
 % ---- actual value
 ymean = nanmean(y,2);
 ysem = lt_sem(y');

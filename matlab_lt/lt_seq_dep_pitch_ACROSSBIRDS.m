@@ -773,15 +773,11 @@ close all;
 OnlyExptsWithNoStartDelay= 0;
 DayWindow = [-3 4]; % [-2 4] mean 2 base days and 1st 4 learning days
 onlyIfSignLearn = 1;
-useHandLabSame= 1;
+useHandLabSame= 1; % default, 1
 [TrialStruct, ParamsTrial] = ...
     lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
     OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame);
 
-% ============== PLOT RANGE OF TIMEPOINTS WITH SINGING DATA
-close all;
-lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial, ...
-    BirdExptIncluded);
 
 
 % ============== [RAW PLOT] DAY VS. NIGHT LEARNING AND GENERALIZATION
@@ -807,10 +803,17 @@ onlyifhaveAllSylTypes = 1; % 1 then needs targ, same, diff...
 % onlyifhaveDataAllDays = 1;
 throwoutnan=1; % then any syl must have dat across all days...
 plotEachExptRaw=0; % then all syls, overlay ff and extracted edges.
-minDurNoSong = 1; % in hours, min time between morning-firstsong lastsong-night
+minDurNoSong = 8; % in hours, min time between morning-firstsong lastsong-night
+% default = 8, to include all data. [use l
 [BirdExptIncluded] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Slopes(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, threshOnSametype, scalemethod, combineSylsInExpt, ...
     onlyifhaveAllSylTypes, throwoutnan, plotEachExptRaw, minDurNoSong);
+
+
+% ============== PLOT RANGE OF TIMEPOINTS WITH SINGING DATA
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_TbyT_datrange(TrialStruct, ParamsTrial, ...
+    BirdExptIncluded);
 
 
 % #################################### COMBINE WITH GENERALIZATION STRUCT
@@ -860,6 +863,7 @@ lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
     ignoreLMANexpt, songasrend, singleRendOnly);
 
 % ================ 1b) take all adjacent syls, not just the first 
+% [PUBLICATION VERSION]
 close all;
 ignoreLMANexpt=1; % usually 1, since they lack full day label
 songasrend = 1; % if 1, then instead of rends, uses songs. 

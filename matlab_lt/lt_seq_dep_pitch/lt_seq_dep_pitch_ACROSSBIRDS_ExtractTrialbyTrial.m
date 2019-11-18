@@ -1,5 +1,11 @@
 function [TrialStruct, Params] = lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
     OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame)
+%% defualt:
+% OnlyExptsWithNoStartDelay= 0;
+% DayWindow = [-3 4]; % [-2 4] mean 2 base days and 1st 4 learning days
+% onlyIfSignLearn = 1;
+% useHandLabSame= 1;
+
 %% 7/31/18 - lt, fix
 % fixing slight issue where for LMAN experiments collected deviation FF,
 % while non-LMAN collected raw FF. did not affect any subsequent analyses,

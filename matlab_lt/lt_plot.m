@@ -91,7 +91,7 @@ else
     end
 %     if ~all(isnan(Y))
         hfig=errorbar(X, Y, Yerr);
-        if ~strcmp(version('-release'), '2017a')
+        if ~strcmp(version('-release'), '2017a') & ~strfind(version('-release'), '2017b')
             errorbar_tick(hfig, 10000000)
         end
 %     else

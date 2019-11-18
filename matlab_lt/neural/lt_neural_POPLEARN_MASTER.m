@@ -525,6 +525,7 @@ save('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_14
     'MOTIFSTATS_Compiled', '-v7.3');
 
 % ==== LOAD 
+% ===================== [PUBLICATION]
 % 1) all data, 2/5/19, up to gr48, RALMANLearn6
 clear all; close all;
 load('/bluejay5/lucas/analyses/neural/MOTIFSTATS_Compiled/MOTIFSTATS_Compiled_05Feb2019_2142.mat');
@@ -2439,7 +2440,7 @@ save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
 savemarker = '100mswind_zscore_smooth_030519_2bins'; % latest, and 6 epochs for Xcovgram
 save([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV', '-v7.3');
 % save([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct', '-v7.3');
-save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3'
+save([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS', '-v7.3');
 
 % =============== [60 m s bins] [3 epochs]
 savemarker = '60mswind_zscore_smooth_031019_3bins'; % latest, and 6 epochs for Xcovgram
@@ -2528,7 +2529,6 @@ load([savedir '/SwitchXCovStruct.mat']);
 load([savedir '/PARAMS.mat']);
 end
 
-
 if (0)
     
 savemarker = '40mswind_zscore_smooth';
@@ -2547,9 +2547,9 @@ load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 % load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
 
+% ################### GOOD
 % ================ [60ms bins - after recurating data][3 epochs] [hi lo ff split]
 % "quarter" for xcov gram, 4 bins for epoch
-% ################### GOOD
 savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgram
 load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat']);
 load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
@@ -2561,6 +2561,7 @@ load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV');
 load([savedir '/SwitchXCovStruct_' savemarker '.mat'], 'SwitchXCovStruct');
 load([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS')
 
+% ===========  [PUBLICATION]
 % ====================== [SAME, but 4 bins for both xcovgram and epochs]
 savemarker = '60mswind_031919_4binsAll';  % 4 bins for both xcovgram and epochs
 load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV');
@@ -2622,6 +2623,18 @@ load([savedir '/SwitchXCovStruct_100mswind_zscore_smooth_021619.mat']);
 load([savedir '/PARAMS_' savemarker '.mat']);
 
 end
+
+%% ==== PUBLICATION VERSION
+savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/POPLEARN/OUTSTRUCT_XCOV/' PARAMS.savemarker];
+
+% ===========  [PUBLICATION]
+savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgram
+load([savedir '/SwitchXCovStruct_' savemarker '.mat']);
+
+% ====================== [SAME, but 4 bins for both xcovgram and epochs]
+savemarker = '60mswind_031919_4binsAll';  % 4 bins for both xcovgram and epochs
+load([savedir '/OUTSTRUCT_XCOV_' savemarker '.mat'], 'OUTSTRUCT_XCOV');
+load([savedir '/PARAMS_' savemarker '.mat'], 'PARAMS')
 
 
 %% ========== [REALIGN XCOVGRAMS TO WN ONSET]
@@ -2889,15 +2902,15 @@ lt_neural_POPLEARN_Xcov_Epochs(OUTSTRUCT, OUTSTRUCT_XCOV, PARAMS, ...
 close all;
 dattype = 'chan';
 % dattype = 'switch';
-scalwind = 1; % t/f window for scalar. (i.e which peak)
-syltype = 1; %, 1,2,3 = targ, same, diff.
-doFFsplit=0;
+scalwind = 1; % [1] t/f window for scalar. (i.e which peak)
+syltype = 1; %, [1] 1,2,3 = targ, same, diff.
+doFFsplit=0; 
 
 % casestokeep = 'goodlearn';
 % casestokeep = 'goodneural';
 % casestokeep = 'goodlearnneural';
 % casestokeep = 'badlearn';
-casestokeep = 'all';
+casestokeep = 'all'; % [DEFAULT]
 
 
 % ========== TO LOOK AT OVERALL LEARNING/LEARNING RATE
@@ -2908,8 +2921,8 @@ casestokeep = 'all';
 % ========== TO LOOK AT WITHIN EXPT CHANGES
 % mintraindur = 2.5; % hours. (have to have data)
 % mintotaltrain = 2; % hours (end of data minus base) (doesn't have to actually have data throughotu)
-mintraindur = 1; % hours. (have to have data)
-mintotaltrain = 1; % hours (end of data minus base) (doesn't have to actually have data throughotu)
+mintraindur = 1; % [DEFAULT] hours. (have to have data)
+mintotaltrain = 1; % [DEFAULT] hours (end of data minus base) (doesn't have to actually have data throughotu)
 % mintraindur = 0; % hours. (have to have data)
 % mintotaltrain = 0; % hours (end of data minus base) (doesn't have to actually have data throughotu)
 
@@ -2919,7 +2932,7 @@ mintotaltrain = 1; % hours (end of data minus base) (doesn't have to actually ha
 % casestokeep = 'goodlearnneural';
 
 % doshift =0; % if 1, then asks whetehr neural in bin n predicts learn in bin n+1;
-adhoc_replacelearnwithWind2 = 0; % NOTE: have not modified FFsplit code to run this.
+adhoc_replacelearnwithWind2 = 0; % [0] NOTE: have not modified FFsplit code to run this.
 
 % === NOTES ABOUT FFSPLIT
 % - have not coded for dattype=switch
@@ -2931,13 +2944,13 @@ adhoc_replacelearnwithWind2 = 0; % NOTE: have not modified FFsplit code to run t
 % - the "casestokeep" does not apply for ffsplit analyses.
 
 % ---- FF SPLIT? USE THESE PARAMS
-% FFsplit_pu69learn2_combine = 1; % combines all bins into one bin (since only looked at trials at end of learning, since noisy neural during learning)
-% mintraindur = 0; % hours. (have to have data)
-% mintotaltrain = 3; % hours (end of data minus base) (doesn't have to actually have data throughotu)
-% doFFsplit=1;
-% useAd_Nonad_Average_forBaseline = 0; % if 0, then (adaptive minus adaptive), (nonad - nonad)
-% % if 1, then for each case subtract the baseline mean over non and ad)
-% % DEFAULT: 0
+FFsplit_pu69learn2_combine = 1; % [1] combines all bins into one bin (since only looked at trials at end of learning, since noisy neural during learning)
+mintraindur = 0; % [0] hours. (have to have data)
+mintotaltrain = 3; % [3] hours (end of data minus base) (doesn't have to actually have data throughotu)
+doFFsplit=1; % [1]
+useAd_Nonad_Average_forBaseline = 0; % [0] if 0, then (adaptive minus adaptive), (nonad - nonad)
+% if 1, then for each case subtract the baseline mean over non and ad)
+% DEFAULT: 0
 
 lt_neural_POPLEARN_Xcov_EpochScal(OUTSTRUCT_XCOV, PARAMS, ...
     onlygoodexpt, SwitchStruct, dattype, scalwind, syltype, casestokeep, ...
@@ -3014,19 +3027,21 @@ onlygoodexpt = 1;
 % lagwindows = [-0.011 -0.001 0.029 0.046]; % exclusive... , will take all intervals.
 % lagwindows = [-0.0126 0.001 0.029 0.046]; % 2.5ms windows
 % lagwindows = [-0.011 0.001 0.027 0.045]; % 2.5ms, smoothed DEFAULT
-lagwindows = [-0.015 0.007 0.029 0.046]; % OK % 100ms window
-ffbinsedges_indstoplot = [1 3]; % which ones of lagwindow intervals to p[lot?
-
-lagwindows = [-0.016 0.006]; % OK % 60ms window
+% -- good?:
+% lagwindows = [-0.015 0.007 0.029 0.046]; % OK % 100ms window
+% ffbinsedges_indstoplot = [1 3]; % which ones of lagwindow intervals to p[lot?
+% 
+% lagwindows = [-0.016 0.006]; % OK % 60ms window
+lagwindows = [-0.009 0.006]; % OK % 60ms window
 ffbinsedges_indstoplot = [1]; % which ones of lagwindow intervals to p[lot?
 dattype = 'chan';
 % dattype = 'switch';
 % clim = [-0.015 0.015];
 plotindivswitch=0;
 % clim = [-1.5e-4 1.5e-4];
-clim = [-0.1 0.1];
-XLIM = [-0.1 -0.04];
-YLIMGRAM = [-0.05 0.05];
+% clim = [-0.1 0.1];
+% XLIM = [-0.1 -0.04];
+% YLIMGRAM = [-0.05 0.05];
 clim = [-0.3 0.3];
 XLIM = [-0.1 -0.01];
 YLIMGRAM = [-0.05 0.05];
@@ -3035,12 +3050,15 @@ plotlines = 1; % then plots each channel on the summary figure.
 % === do ffsplit?
 ffsplitparams = struct;
 ffsplitparams.dosplit = 1; % on or off
-ffsplitparams.epochtoplot = 3:4;
-ffsplitparams.adaptivebin = 2; % usually 1=non-adaptive; 2=adaptive, 3= take difference
+ffsplitparams.epochtoplot = 3:4; % [3, 4]
+ffsplitparams.adaptivebin = 3; % usually 1=non-adaptive; 2=adaptive, 3= take difference
+
+doOnlyPlotAdjacentSyls = 0;
 
 lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
     onlygoodexpt, PARAMS, dattype, lagwindows, clim, ffbinsedges_indstoplot, ...
-    plotindivswitch, XLIM, YLIMGRAM, plotlines, ffsplitparams);
+    plotindivswitch, XLIM, YLIMGRAM, plotlines, ffsplitparams, ...
+    doOnlyPlotAdjacentSyls);
 
 
 %% =========== [XCOV] PLOT INVIDIDUAL EXPEIRMNTS, BUT XCOV GRAM
@@ -3218,6 +3236,7 @@ lt_neural_POPLEARN_XCov_PlotScal(frchange_neur2, OUTSTRUCT_XCOV, SwitchCohStruct
 
 
 %% ========== [XCOV SCALAR] - MOTIF POSITION...
+% Also adjacent sylalbles
 % NOTE: is currently plotting at level of channel pair. to change is easy -
 % eitehr replace which indsgrp is used in the code by hand or add as
 % variable.

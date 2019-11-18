@@ -918,6 +918,7 @@ colorscheme = 'learnsig';
 plotsmooth = 0;
 logtime = 0;
 xedges_hand = [0 5 10 20 40 120]; % leave expty if want to automatically [should be [0 stuff]
+xedges_hand = [0 2 5 10 20 60 120]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 5 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 2 20]; % leave expty if want to automatically [should be [0 stuff]
@@ -1506,6 +1507,13 @@ lt_plot_pvalue(p, 'vs', 1);
 FFall = [];
 FFall_targMinusSame = [];
 Tall = [];
+
+% tally to get N.
+b_targ=[];
+s_targ=[];
+b_same =[];
+s_same = [];
+
 for i = 1:nbirds
     for ii=1:nexpts
         
@@ -1578,6 +1586,7 @@ title('targ');
 ylabel('hz');
 
 Y = OUTSTRUCT.FFdevMean_binned(Inds_IsSame==1 & Inds_IsTarg==1, :);
+
 x = 1:size(Y,2);
 plot(x, Y', '-k');
 
@@ -1592,6 +1601,13 @@ for j=1:size(Y,2)
     end
     end
 end
+B = Inds_birdnum(Inds_IsSame==1 & Inds_IsTarg==1);
+E = Inds_exptnum(Inds_IsSame==1 & Inds_IsTarg==1);
+S = Inds_sylcounter(Inds_IsSame==1 & Inds_IsTarg==1);
+Nbirds = length(unique(B));
+Nsyls = length(unique(S));
+Nexpt = length(unique(lt_tools_grp2idx({B', E'})));
+lt_plot_annotation(1, ["Nbirds=" num2str(Nbirds) ", Nexpt=" num2str(Nexpt) ",Nsyls=" num2str(Nsyls)]);
 
 % ====== % all same tupe syls
 lt_subplot(3,2,2); hold on;
@@ -1615,6 +1631,14 @@ for j=1:size(Y,2)
     end
     end
 end
+B = Inds_birdnum(Inds_IsSame==1 & Inds_IsTarg==0);
+E = Inds_exptnum(Inds_IsSame==1 & Inds_IsTarg==0);
+S = Inds_sylcounter(Inds_IsSame==1 & Inds_IsTarg==0);
+Nbirds = length(unique(B));
+Nsyls = length(unique(S));
+Nexpt = length(unique(lt_tools_grp2idx({B', E'})));
+lt_plot_annotation(1, ["Nbirds=" num2str(Nbirds) ", Nexpt=" num2str(Nexpt) ",Nsyls=" num2str(Nsyls)]);
+
 
 % ====== % all diff tupe syls
 lt_subplot(3,2,3); hold on;
@@ -1635,6 +1659,13 @@ for j=1:size(Y,2)
     end
     end
 end
+B = Inds_birdnum(Inds_IsSame==0 & Inds_IsTarg==0);
+E = Inds_exptnum(Inds_IsSame==0 & Inds_IsTarg==0);
+S = Inds_sylcounter(Inds_IsSame==0 & Inds_IsTarg==0);
+Nbirds = length(unique(B));
+Nsyls = length(unique(S));
+Nexpt = length(unique(lt_tools_grp2idx({B', E'})));
+lt_plot_annotation(1, ["Nbirds=" num2str(Nbirds) ", Nexpt=" num2str(Nexpt) ",Nsyls=" num2str(Nsyls)]);
 
 
 % ====== 2) subtract diff type
@@ -1656,6 +1687,8 @@ for ii = 1:size(FFall,2)
     pp = signrank(FFall(:,ii));
     lt_plot_text(x(ii), 2*ymean(ii), ['p=' num2str(pp)], 'm', 8);    
 end
+
+
 
 % ====== 2) subtract diff type
 lt_subplot(3,2,5); hold on;

@@ -87,13 +87,16 @@ lmesimple = fitlme(dat, formula, 'StartMethod', 'random');
 
 if onlyIfSameType==1
     % --- use categories for the three syl types
-    formula = 'Yresponse ~ syltype + (istarg|exptnum) + (istarg|exptnum:chanpairID)';
+%     formula = 'Yresponse ~ syltype + (syltype|exptnum) + (syltype|exptnum:chanpairID)';
+    formula = 'Yresponse ~ syltype + (syltype|exptnum)';
+%     formula = 'Yresponse ~ syltype + (syltype|bnum) + (syltype|exptnum)';
 else
-    formula = 'Yresponse ~ istarg + (istarg|exptnum) + (istarg|exptnum:chanpairID)';
+%     formula = 'Yresponse ~ istarg + (istarg|exptnum) + (istarg|exptnum:chanpairID)';
+    formula = 'Yresponse ~ istarg + (istarg|exptnum)';
 end
 % formula = 'Yresponse ~ istarg + (istarg|bnum) + (istarg|bnum:exptnum) + (istarg|bnum:exptnum:chanpairID)';
 
-lme = fitlme(dat, formula, 'StartMethod', 'random');
+lme = fitlme(dat, formula, 'StartMethod', 'random')
 
 
 % ################## plot
@@ -109,7 +112,7 @@ formula = 'Yresponse ~ 1 + (1|exptnum)';
 % formula = 'Yresponse ~ istarg + (istarg|bnum) + (istarg|bnum:exptnum) + (istarg|bnum:exptnum:chanpairID)';
 
 dat = dat(dat.istarg==1,:);
-lme = fitlme(dat, formula, 'StartMethod', 'random');
+lme = fitlme(dat, formula, 'StartMethod', 'random')
 
 
 % ################## plot

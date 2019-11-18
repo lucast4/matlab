@@ -1,6 +1,7 @@
 function lt_neural_POPLEARN_Xcov_PlotTcourse(OUTSTRUCT_XCOV, SwitchStruct, ...
     onlygoodexpt, PARAMS, dattype, lagwindows, clim, ffbinsedges_indstoplot, ...
-    plotindivswitch, XLIM, YLIMGRAM, plotlines, ffsplitparams)
+    plotindivswitch, XLIM, YLIMGRAM, plotlines, ffsplitparams, ...
+    doOnlyPlotAdjacentSyls)
 %% lt 2/6/19 - takes lag window, and plots timecourse, relative to onset of syl
 
 %%
@@ -8,6 +9,62 @@ if onlygoodexpt==1
     % ===== filter outstruct
     [OUTSTRUCT_XCOV, indstokeep] = lt_neural_Coher_QUICK_FilterOUTSTRUCT(OUTSTRUCT_XCOV, ...
         SwitchStruct, 'xcov_spikes');
+end
+
+%% ===== ONLY KEEP SYLLABLES ADJACENT TO TARGET
+% - finds each targ syl (for a given channel pair). then iterates over all
+% otheres to find the preceding syl. Then replaces outstruct so that it
+% only has the adjacent syl, and those are named artifically as target.
+
+NUMBACK = 1;
+if doOnlyPlotAdjacentSyls==1
+    % --- go thru each expt and find the one syl that is next to target
+    inds = find(OUTSTRUCT_XCOV.istarg==1);
+    indstokeep = [];
+    for i=inds'
+
+    % --- find what bird/syl this corresponds to
+    nn = OUTSTRUCT_XCOV.neurpairnum(i);
+    bb = OUTSTRUCT_XCOV.bnum(i);
+    ee = OUTSTRUCT_XCOV.enum(i);
+    ss = OUTSTRUCT_XCOV.swnum(i);
+    mname = OUTSTRUCT_XCOV.motifname{i};
+
+    bname = SwitchStruct.bird(bb).birdname;
+
+    [~, ~, motifposition_targ] = ...
+    lt_neural_QUICK_MotifID(bname, mname);
+
+    % -- find the adjacent syllable
+    indstocheck = find(OUTSTRUCT_XCOV.bnum==bb & OUTSTRUCT_XCOV.neurpairnum==nn & ...
+        OUTSTRUCT_XCOV.enum==ee & OUTSTRUCT_XCOV.switch==ss);
+
+    disp('---');
+    disp([bname '-' num2str(ee) '-' num2str(ss) '-n' num2str(nn)])
+    %     disp(motifposition_targ)
+    for ii=indstocheck'
+
+        % --- get the posotion of this syl
+        mname_2 = OUTSTRUCT_XCOV.motifname{ii};
+
+        [~, ~, motifposition_other] = lt_neural_QUICK_MotifID(bname, mname_2);
+    %         disp(motifposition_other)
+        if motifposition_other(1)==motifposition_targ(1) & ...
+                motifposition_other(2)==(motifposition_targ(2)-NUMBACK)
+                % --- if it is preceding the target, then keep
+            disp([num2str(ii) ', ' mname_2 ' before ' mname]);    
+            indstokeep = [indstokeep ii];
+        end
+
+
+    end
+
+    end
+
+    % =============== ONLY KEEP THESE INDS - RENAME EVERYTHING AS TARGET
+    OUTSTRUCT_XCOV = lt_structure_subsample_all_fields(OUTSTRUCT_XCOV, indstokeep, 1);
+    OUTSTRUCT_XCOV.istarg = ones(length(OUTSTRUCT_XCOV.istarg),1);
+    OUTSTRUCT_XCOV.issame = ones(length(OUTSTRUCT_XCOV.issame),1);
 end
 
 %% ============== IF WANT TO PLOT ADAPTIVE PITCH TRIALS (OR NONADAPTIVE)
@@ -38,6 +95,8 @@ if ffsplitparams.dosplit==1
         OUTSTRUCT_XCOV.XcovgramBase = ybase;
         OUTSTRUCT_XCOV.XcovgramWN = ywn;
 end
+
+
 %% group based on syl type
 
 if strcmp(dattype, 'switch')

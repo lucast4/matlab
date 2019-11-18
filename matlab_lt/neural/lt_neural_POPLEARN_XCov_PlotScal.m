@@ -154,8 +154,11 @@ for i=1:length(indsgrp_switch_unique)
     x = unique(motifID);
     
     % ================= PLOT MEAN
-    lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
-    
+    disp(ymean);
+    disp(x);
+    if length(x)==length(ymean)
+        lt_plot(x+0.2, ymean, {'Errors', ysem, 'Color', 'r'});
+    end
     
     % ===================== ANNOTATE PLOT.
     % -------- NOTE DOWN POSITION OF TARGET SYSL
@@ -903,7 +906,7 @@ if size(Yall,2)>3
     xthis = colsthis + XSHIFT;
     plot(xthis, ythis', 'o-k');
     xlim([0 5+XSHIFT]);
-    if size(ythis,1)>1
+    if size(ythis,1)>1po
         lt_plot(xthis+0.1, mean(ythis,1), {'Errors', lt_sem(ythis), 'Color', 'r'});
     end
     if length(colsthis)==2
