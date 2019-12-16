@@ -99,12 +99,12 @@ if plotON==1;
     end
 end
 
-    plotcolsummary = 'r';
-    if plotcol =='r';
-        plotcolsummary = 'k';
-    end
+plotcolsummary = 'r';
+if plotcol =='r';
+    plotcolsummary = 'k';
+end
 
-    
+
 if plotOnlyLineSummary==1
     plot(xlim,b(1) + b(2).*xlim,'-','Color',plotcolsummary,'LineWidth',2);
     

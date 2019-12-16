@@ -22,6 +22,7 @@ NumBirds = length(TrialStruct.birds);
 
 %% =========== get ffvals by song for each syl
 
+
 for i=1:NumBirds
     
     numexpts = length(TrialStruct.birds(i).exptnum);
@@ -166,6 +167,7 @@ if plotRaw==1
 end
 
 %% =================== correlation of between syls, using song by song dat
+
 AllXcov = struct;
 AllXcov.sametype.base = [];
 AllXcov.sametype.WNon = [];
@@ -346,8 +348,8 @@ shadedErrorBar(lag, ccmean, ccsem, {'Color', plotcol}, 1);
 lt_plot_zeroline;
 % ylim([-0.2 0.8]);
 
-%% ================== 1) interpolate to get continuous signal (can't use trials since not fully labeled).
 
+%% note down if is SDP experiment
 
 for i=1:NumBirds
     
@@ -355,7 +357,246 @@ for i=1:NumBirds
     
     for ii=1:numexpts
         
+        isSDP = isfield(TrialStruct.birds(i).exptnum(ii).sylnum(1), 'INFO_SylDimensions');
+        TrialStruct.birds(i).exptnum(ii).isSDP=isSDP;
+    end
+end
+
+
+
+%% collect each day as datapoint
+
+takesongaverage = 0;
+dosmooth=1;
+
+YvalsAllAll = {};
+BirdAll = [];
+EnumAll = [];
+SylnumAll = {};
+DayAll = [];
+
+for i=1:NumBirds
+    
+    numexpts = length(TrialStruct.birds(i).exptnum);
+    
+    for ii=1:numexpts
         
+        if TrialStruct.birds(i).exptnum(ii).isSDP==1
+            disp("skipping, since is not fully labeled (i.e. is SDP)");
+            continue
+        end
+        
+        disp(i);
+        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+        day1 = floor(min(cellfun(@(x)min(x), {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals})));
+        dayend = floor(max(cellfun(@(x)max(x), {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals})));
+        daylist = day1:dayend;
+        
+        % go thru each day
+        for day = daylist
+            assert(length(day)==1);
+            
+            % === for each syl, extract timecourse
+            % -- get x base
+            try
+            func = @(X) max(X(floor(X)==day));
+            maxtime = min(cellfun(func, {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals}));
+            func = @(X) min(X(floor(X)==day));
+            mintime = max(cellfun(func,  {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals}));
+            catch err
+            disp("cought error, skipping, think, but not sure, that this is ok... i.e., this dayu doesnt exist")
+            continue
+            end
+            xvals = mintime-xbinsize:xbinsize:maxtime+xbinsize;
+
+            YvalsAll = nan(numsyls, length(xvals)); % syls x timepts
+
+            for j=1:numsyls
+
+                tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals;
+                ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).FFvals;
+                
+                % --- only keep if is within the day
+                indsday = floor(tvals)==day;
+                tvals=tvals(indsday);
+                ffvals = ffvals(indsday);
+
+                % --- sort
+                [~, indstmp] = sort(tvals);
+                tvals = tvals(indstmp);
+                ffvals = ffvals(indstmp);
+
+                % ------------ convert to song by song FF
+                if takesongaverage ==1
+                    ffvals = grpstats(ffvals, tvals);
+                    tvals = unique(tvals);
+                end
+
+                %         lt_figure; hold on;
+                %
+                %         subplot(411); title('linear');
+                %         yvals = interp1(tvals, ffvals, xvals, 'linear');
+                %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
+                %
+                %                 subplot(412); title('nearest');
+                %         yvals = interp1(tvals, ffvals, xvals, 'nearest');
+                %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
+                %
+                %
+                %         subplot(413); title('cubic');
+
+                if dosmooth==1
+                    fraction_of_data_for_fit = 0.25;
+                    %             smooth(tvals,ffvals,fraction_of_data_for_fit,'rloess');
+                    %             fit(tvals,ffvals,'lowess')
+                    ffvals_1 = ffvals;
+                    ffvals = fLOESS([tvals ffvals], fraction_of_data_for_fit);
+                end
+
+                ffvals_2 = ffvals;
+                %             yvals = interp1(tvals, ffvals, xvals, 'pchip');
+                assert(length(unique(tvals))/length(tvals)>0.95, "then cannot do unique, throwing out too much");
+                
+                [~, indstmp] = unique(tvals);
+                tvals = tvals(indstmp);
+                ffvals = ffvals(indstmp);
+                
+                yvals = interp1(tvals, ffvals, xvals, 'linear');
+                %             yvals =     smooth_out.fb=smooth(tms_out.fb,ff_out.fb,fraction_of_data_for_fit,'rloess');
+
+                %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
+                %
+                %         subplot(414); title('spline');
+                %         yvals = interp1(tvals, ffvals, xvals, 'spline');
+                %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
+                %         pause
+                %         close all
+                if (0)
+                    figure; hold on;
+                    plot(tvals, ffvals_1, 'ok');
+                    plot(tvals, ffvals_2, 'or');
+                    plot(xvals, yvals, 'xb');
+                end
+                % ================= COLLECT ALL SYLS
+                YvalsAll(j,:) = yvals;
+
+            end
+            YvalsAll = YvalsAll(:, 5:end-5);
+            assert(~any(isnan(YvalsAll(:))), 'asfasd');
+            YvalsAll = int16(YvalsAll);
+
+            % ========== STORE
+            YvalsAllAll = [YvalsAllAll; YvalsAll];
+            BirdAll = [BirdAll; i];
+            EnumAll = [EnumAll; ii];
+            SylnumAll = [SylnumAll; [1:numsyls]];
+            DayAll = [DayAll; day];
+
+        end
+    end
+end
+
+
+%% ==== get all xcorrs
+        
+
+NumBirds = length(TrialStruct.birds);
+
+Xcorrout_all = [];
+Lags_all = [];
+Bnum_all = [];
+Enum_all = [];
+Sylnum_all = [];
+Similar_all = [];
+
+maxday = max(DayAll);
+
+for i=1:NumBirds
+    
+    numexpts = length(TrialStruct.birds(i).exptnum);
+    
+    for ii=1:numexpts
+        
+        if TrialStruct.birds(i).exptnum(ii).isSDP==1
+            continue
+        end
+        
+        numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
+        targsyl = TrialStruct.birds(i).exptnum(ii).targsyl;
+        targsylind = find(strcmp(TrialStruct.birds(i).exptnum(ii).SylsUnique, targsyl));
+        
+        assert(find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]) == targsylind, "why no match");
+%         YvalsAll = TrialStruct.birds(i).exptnum(ii).FFinterpAll_sylxtime;
+%         yvals_targ = YvalsAll(targsylind, :);
+        
+        for day=1:maxday
+            disp(["day " num2str(day)]);
+            indstmp = BirdAll==i & EnumAll==ii & DayAll==day;
+                        
+            if any(indstmp)
+                assert(sum(indstmp)==1);
+                YvalsAll = YvalsAllAll{indstmp};
+                assert(numsyls == size(YvalsAll,1));
+             	yvals_targ = YvalsAll(targsylind, :);
+
+                for j=1:numsyls
+                    yvals_this = YvalsAll(j, :);
+
+                    if TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_istarget==1
+                        continue
+                    end
+
+                    % for each syl, get
+                    [xcorrout, lags] = xcorr(yvals_targ-mean(yvals_targ), yvals_this-mean(yvals_this), 100,'unbiased');
+
+                    Xcorrout_all = [Xcorrout_all; xcorrout];
+                    Lags_all = [Lags_all; lags];
+                    Similar_all = [Similar_all; TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_similar];
+                    Bnum_all = [Bnum_all; i];
+                    Enum_all = [Enum_all; ii];
+                    Sylnum_all = [Sylnum_all; j];
+                    
+                end
+            end
+        end
+    end
+end
+
+%%
+figure; hold on;
+subplot(1,2,1); hold on;
+xlabel('lag (min), Target vs. Same-type');
+ylabel('cross correlation');
+title('each line, one syl/day combination');
+indstmp = Similar_all==1;
+xcorrthis = Xcorrout_all(indstmp,:);
+plot(Lags_all(1,:), xcorrthis, '-k');
+
+subplot(1,2,2); hold on;
+xlabel('lag (min), Target vs. Same-type');
+ylabel('cross correlation');
+title('mean/sem over all syls/days');
+plot(Lags_all(1,:), mean(xcorrthis), '-r');
+shadedErrorBar(Lags_all(1,:), mean(xcorrthis), lt_sem(xcorrthis), {'Color', 'r'}, 1)
+line([0 0], ylim);
+
+%% ================== 1) interpolate to get continuous signal (can't use trials since not fully labeled).
+
+takesongaverage = 0;
+dosmooth=1;
+
+for i=1:NumBirds
+    
+    numexpts = length(TrialStruct.birds(i).exptnum);
+    
+    for ii=1:numexpts
+        
+        if TrialStruct.birds(i).exptnum(ii).isSDP==1
+            disp("skipping, since is not fully labeled (i.e. is SDP)");
+            continue
+        end
+        
+        disp(i);
         numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
         
         % === for each syl, extract timecourse
@@ -363,7 +604,7 @@ for i=1:NumBirds
         func = @(X) max(X);
         maxtime = cellfun(func, {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals});
         func = @(X) min(X);
-        mintime = cellfun(func,  {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals});
+        mintime = cellfun(func, {TrialStruct.birds(i).exptnum(ii).sylnum.Tvals});
         
         xvals = mintime-xbinsize:xbinsize:maxtime+xbinsize;
         
@@ -374,13 +615,17 @@ for i=1:NumBirds
             tvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).Tvals;
             ffvals = TrialStruct.birds(i).exptnum(ii).sylnum(j).FFvals;
             
-            % ------------ convert to song by song FF
+            
             [~, indstmp] = sort(tvals);
             tvals = tvals(indstmp);
             ffvals = ffvals(indstmp);
             
-            ffvals = grpstats(ffvals, tvals);
-            tvals = unique(tvals);
+            % ------------ convert to song by song FF
+            if takesongaverage ==1
+                
+                ffvals = grpstats(ffvals, tvals);
+                tvals = unique(tvals);
+            end
             
             %         lt_figure; hold on;
             %
@@ -394,7 +639,20 @@ for i=1:NumBirds
             %
             %
             %         subplot(413); title('cubic');
-            yvals = interp1(tvals, ffvals, xvals, 'pchip');
+            
+            if dosmooth==1
+                fraction_of_data_for_fit = 0.25;
+                %             smooth(tvals,ffvals,fraction_of_data_for_fit,'rloess');
+                %             fit(tvals,ffvals,'lowess')
+                ffvals_1 = ffvals;
+                ffvals = fLOESS([tvals ffvals], fraction_of_data_for_fit);
+            end
+            
+            ffvals_2 = ffvals;
+            %             yvals = interp1(tvals, ffvals, xvals, 'pchip');
+            yvals = interp1(tvals, ffvals, xvals, 'linear');
+            %             yvals =     smooth_out.fb=smooth(tms_out.fb,ff_out.fb,fraction_of_data_for_fit,'rloess');
+            
             %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
             %
             %         subplot(414); title('spline');
@@ -402,7 +660,12 @@ for i=1:NumBirds
             %         plot(xvals, yvals, '-r', tvals, ffvals, 'ko');
             %         pause
             %         close all
-            
+            if (0)
+                figure; hold on;
+                plot(tvals, ffvals_1, 'ok');
+                plot(tvals, ffvals_2, 'or');
+                plot(xvals, yvals, 'xb');
+            end
             % ================= COLLECT ALL SYLS
             YvalsAll(j,:) = yvals;
             
@@ -421,26 +684,69 @@ end
 
 NumBirds = length(TrialStruct.birds);
 
+Xcorrout_all = [];
+Lags_all = [];
+Bnum_all = [];
+Enum_all = [];
+Sylnum_all = [];
+Similar_all = [];
+
 for i=1:NumBirds
     
     numexpts = length(TrialStruct.birds(i).exptnum);
     
     for ii=1:numexpts
         
+        if TrialStruct.birds(i).exptnum(ii).isSDP==1
+            continue
+        end
+        
         numsyls = length(TrialStruct.birds(i).exptnum(ii).sylnum);
         targsyl = TrialStruct.birds(i).exptnum(ii).targsyl;
         targsylind = find(strcmp(TrialStruct.birds(i).exptnum(ii).SylsUnique, targsyl));
         
+        assert(find([TrialStruct.birds(i).exptnum(ii).sylnum.INFO_istarget]) == targsylind, "why no match");
         YvalsAll = TrialStruct.birds(i).exptnum(ii).FFinterpAll_sylxtime;
-        
         yvals_targ = YvalsAll(targsylind, :);
         
         
         for j=1:numsyls
+            yvals_this = YvalsAll(j, :);
+            
+            if TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_istarget==1
+                continue
+            end
+            
             % for each syl, get
             
+            
+            [xcorrout, lags] = xcorr(yvals_targ-mean(yvals_targ), yvals_this-mean(yvals_this), 100,'unbiased');
+            
+            Xcorrout_all = [Xcorrout_all; xcorrout];
+            Lags_all = [Lags_all; lags];
+            Similar_all = [Similar_all; TrialStruct.birds(i).exptnum(ii).sylnum(j).INFO_similar];
+            Bnum_all = [Bnum_all; i];
+            Enum_all = [Enum_all; ii];
+            Sylnum_all = [Sylnum_all; j];
         end
-        
-        
     end
 end
+
+
+%%
+figure; hold on;
+subplot(1,2,1); hold on;
+indstmp = Similar_all==1;
+xcorrthis = Xcorrout_all(indstmp,:);
+plot(Lags_all(1,:), xcorrthis, '-k');
+subplot(1,2,2); hold on;
+plot(Lags_all(1,:), median(xcorrthis), '-r');
+line([0 0], ylim);
+
+
+figure; hold on;
+plot(Lags_all(1,:), Xcorrout_all, '-k');
+figure; hold on;
+plot(Lags_all(1,:), median(Xcorrout_all), '-r');
+line([0 0], ylim)
+

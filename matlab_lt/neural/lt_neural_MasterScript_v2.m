@@ -3,12 +3,12 @@
 
 %% EXTRACT
 clear all; close all; fclose all;
-BirdsToKeep = {'gr48bu5'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
+BirdsToKeep = {'gr48bu5', 'wh72pk12', 'wh44wh39', 'pu69wh78'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BirdsToKeep = {'wh72pk12'}; % {birdname , neuronstokeep} if neuronstokeep = [], then gets all;
 % BrainArea = {'LMAN', 'RA', 'LMANoutside', 'RAoutside'}; % IF DOING NEGATIVE CONTROLS.
 BrainArea = {'LMAN', 'RA'}; % 
 % BrainArea = {}; % if want Sam/Mel data, must include "RAmel"
-ExptToKeep = {'RALMANLearn9'};
+ExptToKeep = {};
 RecordingDepth = [];
 LearningOnly = 0;
 BatchesDesired = {};

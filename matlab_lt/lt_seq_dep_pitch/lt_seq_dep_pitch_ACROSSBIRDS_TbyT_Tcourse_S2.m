@@ -1,6 +1,7 @@
 function DATBYREND = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse_S2(TrialStruct, ...
     singleRendOnly, densitymethod, cutoffmethod, mintime_fromref, ...
-    maxtime_fromref, ignoreLMANexpt, includeTarg)
+    maxtime_fromref, ignoreLMANexpt, includeTarg, timewindow_refsyl)
+
 
 if ~exist('includeTarg', 'var')
     includeTarg = [];
@@ -75,6 +76,7 @@ DATBYREND.Density_targ = [];
 DATBYREND.Density_nontarg = [];
 DATBYREND.Density_isHigh = [];
 DATBYREND.FF_dev = {};
+DATBYREND.Tvals = [];
 DATBYREND.Time_dev = {};
 DATBYREND.Time_dev_targ = {};
 DATBYREND.IsDurTrain = [];
@@ -95,10 +97,10 @@ DATBYREND.IsCatch = [];
 DATBYREND.LearnLocal = [];
 DATBYREND.LearnLocal_targ = [];
 
-          DATBYREND.WN_hits = [];
-          DATBYREND.WN_miss = [];
+DATBYREND.WN_hits = [];
+DATBYREND.WN_miss = [];
 
-          
+
 sylcount = 1;
 
 for i=1:Numbirds
@@ -425,10 +427,14 @@ for i=1:Numbirds
                 
             end
             
-%             if std(cell2mat(ffdev))>500
-%                 disp('STOPPED');
-%                 keyboard
-%             end
+            %             if std(cell2mat(ffdev))>500
+            %                 disp('STOPPED');
+            %                 keyboard
+            %             end
+            
+            tvals = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).Tvals;
+            DATBYREND.Tvals = [DATBYREND.Tvals ; tvals];
+            assert(length(tvals)==length(ffdev));
             DATBYREND.FF_dev = [DATBYREND.FF_dev; ffdev];
             DATBYREND.Time_dev = [DATBYREND.Time_dev; timedev];
             DATBYREND.Time_dev_targ = [DATBYREND.Time_dev_targ; timedev_TARG];
@@ -470,19 +476,19 @@ for i=1:Numbirds
             %             end
             
             % ======================
-%                 if i==1 & ii==4
-%                     keyboard
-%                 end
-try
-            nhits = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nhits;
-            nmiss = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nmiss;
-catch err
-    nhits = nan;
-    nmiss = nan;
-end
-          DATBYREND.WN_hits = [DATBYREND.WN_hits; nhits];
-          DATBYREND.WN_miss = [DATBYREND.WN_miss; nmiss];
-
+            %                 if i==1 & ii==4
+            %                     keyboard
+            %                 end
+            try
+                nhits = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nhits;
+                nmiss = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).WN_nmiss;
+            catch err
+                nhits = nan;
+                nmiss = nan;
+            end
+            DATBYREND.WN_hits = [DATBYREND.WN_hits; nhits];
+            DATBYREND.WN_miss = [DATBYREND.WN_miss; nmiss];
+            
             
             % ============================ LOCAL LAERNING
             learnlocal = TrialStruct.birds(i).exptnum(ii).sylnum(indthis).LearnLocal;
@@ -508,10 +514,10 @@ end
                 'INFO_SylDimensions'); % only SDP experiments have this. all SDP expts have this.
             
             
-%             if sylcount==30
-%                 keyboard
-%             end
-%             
+            %             if sylcount==30
+            %                 keyboard
+            %             end
+            %
             % ###################### KEEP TRACK OF EXPT/SYL
             DATBYREND.Birdnum= [DATBYREND.Birdnum; i*ones(size(istrain))];
             DATBYREND.Exptnum= [DATBYREND.Exptnum; ii*ones(size(istrain))];
@@ -528,3 +534,5 @@ end
         end
     end
 end
+
+

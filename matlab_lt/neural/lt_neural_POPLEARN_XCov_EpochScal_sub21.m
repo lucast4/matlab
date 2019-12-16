@@ -274,6 +274,9 @@ ymean = nanmean(Y,1);
 ysem = lt_sem(Y);
 lt_plot_bar(x, ymean, {'Errors', ysem});
 
+
+
+
 % -- wn
 Y = [Ynonadapt(:,2) Yadapt(:,2)];
 x = [3 4];
@@ -287,7 +290,6 @@ lt_plot_bar(x, ymean, {'Errors', ysem});
 % --
 xlim([0 5]);
 ylim(YLIM);
-
 
 
 % ############################## PLOTS
@@ -346,6 +348,53 @@ end
 % --
 xlim([0 3]);
 ylim(YLIM);
+
+
+% ######################## SCATTERPLOT of adaptive vs. nonadapt
+Y = [Ynonadapt(:,1) Yadapt(:,1)];
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt (xcov, train - base)'); ylabel('adapt');
+title('[BASELINE] color = expt id');
+scatter(Y(:,1), Y(:,2), 30, lt_tools_grp2idx({allbnum, allenum}), 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt'); ylabel('adapt');
+title('color = bird');
+scatter(Y(:,1), Y(:,2), 30, allbnum, 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
+
+Y = [Ynonadapt(:,2) Yadapt(:,2)];
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt (xcov, train - base)'); ylabel('adapt');
+title('[WN] color = expt id');
+scatter(Y(:,1), Y(:,2), 30, lt_tools_grp2idx({allbnum, allenum}), 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt'); ylabel('adapt');
+title('color = bird');
+scatter(Y(:,1), Y(:,2), 30, allbnum, 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
+
+Y = [Ynonadapt(:,2) Yadapt(:,2)] - [Ynonadapt(:,1) Yadapt(:,1)];
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt (xcov, train - base)'); ylabel('adapt');
+title('[WN - BASE] color = expt id');
+scatter(Y(:,1), Y(:,2), 30, lt_tools_grp2idx({allbnum, allenum}), 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
+
+[fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+hsplots = [hsplots; hsplot];
+xlabel('nonadapt'); ylabel('adapt');
+title('color = bird');
+scatter(Y(:,1), Y(:,2), 30, allbnum, 'filled'); 
+lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
 
 %% ========
 figcount=1;
@@ -519,7 +568,7 @@ if useAd_Nonad_Average_forBaseline==0 & keptallinds==1
     
 end
 %% ======================= lme modeling, account for shared experiment
-
+try
 % =========================================== COLLECT DATA
 y1 = squeeze(allDat_BaseEpochs_FFsplits_adaptivedir(1, 1, 1, indsthis));
 y2 = squeeze(nanmean(allDat_BaseEpochs_FFsplits_adaptivedir(wnbins, 1, 1, indsthis),1));
@@ -606,3 +655,5 @@ lt_tools_lme_plotEffects(lme, 0);
 lt_subplot(3,3,9); hold on;
 title('model fits');
 plot(dat.YenumUnique, lme.fitted, 'ok');
+catch err
+end

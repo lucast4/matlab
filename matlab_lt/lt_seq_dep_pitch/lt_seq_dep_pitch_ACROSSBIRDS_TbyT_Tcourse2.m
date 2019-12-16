@@ -1,5 +1,13 @@
 function [DATBYREND] = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt, songasrend, singleRendOnly)
+    ignoreLMANexpt, songasrend, singleRendOnly, timewindow_refsyl)
+%% lt 11/17/19 - to restrict analyses to certain time windows within day.
+
+if ~exist('timewindow_refsyl', 'var')
+    timewindow_refsyl = [];
+    % should be hour to hour, will only keep trials for which the reference
+    % syllable time falls within this window. e.g. [7 9] is 7 to 9 am.
+end
+
 %% NOTE (7/17/19) - removed TrialStruct from output since here ffvals are flipped. this may mess up subsequent analses
 %% 7/31/18 - lt diverged from lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse, here
 % focusing on key extractions and analyses.
@@ -281,6 +289,19 @@ assert(all(isnan(DATBYREND.IsDurTrain) == isnan(DATBYREND.Density_isHigh)), 'the
 assert(all(isnan(DATBYREND.Density_targ) == isnan(DATBYREND.Density_nontarg)), 'then nan likely matches up');
 
 
+%% get within day time (0-24 hours)
+DATBYREND.Tvals_withinday24hours = (DATBYREND.Tvals - floor(DATBYREND.Tvals))*24;
+
+%% ============== [only keep if within time window]
+if ~isempty(timewindow_refsyl)
+    disp("restricting to within time window");
+    % convert tvals (whcih are like 1.5 for noon of day 1) to 24 hr times
+    DATBYREND.Tvals_withinday24hours = (DATBYREND.Tvals - floor(DATBYREND.Tvals))*24;
+    indstmp = DATBYREND.Tvals_withinday24hours >= timewindow_refsyl(1) & DATBYREND.Tvals_withinday24hours<=timewindow_refsyl(2);
+    DATBYREND = rmfield(DATBYREND, 'IsWN');
+    DATBYREND = lt_structure_subsample_all_fields(DATBYREND, indstmp, 1);
+end
+
 
 %% ====================== extract binned data
 
@@ -319,7 +340,7 @@ lt_figure; hold on;
 lt_subplot(2,2,1); hold on;
 indstmp = ~isnan(NumDatPerRend);
 lt_plot_histogram(NumDatPerRend(indstmp));
-
+title('num dat per rend')
 
 lt_subplot(2,2,2); hold on;
 xlabel('birdnum');
@@ -363,6 +384,7 @@ indstoplot = find(indstoplot)';
 
 
 %% =================== [PLOT] SHOW SAMPLE SIZE
+if ~isempty(indstoplot)
 
 lt_figure; hold on;
 
@@ -482,7 +504,7 @@ lt_plot_zeroline_vert;
 xlim([-30 30]);
 
 
-
+end
 
 
 %% ================= [SUMAMRY PLOTS] - GOOD
@@ -517,6 +539,7 @@ for ss = 1:sylmax
         & DATBYREND.IsTarg==0 & ismember(DATBYREND.SigLearn, sigthis) ...
         & DATBYREND.Sylcounter==ss;
     
+
     if ~any(indsthis)
         continue
     end
@@ -531,6 +554,7 @@ for ss = 1:sylmax
     %         keyboard
     %     end
     %
+    
     if ~isempty(birdstoget)
         if ismember(bnum, birdstoget)==0
             continue
@@ -540,8 +564,7 @@ for ss = 1:sylmax
     
     % ============================ PLOT RAW DAT, AND SMOOTHED RUNNING
     tthis = cell2mat(DATBYREND.Time_dev(indsthis));
-    tthis = tthis*(24*60);
-    
+    tthis = tthis*(24*60);    
     ffthis = cell2mat(DATBYREND.FF_dev(indsthis));
     
     
@@ -559,6 +582,8 @@ for ss = 1:sylmax
     hsplots = [hsplots hsplot];
     title([birdname '-' exptname '-' sylthis]);
     
+    disp(tthis)
+  
     plot(tthis, ffthis, 'x', 'Color',pcol);
     lt_plot_zeroline;
     lt_plot_zeroline_vert;
@@ -567,7 +592,11 @@ for ss = 1:sylmax
     t_all = [t_all; tthis];
 end
 
-linkaxes(hsplots, 'xy');
+try
+    linkaxes(hsplots, 'xy');
+catch err
+end
+
 
 % ======================= PLOT HISTO OF ALL TIMEDEVS
 lt_figure; hold on;
@@ -662,7 +691,11 @@ for ss = 1:sylmax
     t_all = [t_all; tthis];
 end
 
-linkaxes(hsplots, 'xy');
+
+try
+    linkaxes(hsplots, 'xy');
+catch err
+end
 
 
 % ===================================== 1) DISTRIBUTION OF DEVIATIONS
@@ -773,8 +806,10 @@ syltype = 'targ';
 
 minbaserends = 100; % has at least this many baseline renditions.
 minrends = 100;
+% minbaserends = 5; % has at least this many baseline renditions.
+% minrends = 5;
 
-[Inds_sylcounter, Inds_birdnum, Inds_exptnum, ...
+[Inds_sylcounter, ~, Inds_exptnum, ...
     Inds_IsSame, Inds_IsTarg] = ...
     lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2_2(DATBYREND, TrialStruct, ...
     syltype, getsiglearn, birdstoget, minbaserends, minrends);
@@ -919,6 +954,25 @@ plotsmooth = 0;
 logtime = 0;
 xedges_hand = [0 5 10 20 40 120]; % leave expty if want to automatically [should be [0 stuff]
 xedges_hand = [0 2 5 10 20 60 120]; % leave expty if want to automatically [should be [0 stuff]
+% xedges_hand = [0 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
+% xedges_hand = [0 5 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
+% xedges_hand = [0 2 20]; % leave expty if want to automatically [should be [0 stuff]
+normtobase = 0; % 1, minus base. 2: then norms to catch
+use2bins = 0; % then will take only "early" and "late". if 0. then takes 3 bins .
+if ~isempty(xedges_hand)
+    edgelist = [2]; % doesn't matter, but should be length 2, since will iterate, but will overwrite the actual value
+end
+
+
+% [for looking at first 2 hours]
+gettrain = 1;
+plotraw = 0;
+edgelist = [2]; % list of edges to use
+minrendsinbin = 5;
+colorscheme = 'learnsig';
+plotsmooth = 0;
+logtime = 0;
+xedges_hand = [0 30 60 90 120]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 5 10 20 60]; % leave expty if want to automatically [should be [0 stuff]
 % xedges_hand = [0 2 20]; % leave expty if want to automatically [should be [0 stuff]

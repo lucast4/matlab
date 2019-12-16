@@ -51,9 +51,11 @@ end
 %% if want to remove redundant cases, then do that here
 if strcmp(birdstoget, 'all_preferNoSDP') | strcmp(birdstoget, 'all_preferSDP')
     
-    if length(DATBYREND.IsWN) ~= length(DATBYREND.Birdnum)
-        % not sure why, just remove this field
-        DATBYREND = rmfield(DATBYREND, 'IsWN');
+    if isfield(DATBYREND, 'isWN')
+        if length(DATBYREND.IsWN) ~= length(DATBYREND.Birdnum)
+            % not sure why, just remove this field
+            DATBYREND = rmfield(DATBYREND, 'IsWN');
+        end
     end
     
     nbirds = length(TrialStruct.birds);

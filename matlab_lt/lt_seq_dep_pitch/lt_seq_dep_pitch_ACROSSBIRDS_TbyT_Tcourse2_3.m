@@ -522,6 +522,8 @@ for edge1 = edgelist
     
     
     %% plot summary for this edge value.
+    try
+        
     [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
     hsplots = [hsplots hsplot];
     title(['summary, each syl, edge1 = ' num2str(edge1) 'min']);
@@ -550,6 +552,8 @@ for edge1 = edgelist
     if size(Yall,2)>3
         p = signrank(Yall(:,2), Yall(:,3));
         lt_plot_text(mean(Xmean(2:3)), max(Yall(:,3)), ['2vs3, p=' num2str(p)], 'r');
+    end
+    catch err
     end
 end
 

@@ -871,8 +871,10 @@ if songasrend==1
     assert(addWithinSongTime==0, 'since uses same datenum to decide that is same song');
 end
 singleRendOnly=0; % if 1, then takes first dat post rend. otherwise takes all flank.
+timewindow_refsyl=[7 8]; % hours from start of day, all reference syllables must be between these hours
+% the compared syllabl, in future, can be outside of this window.
 lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Tcourse2(TrialStruct, ParamsTrial, ...
-    ignoreLMANexpt, songasrend, singleRendOnly);
+    ignoreLMANexpt, songasrend, singleRendOnly, timewindow_refsyl);
 
 
 
@@ -971,6 +973,91 @@ plotSongBySong = 1; % for raw dat
 % ignoreLMANexpt = 1;
 lt_seq_dep_pitch_ACROSSBIRDS_TrialbyTrialGen(TrialStruct, ParamsTrial, ...
     SeqDepPitch_AcrossBirds, plotSongBySong, plotRaw);
+
+% ============== [DIAGNOSTIC] list all experiments along wtih info
+% usdeful if want to know how many duplicates, and singing density
+% -- plot name of each expt
+disp(' ################################ ');
+for i=1:length(TrialStruct.birds)
+    for ii=1:length(TrialStruct.birds(i).exptnum)
+            bname = TrialStruct.birds(i).birdname;
+            ename = TrialStruct.birds(i).exptnum(ii).exptname;
+            isSDP = isfield(TrialStruct.birds(i).exptnum(ii).sylnum(1), 'INFO_SylDimensions');
+            
+            
+            tvals = TrialStruct.birds(i).exptnum(ii).sylnum(1).Tvals;
+            t = 1000*(tvals(end) - tvals(1))/length(tvals);
+            t=1/t;
+            
+            disp([bname ' -- ' ename ' -- ' num2str(isSDP) ' -- ' num2str(t)]);
+    end
+    disp('======== (bird, ename, isSDP, nsyls/time)');
+end
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% FOR TIM
+
+
+% %%%%%%%%%%%% FIRST_A: Extract TrialStruct by loading as above. 
+
+% %%%%%%%%%%%% FIRST_B: PREPROCESSINg - COMBINE WITH GENERALIZATION STRUCT
+OnlyExptsWithNoStartDelay= 0;
+DayWindow = [-3 4]; % [-2 4] mean 2 base days and 1st 4 learning days
+onlyIfSignLearn = 1;
+useHandLabSame= 1; % default, 1
+[TrialStruct, ParamsTrial] = ...
+    lt_seq_dep_pitch_ACROSSBIRDS_ExtractTrialbyTrial(SeqDepPitch_AcrossBirds, ...
+    OnlyExptsWithNoStartDelay, DayWindow, onlyIfSignLearn, useHandLabSame);
+
+% ================ [OPTIONAL] CONVERT BASELINE INDICATOR TO ACCOMOATE
+% WITHIN DAY
+TrialStructORIG = TrialStruct;
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Base(TrialStruct);
+
+% =============== CONVERT GENSTRUCT TO TRIALSTRUCT
+addWithinSongTime = 1; % if 1, then resolution is to within song. otherwise 
+% time is time of song. NOTE: this currently only works for experiments
+% from Genstruct (i.e. neural expts.)
+sortbytime = 1; % then sorts all trials before including
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Conv(TrialStruct, ...
+    ParamsTrial, GenStruct, addWithinSongTime, sortbytime);
+
+% =============== [OPTIONAL - REMOVE OUTLIER TRIALS, FF]
+close all;
+plotRawFF = 0; % if 1, then plots raw FF showing wghich are outliers.
+TrialStruct = lt_seq_dep_pitch_ACROSSBIRDS_TbyT_Outli(TrialStruct, plotRawFF);
+
+% %%%%%%%%%%%%%%%% SECOND: Prune TrialStruct so only has nonSDP. I have
+% confirmed that these are all well-labeled cases.
+NumBirds = length(TrialStruct.birds);
+for i=1:NumBirds
+    badexpts = [];
+    numexpts = length(TrialStruct.birds(i).exptnum);
+    for ii=1:numexpts
+        isSDP = isfield(TrialStruct.birds(i).exptnum(ii).sylnum(1), 'INFO_SylDimensions');
+        TrialStruct.birds(i).exptnum(ii).isSDP=isSDP;
+        if isSDP==1
+            badexpts = [badexpts ii];
+        end
+    end
+    if ~isempty(badexpts)
+    disp(["removing " badexpts]);
+    end
+    TrialStruct.birds(i).exptnum(badexpts') = [];
+end
+
+
+% %%%%%%%%%%%%%%% THIRD: RUN THIS ANLYSES FOR CROSS CORR.
+close all;
+lt_seq_dep_pitch_ACROSSBIRDS_TrialbyTrialGen2(TrialStruct)
+
+
+% %%%%%%%%%%%%%% MANUALLY SAVE THE FIGURE
+
+% %%%%%%%%%%%% SAVE TRIALSTRUCT
+save("~/fortim/TrialStruct.mat", "TrialStruct");
+
+
 
 
 %% ==== TRIAL TO TRIAL LEARNING/ DAY VS. OVERNIGHT?
