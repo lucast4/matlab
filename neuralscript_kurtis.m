@@ -84,7 +84,7 @@ end
 % extract and it will extract all cases where it finds that sequence, along
 % with neural data and bunch of other things.
 
-regexp_str = 'n(a)abh'; % this means get all cases of abc, and align at onset of b. the parantheses
+regexp_str = '[nj](a)abh'; % this means get all cases of abc, and align at onset of b. the parantheses
 % area always interpreted as the syl to align to. You must have one and
 % only one syl with parantheses. 
 motif_predur = 0.2; % seconds to extract preceding syl
@@ -146,5 +146,7 @@ for i=1:length(SegmentsExtract)
     lt_neural_PLOT_rasterline(seg.spk_Times, i, 'k', 0);
 end
 lt_neural_QUICK_PlotSylPatches(onsets, offsets, [0 i], [], 'r')
+
+%%
 
 
