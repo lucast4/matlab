@@ -308,7 +308,7 @@ end
 
 
 
-% ==================== LME
+%% ==================== LME
 % Yallcell = mat2cell(Yall, size(Yall,1), ones(size(Yall,2),1));
 Yallvec = Yall(:);
 Bnumvec = repmat(Bnum, 1, size(Yall,2));
@@ -321,7 +321,8 @@ Syltype = Syltype(:);
 dat = table(Yallvec, categorical(Bnumvec), categorical(Enumvec), ...
     Syltype, 'VariableNames', {'Yresponse', 'bnum', 'exptnum', 'syltype'});
 % dat=dat(dat.syltype(:)==categorical(1) | dat.syltype(:)==categorical(2), :); % only care about target and adjacent
-formula = 'Yresponse ~ syltype + (syltype|exptnum)';
+formula = 'Yresponse ~ syltype + (1|exptnum)';
+formula = 'Yresponse ~ syltype';
 lme = fitlme(dat, formula, 'StartMethod', 'random')
 disp("LME: syltype 0 (intercept) is adjacents. syltype 1 is targ. only cases where they have both targ and adjacent.")
 disp("N unique expts after only keeping cases with adjacent: ")

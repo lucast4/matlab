@@ -181,6 +181,8 @@ for i=1:length(SwitchCohStruct.bird)
                         
                         
                         %% ================== GET AUTOCOVARIANCE FUNCTIONS
+                        % NOTE: DID NOT INSPECT THIS A SECOND TIME
+                        % (2/18/20)
                         % AS WELL.
                         ccauto = {};
                         ccautoshift = {};

@@ -91,8 +91,8 @@ if onlyIfSameType==1
     formula = 'Yresponse ~ syltype + (syltype|exptnum)';
 %     formula = 'Yresponse ~ syltype + (syltype|bnum) + (syltype|exptnum)';
 else
-%     formula = 'Yresponse ~ istarg + (istarg|exptnum) + (istarg|exptnum:chanpairID)';
     formula = 'Yresponse ~ istarg + (istarg|exptnum)';
+%     formula = 'Yresponse ~ istarg + (istarg|exptnum)';
 end
 % formula = 'Yresponse ~ istarg + (istarg|bnum) + (istarg|bnum:exptnum) + (istarg|bnum:exptnum:chanpairID)';
 
@@ -109,6 +109,7 @@ lt_neural_POPLEARN_XCOV_LME_subplot;
 
 
 formula = 'Yresponse ~ 1 + (1|exptnum)';
+% formula = 'Yresponse ~ 1 + (1|exptnum) + (1|bnum)';
 % formula = 'Yresponse ~ istarg + (istarg|bnum) + (istarg|bnum:exptnum) + (istarg|bnum:exptnum:chanpairID)';
 
 dat = dat(dat.istarg==1,:);

@@ -498,9 +498,9 @@ if useAd_Nonad_Average_forBaseline==0 & keptallinds==1
     
     Y = {};
     
-    indsthis = OUTSTRUCT_XCOV.istarg==1;
-    Y{1} = Yall_nonad(indsthis);
-    Y{2} = Yall_ad(indsthis);
+    tmp = OUTSTRUCT_XCOV.istarg==1;
+    Y{1} = Yall_nonad(tmp);
+    Y{2} = Yall_ad(tmp);
     lt_plot_annotation(2, ['N=' num2str(cellfun(@(x)length(x), Y))], 'm');
     
     % ============ WHAT IS GOOD BINSIZE
@@ -614,9 +614,9 @@ plot(dat.YenumUnique, lme.fitted, 'ok');
 % ================ adapt
 formula = 'Yadapt ~ 1 + (1|YenumUnique)';
 % formula = 'Yadapt ~ 1 + (1|YenumUnique:Ybnum)';
-% % formula = 'Yresponse ~ 1 + (1|YenumUnique) + (1|Ybnum)';
+% formula = 'Yadapt ~ 1 + (1|YenumUnique) + (1|Ybnum)';
 % formula = 'Yresponse ~ 1 + (1|Ybnum)';
-lme = fitlme(dat, formula);
+lme = fitlme(dat, formula)
 
 lt_subplot(3,3,4); hold on;
 xlabel('expt id');
@@ -655,5 +655,58 @@ lt_tools_lme_plotEffects(lme, 0);
 lt_subplot(3,3,9); hold on;
 title('model fits');
 plot(dat.YenumUnique, lme.fitted, 'ok');
+
+
+% ================ FIT EFFECT OF ADAPTIVE/NONADAPTIVE INTO MODEL
+lt_figure; hold on;
+y1 = squeeze(allDat_BaseEpochs_FFsplits_adaptivedir(1, 1, 1, indsthis));
+y2 = squeeze(nanmean(allDat_BaseEpochs_FFsplits_adaptivedir(wnbins, 1, 1, indsthis),1));
+Ynonadapt = y2 - y1;
+
+y1 = squeeze(allDat_BaseEpochs_FFsplits_adaptivedir(1, 2, 1, indsthis));
+y2 = squeeze(nanmean(allDat_BaseEpochs_FFsplits_adaptivedir(wnbins, 2, 1, indsthis),1));
+Yadapt = y2 - y1;
+
+Ybnum = categorical(allbnum(indsthis));
+Yenum = categorical(allenum(indsthis));
+YenumUnique = categorical(lt_tools_grp2idx({allbnum(indsthis), allenum(indsthis)}));
+
+% --- iterate over each channel pair
+Y_xcov_minus_base = [Ynonadapt; Yadapt];
+X_isadaptive = [zeros(size(Ynonadapt)); ones(size(Yadapt))];
+X_exptID = [YenumUnique;YenumUnique];
+
+X_bnum = [Ybnum; Ybnum];
+
+dat = table(Y_xcov_minus_base, X_bnum, X_isadaptive, X_exptID);
+
+% ================ adapt - nonadapt
+% formula = 'Yresponse ~ 1 + (1|Ybnum) + (1|Ybnum:YenumUnique)';
+% formula = 'Y_xcov_minus_base ~ 1 + X_isadaptive + (1 + X_isadaptive|X_exptID)';
+formula = 'Y_xcov_minus_base ~ 1 + X_isadaptive + (-1 + X_isadaptive|X_exptID) + (X_isadaptive-1|X_bnum)';
+% formula = 'Yresponse ~ 1 + (1|YenumUnique:Ybnum)';
+% % formula = 'Yresponse ~ 1 + (1|YenumUnique) + (1|Ybnum)';
+% formula = 'Yresponse ~ 1 + (1|Ybnum)';
+lme = fitlme(dat, formula, 'StartMethod', 'random')
+
+lt_figure; hold on;
+
+lt_subplot(3,3,1); hold on;
+xlabel('expt id');
+ylabel('change in xcov, train minus base');
+plot(X_exptID, Y_xcov_minus_base, 'o');
+lt_plot_zeroline;
+
+lt_subplot(3,3,2); hold on;
+title(['lme, ' formula]);
+ylabel('effect');
+lt_tools_lme_plotEffects(lme, 0);
+
+% -------- plot model predictions
+lt_subplot(3,3,3); hold on;
+title('model fits');
+plot(dat.X_exptID, lme.fitted, 'ok');
+
+
 catch err
 end
