@@ -9,7 +9,7 @@ dohack =1; % if 1, then does hack where I tried to make it work if epoch was mor
 
 assert(all(strcmp(OUTSTRUCT_XCOV.bregionpair, 'LMAN-RA')), 'assumes n1 is lMAN, n2 is RA');
 
-epochthis = epochtoplot +1;
+epochthis = epochtoplot +1; % since 0 is baseline.
 
 if dohack==0
     % == old version, doesn't work if epochthis is array length>1

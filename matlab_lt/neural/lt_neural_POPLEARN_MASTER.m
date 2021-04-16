@@ -2626,6 +2626,7 @@ end
 
 %% ==== PUBLICATION VERSION
 savedir = ['/bluejay0/bluejay2/lucas/analyses/neural/POPLEARN/OUTSTRUCT_XCOV/' PARAMS.savemarker];
+savedir = ['/bluejay5/lucas/analyses/neural/POPLEARN/OUTSTRUCT_XCOV/' PARAMS.savemarker];
 
 % ===========  [PUBLICATION]
 savemarker = '60mswind_031919_3bins_hiloFF';  % latest, and 6 epochs for Xcovgram

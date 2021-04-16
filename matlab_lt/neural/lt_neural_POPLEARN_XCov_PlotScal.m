@@ -41,6 +41,7 @@ hsplots = [];
 Yall = []; % targ, same, diff, nontarg (means across chans, motifs)
 % Ydiffall = {};
 Yall_allsyls = cell(length(indsgrp_switch_unique), 4); % same as above, but do not average withni syl type.
+Yall_learndir = nan(size(Yall_allsyls,1),1);
 All_bname ={};
 All_bnum = [];
 All_ename = {};
@@ -129,6 +130,7 @@ for i=1:length(indsgrp_switch_unique)
     cohscal = Yscalar(indsthis);
     learndir = unique(OUTSTRUCT.learndirTarg(indsthis));
     assert(length(learndir)==1);
+    Yall_learndir(i) = learndir;
     
     if useglobalmotifname==1
         motifID = lt_neural_QUICK_MotifID(bname, OUTSTRUCT.motifname(indsthis)); % ---- get positions within global motif
@@ -1178,6 +1180,20 @@ x = [1 2 3];
 
 lt_neural_POPLEARN_XCov_PlotScal_sub2;
 
+
+%% ############## [HISTOGRAMS, lowest level data, chan x syl] [SPLIT BY DIR OF LEARNING]
+
+x = [1 3];
+
+% UP
+Yall_allsyls_this = Yall_allsyls(Yall_learndir==1,:);
+plot_hist_chans_good(Yall_allsyls_this, x);
+
+% DN
+Yall_allsyls_this = Yall_allsyls(Yall_learndir==-1,:);
+plot_hist_chans_good(Yall_allsyls_this, x);
+
+
 %% ########## [MORE PLOTS] NOT DIRECTLY REALTED TO YSCALAR.
 % ==== CORREALTING SCALARS WITH BEHAVIOR
 
@@ -1303,3 +1319,79 @@ x = squeeze(All_learn_targdir_z(1,1,indthis,:) - All_learn_targdir_z(1,1,3,:));
 y = squeeze(All_cohdiff_z(1,1,indthis,:) - All_cohdiff_z(1,1,3,:));
 lt_regress(y, x, 1, 0, 1, 1);
 % lt_regress(y, c, 1, 0, 1, 1)
+end
+
+function plot_hist_chans_good(Yall_allsyls, x)
+    figcount=1;
+    subplotrows=1;
+    subplotcols=3;
+    fignums_alreadyused=[];
+    hfigs=[];
+    hsplots = [];
+
+
+    % ############################# 1) TARG -- DIFF
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    xlabel('Targ -- DIFF');
+    ylabel('xcov, change');
+    title('dat = chan x syl');
+
+    % ===== GET ONLY EXPERIMENTS THAT HAVE DATA FOR ALL DESIRED SYL TYPES
+    indsthis = all(~cellfun(@(x)isempty(x), Yall_allsyls(:, x))');
+
+    % ================= COLLECT ALL LOWER LEVEL DATA
+    Ythis = {};
+
+    for i=1:size(Yall_allsyls,2)
+        Ythis{i} = cell2mat(Yall_allsyls(indsthis,i));
+    end
+
+    % ============ WHAT IS GOOD BINSIZE
+    binsize = 0.025;
+    y = cell2mat(cellfun(@(x)x', Ythis, 'UniformOutput', 0));
+    tmp = round(100*max(abs(y)))/100;
+    tmp = tmp+(binsize-mod(tmp, binsize));
+    % tmp = tmp+binsize/2;
+    xcenter = -tmp:binsize:tmp;
+
+
+    % =============== PLOT RAW DISTRIBUTION
+    distributionPlot(Ythis(x), 'xValues', x, 'showMM', 4, 'addSpread', 0, 'color', ...
+        'b', 'histOpt', 0, 'divFactor', xcenter);
+    lt_plot_zeroline;
+    lt_plot_text(2, 0.3, ['N=' num2str(cellfun(@(y)length(y), Ythis(x)))], 'r');
+    
+    
+    % pvalue (rank sum)
+    if length(x)==2
+        p = ranksum(Ythis{x(1)}, Ythis{x(2)});
+        lt_plot_pvalue(p, 'rank sum', 1);
+        p1 = signrank(Ythis{x(1)});
+        lt_plot_pvalue(p1, 'sign rank 1', 2);
+        p2 = signrank(Ythis{x(2)});
+        lt_plot_pvalue(p2, 'sign rank 2', 2);
+    end
+
+% 
+%     % ================== OVERLAY EACH BIRD MEAN
+%     indsthis = all(~isnan(Yall(:,x))');
+%     ythis = Yall(indsthis,x);
+%     bnumthis = All_bnum(indsthis);
+% 
+% 
+%     % ------ 2) OVERLAY EACH BIRD MEAN
+%     [ymean, ysem] = grpstats(ythis, bnumthis, {'mean', 'sem'});
+%     bnumtmp = unique(bnumthis);
+%     for i=1:size(ymean,1)
+%         lt_plot(x+0.7*rand-0.3, ymean(i,:), {'Errors', ysem(i,:), 'LineStyle', '-'});
+%         % -- within bird p val
+%     %     [~, p] = ttest(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+%         [p] = signrank(ythis(bnumthis==bnumtmp(i), 1), ythis(bnumthis==bnumtmp(i), 2));
+%         [p1] = signrank(ythis(bnumthis==bnumtmp(i), 1));
+%        [p2] = signrank(ythis(bnumthis==bnumtmp(i), 2));
+%         % -- plot bird info
+%         lt_plot_text(x(end)+1, ymean(i, end), ['bnum ' num2str(bnumtmp(i)) ',p1=' num2str(p1) 'p2=' num2str(p2) ',p(v2)=' num2str(p)]);
+%     end
+%     xlim([0 5]);
+
+end

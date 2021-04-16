@@ -548,8 +548,8 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-
-indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==1;
+learndir = 1;
+indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==learndir;
 
 if plotraw==1
     YLIM = [-0.2 0.5];
@@ -569,7 +569,8 @@ fignums_alreadyused=[];
 hfigs=[];
 hsplots = [];
 
-indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==-1;
+learndir = -1;
+indsthis = squeeze(allDat_targLearnDir(1,1,1,:))==learndir;
 
 if plotraw==1
     YLIM = [-0.2 0.5];
@@ -580,6 +581,13 @@ end
 lt_neural_POPLEARN_XCov_EpochScal_sub21;
 lt_subtitle('driving pitch down');
 
+%% ============= plot, split by direction training, flattened to all datapts
+
+learndir = -1;
+
+[fignums_alreadyused, hfigs, figcount, hsplot] = plot_by_train_direction(...
+    OUTSTRUCT_XCOV, learndir, useAd_Nonad_Average_forBaseline, ...
+    keptallinds, scalwind, wnbins, subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 
 %% ================== PLOT ALL EXPERIMENTS 
 figcount=1;
@@ -1002,4 +1010,55 @@ xlim([0 12]);
 lt_plot_zeroline;
 
 
+
+function [fignums_alreadyused, hfigs, figcount, hsplot] = plot_by_train_direction(OUTSTRUCT_XCOV, learndir, useAd_Nonad_Average_forBaseline, ...
+    keptallinds, scalwind, wnbins, subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount)
+    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', ...
+        subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+    hsplots = [hsplots; hsplot];
+    xlabel('TARG -- DIFF)');
+    ylabel('xcov (ad - non, mnus base)');
+    title('hist is chan x syl,');
+    lt_plot_annotation(1, 'if empty then conditions not correct', 'r');
+    binsize = 0.05;
+
+    if useAd_Nonad_Average_forBaseline==0 & keptallinds==1
+        %  otherwise the extracted data is probably different from original OUTSTRUCT.
+        assert(size(OUTSTRUCT_XCOV.xcovscalBase_window_FFsplit{i},2)==1, 'this code only works if only have one scalar window defined... [an issue with squeeze..]');
+
+        % === 1) extract all change from baseline
+        tmp = nan(size(OUTSTRUCT_XCOV.bnum));
+        for i=1:length(OUTSTRUCT_XCOV.bnum)
+
+            ywn_AdMinNon = nanmean(OUTSTRUCT_XCOV.xcovscalEpochs_window_FFsplit{i}{scalwind}(wnbins-1,2),1) ...
+                - nanmean(OUTSTRUCT_XCOV.xcovscalEpochs_window_FFsplit{i}{scalwind}(wnbins-1,1),1);
+
+            ybase_AdMinNon = OUTSTRUCT_XCOV.xcovscalBase_window_FFsplit{i}(2) ...
+                - OUTSTRUCT_XCOV.xcovscalBase_window_FFsplit{i}(1);
+
+
+
+            y = ywn_AdMinNon - ybase_AdMinNon;
+            y = y*OUTSTRUCT_XCOV.learndirTarg(i); % so positive is in adaptive direction
+
+            tmp(i) = y;
+        end
+
+        Y = {};
+        Y{1} = tmp(OUTSTRUCT_XCOV.istarg==1 & OUTSTRUCT_XCOV.learndirTarg==learndir);
+        Y{2} = tmp(OUTSTRUCT_XCOV.istarg==0 & OUTSTRUCT_XCOV.issame==0 & OUTSTRUCT_XCOV.learndirTarg==learndir);
+
+        % ============ WHAT IS GOOD BINSIZE
+        y = cell2mat(cellfun(@(x)x', Y, 'UniformOutput', 0));
+        tmp = round(100*max(abs(y)))/100;
+        tmp = tmp+(binsize-mod(tmp, binsize));
+        % tmp = tmp+binsize/2;
+        xcenter = -tmp:binsize:tmp;
+
+        distributionPlot(Y, 'xValues', [1 3], 'showMM', 4, 'addSpread', 0, 'color', ...
+            'b', 'histOpt', 0, 'divFactor', xcenter);
+    end
+
+
+end
 

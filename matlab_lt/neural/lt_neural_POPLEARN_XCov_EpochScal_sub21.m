@@ -96,6 +96,7 @@ y = [y(1,:); nanmean(y(wnbins, :),1)];
 x = 1:size(y,1);
 
 % =============== DO LME
+try
 indsexpt = categorical(lt_tools_grp2idx({allbnum, allenum}));
 xcov_ad_minus_nonad_without_subtr_base = y(2,:)';
 dat = table(xcov_ad_minus_nonad_without_subtr_base, indsexpt);
@@ -112,7 +113,8 @@ for j=1:size(y,1)
 end
 p = signrank(y(2,:), y(1,:));
 lt_plot_text(x(end), ymean(end), ['p=' num2str(p) '[wn vs base]'], pcolors{i});
-
+catch err
+end
 
 % ---- subtract base
 y = y-y(1,:);
@@ -318,6 +320,8 @@ for i=1:size(Y,2)
     end
 end
 
+lt_plot_annotation(1, ['N=' num2str(size(Y,1))], 'r');
+
 % -- overlay each bird
 for i=1:max(Ybnum)
     y = Y(Ybnum==i,:);
@@ -351,6 +355,7 @@ ylim(YLIM);
 
 
 % ######################## SCATTERPLOT of adaptive vs. nonadapt
+try
 Y = [Ynonadapt(:,1) Yadapt(:,1)];
 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
 hsplots = [hsplots; hsplot];
@@ -395,7 +400,8 @@ xlabel('nonadapt'); ylabel('adapt');
 title('color = bird');
 scatter(Y(:,1), Y(:,2), 30, allbnum, 'filled'); 
 lt_regress(Y(:,2), Y(:,1), 0, 0, 1, 1, 'k', 1);
-
+catch err
+end
 %% ========
 figcount=1;
 subplotrows=1;
@@ -448,10 +454,6 @@ if useAd_Nonad_Average_forBaseline==0 & keptallinds==1
     
     distributionPlot(Y, 'xValues', [1 3], 'showMM', 4, 'addSpread', 0, 'color', ...
         'b', 'histOpt', 0, 'divFactor', xcenter);
-    
-    
-    
-    
 end
 
 %% ================== PLOT HISTOGRAM OF ALL SYL/CHAN COMBINATIONS
@@ -501,6 +503,9 @@ if useAd_Nonad_Average_forBaseline==0 & keptallinds==1
     tmp = OUTSTRUCT_XCOV.istarg==1;
     Y{1} = Yall_nonad(tmp);
     Y{2} = Yall_ad(tmp);
+    
+    Y{1} = Y{1}(indsthis);
+    Y{2} = Y{2}(indsthis);
     lt_plot_annotation(2, ['N=' num2str(cellfun(@(x)length(x), Y))], 'm');
     
     % ============ WHAT IS GOOD BINSIZE

@@ -24,142 +24,142 @@ end
     OUTSTRUCT_XCOV.enum, OUTSTRUCT_XCOV.switch});
 
 if plotRaw==1
-for i=1:length(indsgrpU)
-    
-figcount=1;
-subplotrows=6;
-subplotcols=4;
-fignums_alreadyused=[];
-hfigs=[];
-hsplots = [];
-    
-    indthis = find(indsgrp==indsgrpU(i) & OUTSTRUCT_XCOV.istarg==1);
-    %     assert(sum(indthis)==1, 'multipel targs?');
-    
-    bnum = unique(OUTSTRUCT_XCOV.bnum(indthis));
-    enum = unique(OUTSTRUCT_XCOV.enum(indthis));
-    sw = unique(OUTSTRUCT_XCOV.switch(indthis));
-    motifname = unique(OUTSTRUCT_XCOV.motifname(indthis)); assert(length(motifname)==1);
-    %     bregionpair = unique(OUTSTRUCT_XCOV.b (indthis)); assert(length(motifname)==1);
-    %                     hsplots = [];
-    
-    for j=1:length(indthis)
+    for i=1:length(indsgrpU)
         
-        epochsplit = OUTSTRUCT_XCOV.epochSplitStatsAll{indthis(j)};
-        ldir = OUTSTRUCT_XCOV.learndirTarg(indthis(j));
+        figcount=1;
+        subplotrows=6;
+        subplotcols=4;
+        fignums_alreadyused=[];
+        hfigs=[];
+        hsplots = [];
         
-        neurpair = OUTSTRUCT_XCOV.neurpair(indthis(j), :);
+        indthis = find(indsgrp==indsgrpU(i) & OUTSTRUCT_XCOV.istarg==1);
+        %     assert(sum(indthis)==1, 'multipel targs?');
         
-        if j==1
-            % ====== PLOT DISTRIBUTION OF FF OVER ALL TRIALS
+        bnum = unique(OUTSTRUCT_XCOV.bnum(indthis));
+        enum = unique(OUTSTRUCT_XCOV.enum(indthis));
+        sw = unique(OUTSTRUCT_XCOV.switch(indthis));
+        motifname = unique(OUTSTRUCT_XCOV.motifname(indthis)); assert(length(motifname)==1);
+        %     bregionpair = unique(OUTSTRUCT_XCOV.b (indthis)); assert(length(motifname)==1);
+        %                     hsplots = [];
+        
+        for j=1:length(indthis)
+            
+            epochsplit = OUTSTRUCT_XCOV.epochSplitStatsAll{indthis(j)};
+            ldir = OUTSTRUCT_XCOV.learndirTarg(indthis(j));
+            
+            neurpair = OUTSTRUCT_XCOV.neurpair(indthis(j), :);
+            
+            if j==1
+                % ====== PLOT DISTRIBUTION OF FF OVER ALL TRIALS
+                for k=1:length(epochsplit)
+                    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                    hsplots = [hsplots hsplot];
+                    title([num2str(bnum) '-' num2str(enum) '-' num2str(sw) '-' motifname{1}]);
+                    ylabel(['laerndir: ' num2str(ldir)]);
+                    xlabel('trial num')
+                    ff = epochsplit(k).ffthis;
+                    if isnan(ff)
+                        lt_plot_annotation(1, 'no data, so skip');
+                        continue
+                    end
+                    
+                    indshi = epochsplit(k).inds_hi;
+                    indslo = epochsplit(k).inds_lo;
+                    x = 1:length(ff);
+                    
+                    plot(x(indshi), ff(indshi), 'or');
+                    plot(x(indslo), ff(indslo), 'ok');
+                    
+                end
+                
+                % ====== PLOT DISTRIBUTION OF FF WITHIN SONG BOUTS
+                for k=1:length(epochsplit)
+                    [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
+                    hsplots = [hsplots hsplot];
+                    title(['epoch num ' num2str(k)]);
+                    xlabel('rendition in bout (10syl min, 1sec IBI min)');
+                    ff = epochsplit(k).ffthis;
+                    if isnan(ff)
+                        lt_plot_annotation(1, 'no data, so skip');
+                        continue
+                    end
+                    indshi = epochsplit(k).inds_hi;
+                    indslo = epochsplit(k).inds_lo;
+                    songID = epochsplit(k).songboutID;
+                    
+                    rendinbout = epochsplit(k).rendnumInBout_1secIBI; % if nan, then it is not part of bout with at least 10 syls.
+                    
+                    plot(rendinbout(indshi), ff(indshi), 'xr');
+                    plot(rendinbout(indslo), ff(indslo), 'xk');
+                    XLIM = xlim;
+                    xlim([XLIM(1)-1 XLIM(2)+1]);
+                end
+                
+                linkaxes(hsplots, 'y');
+            end
+            
+            
+            % ====== PLOT DISTRIBUTION OF SPIKE COUNTS
+            hsplots = [];
             for k=1:length(epochsplit)
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 hsplots = [hsplots hsplot];
-                title([num2str(bnum) '-' num2str(enum) '-' num2str(sw) '-' motifname{1}]);
-                ylabel(['laerndir: ' num2str(ldir)]);
-                xlabel('trial num')
-                ff = epochsplit(k).ffthis;
-                if isnan(ff)
+                title(['LMAN, ' num2str(neurpair)]);
+                ylabel('spikecount');
+                xlabel('LO-HI');
+                
+                %                 ff = epochsplit(k).ffthis;
+                if isnan(epochsplit(k).ffthis)
                     lt_plot_annotation(1, 'no data, so skip');
                     continue
                 end
-                
                 indshi = epochsplit(k).inds_hi;
                 indslo = epochsplit(k).inds_lo;
-                x = 1:length(ff);
+                nspksByNeuron = epochsplit(k).nspksByNeuron;
                 
-                plot(x(indshi), ff(indshi), 'or');
-                plot(x(indslo), ff(indslo), 'ok');
+                % --- neuron 1
+                nn=1;
+                x = [1 2];
+                
+                Y = {};
+                Y{1} = nspksByNeuron{nn}(indslo);
+                Y{2} = nspksByNeuron{nn}(indshi);
+                lt_plot_MultDist(Y, x, 1, 'k');
                 
             end
+            linkaxes(hsplots, 'xy');
             
-            % ====== PLOT DISTRIBUTION OF FF WITHIN SONG BOUTS
+            hsplots = [];
             for k=1:length(epochsplit)
                 [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
                 hsplots = [hsplots hsplot];
-                title(['epoch num ' num2str(k)]);
-                xlabel('rendition in bout (10syl min, 1sec IBI min)');
-                ff = epochsplit(k).ffthis;
-                if isnan(ff)
+                title(['RA, ' num2str(neurpair)]);
+                ylabel('spikecount');
+                xlabel('LO-HI');
+                
+                %                 ff = epochsplit(k).ffthis;
+                if isnan(epochsplit(k).ffthis)
                     lt_plot_annotation(1, 'no data, so skip');
                     continue
                 end
                 indshi = epochsplit(k).inds_hi;
                 indslo = epochsplit(k).inds_lo;
-                songID = epochsplit(k).songboutID;
+                nspksByNeuron = epochsplit(k).nspksByNeuron;
                 
-                rendinbout = epochsplit(k).rendnumInBout_1secIBI; % if nan, then it is not part of bout with at least 10 syls.
+                % --- neuron 1
+                nn=2;
+                x = [1 2];
                 
-                plot(rendinbout(indshi), ff(indshi), 'xr');
-                plot(rendinbout(indslo), ff(indslo), 'xk');
-                XLIM = xlim;
-                xlim([XLIM(1)-1 XLIM(2)+1]);
+                Y = {};
+                Y{1} = nspksByNeuron{nn}(indslo);
+                Y{2} = nspksByNeuron{nn}(indshi);
+                lt_plot_MultDist(Y, x, 1, 'k');
+                
             end
-            
-            linkaxes(hsplots, 'y');
+            linkaxes(hsplots, 'xy');
         end
-        
-        
-        % ====== PLOT DISTRIBUTION OF SPIKE COUNTS
-        hsplots = [];
-        for k=1:length(epochsplit)
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title(['LMAN, ' num2str(neurpair)]);
-            ylabel('spikecount');
-            xlabel('LO-HI');
-            
-            %                 ff = epochsplit(k).ffthis;
-            if isnan(epochsplit(k).ffthis)
-                lt_plot_annotation(1, 'no data, so skip');
-                continue
-            end
-            indshi = epochsplit(k).inds_hi;
-            indslo = epochsplit(k).inds_lo;
-            nspksByNeuron = epochsplit(k).nspksByNeuron;
-            
-            % --- neuron 1
-            nn=1;
-            x = [1 2];
-            
-            Y = {};
-            Y{1} = nspksByNeuron{nn}(indslo);
-            Y{2} = nspksByNeuron{nn}(indshi);
-            lt_plot_MultDist(Y, x, 1, 'k');
-            
-        end
-        linkaxes(hsplots, 'xy');
-        
-        hsplots = [];
-        for k=1:length(epochsplit)
-            [fignums_alreadyused, hfigs, figcount, hsplot]=lt_plot_MultSubplotsFigs('', subplotrows, subplotcols, fignums_alreadyused, hfigs, figcount);
-            hsplots = [hsplots hsplot];
-            title(['RA, ' num2str(neurpair)]);
-            ylabel('spikecount');
-            xlabel('LO-HI');
-            
-            %                 ff = epochsplit(k).ffthis;
-            if isnan(epochsplit(k).ffthis)
-                lt_plot_annotation(1, 'no data, so skip');
-                continue
-            end
-            indshi = epochsplit(k).inds_hi;
-            indslo = epochsplit(k).inds_lo;
-            nspksByNeuron = epochsplit(k).nspksByNeuron;
-            
-            % --- neuron 1
-            nn=2;
-            x = [1 2];
-            
-            Y = {};
-            Y{1} = nspksByNeuron{nn}(indslo);
-            Y{2} = nspksByNeuron{nn}(indshi);
-            lt_plot_MultDist(Y, x, 1, 'k');
-            
-        end
-        linkaxes(hsplots, 'xy');
     end
-end
 end
 
 %% ==================== PLOT SUMMARY IS THERE OVERALL INCREASE IN FIRING RATE?
@@ -171,9 +171,9 @@ epochtoplot = 0;
 
 % ================= WN EPOCH, LAST
 for j=1:length(epochtoplot)
-%     epochtoplot = epochWN;
-[spkmeanNonadAdapt_LMAN, spkmeanNonadAdapt_RA] = lt_neural_POPLEARN_Xcov_Epochs_DistrSub(...
-    OUTSTRUCT_XCOV, epochWN(j));
+    %     epochtoplot = epochWN;
+    [spkmeanNonadAdapt_LMAN, spkmeanNonadAdapt_RA] = lt_neural_POPLEARN_Xcov_Epochs_DistrSub(...
+        OUTSTRUCT_XCOV, epochWN(j));
 end
 % ============= PLOT
 lt_figure; hold on;

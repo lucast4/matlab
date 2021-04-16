@@ -2,7 +2,8 @@
 % SaveDir = '/bluejay5/egret_data/lucas/Transferfiles';
 % SaveDir = '/home/lucast4/Dropbox/SCIENCE/BRAINARD_LAB/FIGURES/MATLAB';
 % SaveDir = '/bluejay5/egret_data/lucas/FIGS/MATLAB';
-SaveDir = '/bluejay/Dropbox/SCIENCE/BRAINARD_LAB/FIGURES/MATLAB';
+% SaveDir = '/bluejay/Dropbox/SCIENCE/BRAINARD_LAB/FIGURES/MATLAB';
+SaveDir = '~/Dropbox/SCIENCE/BRAINARD_LAB/FIGURES/MATLAB';
 timestamp=lt_get_timestamp(0);
 randnum=randi(10000, 1);
 SavePath=[SaveDir '/' timestamp '_rand' num2str(randnum) '.pdf'];
